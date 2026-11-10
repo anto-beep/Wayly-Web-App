@@ -64,7 +64,7 @@ function LInput({ label, value, onChangeText, placeholder, keyboardType, testID,
 }
 
 function Checkbox({ checked, colors }: any) {
-  return <View style={{ width: 20, height: 20, borderRadius: 5, borderWidth: 1.5, borderColor: checked ? colors.primary : colors.border, backgroundColor: checked ? colors.primary : "transparent", alignItems: "center", justifyContent: "center" }}>{checked ? <CheckCircle2 size={13} color="#fff" /> : null}</View>;
+  return <View style={{ width: 20, height: 20, borderRadius: 5, borderWidth: 1.5, borderColor: checked ? colors.primary : colors.border, backgroundColor: checked ? colors.primary : colors.surface, alignItems: "center", justifyContent: "center" }}>{checked ? <CheckCircle2 size={13} color="#fff" /> : null}</View>;
 }
 
 const aud = (v: any) => `$${Number(v ?? 0).toLocaleString("en-AU", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
@@ -803,7 +803,7 @@ function TransitionWalkthrough({ colors }: any) {
       <View style={{ flexDirection: "row", gap: spacing.sm, marginTop: spacing.md, flexWrap: "wrap" }}>
         {titles.map((t, i) => (
           <Pressable key={i} testID={`tw-step-${i}`} onPress={() => setStep(i)}
-            style={{ borderWidth: 1, borderColor: step === i ? colors.primary : colors.border, backgroundColor: step === i ? colors.primary : "transparent", borderRadius: radius.pill, paddingHorizontal: 12, paddingVertical: 6 }}>
+            style={{ borderWidth: 1, borderColor: step === i ? colors.primary : colors.border, backgroundColor: step === i ? colors.primary : colors.surface, borderRadius: radius.pill, paddingHorizontal: 12, paddingVertical: 6 }}>
             <T variant="small" style={{ fontSize: 11, color: step === i ? "#fff" : colors.muted }}>{i + 1}. {t}</T>
           </Pressable>
         ))}

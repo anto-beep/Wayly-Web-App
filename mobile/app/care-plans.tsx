@@ -129,14 +129,14 @@ export default function CarePlansScreen() {
 
           {/* Tabs + compare toggle */}
           <View style={{ flexDirection: "row", gap: spacing.sm, flexWrap: "wrap", alignItems: "center" }}>
-            <Pressable testID="cp-tab-active" onPress={() => { setShowArchived(false); setSelected([]); }} style={[styles.tab, { borderColor: !showArchived ? colors.primary : colors.border, backgroundColor: !showArchived ? colors.primary : "transparent" }]}>
+            <Pressable testID="cp-tab-active" onPress={() => { setShowArchived(false); setSelected([]); }} style={[styles.tab, { borderColor: !showArchived ? colors.primary : colors.border, backgroundColor: !showArchived ? colors.primary : colors.surface }]}>
               <T style={{ fontFamily: fonts.bodyMedium, fontSize: 13, color: !showArchived ? "#fff" : colors.text }}>Active ({plans.length})</T>
             </Pressable>
-            <Pressable testID="cp-tab-archived" onPress={() => { setShowArchived(true); setCompareMode(false); setSelected([]); }} style={[styles.tab, { borderColor: showArchived ? colors.primary : colors.border, backgroundColor: showArchived ? colors.primary : "transparent" }]}>
+            <Pressable testID="cp-tab-archived" onPress={() => { setShowArchived(true); setCompareMode(false); setSelected([]); }} style={[styles.tab, { borderColor: showArchived ? colors.primary : colors.border, backgroundColor: showArchived ? colors.primary : colors.surface }]}>
               <T style={{ fontFamily: fonts.bodyMedium, fontSize: 13, color: showArchived ? "#fff" : colors.text }}>Trash ({archived.length})</T>
             </Pressable>
             {!showArchived && plans.length >= 2 ? (
-              <Pressable testID="cp-compare-toggle" onPress={() => { setCompareMode((m) => !m); setSelected([]); }} style={[styles.tab, { flexDirection: "row", gap: 6, borderColor: compareMode ? colors.primary : colors.border, backgroundColor: compareMode ? colors.primary : "transparent" }]}>
+              <Pressable testID="cp-compare-toggle" onPress={() => { setCompareMode((m) => !m); setSelected([]); }} style={[styles.tab, { flexDirection: "row", gap: 6, borderColor: compareMode ? colors.primary : colors.border, backgroundColor: compareMode ? colors.primary : colors.surface }]}>
                 <GitCompare size={14} color={compareMode ? "#fff" : colors.text} />
                 <T style={{ fontFamily: fonts.bodyMedium, fontSize: 13, color: compareMode ? "#fff" : colors.text }}>{compareMode ? "Cancel compare" : "Compare plans"}</T>
               </Pressable>
@@ -164,7 +164,7 @@ export default function CarePlansScreen() {
                   const on = classFilter === c;
                   return (
                     <View key={c ?? "all"} testID={`cp-filter-class-${c ?? "all"}`} style={{ flexShrink: 0 }}>
-                      <T onPress={() => setClassFilter(c)} style={{ fontFamily: fonts.bodyMedium, fontSize: 12, overflow: "hidden", color: on ? "#fff" : colors.text, backgroundColor: on ? colors.primary : "transparent", borderWidth: 1, borderColor: on ? colors.primary : colors.border, borderRadius: radius.pill, paddingHorizontal: 12, paddingVertical: 6 }}>
+                      <T onPress={() => setClassFilter(c)} style={{ fontFamily: fonts.bodyMedium, fontSize: 12, overflow: "hidden", color: on ? "#fff" : colors.text, backgroundColor: on ? colors.primary : colors.surface, borderWidth: 1, borderColor: on ? colors.primary : colors.border, borderRadius: radius.pill, paddingHorizontal: 12, paddingVertical: 6 }}>
                         {c ? `Class ${c}` : "All"}
                       </T>
                     </View>
@@ -193,7 +193,7 @@ export default function CarePlansScreen() {
                     <View style={{ flexDirection: "row", justifyContent: "space-between", gap: 8 }}>
                       <View style={{ flexDirection: "row", alignItems: "center", gap: 8, flex: 1 }}>
                         {compareMode ? (
-                          <View style={[styles.checkbox, { borderColor: isSel ? colors.primary : colors.border, backgroundColor: isSel ? colors.primary : "transparent" }]}>
+                          <View style={[styles.checkbox, { borderColor: isSel ? colors.primary : colors.border, backgroundColor: isSel ? colors.primary : colors.surface }]}>
                             {isSel ? <Check size={14} color="#fff" /> : null}
                           </View>
                         ) : <FileText size={18} color={colors.heading} />}

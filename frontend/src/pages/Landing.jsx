@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { ArrowRight, ShieldCheck, FileSearch, MessageCircle, Users2, Wallet, AlertTriangle, Calendar, Mic, Check, FilePenLine, Calculator, ClipboardList, FileText, Receipt, BarChart3, Clock, Layers, Award, Folder } from "lucide-react";
+import { ArrowRight, ShieldCheck, FileSearch, MessageCircle, Users2, Wallet, AlertTriangle, Calendar, Mic, Check, FilePenLine, Calculator, ClipboardList, FileText, Receipt, BarChart3, Clock, Layers, Award, Folder, UserRound, RefreshCw } from "lucide-react";
 import MarketingHeader from "@/components/MarketingHeader";
 import Footer from "@/components/Footer";
 import StatementDecoderEmbed from "@/components/StatementDecoderEmbed";
@@ -19,24 +19,21 @@ const PERSONAS = [
     {
         id: "caregiver",
         title: "I'm helping a loved one",
-        sub: "Most popular",
+        sub: "Caregiver",
+        blurb: "Decode statements, track funding and coordinate the whole family in one place.",
         cta: "Start free trial",
         href: "/signup",
         primary: true,
+        icon: Users2,
     },
     {
         id: "participant",
         title: "I'm on Support at Home",
         sub: "I receive care",
+        blurb: "See your budget, your contributions and what every charge really means.",
         cta: "Start free trial",
         href: "/signup",
-    },
-    {
-        id: "advisor",
-        title: "I'm a financial advisor",
-        sub: "For practices",
-        cta: "Book a demo",
-        href: "/contact?intent=demo",
+        icon: UserRound,
     },
 ];
 
@@ -80,7 +77,6 @@ function useCountdown(target) {
 export default function Landing() {
     const { user } = useAuth();
     const countdown = useCountdown(new Date("2026-10-01T00:00:00+10:00"));
-    const [selectedPersona, setSelectedPersona] = useState("caregiver");
 
     return (
         <div className="min-h-screen bg-kindred landing-marketing">
@@ -95,50 +91,6 @@ export default function Landing() {
             {process.env.REACT_APP_FLAG_DUAL_FLAGSHIP === "0"
                 ? <HeroSpotlight />
                 : <DualFlagshipHero />}
-
-            {/* PERSONA ON-RAMP + DECODER EMBED */}
-            <section className="mx-auto max-w-7xl px-6 pt-10 pb-6 sm:pt-16 sm:pb-8" data-testid="persona-section">
-                <div className="grid lg:grid-cols-12 gap-10 items-start">
-                    <div className="lg:col-span-7">
-                        <span className="overline">Three quick ways in</span>
-                        <h2 className="font-heading text-3xl sm:text-4xl text-[#0E2A47] mt-3">Which describes you best?</h2>
-                        <p className="mt-3 text-base text-muted-k max-w-xl leading-relaxed">
-                            On 01/11/2025, Support at Home replaced Home Care Packages. Pick the path that fits your household and we will tailor the next step for you.
-                        </p>
-
-                        {/* Persona on-ramp */}
-                        <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-3" data-testid="persona-onramp">
-                            {PERSONAS.map((p) => (
-                                <button
-                                    key={p.id}
-                                    onMouseEnter={() => setSelectedPersona(p.id)}
-                                    onClick={() => (window.location.href = p.href)}
-                                    data-testid={`persona-${p.id}`}
-                                    className={`text-left rounded-xl p-4 border transition-colors ${
-                                        selectedPersona === p.id
-                                            ? "border-[#0E2A47] bg-[#0E2A47] text-white -translate-y-0.5 shadow-md"
-                                            : "border-kindred bg-surface hover:border-[#0E2A47]"
-                                    }`}
-                                >
-                                    <div className={`text-xs uppercase tracking-wider ${selectedPersona === p.id ? "text-white/85" : "text-muted-k"}`}>
-                                        {p.sub}
-                                    </div>
-                                    <div className={`font-heading text-base mt-1 whitespace-nowrap ${selectedPersona === p.id ? "text-white" : "text-[#0E2A47]"}`}>
-                                        {p.title}
-                                    </div>
-                                    <div className={`mt-3 text-sm inline-flex items-center gap-1 ${selectedPersona === p.id ? "text-white" : "text-[#0E2A47]"}`}>
-                                        {p.cta} <ArrowRight className="h-3.5 w-3.5" />
-                                    </div>
-                                </button>
-                            ))}
-                        </div>
-                    </div>
-
-                    <div className="lg:col-span-5">
-                        <StatementDecoderEmbed compact />
-                    </div>
-                </div>
-            </section>
 
             {/* PROBLEM */}
             <section className="relative overflow-hidden">
@@ -169,6 +121,80 @@ export default function Landing() {
                     </div>
                 </div>
             </section>
+
+            {/* PERSONA ON-RAMP */}
+            <section className="mx-auto max-w-7xl px-6 pt-10 pb-6 sm:pt-14" data-testid="persona-section">
+                <div className="max-w-2xl mx-auto text-center">
+                    <span className="overline">Two quick ways in</span>
+                    <h2 className="font-heading text-3xl sm:text-4xl text-[#0E2A47] mt-3">Which describes you best?</h2>
+                    <p className="mt-3 text-base text-muted-k leading-relaxed">
+                        On 01/11/2025, Support at Home replaced Home Care Packages. Pick the path that fits your household and we will tailor the next step for you.
+                    </p>
+                </div>
+
+                {/* Persona on-ramp — two clear cards */}
+                <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 gap-5" data-testid="persona-onramp">
+                    {PERSONAS.map((p) => {
+                        const Icon = p.icon;
+                        return (
+                            <Link
+                                key={p.id}
+                                to={p.href}
+                                data-testid={`persona-${p.id}`}
+                                className={`group relative flex flex-col rounded-2xl p-5 border transition-all duration-300 hover:-translate-y-1 ${
+                                    p.primary
+                                        ? "border-[#0E4D52]/30 bg-[#0E4D52]/[0.045] hover:border-[#0E4D52] hover:shadow-[0_22px_55px_-26px_rgba(14,77,82,0.5)]"
+                                        : "border-kindred bg-surface hover:border-[#0E4D52] hover:shadow-[0_22px_55px_-26px_rgba(14,42,71,0.35)]"
+                                }`}
+                            >
+                                {p.primary && (
+                                    <span className="absolute -top-2.5 right-4 inline-flex items-center gap-1 rounded-full bg-gold px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white shadow-sm">
+                                        Most popular
+                                    </span>
+                                )}
+                                <span className={`inline-flex h-10 w-10 items-center justify-center rounded-xl ${p.primary ? "bg-[#0E4D52] text-white" : "bg-[#0E4D52]/10 text-[#0E4D52]"}`}>
+                                    <Icon className="h-5 w-5" />
+                                </span>
+                                <div className="mt-3 text-[11px] uppercase tracking-wider text-muted-k">{p.sub}</div>
+                                <div className="font-heading text-lg leading-snug text-[#0E2A47] mt-0.5">{p.title}</div>
+                                <p className="mt-1.5 text-sm text-muted-k leading-relaxed flex-1">{p.blurb}</p>
+                                <span className="mt-4 inline-flex items-center gap-1.5 text-sm font-semibold text-[#A5512B]">
+                                    {p.cta} <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+                                </span>
+                            </Link>
+                        );
+                    })}
+                </div>
+
+                {/* Had a Home Care Package? — prominent bridge callout */}
+                <Link
+                    to="/home-care-packages"
+                    data-testid="persona-hcp-link"
+                    className="group mt-5 flex items-center gap-4 rounded-2xl border border-[#A5512B]/30 bg-[#A5512B]/[0.06] p-4 sm:p-5 transition-all hover:border-[#A5512B] hover:shadow-[0_16px_42px_-26px_rgba(165,81,43,0.55)]"
+                >
+                    <span className="inline-flex h-11 w-11 flex-none items-center justify-center rounded-xl bg-[#A5512B]/15 text-[#A5512B]">
+                        <RefreshCw className="h-5 w-5" />
+                    </span>
+                    <div className="flex-1">
+                        <div className="font-heading text-base text-[#0E2A47]">Had a Home Care Package?</div>
+                        <div className="text-sm text-muted-k mt-0.5 leading-relaxed">See exactly what changed when Support at Home replaced it, in plain English.</div>
+                    </div>
+                    <ArrowRight className="h-5 w-5 flex-none text-[#A5512B] transition-transform group-hover:translate-x-1" />
+                </Link>
+            </section>
+
+            {/* TRY THE DECODER — free, no signup, in its own breathing space */}
+            <section className="mx-auto max-w-7xl px-6 pt-4 pb-10 sm:pb-14" data-testid="try-decoder-section">
+                <div className="text-center mb-6">
+                    <span className="overline">Free, no signup</span>
+                    <h2 className="font-heading text-2xl sm:text-3xl text-[#0E2A47] mt-2">See what your statement really says</h2>
+                    <p className="mt-2 text-sm text-muted-k max-w-2xl mx-auto leading-relaxed">
+                        Paste the text or upload the file and Wayly explains every line in plain English, in about a minute.
+                    </p>
+                </div>
+                <StatementDecoderEmbed compact />
+            </section>
+
 
             {/* FEATURE GRID, themed clusters when the dual-flagship flag is on,
                 otherwise fall back to the legacy flat 9-tool grid. */}

@@ -8,6 +8,7 @@ import ToolRelatedLinks from "@/components/ToolRelatedLinks";
 import ReportIssueButton from "@/components/ReportIssueButton";
 import ToolExplainer from "@/components/ToolExplainer";
 import ToolHero from "@/components/ToolHero";
+import HcpBridgeLine from "@/components/HcpBridgeLine";
 import ToolWalkthroughVideo from "@/components/ToolWalkthroughVideo";
 import ToolGate from "@/components/ToolGate";
 import { ScreenshotStatement } from "@/components/Screenshots";
@@ -221,6 +222,7 @@ export default function ContributionEstimator() {
             <MarketingHeader />
 
             <ToolHero toolKey="contribution-estimator" wide />
+                        <HcpBridgeLine className="mt-4" />
 
             <section className="mx-auto max-w-[1720px] px-6 pb-6" data-testid="ce-form">
                 {resumed && !result && (

@@ -440,7 +440,7 @@ function FormRow({ field, value, onChange, colors }: { field: FormField; value: 
           {field.options!.map((o) => {
             const active = String(value) === String(o.value);
             return (
-              <Pressable key={String(o.value)} testID={`tool-field-${field.key}-${o.value}`} onPress={() => onChange(o.value)} style={[styles.chip, { borderColor: active ? colors.primary : colors.border, backgroundColor: active ? colors.primary : "transparent" }]}>
+              <Pressable key={String(o.value)} testID={`tool-field-${field.key}-${o.value}`} onPress={() => onChange(o.value)} style={[styles.chip, { borderColor: active ? colors.primary : colors.border, backgroundColor: active ? colors.primary : colors.surface }]}>
                 <T style={{ fontFamily: fonts.bodyMedium, fontSize: 13, color: active ? "#fff" : colors.text }}>{o.label}</T>
               </Pressable>
             );
@@ -460,7 +460,7 @@ function FormRow({ field, value, onChange, colors }: { field: FormField; value: 
               {[0, 1, 2, 3, 4].map((n) => {
                 const active = (value?.[i] ?? 0) === n;
                 return (
-                  <Pressable key={n} testID={`tool-scale-${i}-${n}`} onPress={() => { const next = [...(value || Array(12).fill(0))]; next[i] = n; onChange(next); }} style={[styles.scaleDot, { borderColor: active ? colors.primary : colors.border, backgroundColor: active ? colors.primary : "transparent" }]}>
+                  <Pressable key={n} testID={`tool-scale-${i}-${n}`} onPress={() => { const next = [...(value || Array(12).fill(0))]; next[i] = n; onChange(next); }} style={[styles.scaleDot, { borderColor: active ? colors.primary : colors.border, backgroundColor: active ? colors.primary : colors.surface }]}>
                     <T style={{ fontFamily: fonts.bodySemi, fontSize: 13, color: active ? "#fff" : colors.muted }}>{n}</T>
                   </Pressable>
                 );

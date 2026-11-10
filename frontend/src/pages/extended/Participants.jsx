@@ -715,12 +715,6 @@ export default function ParticipantsPage() {
                                         </button>
                                     </div>
                                 )}
-                                {addPreview.branch === "adviser_included" && (
-                                    <div className="space-y-3">
-                                        <p className="text-sm text-primary-k">Your Adviser plan includes Participant management at no extra cost.</p>
-                                        <button onClick={() => setStep("form")} className="bg-primary-k text-white rounded-md px-4 py-2 text-sm hover:bg-[#091D33]">Continue</button>
-                                    </div>
-                                )}
                             </div>
                         )}
 

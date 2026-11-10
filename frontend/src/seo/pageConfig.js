@@ -44,12 +44,6 @@ export const SEO = {
             "Reach Wayly's Australian support team for help with Support at Home statements, billing questions or partnership enquiries, usually under 24 hours.",
         path: "/contact",
     },
-    forAdvisors: {
-        title: "Wayly for Aged Care Advisers",
-        description:
-            "Help your clients understand Support at Home statements, budgets and classifications faster. Free Adviser plan with audit trail and client export.",
-        path: "/for-advisors",
-    },
     forGPs: {
         title: "Wayly for GPs & Health Pros",
         description:

@@ -134,7 +134,6 @@ const SECTIONS = [
         rows: [
             ["Quarterly summary reports", true, true, true],
             ["Annual financial year summaries", true, true, true],
-            ["Adviser-branded PDF reports", false, false, false],
         ],
     },
     {
@@ -197,10 +196,6 @@ export default function Pricing() {
     const startCheckout = async (planKey, tierHref) => {
         if (!user) {
             window.location.href = tierHref;
-            return;
-        }
-        if (planKey === "adviser") {
-            window.location.href = "/contact?intent=adviser";
             return;
         }
         setLoadingPlan(planKey);
@@ -272,7 +267,6 @@ export default function Pricing() {
         offers: [
             { "@type": "Offer", name: "Solo", price: String(INDEX1.plans.solo.price_aud), priceCurrency: "AUD", priceSpecification: { "@type": "UnitPriceSpecification", price: String(INDEX1.plans.solo.price_aud), priceCurrency: "AUD", unitText: "MONTH" }, availability: "https://schema.org/InStock", url: "https://wayly.com.au/pricing", description: `All ${TOOL_COUNT} AI tools, unlimited Statement Decoder, one participant. 7-day free trial.`, shippingDetails: _digitalShipping, hasMerchantReturnPolicy: _saasReturnPolicy },
             { "@type": "Offer", name: "Family", price: String(INDEX1.plans.family.price_aud), priceCurrency: "AUD", priceSpecification: { "@type": "UnitPriceSpecification", price: String(INDEX1.plans.family.price_aud), priceCurrency: "AUD", unitText: "MONTH" }, availability: "https://schema.org/InStock", url: "https://wayly.com.au/pricing", description: "Up to four participants, family thread, weekly digest, audit log, household coordination.", shippingDetails: _digitalShipping, hasMerchantReturnPolicy: _saasReturnPolicy },
-            { "@type": "Offer", name: "Adviser", price: String(INDEX1.plans.adviser.price_aud), priceCurrency: "AUD", priceSpecification: { "@type": "UnitPriceSpecification", price: String(INDEX1.plans.adviser.price_aud), priceCurrency: "AUD", unitText: "MONTH" }, availability: "https://schema.org/InStock", url: "https://wayly.com.au/pricing", description: "For aged-care specialist advisers. Client export, audit trail, branded reports.", shippingDetails: _digitalShipping, hasMerchantReturnPolicy: _saasReturnPolicy },
         ],
     };
     return (
@@ -333,7 +327,7 @@ export default function Pricing() {
                                     // is off-brief. Swap to a plain "Buy Solo / Buy Family / Talk to us"
                                     // so returning users see purchase language, not the guest lure.
                                     user
-                                        ? (t.key === "adviser" ? "Talk to us" : `Buy ${t.name}`)
+                                        ? `Buy ${t.name}`
                                         : t.cta
                                 )}
                             </button>

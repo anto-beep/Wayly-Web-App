@@ -162,7 +162,7 @@ export default function AthmProjectsScreen() {
                 const on = typeFilter === c.value;
                 return (
                   <Pressable key={c.value} testID={`athm-filter-type-${c.value}`} onPress={() => setTypeFilter(c.value)}
-                    style={{ flexShrink: 0, borderWidth: 1, borderColor: on ? colors.primary : colors.border, backgroundColor: on ? colors.primary : "transparent", borderRadius: radius.pill, paddingHorizontal: 14, height: 36, justifyContent: "center" }}>
+                    style={{ flexShrink: 0, borderWidth: 1, borderColor: on ? colors.primary : colors.border, backgroundColor: on ? colors.primary : colors.surface, borderRadius: radius.pill, paddingHorizontal: 14, height: 36, justifyContent: "center" }}>
                     <T variant="small" style={{ fontSize: 12, color: on ? "#fff" : colors.muted }}>{c.label}</T>
                   </Pressable>
                 );

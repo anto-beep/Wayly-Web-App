@@ -672,7 +672,7 @@ function BudgetBreakdown({ result, colors }: any) {
         </View>
         <View style={{ flexDirection: "row", backgroundColor: colors.bg, borderRadius: radius.pill, padding: 2, borderWidth: 1, borderColor: colors.border }} testID="ce-budget-period">
           {(["quarterly", "monthly"] as const).map((p) => (
-            <Pressable key={p} testID={`ce-budget-period-${p}`} onPress={() => setPeriod(p)} style={{ paddingHorizontal: 12, paddingVertical: 6, borderRadius: radius.pill, backgroundColor: period === p ? colors.primary : "transparent" }}>
+            <Pressable key={p} testID={`ce-budget-period-${p}`} onPress={() => setPeriod(p)} style={{ paddingHorizontal: 12, paddingVertical: 6, borderRadius: radius.pill, backgroundColor: period === p ? colors.primary : colors.surface }}>
               <T style={{ fontSize: 12, fontFamily: fonts.bodySemi, color: period === p ? "#FFFFFF" : colors.heading, textTransform: "capitalize" }}>{p}</T>
             </Pressable>
           ))}
@@ -777,7 +777,7 @@ function Label({ children, colors, top }: any) {
 function RadioTile({ checked, label, sub, onPress, colors, testID }: any) {
   return (
     <Pressable testID={testID} onPress={onPress} style={{ borderWidth: 1, borderRadius: radius.md, padding: spacing.md, borderColor: checked ? colors.primary : colors.border, backgroundColor: checked ? colors.sageSoft : colors.surface, flexDirection: "row", gap: 10 }}>
-      <View style={{ width: 16, height: 16, borderRadius: 8, borderWidth: 2, marginTop: 2, borderColor: checked ? colors.primary : colors.muted, backgroundColor: checked ? colors.primary : "transparent" }} />
+      <View style={{ width: 16, height: 16, borderRadius: 8, borderWidth: 2, marginTop: 2, borderColor: checked ? colors.primary : colors.muted, backgroundColor: checked ? colors.primary : colors.surface }} />
       <View style={{ flex: 1 }}>
         <T style={{ fontFamily: fonts.bodyMedium, fontSize: 14, color: colors.text }}>{label}</T>
         {sub ? <T variant="small" style={{ color: colors.muted, marginTop: 2 }}>{sub}</T> : null}
@@ -787,7 +787,7 @@ function RadioTile({ checked, label, sub, onPress, colors, testID }: any) {
 }
 function Pill({ active, onPress, children, colors, testID, small }: any) {
   return (
-    <Pressable testID={testID} onPress={onPress} style={{ borderWidth: 1, borderRadius: radius.pill, paddingHorizontal: small ? 10 : 14, paddingVertical: small ? 6 : 9, borderColor: active ? colors.primary : colors.border, backgroundColor: active ? colors.primary : "transparent" }}>
+    <Pressable testID={testID} onPress={onPress} style={{ borderWidth: 1, borderRadius: radius.pill, paddingHorizontal: small ? 10 : 14, paddingVertical: small ? 6 : 9, borderColor: active ? colors.primary : colors.border, backgroundColor: active ? colors.primary : colors.surface }}>
       <T style={{ fontFamily: fonts.bodyMedium, fontSize: small ? 11 : 13, color: active ? "#fff" : colors.text }}>{children}</T>
     </Pressable>
   );

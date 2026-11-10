@@ -2105,4 +2105,313 @@ Outcome typically arrives 4-8 weeks later. The new classification (if changed) t
             "support-at-home-vs-home-care-packages-what-changed",
         ],
     },
+    {
+        slug: "what-happened-to-my-home-care-package",
+        title: "What Happened To My Home Care Package?",
+        excerpt: "Home Care Packages became Support at Home on 01/11/2025. Your package moved across automatically and your funding was kept. Here is what changed, in plain English.",
+        published_at: "2026-11-10",
+        updated_at: "2026-11-10",
+        author: { name: "Wayly Editorial", role: "" },
+        reviewer: { name: "Wayly Editorial", role: "" },
+        category: "Home Care Package transition",
+        hero_alt: "Adult daughter reading an older parent's first Support at Home statement at a kitchen table",
+        tags: ["what happened to my home care package", "Home Care Package", "Support at Home", "transition", "Aged Care Act 2024", "My Aged Care"],
+        related: ["home-care-package-statement-vs-support-at-home-statement", "will-i-pay-more-under-support-at-home-than-home-care-package"],
+        meta: {
+            title: "What Happened To My Home Care Package? | Wayly",
+            description: "Home Care Packages became Support at Home on 01/11/2025. Your package moved across automatically and your funding was kept. Here is what changed, in plain English.",
+        },
+        key_takeaways: [
+            "On 01/11/2025, the Home Care Packages Program was replaced by Support at Home. Every active package moved across automatically.",
+            "You did not need to reapply or be reassessed just because the program changed.",
+            "Your funding carried across at an equivalent level, and any unspent money came with it.",
+            "Your provider stayed the same unless you chose to change it. What changed most is the statement, which now looks different.",
+        ],
+        intro_md: `*General information, not financial, legal or clinical advice.*
+
+If you have been caring for a parent on a Home Care Package, or managing your own, you may have opened a statement recently and found it does not look like it used to. The heading says Support at Home. The services are grouped in a new way. You might be wondering whether something changed without anyone telling you, and whether your package is still there at all.
+
+It is. Here is what happened, in plain English, and what is worth checking now.`,
+        sections: [
+            {
+                heading: "The Short Answer",
+                body_md: `On 01/11/2025, the Australian Government replaced the Home Care Packages Program with Support at Home, under the new Aged Care Act 2024. If you or a parent had a Home Care Package, you are now on Support at Home. The care did not stop, the money did not disappear, and no form needed to be filled in for the change itself.
+
+Support at Home is the same idea as a Home Care Package: government funded care that helps an older person stay in their own home. What changed is the structure around it, including how services are grouped, how budgets are managed, and how your statement is laid out.`,
+            },
+            {
+                heading: "Your Package Moved Across Automatically",
+                body_md: `Every active Home Care Package transitioned to Support at Home automatically on 01/11/2025. There was no need to reapply, and no need for a new assessment simply because the program changed names. If you were already approved for a package, or were waiting on the National Priority System, you were moved across and given a Support at Home budget that matched what you had.
+
+This matters because it means there was nothing you were supposed to do and might have missed. The transition happened at the program level, not yours. If you are reading this months later and only now noticing the change on a statement, you have not fallen behind on anything.`,
+            },
+            {
+                heading: "What Happened To Your Funding",
+                body_md: `Your funding carried across at an equivalent level. People who moved from a Home Care Package keep what is called a transitioned classification, set so that the funding matches the package they had before. You were not dropped to a lower amount because of the change.
+
+Any unspent Home Care Package money was kept and moved across with you. Under the old system, many families built up a balance of unused funds. That balance was not wiped when Support at Home began. It came with you into the new program.
+
+There is also a protection for people who were already in the system, often called the no worse off principle. In short, if you were approved for a Home Care Package before the change, your contribution under Support at Home should not be higher than it was before. We cover that in detail in a separate article, linked at the end.`,
+            },
+            {
+                heading: "Is Your Provider Still The Same?",
+                body_md: `Yes, unless you chose to change it. The move to Support at Home did not reassign anyone to a new provider. The organisation delivering your care stayed the same through the transition. You are free to change providers if you want to, the same as you were under a Home Care Package, but nothing forced a change.`,
+            },
+            {
+                heading: "Why Your Statement Looks Different Now",
+                body_md: `This is the part most families actually notice. Support at Home statements are laid out differently from the old Home Care Package statements. Services are grouped into new categories, the budget is shown on a quarterly cycle, and the contribution line may be calculated differently depending on your situation.
+
+The information is still there. It is just presented in a new shape, and the first one or two statements can be hard to read while you get used to the layout. If your first Support at Home statement left you unsure what most of it meant, that is exactly what Wayly's free [Statement Decoder](/ai-tools/statement-decoder) is for. Paste or upload a statement and get a plain-English read on every line in about 60 seconds.`,
+            },
+            {
+                heading: "What To Check On Your First Support at Home Statement",
+                body_md: `A few things are worth a look on your first statement under the new program:
+
+1. The services listed are ones that were actually delivered.
+2. The amount you are being asked to contribute looks consistent with what you paid before the change, not higher.
+3. Any personal care listed on or after 01/10/2026 shows a $0 contribution, because personal care is now funded as clinical care for approved participants.
+4. Your remaining budget for the quarter makes sense against what has been spent.
+
+If something does not add up, it is reasonable to ask your provider about it before you pay. It is far easier to hold a payment and ask a question than to claw back an overcharge later.`,
+            },
+            {
+                heading: "Where To Get Help",
+                body_md: `For questions about your assessment or services, My Aged Care is the place to start, on 1800 200 422. For free, independent advocacy if something feels wrong, the Older Persons Advocacy Network (OPAN) is on 1800 700 600. And to make sense of a statement line by line before you decide anything, Wayly's [Statement Decoder](/ai-tools/statement-decoder) is free to try with no signup for your first decode.`,
+            },
+        ],
+        faqs: [
+            { q: "Did my Home Care Package automatically transition to Support at Home?", a: "Yes. All active Home Care Packages transitioned to Support at Home automatically on 01/11/2025. You did not need to apply or take any action for the change itself." },
+            { q: "Do I need to reapply or be reassessed now that the program has changed?", a: "No. Existing recipients were not required to be reassessed simply because the program changed. A reassessment only happens if your care needs change and you or your provider request one through My Aged Care." },
+            { q: "Did I lose my unspent Home Care Package funds?", a: "No. Any unspent money from your Home Care Package was kept and carried across to your Support at Home budget." },
+            { q: "Can I still get a Home Care Package?", a: "No. Home Care Packages closed to new applicants on 01/11/2025. Anyone new to in-home care now applies for Support at Home through My Aged Care on 1800 200 422." },
+            { q: "Is my provider still the same after the change?", a: "Yes, unless you chose to change it. The transition did not move anyone to a new provider." },
+        ],
+    },
+    {
+        slug: "home-care-package-levels-support-at-home-classifications",
+        title: "Home Care Package Levels And The New Support at Home Classifications",
+        excerpt: "Home Care Packages had four levels. Support at Home has eight classifications. Here is what changed, why there is no exact swap, and how to check your level.",
+        published_at: "2026-11-10",
+        updated_at: "2026-11-10",
+        author: { name: "Wayly Editorial", role: "" },
+        reviewer: { name: "Wayly Editorial", role: "" },
+        category: "Home Care Package transition",
+        hero_alt: "Older Australian and adult child comparing aged care funding levels on paper",
+        tags: ["home care package levels", "Support at Home classifications", "level 2", "level 4", "transitioned classification", "Classification Self-Check"],
+        related: ["what-happened-to-my-home-care-package", "home-care-package-statement-vs-support-at-home-statement"],
+        meta: {
+            title: "Home Care Package Levels And The New Support at Home Classifications | Wayly",
+            description: "Home Care Packages had four levels. Support at Home has eight classifications. Here is what changed, why there is no exact swap, and how to check your level.",
+        },
+        key_takeaways: [
+            "Home Care Packages used four levels. Support at Home uses eight classifications, from Classification 1 to Classification 8.",
+            "The government did not simply map the old four onto the new eight, so there is no exact \"level 2 equals classification X\" answer.",
+            "When you moved across on 01/11/2025, your funding was kept at an equivalent level through a transitioned classification.",
+            "Your classification is set by an aged care assessment based on need. A higher classification is a match to higher needs, not a reward.",
+        ],
+        intro_md: `*General information, not financial, legal or clinical advice.*
+
+If you knew your parent was on a "level 2" or "level 4" Home Care Package, the new Support at Home classifications can be confusing. The numbers go higher now, there are eight of them instead of four, and nobody sent a simple chart saying which old level became which new classification.
+
+That is because no such chart exists, and this article explains why, what it means for your funding, and how to work out where you sit now.`,
+        sections: [
+            {
+                heading: "The Old Four Levels",
+                body_md: `Under the Home Care Packages Program, funding came in four levels, from Level 1 for basic care needs through to Level 4 for high care needs. Each level carried a set annual amount of funding, and your level was set by an aged care assessment. Many families came to know their parent's care by that single number.`,
+            },
+            {
+                heading: "The New Eight Classifications",
+                body_md: `Support at Home replaced the four levels with eight classifications, from Classification 1 through to Classification 8. The extra steps give the system more room to match funding to need, with Classification 1 for the lowest support needs and Classification 8 for the highest, most complex care. The same broad idea applies: your classification sets the funding available for your care.`,
+            },
+            {
+                heading: "Why There Is No Direct Swap",
+                body_md: `This is the question we hear most, and the honest answer is that there is no exact swap. The government did not publish a table mapping the old four levels onto the new eight classifications. A Level 2 package did not simply become one fixed classification for everyone.
+
+So if you are searching for "home care package level 2 is now classification X", there is no single correct answer to find. What matters is not which new number your old level became, but that your funding was maintained across the change, which it was.`,
+            },
+            {
+                heading: "What Happened To Your Level When You Moved Across",
+                body_md: `When Support at Home began on 01/11/2025, existing recipients were moved to a transitioned classification. This was set so the funding matched the Home Care Package you already had. You were not reassessed just because the program changed, and you were not dropped to a lower amount.
+
+In plain terms: your old level was used to work out equivalent funding under the new system, and that is the funding you kept. The label changed from a level to a classification, but the money behind it was carried across.`,
+            },
+            {
+                heading: "How Your Classification Is Decided",
+                body_md: `Under Support at Home, your classification is set by an aged care assessment based on your needs. You do not choose it, and asking for a higher classification does not make the funding go up on its own. A higher classification reflects higher assessed need, not a better deal. It is a match to need, not a prize.
+
+This is the same principle that applied to Home Care Package levels. The number reflects an assessment of what help a person needs to live safely at home.`,
+            },
+            {
+                heading: "What To Do If Your Needs Have Changed",
+                body_md: `If your circumstances or your parent's care needs have changed since the transition, you can ask for a reassessment through My Aged Care on 1800 200 422. A reassessment can lead to a new classification and different funding. You do not have to stay on a transitioned classification forever if the level of care needed has genuinely changed.
+
+A reassessment is driven by a change in need, not by the program change itself. If nothing about the care has changed, there is no need to seek one.`,
+            },
+            {
+                heading: "How To Check Your Likely Classification",
+                body_md: `If you are not sure which Support at Home classification fits your situation, Wayly's [Classification Self-Check](/ai-tools/classification-self-check) walks through the government's own criteria and gives you a plain-English read on which classification looks likely, and why. It is indicative only. Only an aged care assessor can decide an actual classification, but it can help you understand where you might sit before any conversation with My Aged Care or a provider.`,
+            },
+        ],
+        faqs: [
+            { q: "What Home Care Package level equals which Support at Home classification?", a: "There is no exact swap. The government did not map the four old Home Care Package levels onto the eight Support at Home classifications. When you moved across, your funding was kept at an equivalent level rather than matched to one fixed classification." },
+            { q: "How many Support at Home classifications are there?", a: "Eight, from Classification 1 for the lowest support needs to Classification 8 for the highest, most complex care. Home Care Packages had four levels." },
+            { q: "Did my funding change when the levels became classifications?", a: "No. Existing recipients kept equivalent funding through a transitioned classification set to match their old Home Care Package." },
+            { q: "Can I ask for a higher classification?", a: "You can request a reassessment through My Aged Care if your care needs have changed. A classification is set by assessment based on need, not by request alone." },
+            { q: "How do I find out my classification?", a: "Your provider or My Aged Care can tell you your current classification. To get an indicative read before you ask, you can use Wayly's free Classification Self-Check." },
+        ],
+    },
+    {
+        slug: "home-care-package-statement-vs-support-at-home-statement",
+        title: "Home Care Package Statement vs Support at Home Statement: What Changed",
+        excerpt: "Your old Home Care Package statement and your new Support at Home statement look different. Here is what changed, line by line, and what to check before you pay.",
+        published_at: "2026-11-10",
+        updated_at: "2026-11-10",
+        author: { name: "Wayly Editorial", role: "" },
+        reviewer: { name: "Wayly Editorial", role: "" },
+        category: "Home Care Package transition",
+        hero_alt: "Two aged care statements side by side showing the old and new layouts",
+        tags: ["home care package statement", "Support at Home statement", "quarterly budget", "personal care $0 contribution", "Statement Decoder"],
+        related: ["what-happened-to-my-home-care-package", "will-i-pay-more-under-support-at-home-than-home-care-package"],
+        meta: {
+            title: "Home Care Package Statement vs Support at Home Statement: What Changed | Wayly",
+            description: "Your old Home Care Package statement and your new Support at Home statement look different. Here is what changed, line by line, and what to check before you pay.",
+        },
+        key_takeaways: [
+            "Support at Home statements group services into new categories and show your budget on a quarterly cycle, not the old annual one.",
+            "The three numbers that matter are the same: what the care cost, what the government funded, and what you pay.",
+            "Since 01/10/2026, approved personal care is funded as clinical care, so it should show a $0 contribution on statements dated on or after that day.",
+            "A statement that is hard to read is common in the first few months. Checking it line by line is still worth doing before you pay.",
+        ],
+        intro_md: `*General information, not financial, legal or clinical advice.*
+
+If you kept an eye on a parent's Home Care Package statement for years, the first Support at Home statement can feel like a different document. The headings changed, the services are grouped in a new way, and the budget is counted by the quarter instead of the year.
+
+The good news is that the core of it has not changed. The same three numbers still tell you most of what you need. This article walks through what is different, what stayed the same, and what to check before you pay.`,
+        sections: [
+            {
+                heading: "The Three Numbers That Still Matter",
+                body_md: `Whatever the layout, three numbers carry most of the meaning on any aged care statement. The total cost of the services delivered. The part the government funded. The part you actually pay. This was true on a Home Care Package statement and it is true on a Support at Home one.
+
+The large figure at the top is almost never the amount that leaves your account. It is usually the gross cost of care, most of which the government funds. Your contribution is a smaller, separate line. If those three numbers are not clearly set out on your statement, that is a fair thing to ask your provider to show you.`,
+            },
+            {
+                heading: "What Changed On The New Statement",
+                body_md: `The main changes from a Home Care Package statement to a Support at Home statement are in how the information is grouped and timed, not in the underlying idea. You will typically see new category names for services, a quarterly budget position rather than an annual one, and a contribution line that may be worked out differently depending on your circumstances and the type of service.
+
+None of this means anything has gone wrong. It is the new program's format. But a new format takes a little getting used to, which is why the first statement or two can be hard to follow.`,
+            },
+            {
+                heading: "Quarterly Budgets, Not Annual",
+                body_md: `One of the bigger changes is timing. Home Care Packages were often thought of in annual terms. Support at Home works in quarterly budgets. Your funding is allocated across the quarter, and a portion of what you do not use can carry into the next quarter, within limits.
+
+This matters for how you read a statement. A quiet month is not money lost. It means your budget for the quarter is pacing more slowly, and some of the unused amount can carry forward. Knowing where your current quarter sits against its budget is half of managing Support at Home well.`,
+            },
+            {
+                heading: "The New Service Categories",
+                body_md: `Support at Home groups services into categories that look different from the old Home Care Package layout. The point of the grouping is to make it clearer what kind of help each charge relates to. When you first see the new categories, it is worth matching each charge to a service that was actually delivered, the same check you would have done before, just against new labels.`,
+            },
+            {
+                heading: "The 01/10/2026 Personal Care Change",
+                body_md: `There is one specific change worth watching for. Since 01/10/2026, personal care under Support at Home is funded as clinical care, which is fully government funded for approved participants. In plain terms, help with showering, dressing, grooming and continence support should show a $0 contribution on statements dated on or after 01/10/2026.
+
+If personal care was already on the support plan and funded, this change applies automatically. There was no need to book a new assessment or request it. So if your October statement, or any statement after it, still shows a contribution on a personal care line, that is worth raising with your provider before you pay.`,
+            },
+            {
+                heading: "What To Check Before You Pay",
+                body_md: `A short routine covers most of it:
+
+1. Each service listed was actually delivered.
+2. The rate charged matches what you agreed with your provider.
+3. Personal care dated on or after 01/10/2026 shows a $0 contribution.
+4. Your contribution overall is consistent with what you paid before the transition, not higher.
+5. The quarterly budget position makes sense against what has been spent.
+
+If all of that lines up, pay with confidence. If one thing does not, ask before you pay rather than after. Holding a payment and asking a question is far easier than recovering an overcharge later.`,
+            },
+            {
+                heading: "Reading It In Plain English",
+                body_md: `If the new layout is hard to follow, you do not have to work through it alone. Wayly's free [Statement Decoder](/ai-tools/statement-decoder) reads a Support at Home statement line by line and explains each charge in plain English in about 60 seconds. Your first decode is free with no signup. Paste or upload the statement and see, in clear terms, what the services cost, what the government funded, and what you actually pay.`,
+            },
+        ],
+        faqs: [
+            { q: "Why does my Support at Home statement look different from my Home Care Package statement?", a: "Support at Home uses new service categories and a quarterly budget cycle instead of the old annual one. The information is the same in substance, just grouped and timed differently." },
+            { q: "What are the three numbers I should look for on an aged care statement?", a: "The total cost of the services delivered, the part the government funded, and the part you pay. The large figure at the top is usually the gross cost, not the amount you owe." },
+            { q: "My personal care still shows a contribution after 01/10/2026. Is that right?", a: "Probably not, if the personal care is approved and funded. Since 01/10/2026, approved personal care is funded as clinical care and should show a $0 contribution. Raise it with your provider before you pay." },
+            { q: "What is a quarterly budget under Support at Home?", a: "Your funding is allocated across each quarter rather than the full year. A portion of unused funding can carry into the next quarter, within limits, so a light month is not money lost." },
+            { q: "How can I understand my statement quickly?", a: "Wayly's free Statement Decoder reads a Support at Home statement and explains every line in plain English in about 60 seconds, with your first decode free and no signup." },
+        ],
+    },
+    {
+        slug: "will-i-pay-more-under-support-at-home-than-home-care-package",
+        title: "Will I Pay More Under Support at Home Than My Home Care Package?",
+        excerpt: "If you were approved for a Home Care Package before the change, a no worse off protection applies. Here is what it means for what you pay under Support at Home.",
+        published_at: "2026-11-10",
+        updated_at: "2026-11-10",
+        author: { name: "Wayly Editorial", role: "" },
+        reviewer: { name: "Wayly Editorial", role: "" },
+        category: "Home Care Package transition",
+        hero_alt: "Older couple reviewing their Support at Home contribution at home",
+        tags: ["will I pay more under support at home", "no worse off", "Aged Care Rules 2025", "participant contribution", "lifetime cap", "means assessment"],
+        related: ["what-happened-to-my-home-care-package", "home-care-package-statement-vs-support-at-home-statement"],
+        meta: {
+            title: "Will I Pay More Under Support at Home Than My Home Care Package? | Wayly",
+            description: "If you were approved for a Home Care Package before the change, a no worse off protection applies. Here is what it means for what you pay under Support at Home.",
+        },
+        key_takeaways: [
+            "People approved for a Home Care Package before the change are covered by a no worse off protection under the Aged Care Rules 2025.",
+            "In short, your contribution under Support at Home should not be higher than it was under your Home Care Package.",
+            "This protection holds even if you are later reassessed into a higher Support at Home classification.",
+            "What you contribute is based on your means, not how much care you need. There is also a lifetime cap on contributions.",
+        ],
+        intro_md: `*General information, not financial, legal or clinical advice.*
+
+For families who were already in the system, the most common worry about the move to Support at Home is simple: will it cost more? It is a fair question, because the program changed, the statements changed, and change often means a new bill.
+
+The short answer, for people who were already on a Home Care Package, is that a protection applies and you should not be worse off. This article explains what that protection is, who it covers, and how to check it on your own statement.`,
+        sections: [
+            {
+                heading: "The No Worse Off Protection",
+                body_md: `When Support at Home replaced the Home Care Packages Program on 01/11/2025, the government included a protection for existing recipients, often called the no worse off principle. It is set out in the Aged Care Rules 2025.
+
+The intent is straightforward. If you were approved for a Home Care Package before the change, your contribution arrangements under Support at Home should not leave you paying more than you would have under the old program. The protection exists so that moving to a new system does not quietly raise your costs.`,
+            },
+            {
+                heading: "Who It Covers",
+                body_md: `The protection is for people who were already in the Home Care Package system before Support at Home began, including those approved for a package before the change took effect. If you were a longstanding recipient, or were approved and waiting, this is aimed at you.
+
+If you are new to in-home care and applied under Support at Home from 01/11/2025 onwards, you were never on a Home Care Package, so the comparison does not apply to you in the same way. Your contributions are worked out under the Support at Home rules from the start.`,
+            },
+            {
+                heading: "What It Means For Your Contribution",
+                body_md: `In plain terms, the protection means your participant contribution under Support at Home should not be higher than what you were paying under your Home Care Package. Importantly, this holds even if you are later reassessed into a higher Support at Home classification. A higher classification raises the funding available for your care, but the protection is about what you contribute, not what the government puts in.
+
+If you had no income tested care fee under your Home Care Package, that position is generally preserved under Support at Home as well. The detail of how this applies depends on your own circumstances, which is why it is worth checking your statement and asking your provider if anything looks higher than before.`,
+            },
+            {
+                heading: "Contributions Are Based On Means, Not Care Needs",
+                body_md: `One point that confuses many families: what you contribute to Support at Home is based on your financial means, not on how much care you need. Two people with the same care plan can pay different amounts, and that is by design. Your classification sets your funding. Your means assessment sets your contribution. Keeping those two ideas separate makes the whole system easier to read.`,
+            },
+            {
+                heading: "The Lifetime Cap",
+                body_md: `Support at Home includes a lifetime limit on what a person contributes across their care. It is a ceiling on total out-of-pocket contributions, there as a protection. For many families the cap is reassurance rather than a live concern, because typical contributions sit well below it. Still, it is worth understanding where you stand, especially over years of care. If you have never seen your running total, that is a fair thing to ask about.`,
+            },
+            {
+                heading: "The 01/10/2026 Personal Care Change",
+                body_md: `There is one recent change that reduces what some people pay. Since 01/10/2026, approved personal care under Support at Home is funded as clinical care, which is fully government funded. For many participants, the contribution that used to apply to help with showering, dressing, grooming and continence support no longer does. If personal care appears on your statement dated on or after 01/10/2026, check that it shows a $0 contribution.`,
+            },
+            {
+                heading: "How To Check It On Your Statement",
+                body_md: `The practical test is your own statement. Compare your contribution now with what you were paying before the transition. If it is the same or lower, the protection is doing its job. If it looks higher, that is worth raising with your provider, and if needed, seeking independent advice.
+
+Wayly's free [Statement Decoder](/ai-tools/statement-decoder) can help you see your contribution clearly, line by line, so you have the facts before you ask. It explains each charge in plain English in about 60 seconds, with your first decode free and no signup. Wayly helps you understand your statement. It does not give financial advice, and for your own situation a licensed adviser or My Aged Care on 1800 200 422 is the right source.`,
+            },
+        ],
+        faqs: [
+            { q: "Will I pay more under Support at Home than I did on my Home Care Package?", a: "If you were approved for a Home Care Package before the change, a no worse off protection under the Aged Care Rules 2025 means your contribution should not be higher than it was before." },
+            { q: "Does the protection still apply if I am reassessed into a higher classification?", a: "Yes. The no worse off protection is about what you contribute, not the funding level. A higher classification raises funding, but your contribution should still not exceed what you paid under your Home Care Package." },
+            { q: "I never paid a fee on my Home Care Package. Will I pay one now?", a: "Generally, if you had no income tested care fee under your package, that position is preserved under Support at Home. Check your statement and ask your provider if a fee appears." },
+            { q: "Why do two people with the same care plan pay different amounts?", a: "Contributions are based on financial means, not care needs. Your classification sets funding; your means assessment sets your contribution." },
+            { q: "Is there a limit on what I contribute overall?", a: "Yes. Support at Home includes a lifetime cap on contributions, a ceiling on total out-of-pocket costs. For many families, typical contributions sit well below it." },
+        ],
+    },
 ];

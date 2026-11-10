@@ -23,6 +23,7 @@ import { Link, useNavigate } from "react-router-dom";
 import MarketingHeader from "@/components/MarketingHeader";
 import Footer from "@/components/Footer";
 import ToolHero from "@/components/ToolHero";
+import HcpBridgeLine from "@/components/HcpBridgeLine";
 import ToolWalkthroughVideo from "@/components/ToolWalkthroughVideo";
 import ToolGate from "@/components/ToolGate";
 import ToolExplainer from "@/components/ToolExplainer";
@@ -448,6 +449,7 @@ export default function InvoiceCheckerTool() {
             <SeoHead {...SEO.toolInvoiceChecker} jsonLd={_toolJsonLd(SEO.toolInvoiceChecker)} />
             <MarketingHeader />
             <ToolHero toolKey="invoice-checker" wide />
+                        <HcpBridgeLine className="mt-4" />
 
             <section className="mx-auto max-w-[1720px] px-6 pb-20">
                 {/* Upload widget */}

@@ -1,9 +1,9 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import MarketingHeader from "@/components/MarketingHeader";
-import Footer from "@/components/Footer";
-import SeoHubLinks from "@/components/SeoHubLinks";
+import Footer from "@/components/Footer";import SeoHubLinks from "@/components/SeoHubLinks";
 import SeoHead from "@/seo/SeoHead";
+import HcpBridgeLine from "@/components/HcpBridgeLine";
 import { SUPPORT_AT_HOME_LEVELS, LEVELS_EFFECTIVE_DATE, LEVELS_LAST_CHECKED } from "@/data/supportAtHomeLevels";
 import { ArrowRight, Calculator, ClipboardCheck, FileSearch } from "lucide-react";
 
@@ -68,6 +68,7 @@ export default function SupportAtHomeLevels() {
                 <p className="mt-6 text-lg text-muted-k leading-relaxed max-w-3xl">
                     Support at Home has eight ongoing classifications. The level you are on decides the annual funding paid to your provider, which is then split into four quarterly budgets. Higher levels reflect higher care needs and cover more services, but the contribution rules and the 10% care management cap apply at every level. This guide sets out what each level looks like in practice.
                 </p>
+                <HcpBridgeLine className="mt-6 max-w-3xl" />
 
                 <div className="mt-10 overflow-x-auto rounded-2xl border border-kindred bg-surface" data-testid="levels-table">
                     <div className="flex flex-wrap items-center justify-between gap-2 px-5 pt-4 pb-1">

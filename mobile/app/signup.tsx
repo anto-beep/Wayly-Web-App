@@ -228,7 +228,7 @@ export default function SignupScreen() {
                   const active = caregiverRelationship === r.v;
                   return (
                     <Pressable key={r.v} testID={`signup-caregiver-rel-${r.v}`} onPress={() => setCaregiverRelationship(active ? "" : r.v)}
-                      style={{ flexShrink: 0, paddingHorizontal: 14, paddingVertical: 8, borderRadius: radius.pill, borderWidth: 1.5, borderColor: active ? colors.primary : colors.border, backgroundColor: active ? colors.primary : "transparent" }}>
+                      style={{ flexShrink: 0, paddingHorizontal: 14, paddingVertical: 8, borderRadius: radius.pill, borderWidth: 1.5, borderColor: active ? colors.primary : colors.border, backgroundColor: active ? colors.primary : colors.surface }}>
                       <T style={{ fontFamily: fonts.bodyMedium, fontSize: 13, color: active ? "#fff" : colors.text }}>{r.label}</T>
                     </Pressable>
                   );
@@ -247,7 +247,7 @@ export default function SignupScreen() {
                 onPress={() => setAddSecond((v) => !v)}
                 style={{ flexDirection: "row", gap: 10, alignItems: "flex-start" }}
               >
-                <View style={{ width: 22, height: 22, borderRadius: 6, borderWidth: 2, borderColor: addSecond ? colors.primary : colors.muted, backgroundColor: addSecond ? colors.primary : "transparent", alignItems: "center", justifyContent: "center", marginTop: 1 }}>
+                <View style={{ width: 22, height: 22, borderRadius: 6, borderWidth: 2, borderColor: addSecond ? colors.primary : colors.muted, backgroundColor: addSecond ? colors.primary : colors.surface, alignItems: "center", justifyContent: "center", marginTop: 1 }}>
                   {addSecond ? <Ionicons name="checkmark" size={14} color="#fff" /> : null}
                 </View>
                 <View style={{ flex: 1 }}>
@@ -275,7 +275,7 @@ export default function SignupScreen() {
                           key={r.v}
                           testID={`signup-second-participant-rel-${r.v}`}
                           onPress={() => setSecondRelationship(active ? "" : r.v)}
-                          style={{ flexShrink: 0, paddingHorizontal: 14, paddingVertical: 8, borderRadius: radius.pill, borderWidth: 1.5, borderColor: active ? colors.primary : colors.border, backgroundColor: active ? colors.primary : "transparent" }}
+                          style={{ flexShrink: 0, paddingHorizontal: 14, paddingVertical: 8, borderRadius: radius.pill, borderWidth: 1.5, borderColor: active ? colors.primary : colors.border, backgroundColor: active ? colors.primary : colors.surface }}
                         >
                           <T style={{ fontFamily: fonts.bodyMedium, fontSize: 13, color: active ? "#fff" : colors.text }}>{r.label}</T>
                         </Pressable>

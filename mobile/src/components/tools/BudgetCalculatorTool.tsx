@@ -108,7 +108,7 @@ export default function BudgetCalculatorTool() {
                 return (
                   <View key={o.value}>
                     <Pressable testID={`bc-supplement-${o.value}`} disabled={disabled} onPress={() => toggleSupp(o.value)} style={[styles.suppRow, { borderColor: on ? colors.primary : colors.border, backgroundColor: on ? colors.sageSoft : colors.surface }, disabled && { opacity: 0.5 }]}>
-                      <View style={[styles.checkbox, { borderColor: on ? colors.primary : colors.muted, backgroundColor: on ? colors.primary : "transparent" }]}>
+                      <View style={[styles.checkbox, { borderColor: on ? colors.primary : colors.muted, backgroundColor: on ? colors.primary : colors.surface }]}>
                         {on ? <Check size={13} color="#fff" /> : null}
                       </View>
                       <View style={{ flex: 1 }}>
@@ -128,7 +128,7 @@ export default function BudgetCalculatorTool() {
                         {ENTERAL_TYPE_OPTIONS.map((et) => {
                           const eon = enteralType === et.value;
                           return (
-                            <Pressable key={et.value} testID={`bc-enteral-${et.value}`} onPress={() => setEnteralType(et.value)} style={[styles.pill, { borderColor: eon ? colors.primary : colors.border, backgroundColor: eon ? colors.primary : "transparent" }]}>
+                            <Pressable key={et.value} testID={`bc-enteral-${et.value}`} onPress={() => setEnteralType(et.value)} style={[styles.pill, { borderColor: eon ? colors.primary : colors.border, backgroundColor: eon ? colors.primary : colors.surface }]}>
                               <T style={{ fontFamily: fonts.bodyMedium, fontSize: 12, color: eon ? "#fff" : colors.text }}>{et.label} · {et.sub}</T>
                             </Pressable>
                           );

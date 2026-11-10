@@ -125,7 +125,7 @@ export default function ProviderPriceChecker() {
 
           {/* Grandfathered gate */}
           <Pressable testID="pc-grandfathered-gate" onPress={() => setIsGrandfathered((v) => !v)} style={[styles.gfRow, { borderColor: colors.border, backgroundColor: colors.surface }]}>
-            <View style={[styles.checkbox, { borderColor: isGrandfathered ? colors.primary : colors.muted, backgroundColor: isGrandfathered ? colors.primary : "transparent" }]} testID="pc-grandfathered-checkbox">
+            <View style={[styles.checkbox, { borderColor: isGrandfathered ? colors.primary : colors.muted, backgroundColor: isGrandfathered ? colors.primary : colors.surface }]} testID="pc-grandfathered-checkbox">
               {isGrandfathered ? <CheckCircle2 size={14} color="#fff" /> : null}
             </View>
             <T variant="small" style={{ flex: 1, lineHeight: 19 }}>
@@ -162,7 +162,7 @@ export default function ProviderPriceChecker() {
                 {([["trip", "per trip"], ["kilometre", "per kilometre"]] as const).map(([v, label]) => {
                   const on = transportUnit === v;
                   return (
-                    <Pressable key={v} testID={`pc-transport-${v}`} onPress={() => setTransportUnit(v)} style={[styles.pill, { borderColor: on ? colors.primary : colors.border, backgroundColor: on ? colors.primary : "transparent" }]}>
+                    <Pressable key={v} testID={`pc-transport-${v}`} onPress={() => setTransportUnit(v)} style={[styles.pill, { borderColor: on ? colors.primary : colors.border, backgroundColor: on ? colors.primary : colors.surface }]}>
                       <T style={{ fontFamily: fonts.bodyMedium, fontSize: 12, color: on ? "#fff" : colors.text }}>{label}</T>
                     </Pressable>
                   );
@@ -189,7 +189,7 @@ export default function ProviderPriceChecker() {
                   {PENSION_OPTS.map((o) => {
                     const on = inlinePension === o.key;
                     return (
-                      <Pressable key={o.key} testID={`pc-pension-${o.key}`} onPress={() => setInlinePension(o.key)} style={[styles.pill, { borderColor: on ? colors.primary : colors.border, backgroundColor: on ? colors.primary : "transparent" }]}>
+                      <Pressable key={o.key} testID={`pc-pension-${o.key}`} onPress={() => setInlinePension(o.key)} style={[styles.pill, { borderColor: on ? colors.primary : colors.border, backgroundColor: on ? colors.primary : colors.surface }]}>
                         <T style={{ fontFamily: fonts.bodyMedium, fontSize: 12, color: on ? "#fff" : colors.text }}>{o.label}</T>
                       </Pressable>
                     );
@@ -378,7 +378,7 @@ function SnapshotSelector({ snapshots, selected, onChange, colors }: any) {  if 
           {snapshots.map((s: any, i: number) => {
             const on = s.snapshot_id === selected;
             return (
-              <Pressable key={s.snapshot_id} testID={`pc-snapshot-opt-${s.snapshot_id}`} onPress={() => onChange(s.snapshot_id)} style={{ borderWidth: 1, borderColor: on ? colors.primary : colors.border, backgroundColor: on ? colors.primary : "transparent", borderRadius: radius.pill, paddingHorizontal: 10, paddingVertical: 4 }}>
+              <Pressable key={s.snapshot_id} testID={`pc-snapshot-opt-${s.snapshot_id}`} onPress={() => onChange(s.snapshot_id)} style={{ borderWidth: 1, borderColor: on ? colors.primary : colors.border, backgroundColor: on ? colors.primary : colors.surface, borderRadius: radius.pill, paddingHorizontal: 10, paddingVertical: 4 }}>
                 <T style={{ fontFamily: fonts.bodyMedium, fontSize: 12, color: on ? "#fff" : colors.text }}>{fmt(s)}{i === 0 ? " · latest" : ""}</T>
               </Pressable>
             );
@@ -550,7 +550,7 @@ function EmailProviderModal({ open, onClose, result, provider, colors }: any) {
               <View style={{ gap: spacing.md }}>
                 {(draft.increase_count || 0) > 2 ? (
                   <Pressable testID="pc-email-include-increase" onPress={() => setIncludeIncrease((v) => !v)} style={{ flexDirection: "row", gap: 8, alignItems: "flex-start" }}>
-                    <View style={{ width: 20, height: 20, borderRadius: 5, borderWidth: 1.5, borderColor: includeIncrease ? colors.primary : colors.border, backgroundColor: includeIncrease ? colors.primary : "transparent", alignItems: "center", justifyContent: "center" }}>{includeIncrease ? <CheckCircle2 size={13} color="#fff" /> : null}</View>
+                    <View style={{ width: 20, height: 20, borderRadius: 5, borderWidth: 1.5, borderColor: includeIncrease ? colors.primary : colors.border, backgroundColor: includeIncrease ? colors.primary : colors.surface, alignItems: "center", justifyContent: "center" }}>{includeIncrease ? <CheckCircle2 size={13} color="#fff" /> : null}</View>
                     <T variant="small" style={{ flex: 1, lineHeight: 19, color: colors.text }}>Add the ACQSC / rate-increase paragraph ({draft.increase_count} increases in 12 months)</T>
                   </Pressable>
                 ) : (

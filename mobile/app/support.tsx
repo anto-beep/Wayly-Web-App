@@ -145,7 +145,7 @@ export default function SupportScreen() {
                   {STATUS_FILTERS.map((s) => {
                     const on = statusFilter === s.v;
                     return (
-                      <Pressable key={s.v} testID={`my-support-filter-${s.v}`} onPress={() => setStatusFilter(s.v)} style={[styles.chip, { borderColor: on ? colors.primary : colors.border, backgroundColor: on ? colors.primary : "transparent" }]}>
+                      <Pressable key={s.v} testID={`my-support-filter-${s.v}`} onPress={() => setStatusFilter(s.v)} style={[styles.chip, { borderColor: on ? colors.primary : colors.border, backgroundColor: on ? colors.primary : colors.surface }]}>
                         <T style={{ fontFamily: fonts.bodySemi, fontSize: 12, color: on ? colors.primaryFg : colors.muted }}>{s.label}</T>
                       </Pressable>
                     );

@@ -1130,7 +1130,7 @@ export default function CorrespondenceDetail() {
 // ---------------------------------------------------------------------------
 function Checkbox({ checked, colors }: { checked: boolean; colors: any }) {
   return (
-    <View style={[styles.checkbox, { borderColor: checked ? colors.primary : colors.border, backgroundColor: checked ? colors.primary : "transparent" }]}>
+    <View style={[styles.checkbox, { borderColor: checked ? colors.primary : colors.border, backgroundColor: checked ? colors.primary : colors.surface }]}>
       {checked ? <CheckCircle2 size={14} color="#fff" /> : null}
     </View>
   );
@@ -1138,7 +1138,7 @@ function Checkbox({ checked, colors }: { checked: boolean; colors: any }) {
 
 function FormatBtn({ label, activeMode, onPress, testID, colors }: { label: string; activeMode: boolean; onPress: () => void; testID: string; colors: any }) {
   return (
-    <Pressable testID={testID} onPress={onPress} style={[styles.formatBtn, { borderColor: activeMode ? colors.primary : colors.border, backgroundColor: activeMode ? colors.primary : "transparent" }]}>
+    <Pressable testID={testID} onPress={onPress} style={[styles.formatBtn, { borderColor: activeMode ? colors.primary : colors.border, backgroundColor: activeMode ? colors.primary : colors.surface }]}>
       <T variant="small" style={{ color: activeMode ? "#fff" : colors.text, fontSize: 12, fontFamily: fonts.bodySemi }}>{label}</T>
     </Pressable>
   );

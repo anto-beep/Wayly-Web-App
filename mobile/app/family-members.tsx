@@ -220,7 +220,7 @@ export default function FamilyMembersScreen() {
                         key={r}
                         testID={`invite-relationship-${r}`}
                         onPress={() => setRelationship(r)}
-                        style={{ flexShrink: 0, height: 36, justifyContent: "center", paddingHorizontal: spacing.md, borderRadius: 18, borderWidth: 1.5, borderColor: active ? colors.primary : colors.border, backgroundColor: active ? colors.primary : "transparent" }}
+                        style={{ flexShrink: 0, height: 36, justifyContent: "center", paddingHorizontal: spacing.md, borderRadius: 18, borderWidth: 1.5, borderColor: active ? colors.primary : colors.border, backgroundColor: active ? colors.primary : colors.surface }}
                       >
                         <T style={{ fontFamily: fonts.bodyMedium, fontSize: 13, color: active ? colors.primaryFg : colors.text }}>{r}</T>
                       </Pressable>

@@ -369,7 +369,7 @@ function ActionBtn({ label, icon: Icon, onPress, disabled, filled, tone, testID 
   const c = tone || colors.primary;
   return (
     <Pressable testID={testID} onPress={onPress} disabled={disabled}
-      style={{ flexDirection: "row", alignItems: "center", gap: 6, borderRadius: radius.pill, paddingHorizontal: 14, paddingVertical: 8, borderWidth: filled ? 0 : 1.5, borderColor: c, backgroundColor: filled ? colors.primary : "transparent", opacity: disabled ? 0.55 : 1 }}>
+      style={{ flexDirection: "row", alignItems: "center", gap: 6, borderRadius: radius.pill, paddingHorizontal: 14, paddingVertical: 8, borderWidth: filled ? 0 : 1.5, borderColor: c, backgroundColor: filled ? colors.primary : colors.surface, opacity: disabled ? 0.55 : 1 }}>
       <Icon size={15} color={filled ? "#fff" : c} />
       <T style={{ fontFamily: fonts.bodySemi, fontSize: 13, color: filled ? "#fff" : c }}>{label}</T>
     </Pressable>

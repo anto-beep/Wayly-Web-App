@@ -395,7 +395,7 @@ export default function CarePlanReviewer() {
                     setClassification(c);
                     const band = bands.find((b) => b.classification === Number(c));
                     if (band?.quarterly_budget != null) setQuarterlyBudget(fmtQb(band.quarterly_budget));
-                  }} style={[styles.pill, { borderColor: on ? colors.primary : colors.border, backgroundColor: on ? colors.primary : "transparent" }]}>
+                  }} style={[styles.pill, { borderColor: on ? colors.primary : colors.border, backgroundColor: on ? colors.primary : colors.surface }]}>
                     <T style={{ fontFamily: fonts.bodyMedium, fontSize: 12, color: on ? "#fff" : colors.text }}>{c ? `Classification ${c}` : "Choose a classification"}</T>
                   </Pressable>
                 );

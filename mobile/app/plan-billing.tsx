@@ -23,7 +23,7 @@ type Sub = {
   trial_ends_at?: string | null;
 };
 
-const PLAN_NAME: Record<string, string> = { free: "No active plan", solo: "Solo", family: "Family", adviser: "Adviser" };
+const PLAN_NAME: Record<string, string> = { free: "No active plan", solo: "Solo", family: "Family" };
 
 // Reader app: this screen shows the plan STATUS only. No prices, no card
 // management, and no purchasing happen inside the iOS app — a Wayly plan is

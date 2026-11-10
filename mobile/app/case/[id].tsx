@@ -73,7 +73,7 @@ export default function CaseDetailScreen() {
                   const active = c.status === s;
                   return (
                     <Pressable key={s} testID={`case-status-${s}`} onPress={() => changeStatus(s)} disabled={busy}
-                      style={{ paddingHorizontal: 12, paddingVertical: 8, borderRadius: radius.pill, borderWidth: 1.5, borderColor: active ? colors.primary : colors.border, backgroundColor: active ? colors.primary : "transparent" }}>
+                      style={{ paddingHorizontal: 12, paddingVertical: 8, borderRadius: radius.pill, borderWidth: 1.5, borderColor: active ? colors.primary : colors.border, backgroundColor: active ? colors.primary : colors.surface }}>
                       <T style={{ fontFamily: fonts.bodyMedium, fontSize: 12, color: active ? "#fff" : colors.text }}>{s.replace(/_/g, " ")}</T>
                     </Pressable>
                   );

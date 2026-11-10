@@ -24,7 +24,7 @@ export function useExpiredTrial() {
     if (user.access_state) return user.access_state === "view_only";
     // Legacy fallback (older /auth/me without access_state).
     const plan = (user.plan || "").toLowerCase();
-    const isPaid = plan === "solo" || plan === "family" || plan === "adviser";
+    const isPaid = plan === "solo" || plan === "family";
     if (isPaid) return false;
     return user.subscription_status === "expired";
 }

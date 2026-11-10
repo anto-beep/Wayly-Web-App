@@ -13,7 +13,7 @@ function _syncReadOnly(u) {
     if (u.access_state) { setReadOnlyMode(u.access_state === "view_only"); return; }
     // Legacy fallback (older /auth/me without access_state).
     const plan = (u.plan || "").toLowerCase();
-    const isPaid = plan === "solo" || plan === "family" || plan === "adviser";
+    const isPaid = plan === "solo" || plan === "family";
     setReadOnlyMode(!isPaid && u.subscription_status === "expired");
 }
 

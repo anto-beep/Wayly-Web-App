@@ -6,6 +6,7 @@ import ToolRelatedLinks from "@/components/ToolRelatedLinks";
 import ReportIssueButton from "@/components/ReportIssueButton";
 import ToolExplainer from "@/components/ToolExplainer";
 import ToolHero from "@/components/ToolHero";
+import HcpBridgeLine from "@/components/HcpBridgeLine";
 import ToolWalkthroughVideo from "@/components/ToolWalkthroughVideo";
 import ToolGate from "@/components/ToolGate";
 import { ScreenshotStatement } from "@/components/Screenshots";
@@ -994,6 +995,7 @@ export default function ClassificationCheck() {
             <SeoHead {...SEO.toolClassification} jsonLd={_toolJsonLd(SEO.toolClassification)} />
             <MarketingHeader />
             <ToolHero toolKey="classification-self-check" wide />
+                        <HcpBridgeLine className="mt-4" />
             <ToolGate toolName="Classification Self-Check"><ScreenshotStatement /></ToolGate>
             <ToolWalkthroughVideo slug="classification-self-check" />
             <section className="max-w-5xl mx-auto px-4 sm:px-8"><ToolExplainer toolKey="classification-self-check" /></section>
@@ -1033,6 +1035,7 @@ export default function ClassificationCheck() {
             <SeoHead {...SEO.toolClassification} jsonLd={_toolJsonLd(SEO.toolClassification)} />
             <MarketingHeader />
             <ToolHero toolKey="classification-self-check" wide />
+                        <HcpBridgeLine className="mt-4" />
             <section className="mx-auto max-w-[1720px] px-6 pt-2 pb-4">
                 <p className="text-base text-primary-k font-medium leading-relaxed max-w-5xl">{intro}</p>
                 <div className="mt-4 flex flex-wrap items-center gap-2.5" data-testid="csc-meta-chips">

@@ -68,7 +68,7 @@ function LInput({ label, value, onChangeText, placeholder, testID, colors, disab
 function CheckRow({ label, checked, onToggle, testID, colors }: any) {
   return (
     <Pressable testID={testID} onPress={onToggle} style={{ flexDirection: "row", gap: 8, alignItems: "center", paddingVertical: 4 }}>
-      <View style={{ width: 20, height: 20, borderRadius: 5, borderWidth: 1.5, borderColor: checked ? colors.primary : colors.border, backgroundColor: checked ? colors.primary : "transparent", alignItems: "center", justifyContent: "center" }}>
+      <View style={{ width: 20, height: 20, borderRadius: 5, borderWidth: 1.5, borderColor: checked ? colors.primary : colors.border, backgroundColor: checked ? colors.primary : colors.surface, alignItems: "center", justifyContent: "center" }}>
         {checked ? <T style={{ color: "#fff", fontSize: 12 }}>✓</T> : null}
       </View>
       <T variant="small" style={{ flex: 1, color: colors.text }}>{label}</T>

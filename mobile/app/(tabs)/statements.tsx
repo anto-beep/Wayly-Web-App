@@ -188,7 +188,7 @@ export default function StatementsScreen() {
         {STATUS_FILTERS.map((s) => {
           const on = status === s;
           return (
-            <Pressable key={s} testID={`statements-filter-${s}`} onPress={() => setStatus(s)} style={[styles.filterChip, { borderColor: on ? colors.primary : colors.border, backgroundColor: on ? colors.primary : "transparent" }]}>
+            <Pressable key={s} testID={`statements-filter-${s}`} onPress={() => setStatus(s)} style={[styles.filterChip, { borderColor: on ? colors.primary : colors.border, backgroundColor: on ? colors.primary : colors.surface }]}>
               <T style={{ fontFamily: fonts.bodySemi, fontSize: 12, color: on ? colors.primaryFg : colors.muted }}>{s === "all" ? "All" : STATUS_LABEL[s]}</T>
             </Pressable>
           );

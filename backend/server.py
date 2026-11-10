@@ -740,7 +740,7 @@ class GoogleCredentialBody(BaseModel):
     role: Optional[str] = None
 
 
-_VALID_PLANS = {"free", "solo", "family", "adviser"}
+_VALID_PLANS = {"free", "solo", "family"}
 _VALID_ROLES = {"caregiver", "participant"}
 
 
@@ -6459,8 +6459,6 @@ HELP_CHAT_SYSTEM = (
     "- Solo A$24.50 per fortnight: unlimited tools, dashboard, statement uploads, 1 participant, 1 caregiver seat.\n"
     "- Family A$49.50 per fortnight (most popular): everything in Solo + 2 participants included + 3 caregiver seats + priority support.\n"
     "- Add extra participants on Family for A$24.50 per fortnight each, billed separately, cancel anytime.\n"
-    "- Adviser $299/mo: up to 20 client households, 3 caregiver seats, scenario modeller, branded PDFs, priority support, offline mode.\n"
-    "- Adviser Pro $3500/mo: unlimited clients, white-label, custom domain, multi-advisor team.\n"
     "- Paid plans get a 7-day free trial, 14 days with a referral code.\n\n"
     "AI TOOLS (8 total)\n"
     "1. Statement Decoder (free 1 decode per 120 days, unlimited on paid). Upload PDF, Word, photo (JPG/PNG/HEIC/WEBP), or paste text.\n"
@@ -7084,17 +7082,16 @@ async def export_account_data(user_id: str = Depends(get_current_user_id)):
 PLAN_PRICES = {
     "solo": {"amount": 19.00, "currency": "aud", "label": "Wayly Solo"},
     "family": {"amount": 39.00, "currency": "aud", "label": "Wayly Family"},
-    "adviser": {"amount": 299.00, "currency": "aud", "label": "Wayly Adviser"},
 }
 
 
 class CheckoutBody(BaseModel):
-    plan: _LiteralType["solo", "family", "adviser"]
+    plan: _LiteralType["solo", "family"]
     origin_url: str = Field(min_length=8, max_length=200)
 
 
 class StartTrialBody(BaseModel):
-    plan: _LiteralType["solo", "family", "adviser"]
+    plan: _LiteralType["solo", "family"]
 
 
 async def _user_had_trial(user_id: str) -> bool:
@@ -7165,7 +7162,6 @@ async def start_trial(body: StartTrialBody, user_id: str = Depends(get_current_u
                 "<li>All 9 AI tools, budget calculator, price checker, invoice checker, reassessment letter, family coordinator chat and more</li>"
                 "<li>Caregiver dashboard with stream-by-stream budget burn and lifetime cap tracker</li>"
                 + ("<li>Up to 5 family members + weekly Sunday digest + concierge support</li>" if body.plan == "family" else "")
-                + ("<li>Multi-client portal, manage up to 25 clients, review-pack export, priority support</li>" if body.plan == "adviser" else "")
                 + "</ul>"
                 f"<p>No payment required during the trial. After {trial_ends_au}, your account "
                 f"reverts to the Free plan unless you choose to subscribe at "
@@ -7380,7 +7376,7 @@ async def downgrade_to_free(user_id: str = Depends(get_current_user_id)):
 
 
 class UpgradeBody(BaseModel):
-    plan: _LiteralType["solo", "family", "adviser"]
+    plan: _LiteralType["solo", "family"]
 
 
 @api.post("/billing/upgrade")
@@ -7815,8 +7811,10 @@ api.include_router(cms_admin)
 api.include_router(cms_public)
 api.include_router(admin_devices_router)
 api.include_router(seo_public_router)
-api.include_router(adviser_router)
-api.include_router(adviser_public_router)
+# Adviser plan removed: the multi-client adviser portal + public invite routers
+# are no longer mounted.
+# api.include_router(adviser_router)
+# api.include_router(adviser_public_router)
 api.include_router(documents_router)
 api.include_router(extended_router)
 api.include_router(participant_profile_router)

@@ -69,7 +69,6 @@ const Trust = lazy(() => import("@/pages/Trust"));
 const Features = lazy(() => import("@/pages/Features"));
 const Demo = lazy(() => import("@/pages/Demo"));
 const Contact = lazy(() => import("@/pages/Contact"));
-const ForAdvisors = lazy(() => import("@/pages/ForAdvisors"));
 const ForGPs = lazy(() => import("@/pages/ForGPs"));
 const ResourcesIndex = lazy(() => import("@/pages/resources/ResourcesIndex"));
 const Glossary = lazy(() => import("@/pages/resources/Glossary"));
@@ -93,7 +92,6 @@ const Accessibility = lazy(() => import("@/pages/legal/Accessibility"));
 const CookiesPage = lazy(() => import("@/pages/legal/Cookies"));
 const AdminApp = lazy(() => import("@/pages/admin/AdminApp"));
 const MySupport = lazy(() => import("@/pages/MySupport"));
-const AdviserPortal = lazy(() => import("@/pages/AdviserPortal"));
 const DocumentVault = lazy(() => import("@/pages/DocumentVault"));
 const VisitCalendar = lazy(() => import("@/pages/extended/VisitCalendar"));
 const BudgetAlerts = lazy(() => import("@/pages/extended/BudgetAlerts"));
@@ -135,11 +133,9 @@ const ChspTools = lazy(() => import("@/pages/ChspTools"));
 const SwitchesList = lazy(() => import("@/pages/ProviderSwitches").then(m => ({ default: m.SwitchesList })));
 const SwitchDecisionWalkthrough = lazy(() => import("@/pages/ProviderSwitches").then(m => ({ default: m.SwitchDecisionWalkthrough })));
 const SwitchSettlement = lazy(() => import("@/pages/SwitchSettlement"));
-const AdviserBrand = lazy(() => import("@/pages/AdviserBrand"));
-const AdviserScenarios = lazy(() => import("@/pages/AdviserScenarios"));
-const AdviserAlerts = lazy(() => import("@/pages/AdviserAlerts"));
 // Phase 4 Batch 1, Support at Home levels hub + 8 level pages
 const SupportAtHomeLevels = lazy(() => import("@/pages/sah-levels/SupportAtHomeLevels"));
+const HomeCarePackages = lazy(() => import("@/pages/HomeCarePackages"));
 const SupportAtHomeLevelDetail = lazy(() => import("@/pages/sah-levels/SupportAtHomeLevelDetail"));
 // Phase 4 Batches B-G, services, policy, guides, FAQ, Ask Wayly, About
 const ServicesHub = lazy(() => import("@/pages/services/ServicesHub"));
@@ -204,8 +200,7 @@ function RequireAuth({ children, requireHousehold = true }) {
     if (loading) return <Loading />;
     if (!user) return <Navigate to="/login" replace />;
     // Free plan users don't need household tracking, they see a paywall in /app instead.
-    // Adviser plan users don't run a household at all, they live in /adviser.
-    if (requireHousehold && !household && user.plan !== "free" && user.plan !== "adviser") return <Navigate to="/onboarding" replace />;
+    if (requireHousehold && !household && user.plan !== "free") return <Navigate to="/onboarding" replace />;
     return children;
 }
 
@@ -214,7 +209,6 @@ function PublicAuthOnly({ children }) {
     const { user, household, loading } = useAuth();
     if (loading) return <Loading />;
     if (user) {
-        if (user.plan === "adviser") return <Navigate to="/adviser" replace />;
         if (!household && user.plan !== "free") return <Navigate to="/onboarding" replace />;
         return <Navigate to="/app" replace />;
     }
@@ -272,7 +266,7 @@ function AIToolsRoute({ children }) {
     /** AI Tools pages, wrap in the dashboard Layout for logged-in users (so the sidebar + participant switcher stay visible), or render bare for visitors. */
     const { user, loading } = useAuth();
     if (loading) return <Loading />;
-    if (user && user.plan !== "adviser") {
+    if (user) {
         return <Layout><ToolLockGate>{children}</ToolLockGate></Layout>;
     }
     return children;
@@ -431,6 +425,9 @@ function App() {
                     <Route path="/features" element={<Features />} />
                     <Route path="/pricing" element={<Pricing />} />
                     <Route path="/support-at-home-levels" element={<SupportAtHomeLevels />} />
+                    <Route path="/home-care-packages" element={<HomeCarePackages />} />
+                    <Route path="/home-care-package" element={<Navigate to="/home-care-packages" replace />} />
+                    <Route path="/hcp" element={<Navigate to="/home-care-packages" replace />} />
                     <Route path="/support-at-home-levels/:slug" element={<SupportAtHomeLevelDetail />} />
                     {/* Phase 4 Batches B-G */}
                     <Route path="/services" element={<ServicesHub />} />
@@ -451,7 +448,7 @@ function App() {
                     <Route path="/trust" element={<Trust />} />
                     <Route path="/demo" element={<Demo />} />
                     <Route path="/contact" element={<Contact />} />
-                    <Route path="/for-advisors" element={<ForAdvisors />} />
+                    <Route path="/for-advisors" element={<Navigate to="/" replace />} />
                     <Route path="/for-gps" element={<ForGPs />} />
                     <Route path="/resources" element={<ResourcesIndex />} />
                     <Route path="/resources/glossary" element={<Glossary />} />
@@ -593,10 +590,10 @@ function App() {
                     <Route path="/support/:ticketId" element={<RequireAuth requireHousehold={false}><Layout><MySupport /></Layout></RequireAuth>} />
 
                     {/* Adviser plan portal, multi-client list view */}
-                    <Route path="/adviser" element={<RequireAuth requireHousehold={false}><AdviserPortal /></RequireAuth>} />
-                    <Route path="/adviser/brand" element={<RequireAuth requireHousehold={false}><AdviserBrand /></RequireAuth>} />
-                    <Route path="/adviser/scenarios" element={<RequireAuth requireHousehold={false}><AdviserScenarios /></RequireAuth>} />
-                    <Route path="/adviser/alerts" element={<RequireAuth requireHousehold={false}><AdviserAlerts /></RequireAuth>} />
+                    <Route path="/adviser" element={<Navigate to="/app" replace />} />
+                    <Route path="/adviser/brand" element={<Navigate to="/app" replace />} />
+                    <Route path="/adviser/scenarios" element={<Navigate to="/app" replace />} />
+                    <Route path="/adviser/alerts" element={<Navigate to="/app" replace />} />
 
                     {/* Admin, completely separate auth system (TOTP 2FA, role-based).
                         AdminApp manages its own auth via AdminAuthContext. */}

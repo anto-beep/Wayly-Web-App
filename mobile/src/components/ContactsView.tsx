@@ -129,7 +129,7 @@ export default function ContactsView({
                       const active = form.kind === o.value;
                       return (
                         <T key={o.value} testID={`${testPrefix}-kind-${o.value}`} onPress={() => setForm({ ...form, kind: o.value })}
-                          style={[styles.chip, { borderColor: active ? colors.primary : colors.border, backgroundColor: active ? colors.primary : "transparent", color: active ? "#fff" : colors.text }]}>
+                          style={[styles.chip, { borderColor: active ? colors.primary : colors.border, backgroundColor: active ? colors.primary : colors.surface, color: active ? "#fff" : colors.text }]}>
                           {o.label}
                         </T>
                       );

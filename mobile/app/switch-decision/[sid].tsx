@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
-import { Pressable, ScrollView, TextInput, View } from "react-native";
+import { Pressable, TextInput, View } from "react-native";
+import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
 import { router, useLocalSearchParams } from "expo-router";
 import { ArrowRight, ArrowLeft, CheckCircle2, FileText } from "lucide-react-native";
 
@@ -30,11 +31,13 @@ const DECISIONS: [string, string][] = [
   ["escalate_via_complaint_first", "Escalate via complaint first"],
 ];
 
+const decisionLabel = (key: string) => DECISIONS.find(([k]) => k === key)?.[1] || (key || "").replace(/_/g, " ");
+
 function Checkbox({ checked, colors }: any) {
-  return <View style={{ width: 20, height: 20, borderRadius: 5, borderWidth: 1.5, borderColor: checked ? colors.primary : colors.border, backgroundColor: checked ? colors.primary : "transparent", alignItems: "center", justifyContent: "center" }}>{checked ? <CheckCircle2 size={13} color="#fff" /> : null}</View>;
+  return <View style={{ width: 20, height: 20, borderRadius: 5, borderWidth: 1.5, borderColor: checked ? colors.primary : colors.muted, backgroundColor: checked ? colors.primary : colors.surface, alignItems: "center", justifyContent: "center" }}>{checked ? <CheckCircle2 size={13} color="#fff" /> : null}</View>;
 }
 function Radio({ checked, colors }: any) {
-  return <View style={{ width: 20, height: 20, borderRadius: 10, borderWidth: 1.5, borderColor: checked ? colors.primary : colors.border, alignItems: "center", justifyContent: "center" }}>{checked ? <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: colors.primary }} /> : null}</View>;
+  return <View style={{ width: 20, height: 20, borderRadius: 10, borderWidth: 1.5, borderColor: checked ? colors.primary : colors.muted, backgroundColor: colors.surface, alignItems: "center", justifyContent: "center" }}>{checked ? <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: colors.primary }} /> : null}</View>;
 }
 
 export default function SwitchDecisionScreen() {
@@ -86,7 +89,7 @@ export default function SwitchDecisionScreen() {
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
       <AppHeader title="Decision Walkthrough" onBack={() => router.back()} />
-      <ScrollView contentContainerStyle={{ padding: spacing.lg, paddingBottom: spacing.xxl, gap: spacing.sm }} keyboardShouldPersistTaps="handled" testID="psw1-walkthrough-root">
+      <KeyboardAwareScrollView contentContainerStyle={{ padding: spacing.lg, paddingBottom: spacing.xxl, gap: spacing.sm }} keyboardShouldPersistTaps="handled" bottomOffset={24} testID="psw1-walkthrough-root">
         <View style={{ backgroundColor: colors.primarySoft, borderRadius: radius.lg, padding: spacing.lg }}>
           <T variant="small" style={{ color: colors.heading, letterSpacing: 0.5, fontSize: 11, fontFamily: fonts.bodySemi }}>DECISION WALKTHROUGH</T>
           <T testID="psw1-walkthrough-title" style={{ fontFamily: fonts.heading, fontSize: 22, color: colors.heading, marginTop: 4 }}>Confirm the Decision to Switch from {sw.current_provider_name}</T>
@@ -125,7 +128,7 @@ export default function SwitchDecisionScreen() {
                 {REASONS.map((r) => {
                   const on = reasons.includes(r.key);
                   return (
-                    <Pressable key={r.key} testID={`psw1-reason-${r.key}`} onPress={() => toggle(setReasons, r.key)} style={{ borderWidth: 1, borderColor: on ? colors.primary : colors.border, backgroundColor: on ? colors.primary : "transparent", borderRadius: radius.pill, paddingHorizontal: 12, paddingVertical: 6 }}>
+                    <Pressable key={r.key} testID={`psw1-reason-${r.key}`} onPress={() => toggle(setReasons, r.key)} style={{ borderWidth: 1, borderColor: on ? colors.primary : colors.border, backgroundColor: on ? colors.primary : colors.surface, borderRadius: radius.pill, paddingHorizontal: 12, paddingVertical: 6 }}>
                       <T style={{ fontFamily: fonts.bodyMedium, fontSize: 12, color: on ? "#fff" : colors.text }}>{r.label}</T>
                     </Pressable>
                   );
@@ -182,7 +185,7 @@ export default function SwitchDecisionScreen() {
               <T variant="small" style={{ color: colors.muted, letterSpacing: 0.5, fontSize: 11, marginTop: spacing.sm }}>REASONS</T>
               <T variant="small" style={{ color: colors.text }}>{reasons.map((k) => REASONS.find((r) => r.key === k)?.label).join(", ") || "—"}</T>
               <T variant="small" style={{ color: colors.muted, letterSpacing: 0.5, fontSize: 11, marginTop: spacing.sm }}>FINAL DECISION</T>
-              <T variant="small" style={{ color: colors.text }}>{decision.replace(/_/g, " ")}</T>
+              <T variant="small" style={{ color: colors.text }}>{decisionLabel(decision)}</T>
             </View>
           ) : null}
           {step === 6 && context?.final_decision ? (
@@ -191,7 +194,7 @@ export default function SwitchDecisionScreen() {
                 <CheckCircle2 size={20} color={colors.sage} />
                 <View style={{ flex: 1 }}>
                   <T style={{ fontFamily: fonts.bodySemi, fontSize: 15, color: colors.text }}>Walkthrough Saved</T>
-                  <T variant="small" style={{ color: colors.muted, marginTop: 2 }}>Final decision: {context.final_decision.replace(/_/g, " ")}.</T>
+                  <T variant="small" style={{ color: colors.muted, marginTop: 2 }}>Final decision: {decisionLabel(context.final_decision)}.</T>
                 </View>
               </View>
               {context.final_decision === "proceed_with_switch" ? (
@@ -220,7 +223,7 @@ export default function SwitchDecisionScreen() {
             )}
           </View>
         ) : null}
-      </ScrollView>
+      </KeyboardAwareScrollView>
     </View>
   );
 }

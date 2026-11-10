@@ -38,7 +38,7 @@ function Chip({ label, active, onPress, testID }: { label: string; active: boole
   const { colors } = useTheme();
   return (
     <Pressable testID={testID} onPress={onPress}
-      style={{ paddingHorizontal: 14, paddingVertical: 10, borderRadius: radius.pill, borderWidth: 1.5, borderColor: active ? colors.primary : colors.border, backgroundColor: active ? colors.primary : "transparent" }}>
+      style={{ paddingHorizontal: 14, paddingVertical: 10, borderRadius: radius.pill, borderWidth: 1.5, borderColor: active ? colors.primary : colors.border, backgroundColor: active ? colors.primary : colors.surface }}>
       <T style={{ fontFamily: fonts.bodyMedium, fontSize: 14, color: active ? "#fff" : colors.text }}>{label}</T>
     </Pressable>
   );

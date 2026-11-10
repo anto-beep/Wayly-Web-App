@@ -61,7 +61,7 @@ function RatingRow({ label, value, onChange, colors, field }: any) {
         {[1, 2, 3, 4, 5].map((n) => {
           const on = value === n;
           return (
-            <Pressable key={n} testID={`ppc3-rating-${field}-${n}`} onPress={() => onChange(n)} style={{ width: 34, height: 34, borderRadius: radius.pill, alignItems: "center", justifyContent: "center", borderWidth: 1, borderColor: on ? colors.primary : colors.border, backgroundColor: on ? colors.primary : "transparent" }}>
+            <Pressable key={n} testID={`ppc3-rating-${field}-${n}`} onPress={() => onChange(n)} style={{ width: 34, height: 34, borderRadius: radius.pill, alignItems: "center", justifyContent: "center", borderWidth: 1, borderColor: on ? colors.primary : colors.border, backgroundColor: on ? colors.primary : colors.surface }}>
               <T style={{ fontSize: 12, color: on ? "#fff" : colors.muted, fontFamily: fonts.bodyMedium }}>{n}</T>
             </Pressable>
           );
@@ -108,7 +108,7 @@ function SurveyForm({ providerName, onSubmitted, colors }: any) {
             {[{ v: true, l: "Yes", id: "yes" }, { v: false, l: "No", id: "no" }].map((o) => {
               const on = form.would_recommend === o.v;
               return (
-                <Pressable key={o.id} testID={`ppc3-recommend-${o.id}`} onPress={() => set("would_recommend", o.v)} style={{ paddingHorizontal: 14, paddingVertical: 6, borderRadius: radius.pill, borderWidth: 1, borderColor: on ? colors.primary : colors.border, backgroundColor: on ? colors.primary : "transparent" }}>
+                <Pressable key={o.id} testID={`ppc3-recommend-${o.id}`} onPress={() => set("would_recommend", o.v)} style={{ paddingHorizontal: 14, paddingVertical: 6, borderRadius: radius.pill, borderWidth: 1, borderColor: on ? colors.primary : colors.border, backgroundColor: on ? colors.primary : colors.surface }}>
                   <T style={{ fontSize: 12, color: on ? "#fff" : colors.muted }}>{o.l}</T>
                 </Pressable>
               );

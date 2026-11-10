@@ -77,8 +77,7 @@ export default function Login() {
     const [resentAt, setResentAt] = useState(null);
 
     const routeAfterLogin = (u) => {
-        if (u.plan === "adviser") nav("/adviser");
-        else nav("/app");
+        nav("/app");
     };
 
     const submit = async (e) => {

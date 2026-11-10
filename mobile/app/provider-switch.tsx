@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useState } from "react";
-import { Modal, Pressable, ScrollView, StyleSheet, View } from "react-native";
+import { Modal, Platform, Pressable, ScrollView, StyleSheet, View } from "react-native";
+import { KeyboardAvoidingView } from "react-native-keyboard-controller";
 import { router } from "expo-router";
 import { Plus, AlertCircle, ChevronRight, X } from "lucide-react-native";
 
@@ -121,7 +122,7 @@ export default function ProviderSwitchScreen() {
         )}
       </ScrollView>
 
-      <NewSwitchModal visible={modalOpen} pid={pid} colors={colors} onClose={() => setModalOpen(false)} onCreated={() => { setModalOpen(false); load(); }} />
+      <NewSwitchModal visible={modalOpen} pid={pid} colors={colors} defaultProvider={active?.provider_name || ""} onClose={() => setModalOpen(false)} onCreated={() => { setModalOpen(false); load(); }} />
     </View>
   );
 }
@@ -159,16 +160,24 @@ function SwitchRow({ row, colors }: any) {
   );
 }
 
-function NewSwitchModal({ visible, pid, colors, onClose, onCreated }: any) {
-  const [form, setForm] = useState({ current_provider_name: "", initial_reason_for_switch: "billing_disputes_unresolved", reason_notes: "" });
+function NewSwitchModal({ visible, pid, colors, onClose, onCreated, defaultProvider }: any) {
+  const [form, setForm] = useState({ current_provider_name: defaultProvider || "", initial_reason_for_switch: "billing_disputes_unresolved", reason_notes: "" });
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState("");
+
+  // Prefill the current provider from the active participant's known provider,
+  // so families do not have to retype a name Wayly already holds.
+  useEffect(() => {
+    if (visible && defaultProvider && !form.current_provider_name) {
+      setForm((f) => ({ ...f, current_provider_name: defaultProvider }));
+    }
+  }, [visible, defaultProvider]);
 
   const submit = async () => {
     setBusy(true); setErr("");
     try {
       await apiFetch(`/psw1/participants/${pid}/switches`, { method: "POST", body: form });
-      setForm({ current_provider_name: "", initial_reason_for_switch: "billing_disputes_unresolved", reason_notes: "" });
+      setForm({ current_provider_name: defaultProvider || "", initial_reason_for_switch: "billing_disputes_unresolved", reason_notes: "" });
       onCreated();
     } catch (e) { setErr(e instanceof ApiError ? e.message : "Could not create switch."); }
     finally { setBusy(false); }
@@ -176,7 +185,7 @@ function NewSwitchModal({ visible, pid, colors, onClose, onCreated }: any) {
 
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
-      <View style={styles.modalBackdrop}>
+      <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} style={styles.modalBackdrop}>
         <View style={[styles.modalCard, { backgroundColor: colors.bg }]} testID="psw1-new-modal">
           <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
             <T style={{ fontFamily: fonts.heading, fontSize: 18, color: colors.heading }}>Start a Provider Switch</T>
@@ -184,14 +193,14 @@ function NewSwitchModal({ visible, pid, colors, onClose, onCreated }: any) {
           </View>
           <T variant="small" style={{ color: colors.muted, marginTop: 4 }}>Wayly supports the switching process once decided. We do not recommend providers.</T>
           <View style={{ gap: spacing.sm, marginTop: spacing.md }}>
-            <Field label="Current provider name" required testID="psw1-modal-provider" value={form.current_provider_name} onChangeText={(v: string) => setForm({ ...form, current_provider_name: v })} />
+            <Field label="Current provider name" required testID="psw1-modal-provider" value={form.current_provider_name} onChangeText={(v: string) => setForm({ ...form, current_provider_name: v })} autoComplete="organization" textContentType="organizationName" autoCapitalize="words" placeholder="Start typing your provider's name" />
             <Select label="Main reason" required value={form.initial_reason_for_switch} onChange={(v: string) => setForm({ ...form, initial_reason_for_switch: v })} options={REASONS.map((r) => ({ value: r.key, label: r.label }))} testID="psw1-modal-reason" />
             <Field label="Notes" optional testID="psw1-modal-notes" value={form.reason_notes} onChangeText={(v: string) => setForm({ ...form, reason_notes: v })} multiline />
           </View>
           {err ? <T variant="small" style={{ color: colors.terracotta, marginTop: spacing.sm }} testID="psw1-modal-error">{err}</T> : null}
           <Button label="Start switch" testID="psw1-modal-submit" loading={busy} disabled={!form.current_provider_name.trim()} onPress={submit} style={{ marginTop: spacing.md }} />
         </View>
-      </View>
+      </KeyboardAvoidingView>
     </Modal>
   );
 }

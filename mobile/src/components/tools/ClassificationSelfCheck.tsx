@@ -615,7 +615,7 @@ export default function ClassificationSelfCheck() {
                       {CLASS_OPTS.map((o) => {
                         const on = current === o.v;
                         return (
-                          <Pressable key={o.v || "none"} testID={`csc-current-${o.v || "none"}`} onPress={() => setCurrent(o.v)} style={[styles.pill, { borderColor: on ? colors.primary : colors.border, backgroundColor: on ? colors.primary : "transparent" }]}>
+                          <Pressable key={o.v || "none"} testID={`csc-current-${o.v || "none"}`} onPress={() => setCurrent(o.v)} style={[styles.pill, { borderColor: on ? colors.primary : colors.border, backgroundColor: on ? colors.primary : colors.surface }]}>
                             <T style={{ fontFamily: fonts.bodyMedium, fontSize: 12, color: on ? "#fff" : colors.text }}>{o.label}</T>
                           </Pressable>
                         );

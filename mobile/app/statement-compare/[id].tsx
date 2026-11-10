@@ -81,7 +81,7 @@ export default function StatementCompare() {
                   onPress={() => setTab(t)}
                   style={[
                     styles.tab,
-                    { borderColor: active ? colors.primary : colors.border, backgroundColor: active ? colors.primary : "transparent", color: active ? "#fff" : colors.text, fontFamily: fonts.bodySemi },
+                    { borderColor: active ? colors.primary : colors.border, backgroundColor: active ? colors.primary : colors.surface, color: active ? "#fff" : colors.text, fontFamily: fonts.bodySemi },
                   ]}
                 >
                   {t === "decoded" ? "Decoded breakdown" : "Original file"}

@@ -427,13 +427,6 @@ export default function ParticipantsScreen() {
                       <Button label="Close" testID="branch-family-addons-close" variant="outline" onPress={closeAdd} />
                     </View>
                   ) : null}
-
-                  {addPreview.branch === "adviser_included" ? (
-                    <View style={{ gap: spacing.sm }} testID="branch-adviser">
-                      <T variant="small">Your Adviser plan includes participant management at no extra cost.</T>
-                      <Button label="Continue" testID="confirm-adviser-add" onPress={() => setStep("form")} />
-                    </View>
-                  ) : null}
                 </View>
               ) : null}
 

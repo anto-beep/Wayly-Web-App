@@ -213,7 +213,7 @@ export function Field({
     <View style={style}>
       {label ? (
         <View style={{ flexDirection: "row", alignItems: "center", gap: 6, marginBottom: 6 }}>
-          <Text style={[styles.fieldLabel, { color: colors.text, marginBottom: 0 }]}>{label}</Text>
+          <Text style={[styles.fieldLabel, { color: colors.text, marginBottom: 0, flex: 1 }]}>{label}</Text>
           {required ? <Text style={{ fontFamily: fonts.bodySemi, fontSize: 12, color: colors.gold }}>Required</Text> : null}
           {optional ? <Text style={{ fontFamily: fonts.body, fontSize: 12, color: colors.muted }}>Optional</Text> : null}
         </View>
@@ -367,7 +367,7 @@ function CalendarSheet({
                         testID={testID ? `${testID}-day-${d}` : undefined}
                         disabled={isDisabled(d)}
                         onPress={() => onSelect(new Date(view.y, view.m, d))}
-                        style={{ width: 40, height: 40, borderRadius: 20, alignItems: "center", justifyContent: "center", backgroundColor: isSelected(d) ? colors.primary : "transparent" }}
+                        style={{ width: 40, height: 40, borderRadius: 20, alignItems: "center", justifyContent: "center", backgroundColor: isSelected(d) ? colors.primary : colors.surface }}
                       >
                         <Text style={{ fontFamily: isSelected(d) ? fonts.bodySemi : fonts.body, fontSize: 16, color: isDisabled(d) ? colors.border : isSelected(d) ? "#fff" : colors.text }}>{d}</Text>
                       </Pressable>
@@ -419,7 +419,7 @@ export function DateField({
     : "";
   const labelRow = label ? (
     <View style={{ flexDirection: "row", alignItems: "center", gap: 6, marginBottom: 6 }}>
-      <Text style={[styles.fieldLabel, { color: colors.text, marginBottom: 0 }]}>{label}</Text>
+      <Text style={[styles.fieldLabel, { color: colors.text, marginBottom: 0, flex: 1 }]}>{label}</Text>
       {required ? <Text style={{ fontFamily: fonts.bodySemi, fontSize: 12, color: colors.gold }}>Required</Text> : null}
       {optional ? <Text style={{ fontFamily: fonts.body, fontSize: 12, color: colors.muted }}>Optional</Text> : null}
     </View>
@@ -477,7 +477,7 @@ export function Select({
     <View>
       {label ? (
         <View style={{ flexDirection: "row", alignItems: "center", gap: 6, marginBottom: 6 }}>
-          <Text style={[styles.fieldLabel, { color: colors.text, marginBottom: 0 }]}>{label}</Text>
+          <Text style={[styles.fieldLabel, { color: colors.text, marginBottom: 0, flex: 1 }]}>{label}</Text>
           {required ? <Text style={{ fontFamily: fonts.bodySemi, fontSize: 12, color: colors.gold }}>Required</Text> : null}
           {optional ? <Text style={{ fontFamily: fonts.body, fontSize: 12, color: colors.muted }}>Optional</Text> : null}
         </View>

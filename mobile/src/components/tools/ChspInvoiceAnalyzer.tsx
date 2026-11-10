@@ -41,7 +41,7 @@ function VarBadge({ status, colors }: any) {
 
 function Chip({ on, label, onPress, colors, testID }: any) {
   return (
-    <Pressable testID={testID} onPress={onPress} style={{ flexShrink: 0, borderWidth: 1, borderColor: on ? colors.primary : colors.border, backgroundColor: on ? colors.primary : "transparent", borderRadius: radius.pill, paddingHorizontal: 12, height: 32, justifyContent: "center" }}>
+    <Pressable testID={testID} onPress={onPress} style={{ flexShrink: 0, borderWidth: 1, borderColor: on ? colors.primary : colors.border, backgroundColor: on ? colors.primary : colors.surface, borderRadius: radius.pill, paddingHorizontal: 12, height: 32, justifyContent: "center" }}>
       <T style={{ fontFamily: fonts.bodyMedium, fontSize: 12, color: on ? "#fff" : colors.text }}>{label}</T>
     </Pressable>
   );

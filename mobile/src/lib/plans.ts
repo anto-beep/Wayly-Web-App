@@ -39,7 +39,7 @@ export const PLAN_OPTIONS = [
       "Track two parents on one plan",
       "Up to 5 Caregiver seats",
       "Sunday digest emails to the whole family",
-      "Adviser & GP role-based sharing links",
+      "GP & specialist role-based sharing links",
       "Family Wall for shared updates & notes",
       "Reassessment letter generator",
       "Invoice + statement history vault",

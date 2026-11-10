@@ -17,6 +17,7 @@ const RESOURCES = [
     { to: "/faq", label: "FAQ" },
     { to: "/ask-wayly", label: "Ask Wayly" },
     { to: "/support-at-home-levels", label: "Support at Home Levels" },
+    { to: "/home-care-packages", label: "Home Care Packages" },
     { to: "/resources/articles", label: "Articles" },
     { to: "/resources/glossary", label: "Glossary" },
 ];

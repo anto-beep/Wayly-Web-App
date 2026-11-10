@@ -1,5 +1,6 @@
 import React, { useCallback, useState } from "react";
-import { Pressable, RefreshControl, ScrollView, StyleSheet, Switch, View } from "react-native";
+import { Pressable, RefreshControl, StyleSheet, Switch, View } from "react-native";
+import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
 import { router, useFocusEffect } from "expo-router";
 import { ClipboardList, Plus, X, FileDown, ShieldAlert, Clock, Info, Stethoscope, Check } from "lucide-react-native";
 
@@ -104,8 +105,10 @@ export default function HandoverPackScreen() {
       ) : error ? (
         <StatePanel testID="handover-error" icon={ClipboardList} title="Couldn't load handover packs" actionLabel="Retry" onAction={load} />
       ) : (
-        <ScrollView
+        <KeyboardAwareScrollView
           contentContainerStyle={{ padding: spacing.lg, paddingBottom: spacing.xxl, gap: spacing.md }}
+          keyboardShouldPersistTaps="handled"
+          bottomOffset={24}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); load(); }} tintColor={colors.primary} />}
         >
           <PageIntro
@@ -135,7 +138,7 @@ export default function HandoverPackScreen() {
                     const on = (include as any)[s.key];
                     return (
                       <Pressable key={s.key} testID={`handover-include-${s.key}`} onPress={() => setInclude((st) => ({ ...st, [s.key]: !(st as any)[s.key] }))}
-                        style={[styles.incChip, { borderColor: on ? colors.primary : colors.border, backgroundColor: on ? colors.primary : "transparent" }]}>
+                        style={[styles.incChip, { borderColor: on ? colors.primary : colors.border, backgroundColor: on ? colors.primary : colors.surface }]}>
                         {on ? <Check size={14} color="#fff" /> : <s.Icon size={14} color={colors.muted} />}
                         <T style={{ fontFamily: fonts.bodyMedium, fontSize: 13, color: on ? "#fff" : colors.text }}>{s.label}</T>
                       </Pressable>
@@ -186,7 +189,7 @@ export default function HandoverPackScreen() {
               </Card>
             ))
           )}
-        </ScrollView>
+        </KeyboardAwareScrollView>
       )}
     </View>
   );

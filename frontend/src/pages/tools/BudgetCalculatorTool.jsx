@@ -7,6 +7,7 @@ import ToolRelatedLinks from "@/components/ToolRelatedLinks";
 import ReportIssueButton from "@/components/ReportIssueButton";
 import ToolExplainer from "@/components/ToolExplainer";
 import ToolHero from "@/components/ToolHero";
+import HcpBridgeLine from "@/components/HcpBridgeLine";
 import ToolWalkthroughVideo from "@/components/ToolWalkthroughVideo";
 import { api, formatAUD, formatAUD2, extractErrorMessage } from "@/lib/api";
 import { ToolSummary, NumberMono } from "@/components/ToolShell";
@@ -219,6 +220,7 @@ export default function BudgetCalculatorTool() {
             <SeoHead {...SEO.toolBudgetCalculator} jsonLd={_toolJsonLd(SEO.toolBudgetCalculator)} />
             <MarketingHeader />
             <ToolHero toolKey="budget-calculator" wide />
+                        <HcpBridgeLine className="mt-4" />
 
             <section className="mx-auto max-w-[1720px] px-6 pb-20">
                 <ProfileInlinePrompts where="budget_calculator" onParticipantUpdated={onParticipantUpdated} />

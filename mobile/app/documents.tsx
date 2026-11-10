@@ -370,7 +370,7 @@ export default function DocumentsScreen() {
                         key={c.value}
                         testID={`upload-category-${c.value}`}
                         onPress={() => setCategory(c.value)}
-                        style={[styles.catChip, { borderColor: on ? colors.primary : colors.border, backgroundColor: on ? colors.primary : "transparent" }]}
+                        style={[styles.catChip, { borderColor: on ? colors.primary : colors.border, backgroundColor: on ? colors.primary : colors.surface }]}
                       >
                         <T style={{ fontFamily: fonts.bodyMedium, fontSize: 13, color: on ? "#fff" : colors.text }}>{c.label}</T>
                       </Pressable>

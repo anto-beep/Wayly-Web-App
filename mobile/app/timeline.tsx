@@ -179,7 +179,7 @@ export default function TimelineScreen() {
                   key={f.key}
                   testID={`timeline-filter-${f.key}`}
                   onPress={() => setFilter(f.key)}
-                  style={[styles.chip, { borderColor: on ? colors.primary : colors.border, backgroundColor: on ? colors.primary : "transparent" }]}
+                  style={[styles.chip, { borderColor: on ? colors.primary : colors.border, backgroundColor: on ? colors.primary : colors.surface }]}
                 >
                   <T style={{ fontFamily: fonts.bodyMedium, fontSize: 13, color: on ? "#fff" : colors.text }}>{f.label}</T>
                 </Pressable>

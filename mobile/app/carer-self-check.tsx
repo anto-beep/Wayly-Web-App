@@ -55,7 +55,7 @@ function ChipGroup({ title, options, selected, onToggle, colors, prefix }: any) 
           const active = selected.includes(o.key);
           return (
             <Pressable key={o.key} testID={`${prefix}-${o.key}`} onPress={() => onToggle(o.key)}
-              style={[styles.chip, { borderColor: active ? colors.primary : colors.border, backgroundColor: active ? colors.primary : "transparent" }]}>
+              style={[styles.chip, { borderColor: active ? colors.primary : colors.border, backgroundColor: active ? colors.primary : colors.surface }]}>
               <T style={{ fontFamily: fonts.bodyMedium, fontSize: 13, color: active ? "#fff" : colors.text }}>{o.label}</T>
             </Pressable>
           );
@@ -74,7 +74,7 @@ function LevelRow({ label, value, onChange, options, colors, prefix }: any) {
           const active = value === o.key;
           return (
             <Pressable key={o.key} testID={`${prefix}-${o.key}`} onPress={() => onChange(o.key)}
-              style={[styles.levelChip, { borderColor: active ? colors.primary : colors.border, backgroundColor: active ? colors.primary : "transparent" }]}>
+              style={[styles.levelChip, { borderColor: active ? colors.primary : colors.border, backgroundColor: active ? colors.primary : colors.surface }]}>
               <T style={{ fontFamily: fonts.bodyMedium, fontSize: 12, color: active ? "#fff" : colors.muted }}>{o.label}</T>
             </Pressable>
           );

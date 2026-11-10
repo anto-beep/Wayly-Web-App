@@ -73,6 +73,20 @@ def _as_of(ext: dict):
             return date(int(au.group(3)), min(12, max(1, int(au.group(2)))), 1)
         except Exception:
             pass
+    # Text-month formats, e.g. "1 November 2026 to 30 November 2026" or
+    # "November 2026". Use the first month name found (period start).
+    _MONTHS = {
+        "january": 1, "february": 2, "march": 3, "april": 4, "may": 5, "june": 6,
+        "july": 7, "august": 8, "september": 9, "october": 10, "november": 11, "december": 12,
+    }
+    txt = re.search(r"\b(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\s+(20\d{2})\b", src, re.IGNORECASE)
+    if txt:
+        try:
+            mkey = next((v for k, v in _MONTHS.items() if k.startswith(txt.group(1).lower())), None)
+            if mkey:
+                return date(int(txt.group(2)), mkey, 1)
+        except Exception:
+            pass
     yr = re.search(r"\b(20\d{2})\b", src)
     if yr:
         try:
@@ -454,17 +468,35 @@ def run_reconciliation_gates(
         except Exception:
             eff, days = None, 999
         if eff and -31 <= days <= 120:
+            eff_str = eff.strftime('%-d %B %Y')
+            # days <= 0 means the statement period is on/after the change date,
+            # so the reclassification is already in force for THIS statement.
+            # Word it in the present tense; only statements dated before the
+            # change (days > 0) get the forward-looking "will move" framing.
+            in_effect = days <= 0
+            if in_effect:
+                _headline = f"Since {eff_str} personal care sits in Clinical Care with no co-contribution."
+                _detail = (
+                    f"Under Support at Home, personal care moved into Clinical Care on {eff_str} and now carries no "
+                    f"participant contribution. On a statement from this period, personal care should appear under "
+                    f"Clinical Care with $0 payable by you."
+                )
+                _action = "No action needed; personal care should now show as Clinical Care with no co-payment to you."
+            else:
+                _headline = f"From {eff_str} personal care will move to Clinical Care with no co-contribution."
+                _detail = (
+                    f"Support at Home reclassifies personal care into Clinical Care from {eff_str}. From that date "
+                    f"personal care will carry no participant contribution, so expect the split on next quarter's statement to change."
+                )
+                _action = "No action needed now; just expect personal care to show as Clinical Care with $0 co-payment from that date."
             add({
                 "severity": "info",
                 "rule": "RULE_G9_CATEGORY_TRANSITION",
-                "headline": f"From {eff.strftime('%-d %B %Y')} personal care moves to Clinical Care with no co-contribution.",
-                "detail": (
-                    f"Support at Home reclassifies personal care into Clinical Care from {eff.strftime('%-d %B %Y')}. From then on "
-                    f"personal care carries no participant contribution, so expect the split on next quarter's statement to change."
-                ),
+                "headline": _headline,
+                "detail": _detail,
                 "dollar_impact": 0.0,
                 "evidence": [f"INDEX-1 policy_date.personal_care_free = {pcf}; personal care present on statement"],
-                "suggested_action": "No action needed now; just expect personal care to show as Clinical Care with $0 co-payment from that date.",
+                "suggested_action": _action,
             })
 
     # ---------- GATE 10: package-management fee cap ----------

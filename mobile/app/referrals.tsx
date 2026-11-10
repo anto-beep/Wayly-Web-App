@@ -91,7 +91,7 @@ export default function ReferralsScreen() {
                     const active = kind === k.v;
                     return (
                       <Pressable key={k.v} testID={`referrals-kind-${k.v}`} onPress={() => setKind(k.v)}
-                        style={{ paddingHorizontal: 14, paddingVertical: 9, borderRadius: radius.pill, borderWidth: 1.5, borderColor: active ? colors.primary : colors.border, backgroundColor: active ? colors.primary : "transparent" }}>
+                        style={{ paddingHorizontal: 14, paddingVertical: 9, borderRadius: radius.pill, borderWidth: 1.5, borderColor: active ? colors.primary : colors.border, backgroundColor: active ? colors.primary : colors.surface }}>
                         <T style={{ fontFamily: fonts.bodyMedium, fontSize: 13, color: active ? "#fff" : colors.text }}>{k.label}</T>
                       </Pressable>
                     );

@@ -69,10 +69,6 @@ const RULES = [
     [/^\/settings\/notifications/, "Notification Settings"],
     [/^\/settings/, "Settings"],
     [/^\/support/, "Support"],
-    [/^\/adviser\/brand/, "Adviser Branding"],
-    [/^\/adviser\/scenarios/, "Adviser Scenarios"],
-    [/^\/adviser\/alerts/, "Adviser Alerts"],
-    [/^\/adviser/, "Adviser Portal"],
     [/^\/onboarding/, "Get Started"],
     [/^\/journey/, "Your Journey"],
 ];

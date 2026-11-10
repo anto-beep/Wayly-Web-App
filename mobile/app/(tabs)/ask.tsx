@@ -262,7 +262,7 @@ function SettingsSheet({ open, onClose, ctx, onUpdated, participantId, colors }:
                 const activeR = retention === o.key;
                 return (
                   <Pressable key={o.key} testID={`aw2-retention-${o.key}`} onPress={() => changeRetention(o.key)}
-                    style={{ borderWidth: 1, borderRadius: radius.pill, paddingHorizontal: 12, paddingVertical: 6, borderColor: activeR ? colors.primary : colors.border, backgroundColor: activeR ? colors.primary : "transparent" }}>
+                    style={{ borderWidth: 1, borderRadius: radius.pill, paddingHorizontal: 12, paddingVertical: 6, borderColor: activeR ? colors.primary : colors.border, backgroundColor: activeR ? colors.primary : colors.surface }}>
                     <T variant="small" style={{ fontSize: 12, color: activeR ? "#fff" : colors.text }}>{o.label}</T>
                   </Pressable>
                 );

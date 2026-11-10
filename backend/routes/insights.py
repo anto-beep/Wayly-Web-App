@@ -168,7 +168,14 @@ _DECODER_SUMMARY_OVERRIDE = (
     "the participant paid out of pocket, then handle anomaly_headlines: if the list is "
     "empty, reassure them warmly that the statement looks correct and in line with the "
     "Support at Home plan; if it has items, name them gently in plain words and suggest "
-    "the one thing worth checking. Keep to the two paragraph, 160 to 200 word shape."
+    "the one thing worth checking. Keep to the two paragraph, 160 to 200 word shape. "
+    "TENSE RULE: Follow the tense of the anomaly_headlines exactly. If a headline about "
+    "personal care moving into Clinical Care (Clinical Supports) is written in the present "
+    "or past tense (for example 'Since 1 October 2026 personal care sits in Clinical Care'), "
+    "treat that reclassification as the CURRENT rule already in force for this statement: "
+    "describe it in the present tense and NEVER say it 'will' happen, 'is coming', or add "
+    "'plan ahead' or 'be aware of this upcoming change' style commentary. Only use future "
+    "wording if a headline itself says 'will move'."
 )
 
 _STATEMENT_SUMMARY_OVERRIDE = (

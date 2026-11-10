@@ -84,6 +84,12 @@ STATIC_PAGES = [
     # Oct 2026 · complaints + AT-HM articles (templates library build)
     ("/resources/articles/how-to-complain-about-aged-care-commission", "0.9", "monthly"),
     ("/resources/articles/at-hm-scheme-assistive-technology-home-modifications", "0.9", "monthly"),
+    # Nov 2026 · HCP-BRIDGE-1 pillar + Home Care Package bridge articles
+    ("/home-care-packages",                                   "0.9", "monthly"),
+    ("/resources/articles/what-happened-to-my-home-care-package", "0.9", "monthly"),
+    ("/resources/articles/home-care-package-levels-support-at-home-classifications", "0.9", "monthly"),
+    ("/resources/articles/home-care-package-statement-vs-support-at-home-statement", "0.9", "monthly"),
+    ("/resources/articles/will-i-pay-more-under-support-at-home-than-home-care-package", "0.9", "monthly"),
     # Oct 2026 · Templates library (20 individual template pages)
     ("/resources/templates/support-at-home-statement-query-letter", "0.7", "monthly"),
     ("/resources/templates/rate-query-letter", "0.7", "monthly"),

@@ -156,7 +156,7 @@ export default function CompareProvidersScreen() {
                   <Card key={a.provider} testID={`ppc3-select-${a.provider}`} style={{ padding: 0 }}>
                     <T
                       onPress={() => toggleSelect(a.provider)}
-                      style={{ fontFamily: fonts.bodyMedium, fontSize: 12, overflow: "hidden", color: on ? "#fff" : colors.text, backgroundColor: on ? colors.primary : "transparent", borderWidth: 1, borderColor: on ? colors.primary : colors.border, borderRadius: radius.pill, paddingHorizontal: 12, paddingVertical: 7 }}
+                      style={{ fontFamily: fonts.bodyMedium, fontSize: 12, overflow: "hidden", color: on ? "#fff" : colors.text, backgroundColor: on ? colors.primary : colors.surface, borderWidth: 1, borderColor: on ? colors.primary : colors.border, borderRadius: radius.pill, paddingHorizontal: 12, paddingVertical: 7 }}
                     >
                       {a.provider}
                     </T>

@@ -51,14 +51,20 @@ const STAGE_TINT = {
     abandoned: "bg-primary-k/5 text-primary-k/50 border-primary-k/10",
 };
 
-function NewSwitchModal({ pid, onClose, onCreated }) {
+function NewSwitchModal({ pid, defaultProvider, onClose, onCreated }) {
     const [form, setForm] = useState({
-        current_provider_name: "",
+        current_provider_name: defaultProvider || "",
         initial_reason_for_switch: "billing_disputes_unresolved",
         reason_notes: "",
     });
     const [busy, setBusy] = useState(false);
     const [err, setErr] = useState(null);
+    // Prefill the current provider from the participant's known provider (parity
+    // with mobile), so families don't retype a name Wayly already holds. It may
+    // arrive after the first render, so backfill only while the field is empty.
+    useEffect(() => {
+        if (defaultProvider) setForm((f) => (f.current_provider_name ? f : { ...f, current_provider_name: defaultProvider }));
+    }, [defaultProvider]);
     const submit = async () => {
         setBusy(true); setErr(null);
         try {
@@ -120,6 +126,7 @@ function NewSwitchModal({ pid, onClose, onCreated }) {
 export function SwitchesList() {
     const { id: pid } = useParams();
     const [rows, setRows] = useState(null);
+    const [providerName, setProviderName] = useState("");
     const [modalOpen, setModalOpen] = useState(false);
 
     const load = useCallback(async () => {
@@ -128,6 +135,16 @@ export function SwitchesList() {
     }, [pid]);
 
     useEffect(() => { load(); }, [load]);
+
+    // Fetch the participant's known provider so the "Start a switch" modal can
+    // prefill the current provider (parity with the mobile switch modal).
+    useEffect(() => {
+        let alive = true;
+        api.get(`/participants/${pid}`)
+            .then(({ data }) => { if (alive) setProviderName(data?.provider_name || ""); })
+            .catch(() => {});
+        return () => { alive = false; };
+    }, [pid]);
 
     if (!rows) return <div className="max-w-3xl mx-auto p-6"><Skeleton className="h-40" /></div>;
 
@@ -220,6 +237,7 @@ export function SwitchesList() {
             {modalOpen && (
                 <NewSwitchModal
                     pid={pid}
+                    defaultProvider={providerName}
                     onClose={() => setModalOpen(false)}
                     onCreated={(sw) => {
                         setModalOpen(false);

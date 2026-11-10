@@ -625,7 +625,7 @@ export default function StatementDecoderTool() {
                                 <div className="bg-primary-k text-white rounded-2xl p-7 mt-6" data-testid="sd-conversion-panel">
                                     <p className="text-[11px] uppercase tracking-[0.18em] text-gold">One free decode every 120 days</p>
                                     <h3 className="font-heading text-2xl mt-2 leading-snug">Want to keep an eye on every statement?</h3>
-                                    <p className="mt-3 text-white/85 leading-relaxed">Solo, Family and Adviser plans include unlimited Statement Decoder runs, so Wayly can watch every statement automatically and alert you the moment something looks wrong.</p>
+                                    <p className="mt-3 text-white/85 leading-relaxed">Solo and Family plans include unlimited Statement Decoder runs, so Wayly can watch every statement automatically and alert you the moment something looks wrong.</p>
                                     <ul className="mt-5 space-y-2 text-sm text-white/90">
                                         <li className="flex items-start gap-2"><span className="text-gold">✦</span> All {TOOL_COUNT} AI tools, unlimited</li>
                                         <li className="flex items-start gap-2"><span className="text-gold">✦</span> Anomaly detection on every statement</li>
