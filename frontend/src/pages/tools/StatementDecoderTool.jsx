@@ -26,6 +26,7 @@ import UploadGuardNotice from "@/components/UploadGuardNotice";
 import { usePlanState } from "@/hooks/usePlanState";
 import { ToolSummary } from "@/components/ToolShell";
 import SmartAISummary from "@/components/SmartAISummary";
+import { buildServiceContext } from "@/lib/summaryContext";
 import StatementInsightGraphics from "@/components/StatementInsightGraphics";
 import StatementAskWayly from "@/components/statements/StatementAskWayly";
 import StatementRightsPanel from "@/components/statements/StatementRightsPanel";
@@ -512,6 +513,10 @@ export default function StatementDecoderTool() {
                             )}
                             {result.publishable !== false && (() => {
                                 const ss = result.audit?.statement_summary || {};
+                                const svcCtx = buildServiceContext(
+                                    result.line_items || result.extracted?.line_items || [],
+                                    result.anomalies || result.audit?.anomalies || [],
+                                );
                                 return (
                                     <SmartAISummary
                                         pageKey="statement-decoder-run"
@@ -522,6 +527,7 @@ export default function StatementDecoderTool() {
                                             you_paid_aud: ss.total_participant_contribution ?? null,
                                             government_paid_aud: ss.total_government_paid ?? null,
                                             anomaly_count: (result.anomalies || result.audit?.anomalies || []).length,
+                                            ...svcCtx,
                                         }}
                                     />
                                 );

@@ -15,6 +15,7 @@ import { periodCompact, periodExact, providerName, decodeStatus, flagsCount } fr
 import { useParticipants } from "@/context/ParticipantsContext";
 import FlagCard from "@/components/FlagCard";
 import SmartAISummary from "@/components/SmartAISummary";
+import { buildServiceContext } from "@/lib/summaryContext";
 import StatementInsightGraphics from "@/components/StatementInsightGraphics";
 import { PieChart, Pie, Cell, ResponsiveContainer } from "recharts";
 
@@ -384,6 +385,10 @@ export default function StatementDetail() {
                     government_paid_aud: stmt.audit_json?.statement_summary?.total_government_paid ?? null,
                     anomaly_count: flagsCount(stmt),
                     anomaly_dollar_impact: stmt.anomaly_dollar_impact_total ?? null,
+                    ...buildServiceContext(
+                        stmt.extracted_json?.line_items || stmt.line_items || [],
+                        stmt.anomalies || stmt.audit_json?.anomalies || [],
+                    ),
                 }}
             />
 

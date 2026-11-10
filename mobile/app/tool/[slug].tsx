@@ -7,6 +7,7 @@ import { AppHeader, Button, Card, Field, T } from "@/src/components/ui";
 import { useAuth } from "@/src/context/AuthContext";
 import ToolExplainer from "@/src/components/ToolExplainer";
 import { SmartAISummary } from "@/src/components/SmartAISummary";
+import { buildServiceContext } from "@/src/utils/summaryContext";
 import ReportIssueButton from "@/src/components/ReportIssueButton";
 import DecoderResultView from "@/src/components/DecoderResultView";
 import UploadGuardNotice from "@/src/components/UploadGuardNotice";
@@ -305,6 +306,10 @@ function StatementDecoderTool() {
                     you_paid_aud: result?.audit?.statement_summary?.total_participant_contribution ?? null,
                     government_paid_aud: result?.audit?.statement_summary?.total_government_paid ?? null,
                     anomaly_count: (result?.anomalies || result?.audit?.anomalies || []).length,
+                    ...buildServiceContext(
+                      result?.line_items || result?.extracted?.line_items || [],
+                      result?.anomalies || result?.audit?.anomalies || [],
+                    ),
                   }}
                 />
               ) : null}

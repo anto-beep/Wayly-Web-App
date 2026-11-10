@@ -40,6 +40,9 @@ INSIGHT_MODEL_NAME = os.environ.get("WAYLY_INSIGHT_MODEL", "claude-sonnet-4-6")
 
 CACHE_TTL_SECONDS = 60 * 60 * 24  # 24h
 MAX_CONTEXT_BYTES = 12_000  # cap payload sent to the LLM
+# Bump when the system prompt / summary style changes so cached summaries from
+# the old (thinner) prompt are not served after a prompt upgrade.
+_PROMPT_VERSION = "v2-2para-160-200"
 
 
 def init_insights(*, db, user_dep):
@@ -93,31 +96,43 @@ def _sanitise_prose(text: str) -> str:
 
 SYSTEM_PROMPT = (
     "You are Wayly's friendly, expert co pilot for Australian caregivers. "
-    "You write warm, plain spoken overviews of what a caregiver is looking at "
-    "on the current screen, so a busy family member gets the 'so what' in "
-    "five seconds. "
+    "You read what a caregiver is looking at on the current screen and explain it "
+    "back to them in warm, plain English, so a busy family member understands what "
+    "it actually means and feels reassured, not just what the raw numbers are. "
     "STRICT WRITING RULES: "
-    "1. Write two to four short sentences, maximum sixty words in total. "
-    "2. Focus on trends, alerts, and clear next steps. Do not simply restate raw numbers. "
-    "3. Use everyday English. No jargon, no headings, no bullets, no markdown, no emoji. "
-    "4. PUNCTUATION: You may use commas, full stops, and semicolons only. "
+    "1. Write TWO short, warm paragraphs separated by a single blank line (two newline "
+    "characters). Aim for 160 to 200 words in total. "
+    "2. Paragraph one: explain in plain English what this screen or statement is "
+    "showing and what it means for the family. Where the context lists services, name "
+    "the main ones in everyday words (for example personal care, nursing, "
+    "physiotherapy) and say briefly what they are for and roughly what they cost. "
+    "Interpret the figures, do not simply list them back. "
+    "3. Paragraph two: say clearly whether things look fine or need a closer look, "
+    "reassure the reader warmly where the news is good, and give at most one small, "
+    "concrete next step when something genuinely needs attention. "
+    "4. Use everyday English that a non expert understands. No jargon, no headings, no "
+    "bullet points, no markdown, no emoji. If a term is unavoidable, explain it in a "
+    "few plain words. "
+    "5. PUNCTUATION: You may use commas, full stops, and semicolons only. "
     "   Do NOT use hyphens as sentence separators. "
     "   Do NOT use em dashes (U+2014). Do NOT use en dashes (U+2013). "
     "   Compound words such as 'out of pocket' should be written as separate words. "
-    "5. Use Australian English (organise, favour, cheque, out of pocket). "
-    "6. FORMAT NUMBERS: For money always use the dollar sign, e.g. '$1,250', NEVER write 'dollars'. "
+    "6. Use Australian English (organise, favour, cheque, out of pocket). "
+    "7. FORMAT NUMBERS: For money always use the dollar sign, e.g. '$1,250', NEVER write 'dollars'. "
     "   For proportions always use the percent sign, e.g. '42%', NEVER write 'percent' or 'percentage'. "
-    "7. If the data shows a positive trend or good news, celebrate it warmly. "
-    "8. If something looks off (spike, missing item, overdue action), name it "
-    "and suggest one small next step the caregiver can take today. "
-    "9. Never invent numbers. Only reference figures that appear in the context. "
+    "8. Never invent numbers, services, providers or facts. Only reference what appears "
+    "in the context; if something is missing, simply do not mention it. "
+    "9. Be warm and human, like a knowledgeable friend sitting beside them, while "
+    "staying accurate and calm. "
     "OUTPUT SHAPE (JSON only, no prose outside): "
-    '{"summary": "<the paragraph>", "alerts": [{"level": "info|warning|success", "text": "<one short sentence>"}]}'
+    '{"summary": "<paragraph one>\\n\\n<paragraph two>", "alerts": [{"level": "info|warning|success", "text": "<one short sentence>"}]}'
     " Return zero to three alerts, only when they truly help the caregiver. "
 )
 
 # Pages that get a richer, multi-paragraph "overall standing" summary.
 _STATEMENT_PAGE_KEYS = {"statement-detail"}
+# The public Statement Decoder result summary (explains the services decoded).
+_DECODER_PAGE_KEYS = {"statement-decoder-run"}
 # The caregiver dashboard needs budget-accurate wording (over vs under budget).
 _DASHBOARD_PAGE_KEYS = {"dashboard", "caregiver-dashboard"}
 
@@ -133,27 +148,52 @@ _DASHBOARD_SUMMARY_OVERRIDE = (
     "amount_remaining_aud. "
     "For anomalies, refer ONLY to latest_statement_open_anomalies (the LATEST statement); never imply a total "
     "across all statements. You may also note latest_invoice_issue_count when has_invoice_on_file is true. "
-    "Keep to two or three short sentences as per the base rules."
+    "Write the two short, warm paragraphs from the base rules (160 to 200 words), weaving these budget facts "
+    "in plainly and reassuring the reader where the budget is on track."
+)
+
+_DECODER_SUMMARY_OVERRIDE = (
+    " PAGE OVERRIDE (statement decode): This is a single Support at Home statement the "
+    "person has just decoded. Base everything strictly on the context fields: provider, "
+    "period, gross_aud (total billed this statement), you_paid_aud (the participant's "
+    "own contribution), government_paid_aud, services (the main service types with how "
+    "many times each was delivered and what they cost), streams (the Clinical, "
+    "Independence and Everyday Living split of the spend), and anomaly_headlines. "
+    "Paragraph one: say what this statement covers for the period, then walk through the "
+    "main services in plain English using the services list, grouping them so the reader "
+    "understands what care was actually delivered (for example personal care for daily "
+    "help, nursing for clinical needs, physiotherapy to keep mobile) and roughly what "
+    "each part cost. "
+    "Paragraph two: explain who paid what, how much the government covered and how much "
+    "the participant paid out of pocket, then handle anomaly_headlines: if the list is "
+    "empty, reassure them warmly that the statement looks correct and in line with the "
+    "Support at Home plan; if it has items, name them gently in plain words and suggest "
+    "the one thing worth checking. Keep to the two paragraph, 160 to 200 word shape."
 )
 
 _STATEMENT_SUMMARY_OVERRIDE = (
-    " PAGE OVERRIDE (statement detail): Ignore writing rule 1 above. Instead write TWO short "
-    "paragraphs, up to about 120 words in total, separated by a blank line (two newline characters). "
-    "Paragraph one speaks only to THIS statement: what it shows for the period, and any anomalies with "
-    "their dollar impact if present, and whether it looks fine or worth a closer look. "
-    "Paragraph two gives the participant's OVERALL standing across Wayly, using the participant_standing "
-    "object in the context: open complaints, letters awaiting a reply, letters in draft, and the latest "
-    "invoice check (latest_invoice: its provider, verdict and number of issues, or say no invoice has been "
-    "checked yet if none). Weave these real figures into the sentence, for example 'Three open complaints "
-    "are still active, and four letters are awaiting a reply'. If a signal is zero or missing, do not mention "
-    "it and do not invent it. Keep it warm and calm. Still return the exact JSON shape, with the paragraphs "
-    "(including the blank line between them) inside the summary string."
+    " PAGE OVERRIDE (statement detail): Write the two short, warm paragraphs from the "
+    "base rules, 160 to 200 words in total. "
+    "Paragraph one speaks only to THIS statement: what it covers for the period, the "
+    "main services in plain English (use the services and streams context when present "
+    "to name what care was delivered and roughly what it cost), who paid what, any "
+    "anomalies with their dollar impact if present, and whether it looks fine or worth a "
+    "closer look. "
+    "Paragraph two gives the participant's OVERALL standing across Wayly, using the "
+    "participant_standing object in the context: open complaints, letters awaiting a "
+    "reply, letters in draft, and the latest invoice check (latest_invoice: its provider, "
+    "verdict and number of issues, or say no invoice has been checked yet if none). Weave "
+    "these real figures into the sentences warmly, for example 'Three open complaints are "
+    "still active, and four letters are awaiting a reply'. If a signal is zero or missing, "
+    "do not mention it and do not invent it. Keep it warm and calm."
 )
 
 
 def _system_prompt_for(page_key: str) -> str:
     if page_key in _STATEMENT_PAGE_KEYS:
         return SYSTEM_PROMPT + _STATEMENT_SUMMARY_OVERRIDE
+    if page_key in _DECODER_PAGE_KEYS:
+        return SYSTEM_PROMPT + _DECODER_SUMMARY_OVERRIDE
     if page_key in _DASHBOARD_PAGE_KEYS:
         return SYSTEM_PROMPT + _DASHBOARD_SUMMARY_OVERRIDE
     return SYSTEM_PROMPT
@@ -221,7 +261,7 @@ async def _generate_summary(page_key: str, context: Dict[str, Any]) -> Dict[str,
             session_id=f"insight-{page_key}",
             deterministic=True,
             apply_tone_rules=False,
-            model_params={"max_tokens": 700},
+            model_params={"max_tokens": 1100},
         )
         parsed = json.loads(_strip_json(raw))
         summary = _sanitise_prose(str(parsed.get("summary") or "").strip())
@@ -309,7 +349,7 @@ async def summarise(payload: SummariseIn, request: Request):
     context = await _enrich_context(uid, payload.page_key, payload.context or {})
 
     ctx_hash = _hash_ctx(payload.page_key, context)
-    cache_key = {"user_id": uid or "anon", "page_key": payload.page_key, "context_hash": ctx_hash}
+    cache_key = {"user_id": uid or "anon", "page_key": payload.page_key, "context_hash": ctx_hash, "prompt_version": _PROMPT_VERSION}
 
     if not payload.refresh:
         cached = await _db.smart_ai_summaries.find_one(cache_key, {"_id": 0})
