@@ -1,7 +1,8 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { Pressable, StyleSheet, View } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
-import { Sparkles, RefreshCw, AlertTriangle, CheckCircle2, Info } from "lucide-react-native";
+import { Sparkles, RefreshCw, AlertTriangle, CheckCircle2, Info, Volume2, Square } from "lucide-react-native";
+import * as Speech from "expo-speech";
 
 import { T } from "@/src/components/ui";
 import { apiFetch } from "@/src/lib/api";
@@ -75,6 +76,25 @@ export function SmartAISummary({
   const alerts = data?.alerts || [];
   const isLoading = status === "loading";
 
+  // Read-aloud: uses the device's built-in voice (no network, no cost, no key).
+  const [speaking, setSpeaking] = useState(false);
+  const toggleSpeak = useCallback(() => {
+    if (speaking) {
+      Speech.stop();
+      setSpeaking(false);
+      return;
+    }
+    if (!summary) return;
+    setSpeaking(true);
+    Speech.speak(summary, {
+      language: "en-AU",
+      onDone: () => setSpeaking(false),
+      onStopped: () => setSpeaking(false),
+      onError: () => setSpeaking(false),
+    });
+  }, [speaking, summary]);
+  useEffect(() => () => { Speech.stop(); }, []);
+
   // Nothing to show yet and no data — stay invisible (matches the "no empty card" rule).
   if (status === "error" && !data) return null;
   if (status === "idle" && !data) return null;
@@ -108,17 +128,29 @@ export function SmartAISummary({
               {eyebrow ? <T style={{ fontFamily: fonts.bodySemi, fontSize: 11, letterSpacing: 1, color: colors.muted }}>{eyebrow}</T> : null}
               <T style={{ fontFamily: fonts.headingSemi, fontSize: 18, color: headText }}>{title}</T>
             </View>
-            {refreshable ? (
-              <Pressable
-                testID={`smart-ai-summary-refresh-${pageKey}`}
-                onPress={() => run(true)}
-                disabled={isLoading}
-                style={[styles.refreshBtn, { borderColor: colors.primary + "4D", backgroundColor: colors.surface, opacity: isLoading ? 0.5 : 1 }]}
-              >
-                <RefreshCw size={13} color={colors.heading} />
-                <T style={{ fontFamily: fonts.bodyMedium, fontSize: 12, color: colors.heading }}>{isLoading ? "Thinking" : "Refresh"}</T>
-              </Pressable>
-            ) : null}
+            <View style={{ flexDirection: "row", alignItems: "center", gap: spacing.sm }}>
+              {summary ? (
+                <Pressable
+                  testID={`smart-ai-summary-listen-${pageKey}`}
+                  onPress={toggleSpeak}
+                  style={[styles.refreshBtn, { borderColor: colors.primary + "4D", backgroundColor: colors.surface }]}
+                >
+                  {speaking ? <Square size={13} color={colors.heading} /> : <Volume2 size={13} color={colors.heading} />}
+                  <T style={{ fontFamily: fonts.bodyMedium, fontSize: 12, color: colors.heading }}>{speaking ? "Stop" : "Listen"}</T>
+                </Pressable>
+              ) : null}
+              {refreshable ? (
+                <Pressable
+                  testID={`smart-ai-summary-refresh-${pageKey}`}
+                  onPress={() => run(true)}
+                  disabled={isLoading}
+                  style={[styles.refreshBtn, { borderColor: colors.primary + "4D", backgroundColor: colors.surface, opacity: isLoading ? 0.5 : 1 }]}
+                >
+                  <RefreshCw size={13} color={colors.heading} />
+                  <T style={{ fontFamily: fonts.bodyMedium, fontSize: 12, color: colors.heading }}>{isLoading ? "Thinking" : "Refresh"}</T>
+                </Pressable>
+              ) : null}
+            </View>
           </View>
 
           <T

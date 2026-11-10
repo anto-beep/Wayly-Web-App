@@ -58,7 +58,7 @@ const FAQ = [
     { q: "Does my parent need to use it?", a: "Not at all. Most households are run by an adult-child caregiver. Your parent has their own simplified view but doesn't need to log in if they don't want to." },
     { q: "What about privacy?", a: "Australian-hosted, encrypted with per-household keys, never sold, never used to train AI without consent. Read more on our Trust page." },
     { q: "Will Wayly ever recommend a provider?", a: "We show provider prices and quality signals neutrally. We never accept commissions from providers, ever." },
-    { q: "Can multiple family members share one account?", a: "Yes, that's the Family plan. Up to 5 family members, each with their own role-based view." },
+    { q: "Can multiple family members share one account?", a: "Yes, that's the Family plan: two Participants and three Caregiver seats, each with their own role-based view." },
     { q: "Does Wayly give clinical or financial advice?", a: "No. We help you understand the system. Clinical advice comes from your care team; financial advice from a licensed advisor." },
     { q: "What if my parent moves to residential care?", a: "We pause billing immediately and provide a transition guide." },
     { q: "Can I try it with sample data first?", a: "Yes, the /demo page walks you through a sample household with no signup. Or paste a statement into the decoder above right now." },
@@ -103,7 +103,7 @@ export default function Landing() {
                         <span className="overline">Three quick ways in</span>
                         <h2 className="font-heading text-3xl sm:text-4xl text-[#0E2A47] mt-3">Which describes you best?</h2>
                         <p className="mt-3 text-base text-muted-k max-w-xl leading-relaxed">
-                            Australia&apos;s aged-care system was rebuilt on 01/11/2025. Pick the path that fits your household and we will tailor the next step for you.
+                            On 01/11/2025, Support at Home replaced Home Care Packages. Pick the path that fits your household and we will tailor the next step for you.
                         </p>
 
                         {/* Persona on-ramp */}
@@ -247,10 +247,10 @@ export default function Landing() {
                     <div className="flex-1 min-w-0">
                         <span className="overline">Free to Try</span>
                         <h2 className="font-heading text-3xl sm:text-5xl text-primary-k mt-3 tracking-tight lg:whitespace-nowrap">
-                            Decode a Statement Now, <span style={{ color: "#A5512B" }}>No Signup Needed</span>.
+                            Your First Decode Is Free, <span style={{ color: "#A5512B" }}>No Signup Needed</span>.
                         </h2>
                         <p className="mt-3 text-base text-muted-k leading-relaxed">
-                            Paste any Support at Home statement and get plain English in about 60 seconds, no account required. Every other Wayly tool is yours to explore during your 7-day free trial, then continues on a Solo or Family plan.
+                            Paste any Support at Home statement and get plain English in about 60 seconds. Your first decode is free with no account needed, then it is one free decode every 120 days, or unlimited on any Wayly plan. Every other Wayly tool is yours to explore during your 7-day free trial, then continues on a Solo or Family plan.
                         </p>
                     </div>
                     <Link to="/ai-tools" data-testid="see-all-tools-cta" className="landing-btn-clay inline-flex items-center gap-1.5 rounded-lg bg-[#A5512B] text-white px-5 py-2.5 text-sm font-semibold shadow-sm shrink-0">See all {TOOL_COUNT} tools <ArrowRight className="h-3.5 w-3.5" /></Link>
@@ -259,7 +259,7 @@ export default function Landing() {
                     {[
                         { to: "/ai-tools/statement-decoder", title: "Statement Decoder", body: "Paste any monthly statement. Get plain English in 60 seconds.", free: true, icon: FileSearch, tone: "#0E4D52" },
                         { to: "/ai-tools/budget-calculator", title: "Budget & Lifetime Cap Calculator", body: "Annual, quarterly, per-stream and lifetime-cap projection.", free: false, icon: Wallet, tone: "#A5512B" },
-                        { to: "/ai-tools/provider-price-checker", title: "Provider Price Checker", body: "Tell us what you're charged. We'll tell you whether it's fair.", free: false, icon: BarChart3, tone: "#4E6E54" },
+                        { to: "/ai-tools/provider-price-checker", title: "Provider Price Checker", body: "See how your provider's rate compares with published medians.", free: false, icon: BarChart3, tone: "#4E6E54" },
                     ].map((t, i) => (
                         <RevealOnScroll key={t.to} delay={i * 80}>
                         <Link to={t.to} className="group relative block h-full overflow-hidden bg-surface border border-kindred rounded-2xl p-6 transition-colors" data-testid={`tool-teaser-${t.to.split('/').pop()}`}>
@@ -273,7 +273,7 @@ export default function Landing() {
                             <h3 className="font-heading text-xl text-primary-k mt-4">{t.title}</h3>
                             <p className="mt-2 text-sm text-muted-k leading-relaxed">{t.body}</p>
                             <div className="mt-4 inline-flex items-center gap-1 text-sm font-semibold" style={{ color: "#A5512B" }}>
-                                {t.free ? "Try free, no signup" : "7-day free trial, then Solo or Family"} <ArrowRight className="h-3.5 w-3.5" />
+                                {t.free ? "First decode free, no signup" : "7-day free trial, then Solo or Family"} <ArrowRight className="h-3.5 w-3.5" />
                             </div>
                         </Link>
                         </RevealOnScroll>

@@ -37,24 +37,24 @@ _MODEL_NAME = os.environ.get(
 )
 
 
-_SYSTEM_PROMPT = """You write short, calm, plain-English summaries of an aged-care invoice check for an Australian family caregiver. The reader is busy and worried; give them the high-level picture and what to do, not a data dump.
+_SYSTEM_PROMPT = """You write warm, clear, plain-English summaries of an aged-care invoice check for an Australian family caregiver. The reader is busy and often worried; explain what the invoice covers and what it means for them, so they understand it and feel reassured, not just handed a data dump.
 
-Structure your summary as flowing prose (not headings or bullets), in this order:
-1. Start with the bottom line in one sentence: what this invoice is (provider and amount), and whether it looks fine to pay or has things worth raising first.
-2. Name only the ONE or TWO things that matter most, each with its dollar figure if there is one, in plain words a non-expert understands. Do not list every finding; the detailed list is shown separately below your summary.
-3. End with one clear, suggested next step the caregiver can take (for example, what to ask the provider), so they know exactly what to do next.
+Write TWO short, warm paragraphs separated by a single blank line. Aim for 160 to 200 words in total.
+
+Paragraph one: say what this invoice is (the provider and the total amount) and the period it covers, then walk through the main charges in plain English using the "Charges by service" breakdown. Name the main services in everyday words (for example personal care for daily help with things like showering, nursing for clinical needs, care management for coordinating the services) and say roughly what each came to, so the reader understands what they are actually being billed for. Interpret the charges, do not simply list numbers.
+
+Paragraph two: give the bottom line, whether the invoice looks fine to pay or has things worth raising first. Name only the ONE or TWO things that matter most, each with its dollar figure if there is one, in plain words a non-expert understands. Reassure the reader warmly when it is all clear. End with one clear, suggested next step they can take, for example what to ask the provider. Do not list every finding; the detailed list is shown separately below your summary.
 
 Rules:
-- Three or four short sentences. No headings. Avoid lists; if you truly need one, keep it to two lines.
-- Plain prose. Do not use em-dashes, en-dashes, double asterisks, backticks, or any markdown formatting.
-- Grounded. Only mention figures, categories, dates, provider names and rule references that appear in the data given to you. Never invent a number.
+- Plain prose. No headings, no bullet points, no markdown, no double asterisks, no backticks.
+- Do not use em-dashes or en-dashes. Write compound phrases such as out of pocket as separate words.
+- Grounded. Only mention figures, categories, dates, provider names and rule references that appear in the data given to you. Never invent a number or a service.
 - Lead with meaning, not mechanics. Say what a figure means for the caregiver ("you may be able to get $28.00 back"), not just that a rule fired.
-- Australian date format. Every date is DD/MM/YYYY, never YYYY-MM-DD, never Month-name form. If the input contains an ISO date, convert it to DD/MM/YYYY.
-- Money uses the "$" symbol with no space, e.g. "$1,234.50", never "1234.5 dollars" or "AUD 1234.50".
-- Percentages use the "%" symbol with no space, e.g. "17.5%", never "17.5 percent" or "17.5 per cent".
-- Calm and non-accusatory. Every issue is framed as "worth checking with your provider", never as "your provider is overcharging you" or "your provider has made an error".
+- Australian date format. Every date is DD/MM/YYYY, never YYYY-MM-DD, never Month-name form.
+- Money uses the "$" symbol with no space, e.g. "$1,234.50", never "1234.5 dollars". Percentages use "%" with no space, e.g. "17.5%", never "17.5 per cent".
+- Calm and non-accusatory. Every issue is framed as "worth checking with your provider", never as "your provider is overcharging you".
 - Match the verdict. If the verdict is "all clear", say so directly and reassure them it looks fine to pay. If it is "check before you pay", say clearly they should raise it with their provider before paying.
-- Do NOT treat the lifetime-cap information note as an urgent problem; it is background information only, so do not raise alarm about it.
+- Do NOT treat the lifetime-cap information note as an urgent problem; it is background information only.
 - When a Tier 4 finding involves the Aged Care Quality and Safety Commission, mention that the ACQSC on 1800 951 822 is available as a next step, but only in one short sentence at the end.
 - If a hardship arrangement is active, personal care post 01/10/2026 is contested, or an exit fee appears, mention it explicitly.
 - Do not repeat the verdict banner text verbatim. Add colour and specifics.
@@ -158,6 +158,24 @@ def _build_prompt(
     parts.append(f"Overall verdict: {verdict}")
     parts.append(f"Number of line items: {len(lines)}")
     parts.append(f"Total gross on the invoice: ${total_gross:,.2f}")
+
+    # Service-level breakdown so the summary can explain what was actually
+    # billed (INV-1 depth upgrade, matching the Statement Decoder style), not
+    # just the line count and total.
+    groups: Dict[str, Dict[str, float]] = {}
+    for ln in lines:
+        label = str(ln.get("service_type") or ln.get("service_category") or "other service").strip() or "other service"
+        g = groups.setdefault(label, {"count": 0.0, "gross": 0.0})
+        g["count"] += 1
+        try:
+            g["gross"] += float(ln.get("gross_cost") or 0)
+        except Exception:
+            pass
+    if groups:
+        parts.append("Charges by service (what was billed, highest first):")
+        for label, g in sorted(groups.items(), key=lambda kv: kv[1]["gross"], reverse=True)[:8]:
+            n = int(g["count"])
+            parts.append(f"- {label}: {n} line{'s' if n != 1 else ''}, ${g['gross']:,.2f}")
     if header:
         if header.get("invoice_date"):
             parts.append(f"Invoice date: {_fmt_au_date(header['invoice_date'])}")
@@ -215,6 +233,7 @@ async def generate_summary(
             user_text=f"Here is what we found on the invoice:\n\n{payload}\n\nWrite the summary now.",
             session_id=session_id,
             apply_tone_rules=False,
+            model_params={"max_tokens": 900},
         )
         text = _iso_to_au_in_text(_scrub_dashes(str(raw or "")).strip())
         if not text:

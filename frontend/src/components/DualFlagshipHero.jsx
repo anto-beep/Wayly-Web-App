@@ -77,6 +77,15 @@ export default function DualFlagshipHero() {
                     </h1>
                 </Reveal>
 
+                <Reveal delay={90}>
+                    <p
+                        className="mt-4 text-base sm:text-lg text-primary-k/80 max-w-3xl leading-relaxed"
+                        data-testid="hero-bridge-line"
+                    >
+                        For Support at Home, the program that replaced Home Care Packages across Australia.
+                    </p>
+                </Reveal>
+
                 <Reveal delay={140}>
                     <p
                         className="mt-7 font-heading text-2xl sm:text-3xl lg:text-[1.9rem] xl:text-4xl text-primary-k tracking-tight leading-[1.12] max-w-none lg:whitespace-nowrap"

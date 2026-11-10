@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback, useRef } from "react";
-import { Sparkles, RefreshCw, AlertTriangle, CheckCircle2, Info } from "lucide-react";
+import { Sparkles, RefreshCw, AlertTriangle, CheckCircle2, Info, Volume2, Square } from "lucide-react";
 import { api } from "@/lib/api";
 import { sanitizeAI } from "@/lib/sanitizeAI";
 
@@ -67,6 +67,39 @@ export default function SmartAISummary({
     };
   }, [autoLoad, pageKey, JSON.stringify(context)]);
 
+  // Read-aloud: uses the browser's built-in voice (no network, no cost, no key).
+  const [speaking, setSpeaking] = useState(false);
+  const toggleSpeak = useCallback(() => {
+    if (typeof window === "undefined" || !window.speechSynthesis) return;
+    const synth = window.speechSynthesis;
+    if (synth.speaking || speaking) {
+      synth.cancel();
+      setSpeaking(false);
+      return;
+    }
+    const text = sanitizeAI(state.data?.summary) || "";
+    if (!text) return;
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = "en-AU";
+    u.rate = 0.98;
+    u.onend = () => setSpeaking(false);
+    u.onerror = () => setSpeaking(false);
+    synth.cancel();
+    synth.speak(u);
+    setSpeaking(true);
+  }, [speaking, state.data]);
+
+  // Stop any speech when the summary changes, and on unmount.
+  useEffect(() => {
+    if (typeof window !== "undefined" && window.speechSynthesis) {
+      window.speechSynthesis.cancel();
+      setSpeaking(false);
+    }
+  }, [state.data?.summary]);
+  useEffect(() => () => {
+    if (typeof window !== "undefined" && window.speechSynthesis) window.speechSynthesis.cancel();
+  }, []);
+
   const summary = sanitizeAI(state.data?.summary) || (state.status === "loading" ? fallback : fallback);
   const alerts = state.data?.alerts || [];
   const isLoading = state.status === "loading";
@@ -94,19 +127,33 @@ export default function SmartAISummary({
               ) : null}
               <h2 className="font-serif text-lg text-primary-k">{title}</h2>
             </div>
-            {refreshable && (
-              <button
-                type="button"
-                onClick={() => run(true)}
-                disabled={isLoading}
-                data-testid={`smart-ai-summary-refresh-${pageKey}`}
-                className="inline-flex items-center gap-1.5 rounded-full border border-primary-k/30 bg-surface px-3 py-1.5 text-xs font-medium text-primary-k hover:bg-primary-k hover:text-white disabled:opacity-50 transition-colors"
-                aria-label="Refresh AI summary"
-              >
-                <RefreshCw className={`h-3.5 w-3.5 ${isLoading ? "animate-spin" : ""}`} />
-                {isLoading ? "Thinking" : "Refresh"}
-              </button>
-            )}
+            <div className="flex items-center gap-2">
+              {state.data?.summary && state.status !== "error" && (
+                <button
+                  type="button"
+                  onClick={toggleSpeak}
+                  data-testid={`smart-ai-summary-listen-${pageKey}`}
+                  className="inline-flex items-center gap-1.5 rounded-full border border-primary-k/30 bg-surface px-3 py-1.5 text-xs font-medium text-primary-k hover:bg-primary-k hover:text-white transition-colors"
+                  aria-label={speaking ? "Stop reading the summary aloud" : "Listen to the summary"}
+                >
+                  {speaking ? <Square className="h-3.5 w-3.5" /> : <Volume2 className="h-3.5 w-3.5" />}
+                  {speaking ? "Stop" : "Listen"}
+                </button>
+              )}
+              {refreshable && (
+                <button
+                  type="button"
+                  onClick={() => run(true)}
+                  disabled={isLoading}
+                  data-testid={`smart-ai-summary-refresh-${pageKey}`}
+                  className="inline-flex items-center gap-1.5 rounded-full border border-primary-k/30 bg-surface px-3 py-1.5 text-xs font-medium text-primary-k hover:bg-primary-k hover:text-white disabled:opacity-50 transition-colors"
+                  aria-label="Refresh AI summary"
+                >
+                  <RefreshCw className={`h-3.5 w-3.5 ${isLoading ? "animate-spin" : ""}`} />
+                  {isLoading ? "Thinking" : "Refresh"}
+                </button>
+              )}
+            </div>
           </div>
           {isLoading ? (
             <div
