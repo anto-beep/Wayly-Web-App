@@ -8,7 +8,7 @@ export const TOOL_CONTENT = {
     "statement-decoder": {
         name: "Statement Decoder",
         heroOneLiner:
-            "Upload a Support at Home statement and get a plain-English read on every charge, with anything unusual flagged for you.",
+            "Upload a Support at Home statement (formerly a Home Care Package) and get a plain-English read on every charge, with anything unusual flagged for you.",
         whatItDoes: [
             "Your monthly Support at Home statement lists the services you received, what the government paid, and what you contributed. It is meant to be clear, but the line items, service IDs and contribution rates can be hard to follow.",
             "Statement Decoder reads your statement and explains it in plain English. It tells you what each charge is for, which service category it sits in (clinical, independence or everyday living), and how your contribution was worked out. Clinical care should show a $0 contribution, so if it does not, the tool points that out.",

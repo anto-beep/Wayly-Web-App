@@ -9,7 +9,7 @@ import ToolRelatedLinks from "@/components/ToolRelatedLinks";
 import ToolExplainer from "@/components/ToolExplainer";
 import ToolHero from "@/components/ToolHero";
 import { api } from "@/lib/api";
-import { Upload, Loader2, AlertTriangle, ArrowRight, Sparkles, Clock, FileText, FileType2, Image as ImageIcon, ChevronDown } from "lucide-react";
+import { Upload, Loader2, AlertTriangle, ArrowRight, Sparkles, Clock, FileText, FileType2, Image as ImageIcon, ChevronDown, HelpCircle, BookOpen, PlayCircle } from "lucide-react";
 import EmailResultButton from "@/components/EmailResultButton";
 import { useAuth } from "@/context/AuthContext";
 import { ScreenshotStatement, BrowserFrame } from "@/components/Screenshots";
@@ -41,6 +41,34 @@ import { TOOL_COUNT } from "@/config/toolRegistry";
 // everyone — authenticated or not — on both web and mobile).
 const HOW_TO_VIDEO_URL = "https://customer-assets-eiarnc6j.emergentagent.net/job_8d74dc1c-0092-4bc2-8a55-b38254dd7592/artifacts/fb62f81a34118d7b_How%20to%20Use%20Statement%20Decoder%20Final_Video.mp4";
 
+// Clearly-fictional sample used by the "Try it with an example statement"
+// button so a visitor without their own statement can still see the tool work.
+const SAMPLE_STATEMENT = `Sunrise Home Care Pty Ltd
+Support at Home monthly statement
+Participant: Jane Sample
+Participant ID: SAMPLE-000123
+Classification level: Level 4
+Statement period: 01/10/2026 to 31/10/2026
+Quarterly budget: $7,250.00
+Carried forward from last quarter: $420.00
+Total available this quarter: $7,670.00
+Services delivered this month
+02/10/2026  Personal care (showering)   Clinical Supports    1.0 hr   $85.00    Contribution $0.00
+09/10/2026  Personal care (showering)   Clinical Supports    1.0 hr   $85.00    Contribution $0.00
+05/10/2026  Domestic assistance         Everyday Living      2.0 hr   $136.00   Contribution $23.80
+19/10/2026  Domestic assistance         Everyday Living      2.0 hr   $136.00   Contribution $23.80
+12/10/2026  Gardening                   Everyday Living      1.5 hr   $108.00   Contribution $18.90
+14/10/2026  Physiotherapy               Clinical Supports    1.0 hr   $150.00   Contribution $0.00
+21/10/2026  Transport to appointment    Independence         1 trip   $45.00    Contribution $2.25
+26/10/2026  Social support (group)      Independence         3.0 hr   $120.00   Contribution $6.00
+Care management (10%)                                                 $86.50    Contribution $0.00
+Total cost of services: $951.50
+Government funded: $877.25
+Participant contribution: $74.25
+Spent this quarter to date: $951.50
+Remaining this quarter: $6,718.50
+Lifetime contributions to date: $1,312.40`;
+
 const _toolJsonLd = (cfg) => {
     const blocks = [softwareApplicationLd({
         name: cfg.toolName,
@@ -63,6 +91,7 @@ export default function StatementDecoderTool() {
     const isPaidUser = plan.isPaid || plan.isTrialing;  // both hide the free-decode gate + upgrade CTAs
     const [mode, setMode] = useState("text");  // "text" | "file"
     const [text, setText] = useState("");
+    const [isExample, setIsExample] = useState(false);
     const [file, setFile] = useState(null);
     const [active, setActive] = useState(false);
     const [loading, setLoading] = useState(false);
@@ -144,7 +173,8 @@ export default function StatementDecoderTool() {
         return () => clearInterval(id);
     }, [limitInfo]);
 
-    const submit = async () => {
+    const submit = async (overrideText) => {
+        const exampleText = typeof overrideText === "string" ? overrideText : null;
         setError(null);
         setResult(null);
         setGuard(null);
@@ -157,12 +187,12 @@ export default function StatementDecoderTool() {
              
             while (true) {
                 try {
-                    if (mode === "file" && file) {
+                    if (exampleText === null && mode === "file" && file) {
                         const fd = new FormData();
                         fd.append("file", file);
                         ({ data: initial } = await api.post("/public/decode-statement", fd, { headers: { "Content-Type": "multipart/form-data" }, timeout: 90_000 }));
                     } else {
-                        ({ data: initial } = await api.post("/public/decode-statement-text", { text }, { timeout: 90_000 }));
+                        ({ data: initial } = await api.post("/public/decode-statement-text", { text: exampleText !== null ? exampleText : text }, { timeout: 90_000 }));
                     }
                     break;
                 } catch (postErr) {
@@ -230,6 +260,19 @@ export default function StatementDecoderTool() {
         }
     };
 
+    // "Try it with an example statement": fill the box with a clearly-fictional
+    // sample, flag it as an example, and immediately run a real decode.
+    const loadExample = () => {
+        setMode("text");
+        setText(SAMPLE_STATEMENT);
+        setIsExample(true);
+        setResult(null);
+        setError(null);
+        setGuard(null);
+        setLimitInfo(null);
+        submit(SAMPLE_STATEMENT);
+    };
+
     return (
         <div className="min-h-screen bg-kindred">
             <SeoHead {...SEO.toolStatementDecoder} jsonLd={_toolJsonLd(SEO.toolStatementDecoder)} />
@@ -271,6 +314,48 @@ export default function StatementDecoderTool() {
                         )}
                     </div>
                 )}
+                {/* Entry point for visitors who don't have a statement to hand. */}
+                <div className="mb-6 rounded-2xl border border-kindred bg-surface p-5 sm:p-6" data-testid="sd-start-here">
+                    <div className="flex items-center gap-2">
+                        <HelpCircle className="h-5 w-5 text-primary-k" />
+                        <h2 className="font-heading text-lg text-primary-k">Not sure where to start?</h2>
+                    </div>
+                    <div className="mt-4 grid gap-3 sm:grid-cols-3">
+                        <Link
+                            to="/articles/support-at-home-statement"
+                            data-testid="sd-start-statement-guide"
+                            className="group flex flex-col rounded-xl border border-kindred bg-surface-2 p-4 hover:border-primary-k/40 transition-colors"
+                        >
+                            <FileText className="h-5 w-5 text-primary-k" />
+                            <span className="mt-2 text-sm font-semibold text-primary-k">Don't have your statement yet?</span>
+                            <span className="mt-1 text-xs text-muted-k">See what a Support at Home statement looks like</span>
+                            <span className="mt-2 inline-flex items-center gap-1 text-xs font-semibold text-primary-k">Read the guide <ArrowRight className="h-3 w-3 transition-transform group-hover:translate-x-0.5" /></span>
+                        </Link>
+                        <Link
+                            to="/articles/support-at-home-explained"
+                            data-testid="sd-start-sah-explainer"
+                            className="group flex flex-col rounded-xl border border-kindred bg-surface-2 p-4 hover:border-primary-k/40 transition-colors"
+                        >
+                            <BookOpen className="h-5 w-5 text-primary-k" />
+                            <span className="mt-2 text-sm font-semibold text-primary-k">New to Support at Home?</span>
+                            <span className="mt-1 text-xs text-muted-k">Start with a plain-English explainer</span>
+                            <span className="mt-2 inline-flex items-center gap-1 text-xs font-semibold text-primary-k">Start here <ArrowRight className="h-3 w-3 transition-transform group-hover:translate-x-0.5" /></span>
+                        </Link>
+                        <button
+                            type="button"
+                            onClick={loadExample}
+                            disabled={loading}
+                            data-testid="sd-try-example"
+                            className="group flex flex-col rounded-xl border border-gold/40 bg-gold/10 p-4 text-left hover:bg-gold/15 transition-colors disabled:opacity-60"
+                        >
+                            <PlayCircle className="h-5 w-5 text-[#A5512B]" />
+                            <span className="mt-2 text-sm font-semibold text-primary-k">Don't have one to hand?</span>
+                            <span className="mt-1 text-xs text-muted-k">Try it with an example statement</span>
+                            <span className="mt-2 inline-flex items-center gap-1 text-xs font-semibold text-[#A5512B]">Run the example <ArrowRight className="h-3 w-3 transition-transform group-hover:translate-x-0.5" /></span>
+                        </button>
+                    </div>
+                </div>
+
                 <div className="bg-surface border border-kindred rounded-2xl p-6">
                     <div className="flex gap-2 flex-wrap" role="tablist">
                         {[
@@ -292,9 +377,15 @@ export default function StatementDecoderTool() {
 
                     {mode === "text" && (
                         <>
+                            {isExample && (
+                                <div className="mt-4 flex items-center gap-2 rounded-lg border border-gold/40 bg-gold/10 px-3 py-2 text-xs text-primary-k" data-testid="sd-example-notice">
+                                    <AlertTriangle className="h-4 w-4 flex-none text-[#A5512B]" />
+                                    This is an example statement, not a real person's data.
+                                </div>
+                            )}
                             <textarea
                                 value={text}
-                                onChange={(e) => setText(e.target.value)}
+                                onChange={(e) => { setText(e.target.value); if (isExample) setIsExample(false); }}
                                 rows={12}
                                 placeholder="Paste your statement text here..."
                                 data-testid="decoder-textarea"
