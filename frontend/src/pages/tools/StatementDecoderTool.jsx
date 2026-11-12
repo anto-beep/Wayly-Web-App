@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import useScrollToResult from "@/hooks/useScrollToResult";
 import { trackToolComplete } from "@/lib/metaPixel";
+import { ga4Track, decoderInputMethod } from "@/lib/ga4";
 import { Link } from "react-router-dom";
 import AboutBackLink from "@/components/AboutBackLink";
 import MarketingHeader from "@/components/MarketingHeader";
@@ -180,6 +181,10 @@ export default function StatementDecoderTool() {
 
     const submit = async (overrideText) => {
         const exampleText = typeof overrideText === "string" ? overrideText : null;
+        const _isSample = exampleText !== null;
+        const _inputMethod = _isSample ? "sample" : (mode === "file" ? "upload" : "paste");
+        const _runId = `dtool-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+        let _started = false;
         setError(null);
         setResult(null);
         setGuard(null);
@@ -222,8 +227,15 @@ export default function StatementDecoderTool() {
             const jobId = initial.job_id;
             if (!jobId) {
                 setResult(initial);
+                try {
+                    ga4Track.decoderStarted(_runId, { input_method: _inputMethod, is_sample: _isSample, surface: "tool", authenticated: !!user });
+                    ga4Track.decoderCompleted(_runId, { input_method: _isSample ? "sample" : (decoderInputMethod(initial?.input_method) || _inputMethod), is_sample: _isSample, surface: "tool", authenticated: !!user });
+                } catch (_) { /* analytics best-effort */ }
                 return;
             }
+            // Server accepted the statement — decoding has actually begun.
+            _started = true;
+            try { ga4Track.decoderStarted(_runId, { input_method: _inputMethod, is_sample: _isSample, surface: "tool", authenticated: !!user }); } catch (_) { /* analytics best-effort */ }
             // Poll for job completion, the decode pipeline takes ~45-70s.
             // Transient 502/503/504s and network blips at the K8s ingress are
             // tolerated, we keep polling until we either see status=done/error
@@ -251,6 +263,12 @@ export default function StatementDecoderTool() {
             }
             // abuse_flag (if any) is now inside the polled result; setResult passes through.
             setResult(final);
+            try {
+                ga4Track.decoderCompleted(_runId, {
+                    input_method: _isSample ? "sample" : (decoderInputMethod(final?.input_method) || _inputMethod),
+                    is_sample: _isSample, surface: "tool", authenticated: !!user,
+                });
+            } catch (_) { /* analytics best-effort */ }
         } catch (err) {
             const detail = err?.response?.data?.detail;
             if (detail && typeof detail === "object" && (detail.error === "cooldown_active" || detail.error === "monthly_limit" || detail.error === "daily_limit")) {
@@ -259,6 +277,12 @@ export default function StatementDecoderTool() {
                 setUsage((u) => u ? { ...u, allowed: false, used_count: (detail.used_count ?? (u.used_count + 1)), remaining: 0, days_until_next_use: detail.days_until_next_use ?? u.days_until_next_use } : u);
             } else {
                 setError(typeof detail === "string" ? detail : detail?.message || err?.message || "Could not decode the statement.");
+            }
+            // Accepted decoding request that failed to produce usable results.
+            // (Validation / limit / guard rejections never set _started, so
+            // they are not counted as decode failures.)
+            if (_started) {
+                try { ga4Track.decoderFailed(_runId, { input_method: _inputMethod, is_sample: _isSample, surface: "tool", authenticated: !!user }); } catch (_) { /* analytics best-effort */ }
             }
         } finally {
             setLoading(false);

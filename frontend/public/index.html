@@ -29,6 +29,28 @@
             });
         </script>
 
+        <!-- Google Tag Manager (GTM-MVLXCD7D) — PRODUCTION ONLY (wayly.com.au).
+             Loads AFTER the consent-mode defaults above and reuses the single
+             window.dataLayer. GA4 (G-1E3HYT8R91) and all wayly_* conversion
+             events are configured INSIDE this container. Preview/test hosts
+             never load GTM, so they never send analytics. The <body> noscript
+             iframe is intentionally omitted: this is a JS-only SPA (React can't
+             run without JS) and an unconditional iframe would bypass the host
+             gate on non-production hosts. -->
+        <script>
+            (function () {
+                var h = window.location.hostname;
+                if (h !== 'wayly.com.au' && h !== 'www.wayly.com.au') return;
+                window.dataLayer = window.dataLayer || [];
+                window.dataLayer.push({ 'gtm.start': new Date().getTime(), event: 'gtm.js' });
+                var f = document.getElementsByTagName('script')[0];
+                var j = document.createElement('script');
+                j.async = true;
+                j.src = 'https://www.googletagmanager.com/gtm.js?id=GTM-MVLXCD7D';
+                f.parentNode.insertBefore(j, f);
+            })();
+        </script>
+
         <!-- Per-page SEO (title / description / og / twitter / JSON-LD / canonical)
              is injected by react-helmet-async on every public page.
              See /src/seo/SeoHead.jsx. We intentionally do NOT declare a static

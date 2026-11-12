@@ -7,6 +7,7 @@ import { DupExactModal, DupLogicalSameModal, DupLogicalDiffModal } from "@/compo
 import ReadOnlyLock from "@/components/ReadOnlyLock";
 import PageIntro from "@/components/PageIntro";
 import UploadGuardNotice from "@/components/UploadGuardNotice";
+import { ga4Track } from "@/lib/ga4";
 
 export default function StatementUpload() {
     const nav = useNavigate();
@@ -29,6 +30,7 @@ export default function StatementUpload() {
         // Generate an idempotency key per upload attempt so accidental
         // double-clicks / network retries don't create phantom duplicates.
         const idemKey = `upload-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+        let _started = false;
         try {
             const fd = new FormData();
             fd.append("file", file);
@@ -73,6 +75,9 @@ export default function StatementUpload() {
             if (!jobId) {
                 throw new Error("No job_id returned");
             }
+            // Server accepted the file — decoding has actually begun.
+            _started = true;
+            try { ga4Track.decoderStarted(idemKey, { input_method: "upload", is_sample: false, surface: "app", authenticated: true }); } catch (_) { /* analytics best-effort */ }
             // Poll every 2s for up to 5 minutes (covers chunked extract + audit + buffer).
             // Network blips at the K8s ingress are tolerated, we keep polling until
             // we either see status=done/error/duplicate or exhaust the budget.
@@ -107,16 +112,22 @@ export default function StatementUpload() {
             }
             // Phase 3: revised-statement supersede, Modal 2b before redirecting.
             if (resolvedSt.duplicate_kind === "DUPLICATE_LOGICAL_DIFFERENT_CONTENT" && resolvedSt.supersedes_version_id) {
+                try { ga4Track.decoderCompleted(idemKey, { input_method: "upload", is_sample: false, surface: "app", authenticated: true }); } catch (_) { /* analytics best-effort */ }
                 setDupLogicalDiff({
                     statement_id: resolvedSt.statement_id,
                     supersedes_version_id: resolvedSt.supersedes_version_id,
                 });
                 return;
             }
+            try { ga4Track.decoderCompleted(idemKey, { input_method: "upload", is_sample: false, surface: "app", authenticated: true }); } catch (_) { /* analytics best-effort */ }
             toast.success("Statement processed");
             nav(`/app/statements/${resolvedSt.statement_id}`);
         } catch (err) {
             toast.error(extractErrorMessage(err, "Upload failed"));
+            // Accepted decoding request that failed to produce usable results.
+            if (_started) {
+                try { ga4Track.decoderFailed(idemKey, { input_method: "upload", is_sample: false, surface: "app", authenticated: true }); } catch (_) { /* analytics best-effort */ }
+            }
         } finally {
             setBusy(false);
         }

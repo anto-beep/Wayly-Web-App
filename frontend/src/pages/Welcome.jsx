@@ -4,6 +4,7 @@ import { CheckCircle2, ArrowRight } from "lucide-react";
 import SeoHead from "@/seo/SeoHead";
 import MarketingHeader from "@/components/MarketingHeader";
 import { fbqTrack } from "@/lib/metaPixel";
+import { ga4Track } from "@/lib/ga4";
 
 /**
  * /welcome — one-time trial confirmation page.
@@ -32,11 +33,28 @@ export default function Welcome() {
     const nav = useNavigate();
     const [allowed] = useState(() => hasEntryToken());
 
-    // Meta Pixel StartTrial — fires once, only on a legitimate welcome view.
+    // Meta Pixel StartTrial + GA4 trial_started — fire once, only on a
+    // legitimate welcome view (reached only after Stripe confirms the trial).
     useEffect(() => {
         if (allowed && !startTrialFired) {
             startTrialFired = true;
             fbqTrack("track", "StartTrial", { value: 60, currency: "AUD" });
+            // GA4 trial_started: the main conversion event. Deduped by the
+            // Stripe checkout session id stashed by BillingSuccess so a reload
+            // never double-counts; falls back to a persisted per-welcome id if
+            // the session id is missing, and plan_type is the non-PII plan name.
+            try {
+                let trialId = null, plan = null;
+                try {
+                    trialId = sessionStorage.getItem("wayly_welcome_trial_id");
+                    plan = sessionStorage.getItem("wayly_welcome_plan");
+                    if (!trialId) {
+                        trialId = `welcome_${Date.now()}`;
+                        sessionStorage.setItem("wayly_welcome_trial_id", trialId);
+                    }
+                } catch (_) { /* ignore */ }
+                ga4Track.trialStarted(trialId, { plan_type: plan || undefined });
+            } catch (_) { /* analytics best-effort */ }
         }
     }, [allowed]);
 

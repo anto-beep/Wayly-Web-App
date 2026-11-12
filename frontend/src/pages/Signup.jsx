@@ -12,6 +12,7 @@ import EmailCodeVerify from "@/components/EmailCodeVerify";
 
 import SeoHead from "@/seo/SeoHead";
 import { track } from "@/lib/analytics";
+import { ga4Track } from "@/lib/ga4";
 import { SEO } from "@/seo/pageConfig";
 import { CAREGIVER_RELATIONSHIPS } from "./onboarding/constants";
 import { TOOL_COUNT } from "@/config/toolRegistry";
@@ -153,6 +154,9 @@ export default function Signup() {
             }, { deferUser: true });
             track.signup({ plan: form.plan });
             track.identify(u);
+            // GA4 sign_up — fires only here, after the account is CONFIRMED
+            // created by /auth/signup (never on click/submit). Deduped by user id.
+            try { ga4Track.signUp(u?.id, { signup_method: "email", plan_type: form.plan }); } catch (_) { /* analytics best-effort */ }
             // PERSONA-1 §C, persist the persona choice on signup so the
             // account is persona-correct from day zero. Best-effort: any
             // failure here shouldn't block trial start.

@@ -1,6 +1,7 @@
 import React, { useRef, useState } from "react";
 import { api } from "@/lib/api";
 import { track } from "@/lib/analytics";
+import { ga4Track, decoderInputMethod } from "@/lib/ga4";
 import { Sparkles, Loader2, AlertTriangle, Upload, FileText, X } from "lucide-react";
 import { SAMPLE_STATEMENT } from "@/data/sampleStatement";
 import SmartAISummary from "@/components/SmartAISummary";
@@ -37,6 +38,9 @@ export default function StatementDecoderEmbed({ compact = false }) {
         const sampleText = typeof opts?.sampleText === "string" ? opts.sampleText : null;
         const isExample = !!sampleText;
         if (isExample) { setMode("text"); setText(sampleText); }
+        const _inputMethod = isExample ? "sample" : (mode === "file" ? "upload" : "paste");
+        const _runId = `dembed-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+        let _started = false;
         setLoading(true);
         setError(null);
         setResult(null);
@@ -71,7 +75,17 @@ export default function StatementDecoderEmbed({ compact = false }) {
             }
             if (initial.abuse_flag) { setResult(initial); return; }
             const jobId = initial.job_id;
-            if (!jobId) { setResult(initial); return; }
+            if (!jobId) {
+                setResult(initial);
+                try {
+                    ga4Track.decoderStarted(_runId, { input_method: _inputMethod, is_sample: isExample, surface: "embed", authenticated: false });
+                    ga4Track.decoderCompleted(_runId, { input_method: isExample ? "sample" : (decoderInputMethod(initial?.input_method) || _inputMethod), is_sample: isExample, surface: "embed", authenticated: false });
+                } catch (_) { /* analytics best-effort */ }
+                return;
+            }
+            // Server accepted the statement — decoding has actually begun.
+            _started = true;
+            try { ga4Track.decoderStarted(_runId, { input_method: _inputMethod, is_sample: isExample, surface: "embed", authenticated: false }); } catch (_) { /* analytics best-effort */ }
             const deadline = Date.now() + 180_000;
             let final = null;
             while (Date.now() < deadline) {
@@ -89,6 +103,13 @@ export default function StatementDecoderEmbed({ compact = false }) {
             }
             if (!final) throw new Error("Decode timed out, try a shorter statement.");
             setResult(final);
+            // GA4 decoder_completed — fires only on a real generated result.
+            try {
+                ga4Track.decoderCompleted(_runId, {
+                    input_method: isExample ? "sample" : (decoderInputMethod(final?.input_method) || _inputMethod),
+                    is_sample: isExample, surface: "embed", authenticated: false,
+                });
+            } catch (_) { /* analytics best-effort */ }
             try {
                 track.decode({
                     rules: final?.rules_run || final?.summary?.rules_run,
@@ -103,6 +124,10 @@ export default function StatementDecoderEmbed({ compact = false }) {
                 try { track.freeDecodeUsed({ surface: compact ? "embed" : "tool" }); } catch (_) { /* analytics is best-effort */ }
             } else {
                 setError(typeof detail === "string" ? detail : detail?.message || err?.message || "Could not decode the statement.");
+            }
+            // Accepted decoding request that failed to produce usable results.
+            if (_started) {
+                try { ga4Track.decoderFailed(_runId, { input_method: _inputMethod, is_sample: isExample, surface: "embed", authenticated: false }); } catch (_) { /* analytics best-effort */ }
             }
         } finally {
             setLoading(false);

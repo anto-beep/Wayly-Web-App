@@ -2,6 +2,7 @@ import React from "react";
 import { GoogleLogin } from "@react-oauth/google";
 import { toast } from "sonner";
 import { useAuth } from "@/context/AuthContext";
+import { ga4Track } from "@/lib/ga4";
 
 /**
  * Wayly's own Google OAuth sign-in button (Google Identity Services).
@@ -35,6 +36,9 @@ export default function GoogleSignInButton({ testid = "google-signin", planInten
                 try {
                     const { api } = await import("@/lib/api");
                     await api.post("/billing/start-trial", { plan: planIntent });
+                    // GA4 trial_started for the Google no-card trial path.
+                    // Deduped locally by user id; plan_type is non-PII.
+                    try { ga4Track.trialStarted(`g_${user?.id || planIntent}`, { plan_type: planIntent }); } catch (_) { /* analytics best-effort */ }
                 } catch { /* trial may already be used, fall through to onboarding */ }
             }
         } catch (e) {

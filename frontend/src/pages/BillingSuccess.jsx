@@ -49,6 +49,13 @@ export default function BillingSuccess() {
                     if (localStorage.getItem("wayly_trial_welcome") === "1") {
                         localStorage.removeItem("wayly_trial_welcome");
                         sessionStorage.setItem("wayly_welcome_entry", "1");
+                        // Stash non-PII context for the GA4 trial_started event
+                        // fired once on /welcome: the Stripe session id (local
+                        // dedupe key only) and the plan name.
+                        try {
+                            if (sessionId) sessionStorage.setItem("wayly_welcome_trial_id", sessionId);
+                            if (data.plan) sessionStorage.setItem("wayly_welcome_plan", data.plan);
+                        } catch (_) { /* ignore */ }
                         nav("/welcome", { replace: true });
                         return;
                     }

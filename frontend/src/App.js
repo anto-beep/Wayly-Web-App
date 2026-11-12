@@ -26,6 +26,7 @@ import AuthCallback from "@/pages/AuthCallback";
 import Layout from "@/components/Layout";
 import MarketingLayout from "@/components/MarketingLayout";
 import GoogleAds from "@/components/analytics/GoogleAds";
+import GtmRouteTracker from "@/components/analytics/GtmRouteTracker";
 
 // Everything else is route-level code-split. This was the single biggest
 // Lighthouse Performance fix in Phase 7 of the Feb 2026 audit, LCP went
@@ -399,6 +400,7 @@ function App() {
                 <BrowserRouter>
                 <ScrollToTop />
                 <GoogleAds />
+                <GtmRouteTracker />
                 <UxfRouteFocus />
                 <AppDocTitle />
                 <Toaster richColors position="top-right" />

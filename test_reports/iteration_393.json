@@ -1,0 +1,39 @@
+{
+  "summary": "GTM migration + Statement Decoder conversion funnel verified on web preview. GTM container is correctly gated (NOT loaded on preview host, zero network requests to googletagmanager.com/gtm.js or /g/collect). All six wayly_* dataLayer events fire correctly as [GTM:dry-run] console.debug pushes. Decoder tool + embed sample-decode flows produce exactly ONE wayly_decoder_started followed by exactly ONE wayly_decoder_completed with correct dimensions (input_method=sample, is_sample=true, surface=tool|embed). trial_started dedupe (iter_392 bug) is CONFIRMED FIXED — second /welcome visit with the same cs_test_dummy trial id produced ZERO additional wayly_trial_started pushes. page_view path sanitization works (/app/statements/<hex> → /app/statements/:id). No regressions: gtag (AW-18544177324), fbq, plausible, posthog, uetq all still present. Payloads contain ONLY allowed keys (event, environment, plan_type, input_method, surface, is_sample + page_path/page_title/page_location for page_view) — no PII. One minor finding: `authenticated` param is absent from decoder dry-run pushes on both tool and embed surfaces (spec says it should be a boolean on every decoder_* event).",
+  "platforms_tested": ["web"],
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "web": {
+      "ui_bugs": [],
+      "integration_issues": [
+        {
+          "flow": "decoder_* events authenticated param",
+          "issue": "The `authenticated` boolean is missing from every wayly_decoder_started / wayly_decoder_completed dry-run payload observed, on BOTH the public tool (/ai-tools/statement-decoder) and the homepage embed. Spec and comment in ga4.js both say the allow-list includes `authenticated (bool)`. Tool call site (StatementDecoderTool.jsx:231,238,267) passes `authenticated: !!user` which SHOULD be a boolean. Embed call sites (StatementDecoderEmbed.jsx:81,88,108) do NOT pass authenticated at all — anonymous visitors should still see authenticated=false. Observed tool payload: {event: wayly_decoder_started, environment: production, input_method: sample, surface: tool, is_sample: true}. Expected: ...authenticated: false. Non-blocking (GA4 will just have an empty dimension) but it does mean the funnel cannot segment anonymous vs. authenticated decode starts.",
+          "affected_selectors": ["[data-testid=sd-try-example]", "[data-testid=decoder-try-sample]", "[data-testid=decoder-submit]"]
+        }
+      ],
+      "design_issues": []
+    }
+  },
+  "parity_issues": [],
+  "test_report_links": [],
+  "action_items": [
+    "In /app/frontend/src/components/StatementDecoderEmbed.jsx add `authenticated: false` (embed is public → anonymous) to all three ga4Track.decoder* call sites so every decoder_* event carries authenticated=false on the embed.",
+    "Investigate why `authenticated: !!user` from StatementDecoderTool.jsx:231/238/267 is not reaching the dry-run payload (either the field is dropped before buildParams, or something is overriding it). Add a quick console.debug in buildParams if needed to confirm — the payloads definitely never include `authenticated` in the captured [GTM:dry-run] output. Once fixed, re-verify decoder flows still fire exactly once each with authenticated=false (anonymous) and authenticated=true (cathy@example.com upload flow).",
+    "Optional: verify sign_up event end-to-end — test agent could not complete /signup in this run because the form also requires First name + Last name (not filled). Core sign_up dedupe infrastructure is the same pushOnce() path proven working by the trial_started dedupe test. Main agent can self-test by filling the full signup form."
+  ],
+  "critical_code_review_comments": [
+    "ga4.js dlPush correctly gates production vs. dry-run and allow-lists event names. Good.",
+    "pushOnce localStorage dedupe key (wayly_ga4_sent_v1:<event>:<id>) is working — trial_started dedupe verified end-to-end, iter_392 bug is gone.",
+    "page_view safePath regex scrubs hex ids and numeric ids correctly. Verified on /app/statements/665f1c0abc1234567890deadbeef → /app/statements/:id.",
+    "Only missing piece: `authenticated` boolean is never emitted on decoder_* events — see action items."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "n/a", "frontend": "95%"},
+  "test_credentials": "No new credentials created; signup form not completed in this run (missing first/last name fields). Trial dedupe used primed sessionStorage with cs_test_dummy as outlined in the request.",
+  "seed_data_creation": "None",
+  "retest_needed": true,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "GTM preview gating, decoder tool+embed funnels, trial_started dedupe, and page_view path sanitization are ALL verified green on preview. The only outstanding item is the missing `authenticated` boolean on decoder_* dry-run payloads. Decoder sample decodes take ~30-60s end-to-end on preview — allow ≥90s before failing a completion assertion. Use page.on('console') with msg.args + json_value() to deserialize the pushed object — msg.text can elide falsy fields.",
+  "rca of the issue": "iter_392 trial_started double-fire: confirmed FIXED. Second /welcome visit with the same wayly_welcome_trial_id=cs_test_dummy produced zero wayly_trial_started pushes (localStorage dedupe key wayly_ga4_sent_v1:wayly_trial_started:cs_test_dummy held across the re-render)."
+}

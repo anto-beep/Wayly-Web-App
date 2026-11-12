@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useEffect, useState, useCallback } from "react";
 import { api, setAuthToken, setRefreshToken, setReadOnlyMode } from "@/lib/api";
 import { track } from "@/lib/analytics";
+import { ga4Track } from "@/lib/ga4";
 import { setSentryUser, clearSentryUser } from "@/lib/sentry";
 
 const AuthContext = createContext(null);
@@ -135,6 +136,16 @@ export function AuthProvider({ children }) {
         setUser(data.user);
         if (data?.user?.id) setSentryUser(data.user.id);
         try { track.login({ method: "google" }); track.identify(data.user); } catch (_) { /* analytics best-effort */ }
+        // GA4 sign_up for Google — only when this is a BRAND-NEW account.
+        // /auth/google is find-or-create, so we treat a just-created account
+        // (created_at within the last 2 minutes) as a signup; returning-user
+        // logins never count. Deduped by user id.
+        try {
+            const createdMs = data?.user?.created_at ? Date.parse(data.user.created_at) : NaN;
+            if (!Number.isNaN(createdMs) && (Date.now() - createdMs) < 120000) {
+                ga4Track.signUp(data.user.id, { signup_method: "google", plan_type: data.user.plan });
+            }
+        } catch (_) { /* analytics best-effort */ }
         await refreshHousehold();
         setLoading(false);
         return data.user;
