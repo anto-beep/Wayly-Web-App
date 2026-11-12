@@ -1,3 +1,11 @@
+**Just shipped to PREVIEW — NOT DEPLOYED (Nov 2026 — SEO & Conversion sprint P1+P2; WEB only; testing-agent iter394 PASS):**
+- CRITICAL MANDATE honoured: implemented + preview-tested only; nothing published. Awaiting founder approval before Publish. GTM/GA4 preserved, no PII.
+- P1 Statement Decoder refresh: new benefit H1 "Decode Your Support at Home Statement: Free to Try" (`data/toolContent.js`), refreshed meta (`seo/pageConfig.js`), and a NEW static inline anonymised sample output (`components/DecoderSampleResult.jsx`, testid `decoder-sample-output`) on `/ai-tools/statement-decoder` so visitors see a real decoded example without uploading; includes a clear free-vs-trial line.
+- P1 copy fix: free limit now reads "one free decode every 120 days" everywhere (was "per month"); corrected in `seoToolArticles.js` + `toolArticles2026.js`.
+- P2 accessibility/technical: fixed skipped heading levels on `/for-gps` and `/resources` (card H3→H2); verified canonicals, robots.txt, DocumentVault noindex, ABN 66 701 311 373 in footer, and global focus-visible states. The "missing React key in StatementDecoderEmbed" item was investigated and closed (no un-keyed list; no console warning).
+- Done earlier this sprint: P0 sitemap/article-routing fixes + Reassessment Letter routing/metadata.
+
+
 # Wayly — current fork status (Jun 2026)
 
 **Just shipped (Jun 2026 — Landing persona/decoder width + section reorder; WEB only; screenshot-verified):**

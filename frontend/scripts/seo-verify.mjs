@@ -81,6 +81,32 @@ if (!fs.existsSync(PRERENDER_FILE)) {
         );
         let missing = 0;
         const SITEMAP_EXEMPT_PREFIXES = ["/app/", "/app", "/login", "/signup", "/logout"];
+
+        // STRUCTURED-ARTICLE COMPLETENESS (drift guard): every article defined
+        // in the structured data MUST appear in sitemap.xml, independent of
+        // whether react-snap crawled it. Add an article and forget the sitemap
+        // and this fails the build. Fix with `yarn sitemap:generate`.
+        const dataDir = path.join(BUILD, "..", "src", "data");
+        let artChecked = 0, artMissing = 0;
+        for (const f of ["seoArticles2026.js", "seoToolArticles.js"]) {
+            const fp = path.join(dataDir, f);
+            if (!fs.existsSync(fp)) continue;
+            const src = fs.readFileSync(fp, "utf8");
+            for (const chunk of src.split(/slug:\s*["']/).slice(1)) {
+                const m = chunk.match(/^([a-z0-9][a-z0-9-]*)/);
+                if (!m) continue;
+                const win = chunk.slice(0, 2500);
+                const cp = win.match(/canonical_path:\s*["']([^"']+)["']/);
+                const p = (cp ? cp[1] : `/resources/articles/${m[1]}`).replace(/\/$/, "");
+                artChecked += 1;
+                if (!sitemapPaths.has(p)) {
+                    artMissing += 1;
+                    failures.push(`article "${m[1]}" (${p}) missing from sitemap.xml — run \`yarn sitemap:generate\` after adding articles`);
+                }
+            }
+        }
+        console.log(`Structured-article sitemap check: ${artChecked} articles, ${artMissing} missing.`);
+
         for (const route of Object.keys(manifest.routes || {})) {
             const data = manifest.routes[route];
             if (!data || !data.rootHtml) continue;

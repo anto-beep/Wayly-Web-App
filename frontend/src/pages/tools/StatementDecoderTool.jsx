@@ -20,6 +20,7 @@ import AIAccuracyBanner, { TOOL_DISCLAIMERS } from "@/components/AIAccuracyBanne
 import ProfileInlinePrompts from "@/components/ProfileInlinePrompts";
 import AcceptedFormatsPanel from "@/components/AcceptedFormatsPanel";
 import PhotoTipsAccordion from "@/components/PhotoTipsAccordion";
+import DecoderSampleResult from "@/components/DecoderSampleResult";
 
 import FilePreviewPanel from "@/components/FilePreviewPanel";
 import ReportIssueButton from "@/components/ReportIssueButton";
@@ -387,7 +388,7 @@ export default function StatementDecoderTool() {
                 </div>
                 )}
 
-                <div className="bg-surface border border-kindred rounded-2xl p-6">
+                <div id="decode" className="bg-surface border border-kindred rounded-2xl p-6">
                     <div className="flex gap-2 flex-wrap" role="tablist">
                         {[
                             { v: "text", label: "Paste text" },
@@ -665,6 +666,8 @@ export default function StatementDecoderTool() {
                         </div>
                     )}
                 </div>
+
+                {!result && <DecoderSampleResult />}
 
                 {/* How-to walkthrough video, plays for everyone (authed or not), web + mobile. */}
                 <section className="mt-16" data-testid="sd-how-to-video" aria-label="How to use the Statement Decoder">

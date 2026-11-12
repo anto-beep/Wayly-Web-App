@@ -35,7 +35,7 @@ const Card = ({ icon: Icon, title, body, href, count, testId, tone }) => (
             </div>
             <div className="flex-1">
                 <div className="flex items-baseline justify-between gap-3">
-                    <h3 className="font-heading text-xl">{title}</h3>
+                    <h2 className="font-heading text-xl">{title}</h2>
                     <span className="text-xs opacity-75 tabular-nums">{count}</span>
                 </div>
                 <p className="mt-2 text-sm leading-relaxed opacity-90">{body}</p>

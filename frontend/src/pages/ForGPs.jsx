@@ -37,7 +37,7 @@ export default function ForGPs() {
                     </div>
                     <div className="bg-surface-2 border border-kindred rounded-2xl p-8">
                         <Mail className="h-6 w-6 text-primary-k" />
-                        <h3 className="font-heading text-2xl text-primary-k mt-3">A small kindness from us to you</h3>
+                        <h2 className="font-heading text-2xl text-primary-k mt-3">A small kindness from us to you</h2>
                         <p className="mt-3 text-primary-k leading-relaxed">
                             Every participating GP gets free Family-tier Wayly for their own parent (or in-law) for as long as they keep the referral cards on the desk. That's roughly $470/year of value, on us, for the small loyalty of remembering us when a family looks lost.
                         </p>

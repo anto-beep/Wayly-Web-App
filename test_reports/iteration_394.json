@@ -1,0 +1,30 @@
+{
+  "summary": "P1 Statement Decoder refresh + P2 accessibility/technical verified on web preview. H1 'Decode Your Support at Home Statement: Free to Try' renders from ToolHero. The new static inline sample (decoder-sample-output) renders with badge, three fee tiles ($890/$0/$890), 4-row line-item table, 'Everything checked out' + 'One thing to know' notes, and both CTAs (decoder-sample-decode-cta -> #decode, decoder-sample-trial-cta -> /signup?plan=solo). '120 days' copy is consistent on decoder page, homepage StatementDecoderEmbed, tool plan badge ('1 free decode every 120 days · Unlimited with a Wayly plan'), and the article. No forbidden 'per month' / 'free decode a month' / 'first decode each month' strings on any tested page. Homepage embed rendered and ran the sample with zero React 'unique key prop' console warnings. Heading hierarchy: /for-gps goes H1->H2->H2->H3->H3->H3->H2 (no skip), /resources goes H1->H2(Articles)->H2(Glossary)->H2(Templates)->H2(Where to Start)->H3s (cards promoted to H2 as required), /resources/templates goes H1->H2->H3. Canonical on decoder page points to prod (https://wayly.com.au/ai-tools/statement-decoder) and no stray noindex. One note: Google Ads gtag.js (AW-18544177324) DOES load on the preview host; this is distinct from a GTM container (no GTM-XXX found) but main agent should confirm this is intended since the request said 'GTM must NOT load' on preview.",
+  "platforms_tested": ["web"],
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "web": {
+      "ui_bugs": [],
+      "integration_issues": [],
+      "design_issues": []
+    }
+  },
+  "parity_issues": [],
+  "test_report_links": ["/app/test_reports/iter394_decoder_page.jpeg"],
+  "action_items": [
+    "Clarify intent: Google Ads conversion gtag.js (AW-18544177324) loads on the preview host. The brief said 'on the preview host GTM must NOT load (prod-gated)'. No GTM container (GTM-XXX) was found, so if the prod-gate is scoped to GTM containers only and Google Ads conversion tracking is deliberately always-on, this can be dismissed. Otherwise gate AW-18544177324 as well.",
+    "Not retested in this pass (auth-gated, out of P1/P2 copy scope): verify /app/documents DocumentVault emits <meta name='robots' content='noindex, nofollow'> when logged in as cathy@example.com — recommended quick manual check."
+  ],
+  "critical_code_review_comments": [
+    "DecoderSampleResult.jsx is static and uses stable row keys (li.date + li.service) and STATS.map(s.label) — correctly keyed, no React warning.",
+    "StatementDecoderTool renders DecoderSampleResult only when !result, correctly hiding the static sample once a real decode completes.",
+    "ToolHero plan badge copy for statement-decoder is hard-coded correctly as '1 free decode every 120 days · Unlimited with a Wayly plan'."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "n/a (skipped)", "frontend": "100% (all P1/P2 copy + a11y checks pass)"},
+  "seed_data_creation": "none",
+  "retest_needed": false,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "Only the P1 (Statement Decoder H1, inline static sample, 120-day copy) and P2 (heading hierarchy /for-gps, /resources, /resources/templates; canonical on decoder) items were verified on web preview. Backend intentionally skipped per testing_type. Decoder sample-run regression on the embed also confirmed (no key-prop warning, sample completed without JS error). The /app/documents noindex check was NOT executed (would need an authenticated session with cathy@example.com).",
+  "rca of the issue": ""
+}

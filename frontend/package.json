@@ -71,6 +71,7 @@
     "prerender": "react-snap",
     "prerender:generate": "(react-snap || echo 'react-snap exited nonzero (hydration recheck); prerendered files were still written, continuing to extract') ; node scripts/prerender-generate.mjs",
     "prerender:check": "node scripts/prerender-check.mjs",
+    "sitemap:generate": "node scripts/gen-sitemap.mjs",
     "postbuild": "node scripts/prerender-apply.mjs && node scripts/seo-verify.mjs",
     "test": "craco test",
     "lint": "eslint \"src/**/*.{js,jsx}\" --max-warnings 0",

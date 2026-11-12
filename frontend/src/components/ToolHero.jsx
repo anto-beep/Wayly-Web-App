@@ -112,7 +112,7 @@ export default function ToolHero({ toolKey, wide = false }) {
                     <div className="min-w-0">
                         <div className="text-[0.68rem] font-semibold uppercase tracking-[0.18em]" style={{ color: eyebrowColor }}>Tool</div>
                         <h1 className="font-heading text-3xl sm:text-4xl lg:text-[2.75rem] text-primary-k tracking-tight leading-[1.05]" style={heroTitleStyle}>
-                            {c.name}
+                            {c.h1 || c.name}
                         </h1>
                     </div>
                 </div>

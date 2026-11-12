@@ -7,6 +7,11 @@
 export const TOOL_CONTENT = {
     "statement-decoder": {
         name: "Statement Decoder",
+        h1: "Decode Your Support at Home Statement: Free to Try",
+        heroCtas: [
+            { label: "Decode a statement free", href: "#decode", primary: true },
+            { label: "Try Wayly free for 7 days", href: "/signup?plan=solo", primary: false },
+        ],
         heroOneLiner:
             "Upload a Support at Home statement (formerly a Home Care Package) and get a plain-English read on every charge, with anything unusual flagged for you.",
         whatItDoes: [

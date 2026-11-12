@@ -25,17 +25,17 @@ export const SEO_TOOL_ARTICLES = [
         author: { name: "Wayly Editorial", role: "Wayly" },
         slug: "wayly-statement-decoder-support-at-home-statement-explained",
         title: "Wayly Statement Decoder: How to Read Your Support at Home Statement and Spot Hidden Charges",
-        excerpt: "The Wayly Statement Decoder reads your Support at Home statement, finds hidden charges and tells you the dollar impact. One free decode a month.",
+        excerpt: "The Wayly Statement Decoder reads your Support at Home statement, finds hidden charges and tells you the dollar impact. One free decode every 120 days.",
         meta: {
             title: "Wayly Statement Decoder: Read Your Aged Care Statement",
-            description: "The Wayly Statement Decoder reads your Support at Home statement, finds hidden charges and tells you the dollar impact. One free decode a month.",
+            description: "The Wayly Statement Decoder reads your Support at Home statement, finds hidden charges and tells you the dollar impact. One free decode every 120 days.",
         },
         key_takeaways: [
             "Under Support at Home, your provider must send a monthly statement showing funding available, services delivered, contributions and any unspent funds, by the last day of the following month.",
             "Statements are not bills. If a contribution is owed, it comes as a separate invoice.",
             "Common problems include duplicate charges, charges during a hospital stay, brokered service premiums and care management above the 10% cap.",
             "The Wayly Statement Decoder reads your statement and flags issues by severity, with a dollar figure attached to each one.",
-            "Wayly gives you one free decode a month, so you can try it before you commit.",
+            "Wayly gives you one free decode every 120 days, so you can try it before you commit.",
         ],
         intro_md: `If you have ever opened a parent's Support at Home statement and felt your eyes glaze over, you are not alone. The monthly statement is meant to give you a clear picture of how the quarterly budget is being spent, but the reality is pages of line items, codes and dollar figures that are hard to check. The Wayly Statement Decoder was built to do that checking for you.`,
         sections: [
@@ -87,7 +87,7 @@ If you are not satisfied, you have backup. The [Older Persons Advocacy Network](
             },
             {
                 heading: "Try the Wayly Statement Decoder",
-                body_md: `You do not need to become an aged care expert to check a statement. Upload your parent's latest Support at Home statement to the [Wayly Statement Decoder](/ai-tools/statement-decoder) and get a clear, plain English list of anything worth a question. Your first decode each month is free.`,
+                body_md: `You do not need to become an aged care expert to check a statement. Upload your parent's latest Support at Home statement to the [Wayly Statement Decoder](/ai-tools/statement-decoder) and get a clear, plain English list of anything worth a question. Your first decode is free, with no account needed.`,
             },
         ],
         howto: {
@@ -105,7 +105,7 @@ If you are not satisfied, you have backup. The [Older Persons Advocacy Network](
             { q: "Is a Support at Home statement the same as a bill?", a: "No. The statement is a summary of funding and services. If you owe a contribution, that comes as a separate invoice. You do not pay anything just because a statement arrives." },
             { q: "How often should I get a statement?", a: "Monthly. Your provider must give you a statement for each calendar month by the last day of the following month, even if no services were delivered." },
             { q: "What file types can the Wayly Statement Decoder read?", a: "You can upload a PDF, a photo, a Word document or a plain text file. Wayly reads the statement and returns line items plus a list of flagged issues." },
-            { q: "How much does the Wayly Statement Decoder cost?", a: "Wayly gives non logged in visitors and free plan users one free decode per month. That lets you try it on a real statement before deciding to do more." },
+            { q: "How much does the Wayly Statement Decoder cost?", a: "Wayly gives non logged in visitors and free plan users one free decode every 120 days. That lets you try it on a real statement before deciding to do more." },
             { q: "What does a HIGH flag mean?", a: "It means the issue has a clear dollar impact or a clear breach of the rules, like a duplicate charge or a service billed during a hospital stay. These are the items to raise with your provider first." },
             { q: "Can the Decoder tell me if I am being overcharged on price?", a: "It compares against published rates and flags brokered premiums and other anomalies. Since the 1 July 2026 price caps were deferred, there is no fixed government ceiling to check against, so the Decoder focuses on premiums, duplicates and rule breaches." },
         ],

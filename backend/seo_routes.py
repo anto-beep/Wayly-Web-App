@@ -45,51 +45,14 @@ STATIC_PAGES = [
     ("/legal/ai-intent",           "0.3", "yearly"),
     ("/legal/accessibility",       "0.3", "yearly"),
     ("/legal/cookies",             "0.3", "yearly"),
-    # SEO articles (Nov 2026)
-    ("/resources/articles/support-at-home-statement",         "0.8", "monthly"),
-    ("/resources/articles/home-care-package-vs-support-at-home", "0.8", "monthly"),
-    ("/resources/articles/support-at-home-costs-and-contributions", "0.8", "monthly"),
-    # SEO AI Tool articles (Feb 2026)
-    ("/resources/articles/wayly-statement-decoder-support-at-home-statement-explained", "0.8", "monthly"),
-    ("/resources/articles/wayly-budget-calculator-support-at-home-quarterly-budget", "0.8", "monthly"),
-    ("/resources/articles/wayly-provider-price-checker-support-at-home-prices", "0.8", "monthly"),
-    ("/resources/articles/wayly-classification-self-check-support-at-home-levels", "0.8", "monthly"),
-    ("/resources/articles/wayly-reassessment-letter-generator-support-at-home-reassessment", "0.8", "monthly"),
-    ("/resources/articles/wayly-contribution-estimator-support-at-home-fees", "0.8", "monthly"),
-    ("/resources/articles/wayly-care-plan-reviewer-support-at-home-care-plan", "0.8", "monthly"),
-    ("/resources/articles/wayly-family-coordinator-managing-parents-aged-care", "0.8", "monthly"),
-    # Where-to-Start & Invoice Checker articles (Feb 2026)
-    ("/resources/articles/support-at-home-vs-home-care-packages-what-changed", "0.9", "monthly"),
-    ("/resources/articles/three-streams-clinical-independence-everyday-living", "0.9", "monthly"),
-    ("/resources/articles/lifetime-contribution-cap-most-families-do-not-worry", "0.9", "monthly"),
-    ("/resources/articles/switching-support-at-home-provider-practical-playbook", "0.9", "monthly"),
-    ("/resources/articles/support-at-home-statement-flags-what-to-question", "0.9", "monthly"),
-    ("/resources/articles/when-to-request-support-at-home-reassessment", "0.9", "monthly"),
-    ("/resources/articles/sah-invoice-checker-verify-support-at-home-invoice-five-minutes", "0.9", "monthly"),
-    ("/resources/articles/nine-most-common-support-at-home-invoice-errors", "0.9", "monthly"),
     # New Invoice Checker tool page (INV-1 v1.2)
     ("/ai-tools/invoice-checker",                                              "0.9", "monthly"),
-    # Jun 2026, personal-care policy article, canonical at /articles/<slug>
-    ("/articles/support-at-home-personal-care-free-october-2026", "0.9", "monthly"),
-    # Jul 2026 · high-value editorial batch (contributions + switching providers)
-    ("/resources/articles/how-much-will-i-pay-for-support-at-home", "0.9", "monthly"),
-    ("/resources/articles/how-to-switch-support-at-home-provider", "0.9", "monthly"),
-    # Aug 2026 · policy + billing editorial batch
-    ("/resources/articles/chsp-extension-2029-what-it-means", "0.9", "monthly"),
-    ("/resources/articles/support-at-home-personal-care-free-1-october-2026", "0.9", "monthly"),
-    ("/resources/articles/support-at-home-statement-vs-invoice-explained", "0.9", "monthly"),
-    # Oct 2026 · pillar refresh (A1 + A6), figures live from INDEX-1
-    ("/resources/articles/support-at-home-explained", "0.9", "monthly"),
-    ("/resources/articles/support-at-home-no-worse-off", "0.9", "monthly"),
-    # Oct 2026 · complaints + AT-HM articles (templates library build)
-    ("/resources/articles/how-to-complain-about-aged-care-commission", "0.9", "monthly"),
-    ("/resources/articles/at-hm-scheme-assistive-technology-home-modifications", "0.9", "monthly"),
-    # Nov 2026 · HCP-BRIDGE-1 pillar + Home Care Package bridge articles
+    # Home Care Package transition pillar (HCP-BRIDGE-1)
     ("/home-care-packages",                                   "0.9", "monthly"),
-    ("/resources/articles/what-happened-to-my-home-care-package", "0.9", "monthly"),
-    ("/resources/articles/home-care-package-levels-support-at-home-classifications", "0.9", "monthly"),
-    ("/resources/articles/home-care-package-statement-vs-support-at-home-statement", "0.9", "monthly"),
-    ("/resources/articles/will-i-pay-more-under-support-at-home-than-home-care-package", "0.9", "monthly"),
+    # NOTE: every /resources/articles/* and /articles/* URL is AUTO-DERIVED
+    # from the frontend structured-article data (see _article_sitemap_entries),
+    # so the sitemap stays in lock-step with published articles and can never
+    # silently drift. Do NOT hand-list article URLs here.
     # Oct 2026 · Templates library (20 individual template pages)
     ("/resources/templates/support-at-home-statement-query-letter", "0.7", "monthly"),
     ("/resources/templates/rate-query-letter", "0.7", "monthly"),
@@ -178,18 +141,94 @@ STATIC_PAGE_MODIFIED = {
 }
 
 
+import json as _json
+import pathlib as _pathlib
+import re as _re
+
+_FRONTEND_DATA = _pathlib.Path(__file__).resolve().parent.parent / "frontend" / "src" / "data"
+_STRUCTURED_ARTICLE_FILES = ("seoArticles2026.js", "seoToolArticles.js")
+_ARTICLE_SNAPSHOT = _pathlib.Path(__file__).resolve().parent / "seo_articles_snapshot.json"
+
+
+def _is_article_path(path: str) -> bool:
+    return path.startswith("/resources/articles/") or path.startswith("/articles/")
+
+
+def _parse_structured_articles():
+    """Parse the frontend structured-article data for sitemap entries.
+
+    Returns a list of {"path", "lastmod"} dicts, or None when the frontend
+    source is not available (e.g. a production backend image without the
+    frontend tree), in which case the caller falls back to the committed
+    snapshot. This keeps the sitemap in lock-step with published articles so
+    it can never silently drift again.
+    """
+    files = [_FRONTEND_DATA / f for f in _STRUCTURED_ARTICLE_FILES]
+    if not all(p.exists() for p in files):
+        return None
+    seen = {}
+    for p in files:
+        txt = p.read_text(encoding="utf-8")
+        for chunk in _re.split(r'slug:\s*["\']', txt)[1:]:
+            m = _re.match(r'([a-z0-9][a-z0-9-]*)', chunk)
+            if not m:
+                continue
+            slug = m.group(1)
+            window = chunk[:2500]
+            cp = _re.search(r'canonical_path:\s*["\']([^"\']+)["\']', window)
+            up = _re.search(r'updated_at:\s*["\']([0-9-]+)["\']', window)
+            pub = _re.search(r'published_at:\s*["\']([0-9-]+)["\']', window)
+            path = cp.group(1) if cp else f"/resources/articles/{slug}"
+            lastmod = up.group(1) if up else (pub.group(1) if pub else None)
+            seen[path] = {"path": path, "lastmod": lastmod}
+    return sorted(seen.values(), key=lambda e: e["path"])
+
+
+def _article_sitemap_entries():
+    """Article sitemap entries: live-parsed from the frontend source in
+    dev/preview (always fresh), refreshed into a committed snapshot that is
+    used when the source is absent (production)."""
+    live = _parse_structured_articles()
+    if live is not None:
+        try:
+            payload = _json.dumps(live, indent=2)
+            if not _ARTICLE_SNAPSHOT.exists() or _ARTICLE_SNAPSHOT.read_text() != payload:
+                _ARTICLE_SNAPSHOT.write_text(payload)
+        except Exception:
+            pass
+        return live
+    if _ARTICLE_SNAPSHOT.exists():
+        try:
+            return _json.loads(_ARTICLE_SNAPSHOT.read_text())
+        except Exception:
+            return []
+    return []
+
+
 async def _build_sitemap_xml() -> str:
     today = datetime.now(timezone.utc).date().isoformat()
     out = ['<?xml version="1.0" encoding="UTF-8"?>',
            '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">']
 
     for path, priority, freq in STATIC_PAGES:
+        if _is_article_path(path):
+            continue
         lastmod = STATIC_PAGE_MODIFIED.get(path, today)
         out.append(
             f"  <url><loc>{SITE_DOMAIN}{path}</loc>"
             f"<lastmod>{lastmod}</lastmod>"
             f"<changefreq>{freq}</changefreq>"
             f"<priority>{priority}</priority></url>"
+        )
+
+    # Auto-derived article URLs (single source of truth = the structured
+    # article data; never hand-maintained here).
+    for art in _article_sitemap_entries():
+        lastmod = art.get("lastmod") or STATIC_PAGE_MODIFIED.get(art["path"]) or today
+        out.append(
+            f"  <url><loc>{SITE_DOMAIN}{art['path']}</loc>"
+            f"<lastmod>{lastmod}</lastmod>"
+            f"<changefreq>monthly</changefreq><priority>0.8</priority></url>"
         )
 
     # CMS articles
@@ -247,8 +286,19 @@ async def sitemap_entries() -> list[dict]:
     entries: list[dict] = []
 
     for path, _priority, _freq in STATIC_PAGES:
+        if _is_article_path(path):
+            continue
         entries.append({"url": f"{SITE_DOMAIN}{path}", "datePublished": None,
                         "dateModified": STATIC_PAGE_MODIFIED.get(path)})
+
+    # Auto-derived article URLs carry their real content dates, so IndexNow
+    # change-detection picks up new / updated articles automatically.
+    for art in _article_sitemap_entries():
+        entries.append({
+            "url": f"{SITE_DOMAIN}{art['path']}",
+            "datePublished": art.get("lastmod"),
+            "dateModified": art.get("lastmod"),
+        })
 
     async for a in db.cms_articles.find({"published": True}, {"_id": 0, "slug": 1, "updated_at": 1, "published_at": 1}):
         slug = a.get("slug")

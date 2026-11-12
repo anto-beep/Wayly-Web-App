@@ -83,9 +83,9 @@ export const SEO = {
 
     // ----- AI TOOLS (each is a SoftwareApplication) -----
     toolStatementDecoder: {
-        title: "Statement Decoder: Check A Support At Home Statement",
+        title: "Decode a Support at Home Statement Free | Wayly",
         description:
-            "Upload your Support at Home statement and Wayly's AI explains every charge in plain English, flags anomalies, double-billing and provider errors.",
+            "Decode a Support at Home statement in plain English and spot charges worth questioning. One free decode every 120 days, no signup, unlimited on a Wayly plan.",
         path: "/ai-tools/statement-decoder",
         toolName: "Statement Decoder",
         toolDesc:
@@ -156,6 +156,15 @@ export const SEO = {
         toolName: "Letters & Follow-ups",
         toolDesc:
             "Draft letters to My Aged Care, providers, ACQSC, or the Ombudsman. Track responses and escalate on time.",
+    },
+    toolReassessmentLetter: {
+        title: "Support at Home Reassessment Letter Generator | Wayly",
+        description:
+            "Draft a clear Support at Home reassessment request in minutes. Wayly helps Australian families prepare an editable letter and organise their next steps.",
+        path: "/ai-tools/reassessment-letter",
+        toolName: "Reassessment Letter Generator",
+        toolDesc:
+            "Draft a clear, editable Support at Home reassessment request to My Aged Care in minutes, and organise the next steps.",
     },
     toolContribution: {
         title: "Contribution Estimator: Support At Home Fees | Wayly",
