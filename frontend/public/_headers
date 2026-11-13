@@ -22,3 +22,18 @@
   Cache-Control: no-cache, no-store, must-revalidate
 /index.html
   Cache-Control: no-cache, no-store, must-revalidate
+
+# Favicons / app icons: short, revalidating cache so brand updates propagate
+# on the next deploy instead of being pinned for a year.
+/favicon.ico
+  Cache-Control: public, max-age=3600, must-revalidate
+/favicon-48.png
+  Cache-Control: public, max-age=3600, must-revalidate
+/favicon-96.png
+  Cache-Control: public, max-age=3600, must-revalidate
+/apple-touch-icon.png
+  Cache-Control: public, max-age=3600, must-revalidate
+/icon-192.png
+  Cache-Control: public, max-age=86400, must-revalidate
+/icon-512.png
+  Cache-Control: public, max-age=86400, must-revalidate

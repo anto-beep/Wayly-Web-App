@@ -8298,3 +8298,15 @@ Implements exactly ONE behaviour-based lifecycle journey on the real production 
 - **server.py**: outbox `_send_fn` now consults `marketing_frequency.can_send_now` + `record_send` for marketing-category messages; frequency indexes created on startup.
 - **Tests**: `tests/test_phase2_lifecycle_iter397.py` (20 tests, isolated throwaway DB `<DB_NAME>_phase2t`, mocked sends) — caps, trial quota, fail-closed hash, full gating, selection, first-use, win-back convert, idempotency, exact copy snapshots. Phase 1 unit tests updated for the tightened contract (clear_suppression + email_verified). ALL PASS. No real emails sent (deliver monkeypatched; lifecycle OFF; outbox worker OFF).
 
+
+## Jun 2026 — Favicon brand fix (PREVIEW DONE, needs Publish to reach wayly.com.au)
+Replaced the stale blue-V favicon with the correct teal Wayly "W" (cream bg + orange accent) pack. Favicon-only change; no other branding/website/mobile edits.
+- **Root public assets placed**: `/favicon.ico` (regenerated multi-resolution 16/32/48/64 from the teal-W source, image/x-icon, 11192 bytes), `/favicon-48.png`, `/favicon-96.png`, `/apple-touch-icon.png` (180px), `/icon-192.png`, `/icon-512.png`. Branding/favicon copies synced to the new pack so no stale blue-V remains anywhere.
+- **`public/index.html` `<head>`**: now declares `/favicon.ico` (sizes=any) + `/favicon-48.png` (48x48) + `/favicon-96.png` (96x96) + `/apple-touch-icon.png` (180x180) + manifest. Removed old `/branding/favicon/*` 16/32 refs. Being static head, it applies to every public route (/, /resources, /faq, /articles, /ai-tools, …) in this SPA.
+- **`manifest.json`**: PWA icons now `/icon-192.png` + `/icon-512.png` (any + maskable); shortcut icons updated. 
+- **`sw.js`**: shell asset → `/favicon.ico`; cache bumped shell/runtime v1→v2 so clients refetch.
+- **`_headers`**: added short, revalidating Cache-Control for favicon/app-icon paths so future brand updates aren't pinned for a year.
+- **Left intact (correct branding, not favicons)**: JSON-LD Organization `logo` → `/branding/png/wayly-mark-512.png` across SEO pages + PDF export lockup.
+- **Verified in preview** (statement-renderer.preview.emergentagent.com): all six icon URLs HTTP 200 w/ correct content types, served view-source head correct, rendered `/favicon.ico` = teal W (not blue V), robots.txt allows all paths, no auth/captcha.
+- **Production (wayly.com.au) BEFORE fix**: `/favicon.ico` = 462-byte blue-V; `/favicon-48/96.png`, `/icon-192/512.png` 404 → SPA HTML fallback (text/html). **Requires one more Publish** to go live; CDN cache purge + Google/Bing recrawl are outside agent control.
+
