@@ -1,0 +1,49 @@
+{
+  "summary": "Final BOS production-readiness regression + 2 new features. Backend pytest 16/16 real tests passed (1 skipped — /admin/growth/publicity not mounted in this build). NEW trend sparklines verified end-to-end: /trends returns series (list[int], len=8, non-negative) for the 5 count metrics on 7d/30d/90d and series=null for marketing_spend_aud; pct_change is None (honest N/A) when previous=0. NEW auto-briefing verified: /briefing/latest?type=daily returns auto_generated=true with facts/snapshot/recommendations; calling it twice returns IDENTICAL stored_at (idempotent); weekly also works; on-demand /briefing still works. Decimal128 fix regression PASSED — GET /api/admin/marketing/campaigns/{id} now returns 200 after approved_budget_aud is set, with the budget serialised as a plain float (via _campaign_public). Core BOS regression PASSED: TOTP admin login, /summary, /approvals (drafts excluded), help_articles public list returns 15, /marketing/summary numeric totals, support tickets list requires auth, support ai-draft requires auth, growth content create+ai-draft, bos_approvals list shape. Web verified via Playwright on /admin/command-centre: 5 sparklines rendered, all 6 trend cards present, data-testid cc-brief-auto visible with 'Auto-generated — waiting for you', all section testIDs present. ALL ZZTEST synthetic records hard-deleted after the run (including a stale ZZTEST campaign left over from iter400).",
+  "platforms_tested": ["web"],
+  "backend_issues": {
+    "critical": [],
+    "minor": [
+      {"endpoint": "POST /api/admin/growth/publicity", "issue": "Returns 404 in this preview build — pipeline publicity test skipped. If the route is intentionally gated, remove /admin/growth/publicity from the public BOS surface; otherwise mount it. Not blocking (growth_pipeline router already exists for other endpoints)."}
+    ]
+  },
+  "frontend_issues": {
+    "web": {
+      "ui_bugs": [],
+      "integration_issues": [],
+      "design_issues": [
+        {"screen": "/admin/command-centre", "issues": ["Cookie consent banner from the public site overlays the bottom of the admin shell — admin routes should suppress the public cookie bar, otherwise it can cover the integration-health card on short viewports. Not blocking but noticeable."]}
+      ]
+    },
+    "mobile": {"ui_bugs": [], "integration_issues": [], "design_issues": [], "react_native_issues": []}
+  },
+  "parity_issues": [],
+  "test_report_links": [
+    "/app/backend/tests/test_bos_iter401_final.py",
+    "/app/test_reports/pytest/iter401_bos.xml",
+    "/app/test_reports/iter401_command_centre.png"
+  ],
+  "action_items": [
+    "LOW: Mount or formally remove /api/admin/growth/publicity if publicity is expected to be user-editable from the pipeline UI (today only /ai-pitch etc may exist). Observed 404 on POST /admin/growth/publicity in this build.",
+    "LOW: On admin routes, suppress the public cookie-consent banner (it overlays admin content on short screens)."
+  ],
+  "critical_code_review_comments": [
+    "Sparkline implementation is correct: _bucketed_counts builds N equal time-slices across [start,end) and the last bucket closes at end — no off-by-one gap; values are counts (ints) which the test asserts.",
+    "Decimal128 fix is done via a central _campaign_public() helper that walks k:v and converts Decimal128 → float via to_aud — same pattern as _expense_public. Future money fields on the campaign doc will be auto-handled.",
+    "/briefing/latest idempotency key = daily:<Sydney date> OR weekly:<ISO-year-week> with a unique index on bos_briefings.key + upsert — correct and timezone-aware; repeat calls read the stored doc first and return the same stored_at.",
+    "pct_change honestly returns None when previous=0 — verified across all metrics; UI renders N/A (never a misleading %).",
+    "/trends does not auto-send/publish anything; /briefing/latest only generates+stores a fact-separated briefing (recommendations are advisory text, not executions). Approval != execution gating preserved.",
+    "help_articles public list stays at 15 published — untouched.",
+    "The ZZTEST cleanup in this iteration also removed one stale ZZTEST campaign left over from iter400 (ZZTEST campaign 1562e634) — recommend making iter400's teardown hard-fail if any created id is still in Mongo at exit, so the next regression can trust the baseline."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_bos_iter401_final.py"
+  ],
+  "success_rate": {"backend": "100% (16/16 — 1 skipped for missing route)", "frontend": "100% (all required testIDs present on /admin/command-centre)"},
+  "test_credentials": "admin hello@wayly.com.au / Admin!2026 + TOTP M5A7R2XCCEXWYYKNJY55MVZYUHPYFA6W — used end-to-end.",
+  "seed_data_creation": "Created 1 ZZTEST marketing_campaign (with approved budget) + 1 ZZTEST growth_content during this run. Both hard-deleted via direct Mongo delete scoped to ZZTEST markers after the run. Additionally cleaned up 1 ZZTEST campaign left over from iter400. Final ZZTEST count across marketing_campaigns/marketing_expenses/growth_content/growth_seo_opportunities/publicity_items/partnerships/experiments/recommendations/bos_approvals = 0. No seed/reset scripts were run; no real records touched. help_articles (15 published) untouched.",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "All iter400 and iter401 scope now GREEN. Backend regression file lives at /app/backend/tests/test_bos_iter401_final.py — safe to re-run for future regressions. If /admin/growth/publicity gets mounted later, flip the skipped test to assert status_code in (200,201).",
+  "rca of the issue": "N/A — no outstanding bugs. The previously-failing Decimal128 campaign GET is now fixed via _campaign_public() and confirmed 200 with numeric approved_budget_aud (1234.56 round-trip)."
+}

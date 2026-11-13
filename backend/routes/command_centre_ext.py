@@ -26,7 +26,7 @@ from motor.motor_asyncio import AsyncIOMotorClient
 from pydantic import BaseModel, Field
 
 from bos_core import (period_range, previous_range, pct_change, sla_target_hours,
-                      BUSINESS_TZ, now_utc)
+                      BUSINESS_TZ, now_utc, syd_now)
 
 logger = logging.getLogger(__name__)
 _client = AsyncIOMotorClient(os.environ["MONGO_URL"])
@@ -93,7 +93,91 @@ async def _marketing_window_total(start: datetime, end: datetime) -> float:
 async def _trend_metric(key: str, label: str, current: float, previous: float, source: str) -> dict:
     return {"key": key, "label": label, "current": current, "previous": previous,
             "change": round(current - previous, 2),
-            "pct_change": pct_change(current, previous), "source": source}
+            "pct_change": pct_change(current, previous), "source": source, "series": None}
+
+
+async def _bucketed_counts(coll: str, field: str, start: datetime, end: datetime,
+                           extra: Optional[dict] = None, n: int = 8) -> List[int]:
+    """Count docs per equal time-slice across [start,end) — for sparklines."""
+    total = (end - start).total_seconds()
+    if total <= 0:
+        return [0] * n
+    step = total / n
+    out: List[int] = []
+    for i in range(n):
+        b0 = start + timedelta(seconds=step * i)
+        b1 = end if i == n - 1 else start + timedelta(seconds=step * (i + 1))
+        q: Dict[str, Any] = {field: {"$gte": b0.isoformat(), "$lt": b1.isoformat()}}
+        if extra:
+            q.update(extra)
+        out.append(await db[coll].count_documents(q))
+    return out
+
+
+async def _pending_approvals_count() -> int:
+    n = await db.help_articles.count_documents({"status": "in_review"})
+    n += await db.marketing_expenses.count_documents({"status": "planned", "voided": {"$ne": True}})
+    n += await db.bos_approvals.count_documents(
+        {"status": {"$in": ["submitted", "pending_approval", "changes_requested"]}})
+    return n
+
+
+def _briefing_key(type_: str) -> str:
+    now = syd_now()
+    if type_ == "weekly":
+        iso = now.isocalendar()
+        return f"weekly:{iso[0]}-W{iso[1]:02d}"
+    return f"daily:{now.date().isoformat()}"
+
+
+async def _store_briefing(data: dict) -> None:
+    key = _briefing_key(data["type"])
+    await db.bos_briefings.update_one(
+        {"key": key}, {"$set": {"key": key, "type": data["type"], "data": data,
+                                "stored_at": _now()}}, upsert=True)
+
+
+async def _compute_briefing(type_: str) -> dict:
+    if type_ == "weekly":
+        start, end, label = period_range("7d")
+    else:
+        end = now_utc()
+        start = end - timedelta(days=1)
+        label = "Last 24 hours"
+    facts = {
+        "new_signups": await _count_in_window("users", "created_at", start, end),
+        "new_subscriptions": await _count_in_window("subscriptions", "created_at", start, end),
+        "new_enquiries": await _count_in_window("contact_requests", "created_at", start, end),
+        "tickets_created": await _count_in_window("sup_tickets", "created_at", start, end),
+        "marketing_spend_aud": await _marketing_window_total(start, end),
+    }
+    await generate_alerts()
+    active_alerts = await db.bos_alerts.count_documents({"status": "active"})
+    pending = await _pending_approvals_count()
+    open_tickets = await db.sup_tickets.count_documents({"status": {"$in": OPEN_TICKET_STATES}})
+    paid_subs = await db.subscriptions.count_documents({"status": "active"})
+    trials = await db.subscriptions.count_documents({"status": "trialing"})
+    recs: List[str] = []
+    if pending:
+        recs.append(f"Review {pending} item(s) in the Approval Centre.")
+    if active_alerts:
+        recs.append(f"{active_alerts} active alert(s) need attention — start with critical/high.")
+    if facts["new_enquiries"] and facts["tickets_created"] == 0:
+        recs.append("New enquiries arrived — ensure they are being followed up.")
+    if not recs:
+        recs.append("No urgent actions detected in this window.")
+    return {
+        "type": type_,
+        "period": {"label": label, "from": start.isoformat(), "to": end.isoformat(), "timezone": BUSINESS_TZ},
+        "facts": facts,
+        "snapshot": {"paid_subscribers": paid_subs, "active_trials": trials,
+                     "open_tickets": open_tickets, "active_alerts": active_alerts,
+                     "pending_approvals": pending},
+        "recommendations": recs,
+        "generated_at": _now(),
+        "note": "Facts are computed from stored records for the stated window. "
+                "Recommendations are rule-based suggestions, not statements of fact.",
+    }
 
 
 # --------------------------------------------------------------------------- SLA (corrected)
@@ -136,6 +220,7 @@ async def ensure_indexes() -> None:
         await db.bos_alerts.create_index("dedup_key", unique=True)
         await db.bos_alerts.create_index("status")
         await db.bos_alerts.create_index("severity")
+        await db.bos_briefings.create_index("key", unique=True)
     except Exception as exc:  # pragma: no cover
         logger.warning("bos_alerts index skipped: %s", exc)
 
@@ -302,6 +387,17 @@ def build_command_centre_ext_router():
                 await _marketing_window_total(start, end),
                 await _marketing_window_total(p_start, p_end), "marketing_expenses"),
         ]
+        series_specs = {
+            "new_signups": ("users", "created_at", None),
+            "new_subscriptions": ("subscriptions", "created_at", None),
+            "cancellations": ("subscriptions", "updated_at", cancelled_q),
+            "new_enquiries": ("contact_requests", "created_at", None),
+            "tickets_created": ("sup_tickets", "created_at", None),
+        }
+        for m in metrics:
+            spec = series_specs.get(m["key"])
+            if spec:
+                m["series"] = await _bucketed_counts(spec[0], spec[1], start, end, spec[2])
         return {
             "period": {"label": label, "from": start.isoformat(), "to": end.isoformat(),
                        "timezone": BUSINESS_TZ},
@@ -432,51 +528,22 @@ def build_command_centre_ext_router():
 
     @r.get("/briefing")
     async def briefing(type: str = "daily", admin: dict = Depends(require_super_or_ops)):
-        period = "7d" if type == "weekly" else "custom"
-        if type == "weekly":
-            start, end, label = period_range("7d")
-        else:
-            end = now_utc()
-            start = end - timedelta(days=1)
-            label = "Last 24 hours"
-        p_start, p_end = previous_range(start, end)
+        """On-demand generation (also stores today's copy)."""
+        data = await _compute_briefing(type)
+        await _store_briefing(data)
+        return data
 
-        facts = {
-            "new_signups": await _count_in_window("users", "created_at", start, end),
-            "new_subscriptions": await _count_in_window("subscriptions", "created_at", start, end),
-            "new_enquiries": await _count_in_window("contact_requests", "created_at", start, end),
-            "tickets_created": await _count_in_window("sup_tickets", "created_at", start, end),
-            "marketing_spend_aud": await _marketing_window_total(start, end),
-        }
-        await generate_alerts()
-        active_alerts = await db.bos_alerts.count_documents({"status": "active"})
-        pending = await approval_centre(admin)
-        open_tickets = await db.sup_tickets.count_documents({"status": {"$in": OPEN_TICKET_STATES}})
-        paid_subs = await db.subscriptions.count_documents({"status": "active"})
-        trials = await db.subscriptions.count_documents({"status": "trialing"})
-
-        # Rule-based recommendations — clearly separated from facts, never fabricated.
-        recs: List[str] = []
-        if pending["count"]:
-            recs.append(f"Review {pending['count']} item(s) in the Approval Centre.")
-        if active_alerts:
-            recs.append(f"{active_alerts} active alert(s) need attention — start with critical/high.")
-        if facts["new_enquiries"] and facts["tickets_created"] == 0:
-            recs.append("New enquiries arrived — ensure they are being followed up.")
-        if not recs:
-            recs.append("No urgent actions detected in this window.")
-
-        return {
-            "type": type, "period": {"label": label, "from": start.isoformat(),
-                                     "to": end.isoformat(), "timezone": BUSINESS_TZ},
-            "facts": facts,
-            "snapshot": {"paid_subscribers": paid_subs, "active_trials": trials,
-                         "open_tickets": open_tickets, "active_alerts": active_alerts,
-                         "pending_approvals": pending["count"]},
-            "recommendations": recs,
-            "generated_at": _now(),
-            "note": "Facts are computed from stored records for the stated window. "
-                    "Recommendations are rule-based suggestions, not statements of fact.",
-        }
+    @r.get("/briefing/latest")
+    async def briefing_latest(type: str = "daily", admin: dict = Depends(require_super_or_ops)):
+        """Auto-generated briefing waiting each Australia/Sydney morning. Generates
+        and stores once per day/week on first view (idempotent, no external send,
+        no extra scheduler)."""
+        key = _briefing_key(type)
+        existing = await db.bos_briefings.find_one({"key": key}, {"_id": 0})
+        if existing:
+            return {**existing["data"], "auto_generated": True, "stored_at": existing.get("stored_at")}
+        data = await _compute_briefing(type)
+        await _store_briefing(data)
+        return {**data, "auto_generated": True, "stored_at": _now()}
 
     return r

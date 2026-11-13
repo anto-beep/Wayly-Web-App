@@ -19,7 +19,7 @@ const GA_ADS_ID = "AW-18544177324";
 const CONSENT_KEY = "wayly_cookie_consent";
 
 // Signed-in app / dashboard shells — the Google tag must NOT load here.
-const APP_PREFIXES = ["/app", "/onboarding", "/journey"];
+const APP_PREFIXES = ["/app", "/onboarding", "/journey", "/admin", "/settings", "/billing"];
 
 function isAppRoute(pathname) {
     return APP_PREFIXES.some((p) => pathname === p || pathname.startsWith(p + "/"));

@@ -50,6 +50,19 @@ function Metric({ label, value }) {
     );
 }
 
+function Sparkline({ data }) {
+    if (!data || data.length < 2) return null;
+    const w = 96, h = 26;
+    const max = Math.max(...data, 1), min = Math.min(...data, 0);
+    const span = max - min || 1;
+    const pts = data.map((v, i) => `${((i / (data.length - 1)) * w).toFixed(1)},${(h - ((v - min) / span) * (h - 3) - 1).toFixed(1)}`).join(" ");
+    return (
+        <svg width={w} height={h} viewBox={`0 0 ${w} ${h}`} style={{ display: "block", marginTop: 8 }} data-testid="cc-sparkline" aria-hidden="true">
+            <polyline points={pts} fill="none" stroke="#0E4D52" strokeWidth="1.5" strokeLinejoin="round" strokeLinecap="round" />
+        </svg>
+    );
+}
+
 function TrendCard({ m }) {
     const up = m.pct_change != null && m.pct_change > 0;
     const down = m.pct_change != null && m.pct_change < 0;
@@ -65,6 +78,7 @@ function TrendCard({ m }) {
                 <span>{m.pct_change == null ? "N/A" : `${m.pct_change > 0 ? "+" : ""}${m.pct_change}%`}</span>
                 <span style={{ color: "var(--admin-muted)" }}>vs prev ({isMoney ? aud(m.previous) : m.previous})</span>
             </div>
+            <Sparkline data={m.series} />
         </div>
     );
 }
@@ -84,15 +98,16 @@ export default function AdminCommandCentre() {
 
     const loadCore = useCallback(async () => {
         try {
-            const [s, al, ap, nd, ig] = await Promise.all([
+            const [s, al, ap, nd, ig, br] = await Promise.all([
                 adminApi.get("/admin/command-centre/summary"),
                 adminApi.get("/admin/command-centre/alerts"),
                 adminApi.get("/admin/command-centre/approvals"),
                 adminApi.get("/admin/command-centre/needs-attention"),
                 adminApi.get("/admin/command-centre/integrations"),
+                adminApi.get("/admin/command-centre/briefing/latest", { params: { type: "daily" } }),
             ]);
             setData(s.data); setAlerts(al.data); setApprovals(ap.data);
-            setNeeds(nd.data); setIntegrations(ig.data);
+            setNeeds(nd.data); setIntegrations(ig.data); setBriefing(br.data);
         } catch (e) {
             setErr(extractMsg(e, "Could not load the command centre."));
         }
@@ -289,7 +304,10 @@ export default function AdminCommandCentre() {
                     <div style={{ color: "var(--admin-muted)", fontSize: 13 }}>Generate an on-demand briefing for the selected window.</div>
                 ) : (
                     <div data-testid="cc-brief-result">
-                        <div style={{ fontSize: 12, color: "var(--admin-muted)", marginBottom: 8 }}>{briefing.period.label} · {briefing.period.timezone}</div>
+                        <div style={{ fontSize: 12, color: "var(--admin-muted)", marginBottom: 8 }}>
+                            {briefing.period.label} · {briefing.period.timezone}
+                            {briefing.auto_generated && <span style={{ marginLeft: 8, fontSize: 11, color: "#2f7d4a", fontWeight: 600 }} data-testid="cc-brief-auto">● Auto-generated — waiting for you</span>}
+                        </div>
                         <div style={{ fontWeight: 700, fontSize: 13, marginBottom: 4 }}>Facts</div>
                         <div style={{ display: "flex", gap: 14, flexWrap: "wrap", marginBottom: 10 }}>
                             <Metric label="New signups" value={briefing.facts.new_signups} />

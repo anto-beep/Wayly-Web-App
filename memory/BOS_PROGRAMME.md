@@ -39,3 +39,6 @@ No auto-send / auto-publish / auto-outreach / ad-budget or billing changes. Hone
 - [DONE] Phase 3A.3 AI Support fixed+tested (iteration_399).
 - [DONE] 5A.1, 5A.2, 4A, 4B built + tested (iteration_400, 1 bug fixed). Preview only, awaiting founder approval to Publish.
 - Consolidated report: /app/memory/BOS_IMPLEMENTATION_REPORT.md
+- [DONE] Trend sparklines + auto daily/weekly briefing (bos_briefings, lazy idempotent) + cookie-banner fix on /admin. testing-agent iteration_401 (16/16) + deployment-agent PASS.
+- [GATE] Go-Live Readiness Report: /app/memory/BOS_GOLIVE_READINESS_REPORT.md — CONDITIONAL GO. Publish NOT executed; awaiting founder approval. Preview↔prod DBs are SEPARATE: redeploy ships code only → run scripts/seed_help_articles_prod.py post-Publish to put the 15 articles in prod. Ensure EMERGENT_LLM_KEY in prod.
+- [POST-GOLIVE] Connect Analytics (GA4 + GSC read-only) — needs founder authorised access; build via integration_expert, collect creds via secure secrets.
