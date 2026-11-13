@@ -5,7 +5,7 @@ import "./admin.css";
 import {
     LayoutDashboard, Users, CreditCard, Bot, Headphones, Megaphone, FileText,
     LineChart, Lock, Settings, UserCog, Search, Bell, LogOut, ShieldAlert,
-    Menu, Mail,
+    Menu, Mail, Inbox, Gauge,
 } from "lucide-react";
 import { AdminAuthProvider, useAdminAuth, adminApi } from "./AdminAuthContext";
 import AdminLogin from "./AdminLogin";
@@ -17,6 +17,14 @@ const NAV = [
     {
         section: null,
         items: [{ to: "/admin", label: "Overview", icon: LayoutDashboard, end: true, testid: "admin-nav-overview" }],
+    },
+    {
+        section: "Founder",
+        items: [
+            { to: "/admin/command-centre", label: "Command Centre", icon: Gauge, testid: "admin-nav-command-centre" },
+            { to: "/admin/marketing-spend", label: "Marketing Spend", icon: Megaphone, testid: "admin-nav-marketing-spend" },
+        ],
+        rolesAllowed: ["super_admin", "operations_admin"],
     },
     {
         section: "User Management",
@@ -47,6 +55,7 @@ const NAV = [
     {
         section: "Support",
         items: [
+            { to: "/admin/support-inbox", label: "Unified Inbox", icon: Inbox, testid: "admin-nav-support-inbox" },
             { to: "/admin/enquiries", label: "Enquiries", icon: Mail, testid: "admin-nav-enquiries" },
             { to: "/admin/support", label: "Support", icon: Headphones, testid: "admin-nav-support" },
             { to: "/admin/macros", label: "Macros", icon: FileText, testid: "admin-nav-macros" },
@@ -309,6 +318,9 @@ import AdminSecurityAlerts from "./AdminSecurityAlerts";
 import AdminEnquiries from "./AdminEnquiries";
 import AdminErrorBoundary from "./AdminErrorBoundary";
 import { AdminSupport, AdminSupportDetail, AdminSupportDefects, AdminSupportMacros } from "./AdminSupport";
+import AdminSupportInbox from "./AdminSupportInbox";
+import AdminMarketingSpend from "./AdminMarketingSpend";
+import AdminCommandCentre from "./AdminCommandCentre";
 
 function AdminRoutes() {
     return (
@@ -358,6 +370,10 @@ function AdminRoutes() {
                 <Route path="support/defects" element={<AdminSupportDefects />} />
                 <Route path="support/macros" element={<AdminSupportMacros />} />
                 <Route path="support/:ticketId" element={<AdminSupportDetail />} />
+                {/* Phase 3A.1 unified inbox + Phase 5A Founder Command Centre */}
+                <Route path="support-inbox" element={<AdminSupportInbox />} />
+                <Route path="command-centre" element={<AdminCommandCentre />} />
+                <Route path="marketing-spend" element={<AdminMarketingSpend />} />
                 {/* P0 + P1 pages (AdminPhaseB) */}
                 {P0P1_ROUTES.map((r) => <Route key={r.path} path={r.path} element={r.element} />)}
                 {/* Fallback placeholders for any nav entry that remains unbuilt */}
@@ -375,6 +391,7 @@ function AdminRoutes() {
                         "feature-flags", "health", "maintenance", "admins",
                         "blog", "glossary", "templates-library", "changelog",
                         "seo/indexnow", "support", "enquiries",
+                        "support-inbox", "command-centre", "marketing-spend",
                     ].includes(path) || P0P1_BUILT_PATHS.has(path)) return null;
                     return <Route key={it.to} path={path} element={<Placeholder label={it.label} />} />;
                 })}

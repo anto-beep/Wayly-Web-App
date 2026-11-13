@@ -8037,6 +8037,31 @@ except Exception as _e:
     import logging as _logging
     _logging.getLogger("wayly").warning(f"routes.support failed to load: {_e}")
 
+# Phase 3A.1 — Unified Support Inbox (read-only aggregation across sup_* +
+# website enquiries + legacy tickets)
+try:
+    from routes.support_inbox import build_support_inbox_router
+    api.include_router(build_support_inbox_router())
+except Exception as _e:
+    import logging as _logging
+    _logging.getLogger("wayly").warning(f"routes.support_inbox failed to load: {_e}")
+
+# Phase 5A — Marketing Spend & Investment Register (admin-only)
+try:
+    from routes.marketing_spend import build_marketing_spend_router
+    api.include_router(build_marketing_spend_router())
+except Exception as _e:
+    import logging as _logging
+    _logging.getLogger("wayly").warning(f"routes.marketing_spend failed to load: {_e}")
+
+# Milestone C — Founder Command Centre MVP (read-only aggregation)
+try:
+    from routes.command_centre import build_command_centre_router
+    api.include_router(build_command_centre_router())
+except Exception as _e:
+    import logging as _logging
+    _logging.getLogger("wayly").warning(f"routes.command_centre failed to load: {_e}")
+
 # Participant Contacts (UI-1 §8)
 try:
     from routes.participant_contacts import build_contacts_router
