@@ -396,6 +396,16 @@ async def signup(payload: SignupRequest, request: Request):
         })
     except Exception as _ce:
         logger.warning("signup consent event write failed: %s", _ce)
+    # Explicit affirmative consent at signup clears any prior OPT-OUT tombstone
+    # (a manual unsubscribe or an earlier account-deletion opt-out) for this
+    # address — but NEVER a hard complaint/bounce. Account creation WITHOUT
+    # consent clears nothing (recreation alone can't remove an opt-out).
+    if payload.marketing_consent:
+        try:
+            from lib.email_governance import clear_optout_tombstones as _clear_optout
+            await _clear_optout(db, user_doc["email"])
+        except Exception as _te:
+            logger.warning("signup opt-in tombstone clear failed: %s", _te)
     # Fire-and-forget, failures here shouldn't block signup (Resend hiccups,
     # mocked preview, etc.). The user can request another email from the
     # banner if needed.
@@ -9233,8 +9243,16 @@ async def _start_email_outbox_worker():
             return
         import asyncio as _aio
         import email_service as _es
+        from lib.email_governance import can_send_marketing as _csm
 
         async def _send_fn(msg):
+            # At-send eligibility gate for MARKETING-category messages: a
+            # consent/unsubscribe/suppression change AFTER enqueue must still be
+            # honoured. Transactional messages are never gated here.
+            if msg.get("category") == "marketing":
+                ok_now, _reason = await _csm(db, email=msg.get("to"))
+                if not ok_now:
+                    return {"ok": True, "skipped": True, "id": None, "ambiguous": False}
             return await _es.deliver(
                 to=msg["to"], subject=msg["subject"], html=msg["html"],
                 headers=msg.get("headers") or None,

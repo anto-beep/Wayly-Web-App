@@ -28,6 +28,10 @@ from lib.email_governance import (
 
 email_prefs_router = APIRouter(tags=["email-prefs"])
 
+# A MUTATING opt-in via an email link must use a recent, preferences-scoped
+# token (not a long-lived one-click unsubscribe link). Opt-OUT has no age limit.
+PREFS_OPTIN_MAX_AGE_DAYS = 30
+
 _db = None
 _user_dep = None
 
@@ -110,9 +114,20 @@ class _PrefsBody(BaseModel):
 
 @email_prefs_router.post("/email/preferences")
 async def set_prefs(body: _PrefsBody):
-    data = verify_email_token(body.token)
-    if not data:
-        raise HTTPException(status_code=400, detail="Invalid or expired link")
+    if body.marketing_opted_in:
+        # Re-subscribing is a MUTATING opt-in → require an affirmative, recent,
+        # preferences-scoped token. A one-click unsubscribe (purpose="unsub")
+        # or a stale link can NEVER turn marketing back on.
+        data = verify_email_token(body.token, expected_purpose="prefs",
+                                  max_age_days=PREFS_OPTIN_MAX_AGE_DAYS)
+        if not data:
+            raise HTTPException(status_code=403, detail=(
+                "To turn marketing emails back on, use the toggle in your Wayly "
+                "account settings, or request a fresh preferences link."))
+    else:
+        data = verify_email_token(body.token)
+        if not data:
+            raise HTTPException(status_code=400, detail="Invalid or expired link")
     user = await _db.users.find_one({"id": data["u"]}, {"_id": 0})
     if not user or user.get("deleted_at"):
         raise HTTPException(status_code=404, detail="Account not found")

@@ -115,7 +115,7 @@ async def process_once(db, send_fn: SendFn, *, limit: int = 25,
     msg['idempotency_key'] to Resend so an ambiguous retry is duplicate-safe.
     """
     owner = owner or f"{socket.gethostname()}:{uuid.uuid4().hex[:8]}"
-    sent = failed = retried = dead = claimed = 0
+    sent = failed = retried = dead = claimed = skipped = 0
     while claimed < limit:
         msg = await _claim_one(db, owner)
         if not msg:
@@ -127,6 +127,17 @@ async def process_once(db, send_fn: SendFn, *, limit: int = 25,
             result = await send_fn(msg)
         except Exception as e:  # defensive — send_fn is contracted not to raise
             result = {"ok": False, "ambiguous": False, "error": str(e)[:300], "id": None}
+
+        # Eligibility gate (marketing) decided this message must NOT go out →
+        # terminal 'skipped' (not sent, not retried, body dropped).
+        if result.get("skipped"):
+            await db.email_outbox.update_one({"id": msg["id"]}, {"$set": {
+                "status": "skipped", "attempts": attempts, "html": None,
+                "skipped_at": now.isoformat(), "updated_at": now.isoformat(),
+                "claim_owner": None, "last_error": None,
+            }})
+            skipped += 1
+            continue
 
         if result.get("ok"):
             await db.email_outbox.update_one({"id": msg["id"]}, {"$set": {
@@ -159,7 +170,7 @@ async def process_once(db, send_fn: SendFn, *, limit: int = 25,
             retried += 1
         failed += 1
     return {"claimed": claimed, "sent": sent, "failed": failed,
-            "retried": retried, "dead": dead}
+            "retried": retried, "dead": dead, "skipped": skipped}
 
 
 def worker_enabled() -> bool:

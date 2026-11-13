@@ -481,17 +481,29 @@ async def send_campaign(campaign_id: str, admin: dict = Depends(get_current_admi
     failed = 0
     for r in recipients:
         try:
+            # Re-check eligibility IMMEDIATELY before sending (not only when the
+            # recipient list was built) so a consent change / unsubscribe /
+            # suppression that landed mid-send is always honoured.
+            ok_now, _reason_now = await can_send_marketing(db, user=r)
+            if not ok_now:
+                skipped += 1
+                continue
             html = c["html_body"].replace("{{first_name}}", (r.get("name") or "there").split()[0] or "there")
             html = html.replace("{{email}}", r.get("email") or "")
-            token = make_email_token(r["id"], r.get("email") or "", purpose="unsub")
+            # Scoped tokens: the List-Unsubscribe header + the footer unsubscribe
+            # link use an OPT-OUT ("unsub") token; a separate "prefs" token backs
+            # the manage-preferences link (the only one allowed to re-opt-in).
+            unsub_token = make_email_token(r["id"], r.get("email") or "", purpose="unsub")
+            prefs_token = make_email_token(r["id"], r.get("email") or "", purpose="prefs")
             wrapped = wrap_email_html(
                 title=c["subject"], eyebrow=c["name"], inner_html=html,
                 footer_note=(f"You received this because you opted in to Wayly updates. "
-                             f"Unsubscribe any time: {base}/email/preferences?token={token}"),
+                             f"Unsubscribe any time: {base}/email/unsubscribe?token={unsub_token}"
+                             f" · Manage preferences: {base}/email/preferences?token={prefs_token}"),
             )
             res = await email_service.deliver(
                 to=r["email"], subject=c["subject"], html=wrapped,
-                headers=marketing_unsub_headers(base, token),
+                headers=marketing_unsub_headers(base, unsub_token),
                 idempotency_key=f"campaign:{campaign_id}:{r['id']}",
             )
             if not res.get("ok"):

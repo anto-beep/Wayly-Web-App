@@ -73,9 +73,47 @@ def _now_iso() -> str:
     return datetime.now(timezone.utc).isoformat()
 
 
-# --- de-identified email hashing (tombstones / suppression keys) ------------
+# --- pseudonymous (keyed) email hashing (tombstones / suppression keys) -----
+# IMPORTANT: these identifiers are PSEUDONYMOUS personal information, not fully
+# anonymous data. We use a keyed HMAC-SHA256 (NOT a bare SHA-256) so the hash
+# cannot be reversed by brute-forcing the small space of real email addresses
+# without also knowing the server-side secret (EMAIL_HASH_SECRET).
+class EmailHashSecretMissing(RuntimeError):
+    """Raised when EMAIL_HASH_SECRET is not configured. Any caller on a
+    MARKETING send path MUST treat this as 'do not send' (fail closed)."""
+
+
+def normalize_email(email: str) -> str:
+    """Single, consistent normalisation applied before hashing/compare so the
+    same address always maps to the same identifier."""
+    return (email or "").strip().lower()
+
+
+def _email_hash_secret() -> bytes:
+    base = os.environ.get("EMAIL_HASH_SECRET") or ""
+    # Fail safe: refuse to emit a weak/guessable identifier. A short or missing
+    # secret is treated as not-configured so we never silently downgrade.
+    if len(base) < 16:
+        raise EmailHashSecretMissing(
+            "EMAIL_HASH_SECRET is missing or too short (need >= 16 chars)")
+    # Domain-separate from the token-signing key even if they share a source.
+    return hashlib.sha256(("wayly-email-hmac::" + base).encode("utf-8")).digest()
+
+
+def email_hash_available() -> bool:
+    try:
+        _email_hash_secret()
+        return True
+    except EmailHashSecretMissing:
+        return False
+
+
 def email_hash(email: str) -> str:
-    return hashlib.sha256((email or "").strip().lower().encode("utf-8")).hexdigest()
+    """Keyed HMAC-SHA256 of the normalised address, hex-encoded. Raises
+    EmailHashSecretMissing if the secret is absent (never silently downgrades
+    to an unkeyed hash). The secret is never logged."""
+    return hmac.new(_email_hash_secret(), normalize_email(email).encode("utf-8"),
+                    hashlib.sha256).hexdigest()
 
 
 # --- signed preference/unsubscribe tokens -----------------------------------
@@ -96,17 +134,26 @@ def _b64u_dec(s: str) -> bytes:
 
 
 def make_email_token(user_id: str, email: str, purpose: str = "prefs") -> str:
-    body = {"u": user_id, "e": (email or "").strip().lower(), "p": purpose}
+    body = {"u": user_id, "e": normalize_email(email), "p": purpose,
+            "iat": int(datetime.now(timezone.utc).timestamp())}
     raw = json.dumps(body, separators=(",", ":"), sort_keys=True).encode("utf-8")
     payload = _b64u(raw)
     sig = _b64u(hmac.new(_token_secret(), payload.encode("ascii"), hashlib.sha256).digest())
     return f"{payload}.{sig}"
 
 
-def verify_email_token(token: str) -> Optional[dict]:
+def verify_email_token(token: str, *, expected_purpose: Optional[str] = None,
+                       max_age_days: Optional[int] = None) -> Optional[dict]:
     """Return the token body dict if the signature is valid, else None.
-    Unsubscribe tokens intentionally never expire (RFC 8058 links must keep
-    working), but they are bound to a single user_id + email."""
+
+    Tokens are HMAC-signed (constant-time compared) and bound to a single
+    user_id + email + purpose, with an issued-at (`iat`).
+      - Unsubscribe / opt-OUT tokens intentionally never expire (RFC 8058
+        links must keep working; replaying an opt-out is idempotent/harmless).
+      - For the MUTATING opt-IN path the caller passes expected_purpose="prefs"
+        and max_age_days, so a long-lived link can't be replayed to
+        re-subscribe someone. A token with no / malformed `iat` is treated as
+        too old (fail closed)."""
     try:
         payload, sig = (token or "").split(".", 1)
     except ValueError:
@@ -115,9 +162,19 @@ def verify_email_token(token: str) -> Optional[dict]:
     if not hmac.compare_digest(sig, expected):
         return None
     try:
-        return json.loads(_b64u_dec(payload))
+        data = json.loads(_b64u_dec(payload))
     except Exception:
         return None
+    if expected_purpose is not None and data.get("p") != expected_purpose:
+        return None
+    if max_age_days is not None:
+        iat = data.get("iat")
+        if not isinstance(iat, int):
+            return None  # legacy / undated token → too old for a mutating opt-in
+        age = datetime.now(timezone.utc).timestamp() - iat
+        if age < 0 or age > max_age_days * 86400:
+            return None
+    return data
 
 
 # --- List-Unsubscribe headers (marketing emails only) -----------------------
@@ -150,16 +207,28 @@ async def record_consent(db, *, user_id, email, opted_in, source,
         "version": version,
         "created_at": now,
     })
-    # Re-opting-in clears a prior *unsubscribe* tombstone, but NEVER a hard
-    # bounce or spam complaint (those stay to protect sender reputation).
+    # Explicit affirmative opt-in clears prior OPT-OUT tombstones (a manual
+    # unsubscribe OR an account-deletion opt-out), but NEVER a hard bounce or
+    # spam complaint (those stay permanently to protect sender reputation).
     if opted_in:
-        await db.email_suppressions.delete_many(
-            {"email_hash": email_hash(email), "reason": "unsubscribe"}
-        )
+        await clear_optout_tombstones(db, email)
 
 
 # --- suppression ------------------------------------------------------------
 PERMANENT_REASONS = {"bounce_permanent", "complaint", "unsubscribe", "account_deleted"}
+
+# Opt-out tombstones that an explicit, verified re-consent is allowed to clear.
+# Deliberately EXCLUDES complaint + bounce_permanent (never auto-cleared, to
+# protect sender reputation and honour hard signals).
+OPTIN_CLEARABLE_REASONS = {"unsubscribe", "account_deleted"}
+
+
+async def clear_optout_tombstones(db, email) -> None:
+    """Remove ONLY the user-reversible opt-out tombstones for this address on
+    an explicit affirmative opt-in. Never touches complaint/bounce_permanent."""
+    await db.email_suppressions.delete_many(
+        {"email_hash": email_hash(email),
+         "reason": {"$in": list(OPTIN_CLEARABLE_REASONS)}})
 
 
 async def suppress(db, *, email, reason, permanent=True, meta=None) -> None:
@@ -197,7 +266,13 @@ async def can_send_marketing(db, *, user=None, email=None) -> Tuple[bool, str]:
         return False, "deleted"
     if not u.get("marketing_consent"):
         return False, "no_consent"
-    if await is_suppressed(db, em):
+    # Fail closed: if we cannot compute the keyed suppression identifier we must
+    # NOT send marketing (a missing secret can't be allowed to bypass the list).
+    try:
+        suppressed = await is_suppressed(db, em)
+    except EmailHashSecretMissing:
+        return False, "hash_unavailable"
+    if suppressed:
         return False, "suppressed"
     return True, "ok"
 

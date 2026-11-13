@@ -3,7 +3,7 @@
 
 **Status:** ✅ Implemented + tested in PREVIEW. **Nothing sent, nothing published.**
 **Scope guardrails honoured:** development/testing only — no production sends, no live DNS/Stripe/Resend changes, outbox worker DISABLED, Resend webhook INERT (503).
-**Date:** June 2026 · **Verification:** 23 unit/integration pytest + 10 API-contract pytest PASS (testing agent iter395), web + mobile UI confirmed.
+**Date:** 13 November 2026 · **Verification:** 23 unit/integration + 10 security-hardening pytest PASS (iter396), testing agent iter395 (10 API-contract), web + mobile UI confirmed.
 
 ---
 
@@ -55,7 +55,7 @@
 - `email_delivery_events` — de-identified delivery log: `{svix_id, type, email_hash, provider_message_id, created_at}`.
 - `resend_webhook_events` — svix-id dedupe ledger with `processed_at`.
 
-Privacy note: suppression/delivery/consent records store only a **SHA-256 hash** of the email, never plaintext.
+Privacy note: suppression/delivery/consent records store only a **keyed HMAC-SHA256** (not a bare SHA-256) of the normalised email, keyed by `EMAIL_HASH_SECRET` — a pseudonymous identifier, never plaintext. Without the secret the value cannot be reversed by brute-forcing known addresses.
 
 ---
 
