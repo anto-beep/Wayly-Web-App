@@ -65,6 +65,7 @@ def test_consent_and_eligibility_matrix():
         uid = uuid.uuid4().hex
         em = _email()
         await db.users.insert_one({"id": uid, "email": em, "name": "Gov Test",
+                                   "email_verified": True,
                                    "created_at": datetime.now(timezone.utc).isoformat()})
         try:
             # No consent recorded → not eligible.
@@ -108,8 +109,10 @@ def test_optin_clears_unsubscribe_but_not_complaint():
         try:
             await gov.suppress(db, email=em, reason="unsubscribe", permanent=True)
             await gov.suppress(db, email=em, reason="complaint", permanent=True)
-            # Opting back in removes the unsubscribe tombstone only.
-            await gov.record_consent(db, user_id=uid, email=em, opted_in=True, source="test")
+            # Opting back in from a proven-ownership path removes the
+            # unsubscribe tombstone only (never the hard complaint signal).
+            await gov.record_consent(db, user_id=uid, email=em, opted_in=True,
+                                     source="test", clear_suppression=True)
             remaining = await db.email_suppressions.find(
                 {"email_hash": gov.email_hash(em)}, {"_id": 0, "reason": 1}).to_list(10)
             reasons = {r["reason"] for r in remaining}

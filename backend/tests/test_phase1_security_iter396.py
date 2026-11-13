@@ -109,9 +109,9 @@ def test_email_hash_fail_closed_when_secret_missing(monkeypatch):
 
     async def body():
         db = _adb()
-        u = {"email": "a@b.com", "marketing_consent": True}
-        # Consented user, but we cannot compute the suppression identifier →
-        # must FAIL CLOSED (do not send), not fall through to 'ok'.
+        u = {"email": "a@b.com", "marketing_consent": True, "email_verified": True}
+        # Consented, verified user, but we cannot compute the suppression
+        # identifier → must FAIL CLOSED (do not send), not fall through to 'ok'.
         ok, reason = await gov.can_send_marketing(db, user=u, email="a@b.com")
         assert ok is False and reason == "hash_unavailable"
     _run(body())
@@ -133,8 +133,11 @@ def test_reconsent_clears_optout_tombstones_but_never_hard_signals():
             await gov.suppress(db, email=em, reason="account_deleted", permanent=True)
             await gov.suppress(db, email=em, reason="unsubscribe", permanent=True)
             await gov.suppress(db, email=em, reason="complaint", permanent=True)
-            # Explicit affirmative opt-in (e.g. new account opts in).
-            await gov.record_consent(db, user_id=uid, email=em, opted_in=True, source="settings")
+            # Explicit affirmative opt-in from a PROVEN-OWNERSHIP path
+            # (clear_suppression=True — e.g. verified settings toggle or an
+            # emailed prefs token) clears reversible tombstones only.
+            await gov.record_consent(db, user_id=uid, email=em, opted_in=True,
+                                     source="settings", clear_suppression=True)
             rows = await db.email_suppressions.find(
                 {"email_hash": gov.email_hash(em)}, {"_id": 0, "reason": 1}).to_list(10)
             reasons = {r["reason"] for r in rows}

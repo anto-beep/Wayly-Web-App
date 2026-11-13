@@ -131,8 +131,12 @@ async def set_prefs(body: _PrefsBody):
     user = await _db.users.find_one({"id": data["u"]}, {"_id": 0})
     if not user or user.get("deleted_at"):
         raise HTTPException(status_code=404, detail="Account not found")
+    # Possession of a valid, recent, prefs-scoped token PROVES the recipient
+    # owns this inbox → an affirmative opt-in may clear reversible opt-out
+    # tombstones (prior unsubscribe / account-deletion). Hard signals never.
     await record_consent(_db, user_id=user["id"], email=user.get("email", ""),
-                         opted_in=body.marketing_opted_in, source="preferences_page")
+                         opted_in=body.marketing_opted_in, source="preferences_page",
+                         clear_suppression=body.marketing_opted_in)
     if not body.marketing_opted_in:
         await suppress(_db, email=user.get("email", ""), reason="unsubscribe",
                        permanent=True, meta={"source": "preferences_page"})
@@ -186,8 +190,14 @@ class _MyPrefsBody(BaseModel):
 @email_prefs_router.patch("/account/marketing-preferences")
 async def set_my_prefs(body: _MyPrefsBody, request: Request):
     user = await _user_dep(request)
+    # An authenticated opt-in from a user whose email is VERIFIED is proven
+    # ownership → it may clear reversible opt-out tombstones. If the email is
+    # not yet verified we record consent but leave the tombstone in place
+    # (and can_send_marketing still blocks on 'unverified_email').
     await record_consent(_db, user_id=user["id"], email=user.get("email", ""),
-                         opted_in=body.marketing_opted_in, source="settings")
+                         opted_in=body.marketing_opted_in, source="settings",
+                         clear_suppression=bool(body.marketing_opted_in
+                                                and user.get("email_verified")))
     if not body.marketing_opted_in:
         await suppress(_db, email=user.get("email", ""), reason="unsubscribe",
                        permanent=True, meta={"source": "settings"})

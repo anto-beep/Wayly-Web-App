@@ -190,7 +190,8 @@ def marketing_unsub_headers(base_url: str, token: str) -> dict:
 
 # --- consent ----------------------------------------------------------------
 async def record_consent(db, *, user_id, email, opted_in, source,
-                         version=MARKETING_CONSENT_VERSION) -> None:
+                         version=MARKETING_CONSENT_VERSION,
+                         clear_suppression: bool = False) -> None:
     now = _now_iso()
     await db.users.update_one({"id": user_id}, {"$set": {
         "marketing_consent": bool(opted_in),
@@ -208,9 +209,11 @@ async def record_consent(db, *, user_id, email, opted_in, source,
         "created_at": now,
     })
     # Explicit affirmative opt-in clears prior OPT-OUT tombstones (a manual
-    # unsubscribe OR an account-deletion opt-out), but NEVER a hard bounce or
-    # spam complaint (those stay permanently to protect sender reputation).
-    if opted_in:
+    # unsubscribe OR an account-deletion opt-out) — but ONLY once email
+    # ownership is proven (`clear_suppression=True`): a verified login, a
+    # verification success, or possession of an emailed prefs token. NEVER
+    # clears a hard bounce or spam complaint.
+    if opted_in and clear_suppression:
         await clear_optout_tombstones(db, email)
 
 
@@ -229,6 +232,20 @@ async def clear_optout_tombstones(db, email) -> None:
     await db.email_suppressions.delete_many(
         {"email_hash": email_hash(email),
          "reason": {"$in": list(OPTIN_CLEARABLE_REASONS)}})
+
+
+async def on_email_verified(db, user) -> None:
+    """Call after an email address is PROVEN owned (verification success).
+    Now that ownership is confirmed, if the user has marketing consent on file
+    we clear reversible opt-out tombstones (a prior unsubscribe or an
+    account-deletion opt-out) so a legitimate re-signup can opt back in —
+    but complaint / hard-bounce suppressions are never cleared. This is what
+    enforces 'verify ownership BEFORE a new signup overrides an unsubscribe'."""
+    if user and user.get("marketing_consent"):
+        try:
+            await clear_optout_tombstones(db, user.get("email") or "")
+        except Exception as e:  # pragma: no cover
+            log.warning("on_email_verified tombstone clear failed: %s", e)
 
 
 async def suppress(db, *, email, reason, permanent=True, meta=None) -> None:
@@ -266,6 +283,9 @@ async def can_send_marketing(db, *, user=None, email=None) -> Tuple[bool, str]:
         return False, "deleted"
     if not u.get("marketing_consent"):
         return False, "no_consent"
+    # Phase 2 / item-5: marketing only ever goes to a VERIFIED email address.
+    if not u.get("email_verified"):
+        return False, "unverified_email"
     # Fail closed: if we cannot compute the keyed suppression identifier we must
     # NOT send marketing (a missing secret can't be allowed to bypass the list).
     try:

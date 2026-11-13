@@ -400,7 +400,12 @@ async def signup(payload: SignupRequest, request: Request):
     # (a manual unsubscribe or an earlier account-deletion opt-out) for this
     # address — but NEVER a hard complaint/bounce. Account creation WITHOUT
     # consent clears nothing (recreation alone can't remove an opt-out).
-    if payload.marketing_consent:
+    # Only clear a prior opt-out tombstone if ownership is ALREADY proven
+    # (pre-verified test/internal accounts). Real signups must verify their
+    # email first — the tombstone is cleared later in on_email_verified(). This
+    # stops a new signup overriding someone else's unsubscribe before the email
+    # is proven owned.
+    if payload.marketing_consent and user_doc.get("email_verified"):
         try:
             from lib.email_governance import clear_optout_tombstones as _clear_optout
             await _clear_optout(db, user_doc["email"])
@@ -1199,6 +1204,13 @@ async def verify_email(body: VerifyBody):
         raise HTTPException(status_code=400, detail="Verification link has expired")
     await db.users.update_one({"id": rec["user_id"]}, {"$set": {"email_verified": True, "email_verified_at": now_iso()}})
     await db.email_verifications.delete_many({"user_id": rec["user_id"]})
+    # Ownership proven → clear reversible opt-out tombstones if consented.
+    try:
+        _vu = await db.users.find_one({"id": rec["user_id"]}, {"_id": 0})
+        from lib.email_governance import on_email_verified as _oev
+        await _oev(db, _vu)
+    except Exception as _e:
+        logger.warning("on_email_verified (token) failed: %s", _e)
     return {"ok": True}
 
 
@@ -8938,6 +8950,16 @@ async def _trial_scheduler_loop():
                 logger.info("Trial scheduler pass: %s", res)
         except Exception as e:
             logger.warning("Trial scheduler pass error: %s", e)
+        # Phase 2 — behaviour-based lifecycle marketing emails (OFF unless
+        # LIFECYCLE_EMAILS_MODE=test_only|live). Fully gated per recipient.
+        try:
+            from lib.lifecycle_emails import lifecycle_enabled, process_lifecycle_once
+            if lifecycle_enabled():
+                lres = await process_lifecycle_once(db)
+                if lres.get("midtrial_sent") or lres.get("postwin_sent"):
+                    logger.info("Lifecycle email pass: %s", lres)
+        except Exception as e:
+            logger.warning("Lifecycle email pass error: %s", e)
         # Support-ticket attachment retention purge - once per hour is fine
         # since eligibility is set months in advance via ``purge_after``.
         try:
@@ -9224,9 +9246,11 @@ async def _ensure_email_governance_indexes():
     try:
         from lib import email_governance as _gov
         from lib import email_outbox as _outbox
+        from lib import marketing_frequency as _mf
         await _gov.ensure_indexes(db)
         await _outbox.ensure_indexes(db)
-        logger.info("email governance + outbox indexes ensured")
+        await _mf.ensure_indexes(db)
+        logger.info("email governance + outbox + frequency indexes ensured")
     except Exception as e:
         logger.warning("email governance index setup failed: %s", e)
 
@@ -9243,21 +9267,44 @@ async def _start_email_outbox_worker():
             return
         import asyncio as _aio
         import email_service as _es
-        from lib.email_governance import can_send_marketing as _csm
+        from lib.email_governance import can_send_marketing as _csm, EmailHashSecretMissing as _EHSM
+        from lib import marketing_frequency as _mf
 
         async def _send_fn(msg):
             # At-send eligibility gate for MARKETING-category messages: a
             # consent/unsubscribe/suppression change AFTER enqueue must still be
             # honoured. Transactional messages are never gated here.
-            if msg.get("category") == "marketing":
+            is_mkt = msg.get("category") == "marketing"
+            if is_mkt:
                 ok_now, _reason = await _csm(db, email=msg.get("to"))
                 if not ok_now:
                     return {"ok": True, "skipped": True, "id": None, "ambiguous": False}
-            return await _es.deliver(
+                # Central frequency governor — the SAME caps (2/7d, 4/30d, 72h
+                # gap, 1-per-trial) that gate lifecycle emails also apply to
+                # admin campaigns and every future marketing producer. Fail
+                # closed if the suppression hash cannot be computed.
+                try:
+                    fok, _freason = await _mf.can_send_now(db, msg.get("to"))
+                except _EHSM:
+                    fok = False
+                if not fok:
+                    return {"ok": True, "skipped": True, "id": None, "ambiguous": False}
+            res = await _es.deliver(
                 to=msg["to"], subject=msg["subject"], html=msg["html"],
                 headers=msg.get("headers") or None,
                 idempotency_key=msg.get("idempotency_key"),
             )
+            # Record the marketing send in the shared ledger so the caps are
+            # computed across ALL paths (lifecycle + campaigns + newsletters).
+            if is_mkt and res.get("ok") and not res.get("skipped"):
+                try:
+                    await _mf.record_send(
+                        db, msg["to"],
+                        category=(msg.get("category") or "marketing"),
+                        kind=(msg.get("template") or "campaign"))
+                except Exception as _re:
+                    logger.warning("marketing_sends ledger write failed: %s", _re)
+            return res
 
         async def _loop():
             while True:

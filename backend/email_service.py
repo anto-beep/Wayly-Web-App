@@ -81,6 +81,7 @@ async def _send(params: Dict[str, Any]) -> Dict[str, Any]:
 
 
 async def deliver(*, to: str, subject: str, html: str,
+                  text: Optional[str] = None,
                   headers: Optional[Dict[str, str]] = None,
                   idempotency_key: Optional[str] = None,
                   reply_to: Optional[str] = None) -> Dict[str, Any]:
@@ -89,7 +90,8 @@ async def deliver(*, to: str, subject: str, html: str,
     Passes Resend's Idempotency-Key so a retry after an AMBIGUOUS outcome (a
     network timeout AFTER Resend may have accepted the message) does not create
     a duplicate at the provider. `ambiguous=True` tells the outbox it is safe
-    to retry; a definite 4xx is not retried past max attempts.
+    to retry; a definite 4xx is not retried past max attempts. An optional
+    plain-text alternative (`text`) is included for deliverability/accessibility.
     """
     params: Dict[str, Any] = {
         "from": _sender(),
@@ -97,6 +99,8 @@ async def deliver(*, to: str, subject: str, html: str,
         "subject": subject,
         "html": html,
     }
+    if text:
+        params["text"] = text
     if headers:
         params["headers"] = headers
     if reply_to:
