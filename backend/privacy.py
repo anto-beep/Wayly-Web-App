@@ -66,6 +66,9 @@ SCOPED_COLLECTIONS: list[tuple[str, str]] = [
     ("household_members",       "user_id"),
     ("notifications",           "user_id"),
     ("adviser_clients",         "client_user_id"),
+    # Business OS Phase 1 lifecycle-email collections (user-scoped).
+    ("marketing_consent_events", "user_id"),
+    ("notification_log",        "user_id"),
 ]
 
 
@@ -170,6 +173,23 @@ async def soft_delete_account(user_id: str) -> dict:
         {"user_id": user_id},
         {"$set": {"status": "removed", "removed_at": iso, "deleted_at": iso}},
     )
+
+    # 6. Business OS Phase 1 — keep a de-identified opt-out tombstone so a
+    #    deleted (or later re-created) address is never re-enrolled or
+    #    re-emailed. Only a one-way hash of the address is retained (minimal
+    #    retention justified by CAN-SPAM / Spam Act opt-out honouring). Also
+    #    purge the lifecycle-email body store and de-identified delivery events.
+    orig_email = user.get("email")
+    if orig_email:
+        try:
+            from lib.email_governance import suppress as _suppress, email_hash as _eh
+            await _suppress(_db, email=orig_email, reason="account_deleted",
+                            permanent=True, meta={"user_id": user_id})
+            await _db.email_outbox.delete_many({"to": orig_email})
+            await _db.email_delivery_events.delete_many({"email_hash": _eh(orig_email)})
+            await _db.newsletter_subscribers.delete_many({"email": orig_email})
+        except Exception as e:
+            log.warning("deletion email tombstone/cleanup failed for %s: %s", user_id, e)
 
     return {"ok": True, "deletion_completes_at": _iso(now + timedelta(days=SOFT_DELETE_WINDOW_DAYS)), "rows_marked": counts}
 

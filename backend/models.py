@@ -26,6 +26,9 @@ class SignupRequest(BaseModel):
     role: Literal["caregiver", "participant"] = "caregiver"
     plan: Literal["free", "solo", "family", "adviser"] = "free"
     invite: Optional[str] = Field(default=None, max_length=64)
+    # Business OS Phase 1: optional marketing-email consent, unchecked by
+    # default. NEVER required to create an account or start a trial.
+    marketing_consent: bool = False
 
 
 class LoginRequest(BaseModel):
@@ -70,6 +73,8 @@ class UserPublic(BaseModel):
     totp_enabled: Optional[bool] = None
     # Email verification state, so clients can nudge/gate without a second call.
     email_verified: Optional[bool] = None
+    # Business OS Phase 1: marketing-email consent (never gates account access).
+    marketing_opted_in: Optional[bool] = None
 
 
 class PlanUpdate(BaseModel):

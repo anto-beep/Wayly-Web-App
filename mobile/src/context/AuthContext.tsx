@@ -51,6 +51,7 @@ export type SignupPayload = {
   mobile?: string;
   role?: "caregiver" | "participant";
   plan?: string;
+  marketing_consent?: boolean;
 };
 
 const AuthContext = createContext<AuthState | undefined>(undefined);
@@ -139,6 +140,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           mobile: payload.mobile,
           role: payload.role || "caregiver",
           plan: payload.plan || "family",
+          marketing_consent: payload.marketing_consent ?? false,
         },
       }
     );

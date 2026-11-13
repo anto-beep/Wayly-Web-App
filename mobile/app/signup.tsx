@@ -54,6 +54,7 @@ export default function SignupScreen() {
   const [showPw, setShowPw] = useState(false);
   const [busy, setBusy] = useState(false);
   const [googleBusy, setGoogleBusy] = useState(false);
+  const [marketingConsent, setMarketingConsent] = useState(false);
   const [appleAvailable, setAppleAvailable] = useState(false);
 
   useEffect(() => {
@@ -99,6 +100,7 @@ export default function SignupScreen() {
         mobile: mobileClean || undefined,
         role,
         plan,
+        marketing_consent: marketingConsent,
       }, { deferUser: true });
       // PERSONA-1: persist the persona choice on signup so the account is
       // persona-correct from day zero, mirroring web. Best-effort, non-fatal.
@@ -376,6 +378,19 @@ export default function SignupScreen() {
               </T>
             </View>
           ) : null}
+
+          <Pressable
+            testID="signup-marketing-consent"
+            onPress={() => setMarketingConsent((v) => !v)}
+            style={{ flexDirection: "row", gap: 10, alignItems: "flex-start", marginTop: spacing.lg }}
+          >
+            <View style={{ width: 22, height: 22, borderRadius: 6, borderWidth: 2, borderColor: marketingConsent ? colors.primary : colors.muted, backgroundColor: marketingConsent ? colors.primary : colors.surface, alignItems: "center", justifyContent: "center", marginTop: 1 }}>
+              {marketingConsent ? <Ionicons name="checkmark" size={14} color="#fff" /> : null}
+            </View>
+            <T variant="small" style={{ flex: 1, color: colors.muted }}>
+              Email me helpful aged-care guides, product updates and occasional news from Wayly. I can unsubscribe at any time.
+            </T>
+          </Pressable>
 
           <Button
             label="Create your account"

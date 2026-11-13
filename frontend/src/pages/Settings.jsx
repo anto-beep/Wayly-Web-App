@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import Skeleton from "@/components/Skeleton";
 import PersonaPreviewCard from "@/components/PersonaPreviewCard";
+import MarketingEmailToggle from "@/components/settings/MarketingEmailToggle";
 import AuditLog from "@/pages/AuditLog";
 
 const TABS = [
@@ -1109,6 +1110,8 @@ function DigestTab() {
                     A short, human email that lands every week with what <span className="font-medium text-primary-k">you</span> paid attention to. Siblings and advisors stay in the loop without ever opening the app, wellbeing check-ins, alerts, chat summary, thread highlights. All one scroll.
                 </p>
             </div>
+
+            <MarketingEmailToggle />
 
             {!onFamily && (
                 <div className="bg-surface border border-gold rounded-2xl p-6">

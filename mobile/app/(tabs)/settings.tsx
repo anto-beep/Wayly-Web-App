@@ -68,6 +68,52 @@ function NotificationsCard() {
   );
 }
 
+function MarketingEmailCard() {
+  const { colors } = useTheme();
+  const [optedIn, setOptedIn] = useState<boolean | null>(null);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    apiFetch<{ marketing_opted_in: boolean }>("/account/marketing-preferences")
+      .then((d) => setOptedIn(!!d?.marketing_opted_in))
+      .catch(() => setOptedIn(false));
+  }, []);
+
+  const toggle = useCallback(async () => {
+    if (optedIn === null) return;
+    const next = !optedIn;
+    setOptedIn(next);
+    setSaving(true);
+    try { await apiFetch("/account/marketing-preferences", { method: "PATCH", body: { marketing_opted_in: next } }); }
+    catch { setOptedIn(!next); }
+    finally { setSaving(false); }
+  }, [optedIn]);
+
+  return (
+    <Card testID="settings-marketing-emails">
+      <View style={{ flexDirection: "row", alignItems: "center", gap: 8, marginBottom: spacing.sm }}>
+        <Mail size={18} color={colors.heading} />
+        <T style={{ fontFamily: fonts.bodySemi, fontSize: 16 }}>Marketing emails</T>
+      </View>
+      <View style={styles.notifRow}>
+        <View style={{ flex: 1, paddingRight: spacing.md }}>
+          <T style={{ fontFamily: fonts.bodyMedium, fontSize: 15 }}>Guides, updates &amp; news</T>
+          <T variant="small" style={{ marginTop: 2 }}>Occasional marketing from Wayly. Account, security and billing emails are always sent.</T>
+        </View>
+        <Switch
+          testID="marketing-emails-toggle"
+          value={!!optedIn}
+          disabled={optedIn === null || saving}
+          onValueChange={toggle}
+          trackColor={{ true: colors.primary }}
+          accessibilityRole="switch"
+          accessibilityState={{ checked: !!optedIn, disabled: optedIn === null || saving }}
+        />
+      </View>
+    </Card>
+  );
+}
+
 function NavRow({ icon: Icon, label, desc, onPress, testID, danger, last }: { icon: any; label: string; desc?: string; onPress: () => void; testID: string; danger?: boolean; last?: boolean }) {
   const { colors } = useTheme();
   const tint = danger ? colors.terracotta : colors.primary;
@@ -218,6 +264,9 @@ export default function SettingsScreen() {
 
         {/* Notifications */}
         <NotificationsCard />
+
+        {/* Marketing emails */}
+        <MarketingEmailCard />
 
         {/* Privacy & legal */}
         <Card testID="settings-privacy">

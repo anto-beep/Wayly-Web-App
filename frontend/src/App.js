@@ -91,6 +91,7 @@ const AIDisclaimerPage = lazy(() => import("@/pages/legal/AIDisclaimer"));
 const AIIntent = lazy(() => import("@/pages/legal/AIIntent"));
 const Accessibility = lazy(() => import("@/pages/legal/Accessibility"));
 const CookiesPage = lazy(() => import("@/pages/legal/Cookies"));
+const EmailPreferences = lazy(() => import("@/pages/EmailPreferences"));
 const AdminApp = lazy(() => import("@/pages/admin/AdminApp"));
 const MySupport = lazy(() => import("@/pages/MySupport"));
 const DocumentVault = lazy(() => import("@/pages/DocumentVault"));
@@ -450,6 +451,8 @@ function App() {
                     <Route path="/trust" element={<Trust />} />
                     <Route path="/demo" element={<Demo />} />
                     <Route path="/contact" element={<Contact />} />
+                    <Route path="/email/preferences" element={<EmailPreferences />} />
+                    <Route path="/email/unsubscribe" element={<EmailPreferences />} />
                     <Route path="/for-advisors" element={<Navigate to="/" replace />} />
                     <Route path="/for-gps" element={<ForGPs />} />
                     <Route path="/resources" element={<ResourcesIndex />} />

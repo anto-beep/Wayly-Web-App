@@ -158,6 +158,13 @@ def _trusted_frontend_url() -> str:
 # WAYLY_ENV=production hides /docs, /redoc, /openapi.json; other envs keep
 # them available for local development and staging QA.
 _IS_PROD = (os.environ.get("WAYLY_ENV") or "").lower() == "production"
+
+# Business OS Phase 1: marketing consent helpers (shared backend; applies to
+# both web and mobile).
+from lib.email_governance import (
+    MARKETING_CONSENT_VERSION as _MARKETING_CONSENT_VERSION,
+    email_hash as _email_hash,
+)
 app = FastAPI(
     title="Wayly API",
     docs_url=None if _IS_PROD else "/docs",
@@ -312,6 +319,7 @@ def _user_public(u: dict, sub: Optional[dict] = None) -> UserPublic:
         access_state=_compute_access_state(u, sub),
         totp_enabled=bool(u.get("totp_enabled", False)),
         email_verified=bool(u.get("email_verified", False)),
+        marketing_opted_in=bool(u.get("marketing_consent", False)),
     )
 
 
@@ -367,8 +375,27 @@ async def signup(payload: SignupRequest, request: Request):
         "email_verified": _is_test,
         "email_verified_at": now_iso() if _is_test else None,
         "verification_deadline": None if _is_test else deadline_for(now_iso()),
+        # Business OS Phase 1: marketing consent captured at signup (optional,
+        # unchecked by default; NEVER required to create an account).
+        "marketing_consent": bool(payload.marketing_consent),
+        "marketing_consent_at": now_iso() if payload.marketing_consent else None,
+        "marketing_consent_source": "signup",
+        "marketing_consent_version": _MARKETING_CONSENT_VERSION,
     }
     await db.users.insert_one(user_doc)
+    # Consent audit trail: status + timestamp + source + wording version.
+    try:
+        await db.marketing_consent_events.insert_one({
+            "id": new_id(),
+            "user_id": user_doc["id"],
+            "email_hash": _email_hash(user_doc["email"]),
+            "status": "opted_in" if payload.marketing_consent else "opted_out",
+            "source": "signup",
+            "version": _MARKETING_CONSENT_VERSION,
+            "created_at": now_iso(),
+        })
+    except Exception as _ce:
+        logger.warning("signup consent event write failed: %s", _ce)
     # Fire-and-forget, failures here shouldn't block signup (Resend hiccups,
     # mocked preview, etc.). The user can request another email from the
     # banner if needed.
@@ -7820,6 +7847,14 @@ api.include_router(extended_router)
 api.include_router(participant_profile_router)
 api.include_router(notification_router)
 api.include_router(email_verification_router)
+
+# Business OS Phase 1: marketing consent / unsubscribe + Resend delivery webhook.
+from routes.email_prefs import email_prefs_router, init_email_prefs_routes
+from routes.resend_webhook import resend_webhook_router, init_resend_webhook
+init_email_prefs_routes(db=db, user_dep=_user_from_request_required)
+init_resend_webhook(db=db)
+api.include_router(email_prefs_router)
+api.include_router(resend_webhook_router)
 api.include_router(email_change_router)
 api.include_router(participant_share_router)
 api.include_router(onboarding_draft_router)
@@ -9170,6 +9205,54 @@ async def _rate_limit_bootstrap():
         except Exception as e:
             logger.warning("rate limiter bootstrap failed: %s", e)
     _aio.create_task(_run())
+
+
+@app.on_event("startup")
+async def _ensure_email_governance_indexes():
+    """Business OS Phase 1: indexes for consent events, suppression list and
+    the lifecycle email outbox (web + mobile share these)."""
+    try:
+        from lib import email_governance as _gov
+        from lib import email_outbox as _outbox
+        await _gov.ensure_indexes(db)
+        await _outbox.ensure_indexes(db)
+        logger.info("email governance + outbox indexes ensured")
+    except Exception as e:
+        logger.warning("email governance index setup failed: %s", e)
+
+
+@app.on_event("startup")
+async def _start_email_outbox_worker():
+    """Lifecycle outbox worker. DISABLED by default — Phase 1 has no live
+    producers, so it never runs in preview. Enable post-approval with
+    EMAIL_OUTBOX_WORKER_ENABLED=1."""
+    try:
+        from lib import email_outbox as _outbox
+        if not _outbox.worker_enabled():
+            logger.info("email outbox worker disabled (EMAIL_OUTBOX_WORKER_ENABLED not set)")
+            return
+        import asyncio as _aio
+        import email_service as _es
+
+        async def _send_fn(msg):
+            return await _es.deliver(
+                to=msg["to"], subject=msg["subject"], html=msg["html"],
+                headers=msg.get("headers") or None,
+                idempotency_key=msg.get("idempotency_key"),
+            )
+
+        async def _loop():
+            while True:
+                try:
+                    await _outbox.process_once(db, _send_fn, limit=25)
+                except Exception as e:
+                    logger.warning("email outbox pass error: %s", e)
+                await _aio.sleep(30)
+
+        _aio.create_task(_loop())
+        logger.info("email outbox worker started")
+    except Exception as e:
+        logger.warning("email outbox worker failed to start: %s", e)
 
 
 @app.on_event("startup")

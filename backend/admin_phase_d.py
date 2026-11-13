@@ -449,28 +449,53 @@ async def send_campaign(campaign_id: str, admin: dict = Depends(get_current_admi
         raise HTTPException(400, f"Campaign already {c['status']}")
 
     q = await _audience_query(c.get("audience") or {})
+    all_recipients = []
+    async for u in db.users.find(q, {"_id": 0, "email": 1, "name": 1, "id": 1,
+                                     "marketing_consent": 1, "deleted_at": 1}):
+        all_recipients.append(u)
+
+    # Business OS Phase 1 — CENTRAL marketing eligibility gate. A campaign may
+    # ONLY reach users with recorded consent who are not unsubscribed or
+    # suppressed. This same gate guards every marketing send path.
+    from lib.email_governance import can_send_marketing, make_email_token, marketing_unsub_headers
+    import email_service
+    from wayly_email_branding import wrap_email_html
     recipients = []
-    async for u in db.users.find(q, {"_id": 0, "email": 1, "name": 1, "id": 1}):
-        recipients.append(u)
+    skipped = 0
+    for u in all_recipients:
+        ok, _reason = await can_send_marketing(db, user=u)
+        if ok:
+            recipients.append(u)
+        else:
+            skipped += 1
+
     await db.email_campaigns.update_one(
         {"id": campaign_id},
-        {"$set": {"status": "sending", "recipients": len(recipients), "send_started_at": _now()}},
+        {"$set": {"status": "sending", "recipients": len(recipients),
+                  "skipped_ineligible": skipped, "send_started_at": _now()}},
     )
 
-    # Send (in-process loop, fine for low volume; in prod use a queue)
-    import email_service
+    base = (os.environ.get("FRONTEND_URL") or os.environ.get("PUBLIC_APP_URL")
+            or "https://wayly.com.au").rstrip("/")
     sent = 0
     failed = 0
     for r in recipients:
         try:
             html = c["html_body"].replace("{{first_name}}", (r.get("name") or "there").split()[0] or "there")
             html = html.replace("{{email}}", r.get("email") or "")
-            await email_service.email_tool_result(
-                to=r["email"],
-                tool_name=c["name"],
-                headline=c["subject"],
-                body_html=html,
+            token = make_email_token(r["id"], r.get("email") or "", purpose="unsub")
+            wrapped = wrap_email_html(
+                title=c["subject"], eyebrow=c["name"], inner_html=html,
+                footer_note=(f"You received this because you opted in to Wayly updates. "
+                             f"Unsubscribe any time: {base}/email/preferences?token={token}"),
             )
+            res = await email_service.deliver(
+                to=r["email"], subject=c["subject"], html=wrapped,
+                headers=marketing_unsub_headers(base, token),
+                idempotency_key=f"campaign:{campaign_id}:{r['id']}",
+            )
+            if not res.get("ok"):
+                raise RuntimeError(res.get("error") or "send failed")
             await db.notification_log.insert_one({
                 "id": secrets.token_urlsafe(6),
                 "ts": _now(),
@@ -480,6 +505,7 @@ async def send_campaign(campaign_id: str, admin: dict = Depends(get_current_admi
                 "campaign_id": campaign_id,
                 "subject": c["subject"],
                 "status": "sent",
+                "provider_message_id": res.get("id"),
             })
             sent += 1
         except Exception as e:
@@ -498,11 +524,14 @@ async def send_campaign(campaign_id: str, admin: dict = Depends(get_current_admi
 
     await db.email_campaigns.update_one(
         {"id": campaign_id},
-        {"$set": {"status": "sent", "sent_count": sent, "failed_count": failed, "sent_at": _now()}},
+        {"$set": {"status": "sent", "sent_count": sent, "failed_count": failed,
+                  "skipped_ineligible": skipped, "sent_at": _now()}},
     )
     await audit_log(admin["id"], "campaign_sent", target_id=campaign_id,
-                    detail={"recipients": len(recipients), "sent": sent, "failed": failed})
-    return {"ok": True, "recipients": len(recipients), "sent": sent, "failed": failed}
+                    detail={"recipients": len(recipients), "sent": sent, "failed": failed,
+                            "skipped_ineligible": skipped})
+    return {"ok": True, "recipients": len(recipients), "sent": sent, "failed": failed,
+            "skipped_ineligible": skipped, "consent_enforced": True}
 
 
 # ----------------------- EMAIL TEMPLATES -----------------------

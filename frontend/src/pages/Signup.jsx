@@ -82,6 +82,8 @@ export default function Signup() {
         care_recipient_pronouns: "unknown",
         caregiver_relationship: "",
         plan: params.get("plan") && ["solo", "family"].includes(params.get("plan")) ? params.get("plan") : "family",
+        // Business OS Phase 1: optional marketing consent, unchecked by default.
+        marketing_consent: false,
     });
     const [mobileError, setMobileError] = useState("");
     const [submitting, setSubmitting] = useState(false);
@@ -582,6 +584,19 @@ export default function Signup() {
                                     </p>
                                     {mobileError && <p data-testid="signup-mobile-error" className="mt-1 text-xs text-terracotta">{mobileError}</p>}
                                 </details>
+
+                                <label className="mt-4 flex items-start gap-3 cursor-pointer select-none" data-testid="signup-marketing-consent-label">
+                                    <input
+                                        type="checkbox"
+                                        checked={form.marketing_consent}
+                                        onChange={(e) => setForm((f) => ({ ...f, marketing_consent: e.target.checked }))}
+                                        data-testid="signup-marketing-consent"
+                                        className="mt-0.5 h-4 w-4 flex-none rounded border-kindred text-primary-k focus:ring-primary-k"
+                                    />
+                                    <span className="text-xs text-muted-k leading-relaxed">
+                                        Email me helpful aged-care guides, product updates and occasional news from Wayly. I can unsubscribe at any time.
+                                    </span>
+                                </label>
 
                                 <button
                                     type="submit"

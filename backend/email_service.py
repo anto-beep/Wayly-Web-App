@@ -80,6 +80,51 @@ async def _send(params: Dict[str, Any]) -> Dict[str, Any]:
         return {"ok": False, "reason": str(e)}
 
 
+async def deliver(*, to: str, subject: str, html: str,
+                  headers: Optional[Dict[str, str]] = None,
+                  idempotency_key: Optional[str] = None,
+                  reply_to: Optional[str] = None) -> Dict[str, Any]:
+    """Outbox-facing send. Returns {ok, id, ambiguous, error}; never raises.
+
+    Passes Resend's Idempotency-Key so a retry after an AMBIGUOUS outcome (a
+    network timeout AFTER Resend may have accepted the message) does not create
+    a duplicate at the provider. `ambiguous=True` tells the outbox it is safe
+    to retry; a definite 4xx is not retried past max attempts.
+    """
+    params: Dict[str, Any] = {
+        "from": _sender(),
+        "to": [to],
+        "subject": subject,
+        "html": html,
+    }
+    if headers:
+        params["headers"] = headers
+    if reply_to:
+        params["reply_to"] = reply_to
+    if not _is_live():
+        logger.info("[email-mock] deliver to=%s subject=%s", to, subject)
+        return {"ok": True, "id": None, "ambiguous": False, "mocked": True}
+    try:
+        resend.api_key = os.environ["RESEND_API_KEY"]  # type: ignore[attr-defined]
+        options = {"idempotency_key": idempotency_key} if idempotency_key else None
+
+        def _call():
+            if options:
+                return resend.Emails.send(params, options)  # type: ignore[attr-defined]
+            return resend.Emails.send(params)  # type: ignore[attr-defined]
+
+        result = await asyncio.to_thread(_call)
+        return {"ok": True, "id": result.get("id") if isinstance(result, dict) else None,
+                "ambiguous": False}
+    except Exception as e:
+        msg = str(e)
+        low = msg.lower()
+        ambiguous = any(k in low for k in (
+            "timeout", "timed out", "connection", "temporarily", "reset",
+            " 500", " 502", " 503", " 504")) or "rate limit" in low
+        return {"ok": False, "id": None, "ambiguous": ambiguous, "error": msg[:300]}
+
+
 # ---------------------------------------------------------------------------
 # Public helpers
 # ---------------------------------------------------------------------------
