@@ -8,6 +8,7 @@ import MarketingHeader from "@/components/MarketingHeader";
 import Footer from "@/components/Footer";
 import ToolRelatedLinks from "@/components/ToolRelatedLinks";
 import ToolExplainer from "@/components/ToolExplainer";
+import ContextualHelp from "@/components/ContextualHelp";
 import ToolHero from "@/components/ToolHero";
 import { api } from "@/lib/api";
 import { Upload, Loader2, AlertTriangle, ArrowRight, Sparkles, Clock, FileText, FileType2, Image as ImageIcon, ChevronDown, HelpCircle, BookOpen, PlayCircle } from "lucide-react";
@@ -706,6 +707,9 @@ export default function StatementDecoderTool() {
             </section>
             <section className="max-w-5xl mx-auto px-4 sm:px-8">
                 <ToolExplainer toolKey="statement-decoder" />
+            </section>
+            <section className="max-w-5xl mx-auto px-4 sm:px-8 mt-6">
+                <ContextualHelp toolKey="statement-decoder" />
             </section>
             <ToolRelatedLinks slug="statement-decoder" />
             <Footer />

@@ -1,0 +1,67 @@
+{
+  "summary": "Phase 3A.2 Help Centre (Milestone 1) — comprehensive backend + web frontend testing completed. All 15 pytest tests PASS (100%). Public /help, admin /admin/help-centre, and Command Centre integration all functional. Privacy guarantees verified: drafts never leak publicly, feedback comments only exposed in admin. Full workflow (create→submit→approve→publish→unpublish→archive) exercised on a THROWAWAY test article; the 15 seeded starter drafts were NOT published (verified still at draft count=15, published=0). ContextualHelp on Statement Decoder renders nothing without crashing. No regressions in Command Centre existing blocks.",
+  "platforms_tested": ["web"],
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "web": {
+      "ui_bugs": [],
+      "integration_issues": [],
+      "design_issues": []
+    }
+  },
+  "parity_issues": [],
+  "test_report_links": [
+    "/app/backend/tests/test_help_centre_iter398.py",
+    "/app/test_reports/pytest/help_centre_iter398.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "routes/help_centre.py is 683 lines — acceptable but approaching the ~700-line split threshold; consider splitting admin vs public subrouters if it grows further.",
+    "retrieve_help_knowledge() uses an in-memory lexical scoring loop over every approved/published article. Fine for Milestone 1 (small corpus) but will degrade when the catalogue grows. Flag for Phase 3A.3: swap to a Mongo text index or BM25.",
+    "In-memory rate limiter _RL is per-process (uvicorn workers do not share state). For PROD fronting multiple workers, feedback/search abuse protection must move to Redis — same pattern Phase 1 email already uses."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_help_centre_iter398.py (new)"
+  ],
+  "success_rate": {"backend": "100%", "frontend": "100%"},
+  "test_credentials": "super_admin hello@wayly.com.au / Admin!2026 + TOTP (secret in test_credentials.md). Used pyotp to generate code.",
+  "seed_data_creation": "Test article 'TEST_iter398 throwaway article' was created, published, unpublished and archived during test_full_workflow; it is left in 'archived' status (not deleted) because the autouse cleanup fixture issues an admin DELETE at module teardown. Final DB state verified: help_articles total=15, all status=draft (seed intact).",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Milestone 1 Help Centre is clean. Backend regression file: /app/backend/tests/test_help_centre_iter398.py (15 tests, ~7s). Reuse the admin_token fixture + pyotp pattern. The 15 seeded drafts MUST remain unpublished — tests assert that. When Phase 3A.3 (AI grounding on human-reviewed drafts) lands, extend retrieve_help_knowledge tests to confirm drafts still never ground, and verify per-draft reply approval flow before anything is user-visible.",
+  "rca of the issue": "N/A — no defects found.",
+  "test_coverage_summary": {
+    "public": [
+      "GET /api/public/help/categories (11 cats, all counts 0 ✓)",
+      "GET /api/public/help/articles empty/q/tool_key ✓",
+      "GET /api/public/help/articles/{slug} 404 for drafts ✓",
+      "POST .../feedback 404 for nonexistent slug + spam reject (3+ links) + happy path ✓",
+      "Public projection omits approved_by/created_by/is_outdated/comments ✓"
+    ],
+    "admin": [
+      "GET /admin/help/categories (requires auth, 401 without token) ✓",
+      "GET /admin/help/articles lists 15 seeded drafts + status_counts.draft==15 ✓",
+      "GET /admin/help/reporting metrics returned ✓",
+      "GET /admin/help/feedback endpoint ✓",
+      "GET /admin/help/knowledge-search returns [] when nothing approved ✓",
+      "Full throwaway workflow: create → PUT (version→2) → submit → approve → publish → PUBLIC 200 → unpublish → PUBLIC 404 → archive ✓",
+      "Admin detail endpoint shows private feedback comments + versions (>=2 snapshots) ✓"
+    ],
+    "command_centre": [
+      "/api/admin/command-centre/summary returns blocks.help_centre with all 5 required keys ✓",
+      "No regression in revenue/growth/support/marketing/alerts/approvals ✓",
+      "UI card renders: Published 0 / Pending Approval 15 / Unanswered(30D) 2 / Helpful % 100% / Outdated 0 ✓"
+    ],
+    "ui": [
+      "/help loads: hero + search + category empty-state + CTAs (Ask Wayly / Contact / FAQ) ✓",
+      "/help search for 'cancel' shows empty state (0 results) correctly ✓",
+      "/admin/help-centre loads with Draft(15), tabs Articles/Feedback/Reporting all work ✓",
+      "Admin knowledge-search preview returns 'No approved articles match' ✓",
+      "/admin/command-centre renders new Help Centre card alongside existing blocks ✓",
+      "/ai-tools/statement-decoder loads cleanly; ContextualHelp renders nothing (no published) ✓"
+    ]
+  }
+}

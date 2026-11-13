@@ -147,6 +147,9 @@ const PolicyDetail = lazy(() => import("@/pages/policy/PolicyDetail"));
 const GuidesHub = lazy(() => import("@/pages/guides/GuidesHub"));
 const GuideDetail = lazy(() => import("@/pages/guides/GuideDetail"));
 const FaqHub = lazy(() => import("@/pages/FaqHub"));
+const HelpCentre = lazy(() => import("@/pages/help/HelpCentre"));
+const HelpCategory = lazy(() => import("@/pages/help/HelpCentre").then((m) => ({ default: m.HelpCategory })));
+const HelpArticle = lazy(() => import("@/pages/help/HelpCentre").then((m) => ({ default: m.HelpArticle })));
 const AskWayly = lazy(() => import("@/pages/AskWayly"));
 const About = lazy(() => import("@/pages/About"));
 // CHSP content pillar, June 2026
@@ -440,6 +443,9 @@ function App() {
                     <Route path="/guides" element={<GuidesHub />} />
                     <Route path="/guides/:slug" element={<GuideDetail />} />
                     <Route path="/faq" element={<FaqHub />} />
+                    <Route path="/help" element={<HelpCentre />} />
+                    <Route path="/help/c/:category" element={<HelpCategory />} />
+                    <Route path="/help/a/:slug" element={<HelpArticle />} />
                     <Route path="/ask-wayly" element={<AskWayly />} />
                     <Route path="/about" element={<About />} />
                     {/* CHSP content pillar, June 2026 */}

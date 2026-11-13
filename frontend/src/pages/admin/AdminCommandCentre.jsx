@@ -3,7 +3,7 @@ import { toast } from "sonner";
 import { Link } from "react-router-dom";
 import {
     LayoutDashboard, DollarSign, Users, Headphones, Megaphone,
-    ShieldAlert, CheckSquare, Activity,
+    ShieldAlert, CheckSquare, Activity, BookOpen,
 } from "lucide-react";
 import { adminApi } from "./AdminAuthContext";
 
@@ -73,6 +73,7 @@ export default function AdminCommandCentre() {
     const b = data.blocks;
     const rev = b.revenue.data, gr = b.growth.data, sup = b.support.data;
     const mk = b.marketing.data, al = b.alerts.data, ap = b.approvals.data;
+    const hc = b.help_centre?.data || {};
 
     return (
         <div data-testid="admin-command-centre">
@@ -119,6 +120,18 @@ export default function AdminCommandCentre() {
                         <Metric label="Planned" value={aud(mk.totals?.planned_aud)} />
                     </div>
                 </Section>
+
+                {b.help_centre && (
+                    <Section icon={BookOpen} title="Help Centre" block={b.help_centre} to="/admin/help-centre">
+                        <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
+                            <Metric label="Published" value={hc.published_articles ?? 0} />
+                            <Metric label="Pending approval" value={hc.pending_approval ?? 0} />
+                            <Metric label="Unanswered (30d)" value={hc.unanswered_searches_30d ?? 0} />
+                            <Metric label="Helpful %" value={hc.feedback_helpful_pct_30d != null ? `${hc.feedback_helpful_pct_30d}%` : "—"} />
+                            <Metric label="Outdated" value={hc.outdated_articles ?? 0} />
+                        </div>
+                    </Section>
+                )}
 
                 <Section icon={ShieldAlert} title="Operational Alerts" block={b.alerts}>
                     <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>

@@ -8062,6 +8062,14 @@ except Exception as _e:
     import logging as _logging
     _logging.getLogger("wayly").warning(f"routes.command_centre failed to load: {_e}")
 
+# Phase 3A.2 — Wayly Help Centre (public /help knowledge base + admin CMS)
+try:
+    from routes.help_centre import build_help_centre_router
+    api.include_router(build_help_centre_router())
+except Exception as _e:
+    import logging as _logging
+    _logging.getLogger("wayly").warning(f"routes.help_centre failed to load: {_e}")
+
 # Participant Contacts (UI-1 §8)
 try:
     from routes.participant_contacts import build_contacts_router

@@ -27,6 +27,7 @@ import HcpBridgeLine from "@/components/HcpBridgeLine";
 import ToolWalkthroughVideo from "@/components/ToolWalkthroughVideo";
 import ToolGate from "@/components/ToolGate";
 import ToolExplainer from "@/components/ToolExplainer";
+import ContextualHelp from "@/components/ContextualHelp";
 import ToolRelatedLinks from "@/components/ToolRelatedLinks";
 import AIAccuracyBanner from "@/components/AIAccuracyBanner";
 import FilePreviewPanel from "@/components/FilePreviewPanel";
@@ -821,6 +822,9 @@ export default function InvoiceCheckerTool() {
             <ToolWalkthroughVideo slug="invoice-checker" />
             <section className="max-w-5xl mx-auto px-4 sm:px-8">
                 <ToolExplainer toolKey="invoice-checker" />
+            </section>
+            <section className="max-w-5xl mx-auto px-4 sm:px-8 mt-6">
+                <ContextualHelp toolKey="invoice-checker" />
             </section>
             <ToolRelatedLinks slug="invoice-checker" />
             <Footer />

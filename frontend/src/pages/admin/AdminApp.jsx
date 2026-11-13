@@ -5,7 +5,7 @@ import "./admin.css";
 import {
     LayoutDashboard, Users, CreditCard, Bot, Headphones, Megaphone, FileText,
     LineChart, Lock, Settings, UserCog, Search, Bell, LogOut, ShieldAlert,
-    Menu, Mail, Inbox, Gauge,
+    Menu, Mail, Inbox, Gauge, LifeBuoy,
 } from "lucide-react";
 import { AdminAuthProvider, useAdminAuth, adminApi } from "./AdminAuthContext";
 import AdminLogin from "./AdminLogin";
@@ -72,6 +72,7 @@ const NAV = [
     {
         section: "Content",
         items: [
+            { to: "/admin/help-centre", label: "Help Centre", icon: LifeBuoy, testid: "admin-nav-help-centre" },
             { to: "/admin/blog", label: "Blog", icon: FileText, testid: "admin-nav-blog" },
             { to: "/admin/glossary", label: "Glossary", icon: FileText, testid: "admin-nav-glossary" },
             { to: "/admin/templates-library", label: "Templates Library", icon: FileText, testid: "admin-nav-tpllib" },
@@ -321,6 +322,7 @@ import { AdminSupport, AdminSupportDetail, AdminSupportDefects, AdminSupportMacr
 import AdminSupportInbox from "./AdminSupportInbox";
 import AdminMarketingSpend from "./AdminMarketingSpend";
 import AdminCommandCentre from "./AdminCommandCentre";
+import AdminHelpCentre from "./AdminHelpCentre";
 
 function AdminRoutes() {
     return (
@@ -374,6 +376,7 @@ function AdminRoutes() {
                 <Route path="support-inbox" element={<AdminSupportInbox />} />
                 <Route path="command-centre" element={<AdminCommandCentre />} />
                 <Route path="marketing-spend" element={<AdminMarketingSpend />} />
+                <Route path="help-centre" element={<AdminHelpCentre />} />
                 {/* P0 + P1 pages (AdminPhaseB) */}
                 {P0P1_ROUTES.map((r) => <Route key={r.path} path={r.path} element={r.element} />)}
                 {/* Fallback placeholders for any nav entry that remains unbuilt */}
@@ -391,7 +394,7 @@ function AdminRoutes() {
                         "feature-flags", "health", "maintenance", "admins",
                         "blog", "glossary", "templates-library", "changelog",
                         "seo/indexnow", "support", "enquiries",
-                        "support-inbox", "command-centre", "marketing-spend",
+                        "support-inbox", "command-centre", "marketing-spend", "help-centre",
                     ].includes(path) || P0P1_BUILT_PATHS.has(path)) return null;
                     return <Route key={it.to} path={path} element={<Placeholder label={it.label} />} />;
                 })}

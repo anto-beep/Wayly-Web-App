@@ -125,6 +125,28 @@ def build_command_centre_router():
         }, source="marketing_expenses", last_updated=now.isoformat(),
             status="ok" if pending_expenses else "empty")
 
+        # ---- Help Centre (Phase 3A.2 knowledge base) ----
+        help_block = None
+        try:
+            from routes.help_centre import help_centre_metrics
+            hm = await help_centre_metrics()
+            help_block = _block({
+                "published_articles": hm["published_articles"],
+                "pending_approval": hm["pending_approval"],
+                "approved_unpublished": hm["approved_unpublished"],
+                "outdated_articles": hm["outdated_articles"],
+                "searches_30d": hm["searches_30d"],
+                "unanswered_searches_30d": hm["unanswered_searches_30d"],
+                "feedback_helpful_pct_30d": hm["feedback_helpful_pct_30d"],
+                "feedback_not_helpful_30d": hm["feedback_not_helpful_30d"],
+                "popular_articles": hm["popular_articles"],
+                "knowledge_gaps": hm["knowledge_gaps"],
+            }, source="help_articles+help_searches+help_feedback",
+                last_updated=hm["last_updated"], status="ok" if hm["has_data"] else "empty")
+        except Exception as _he:
+            logger.warning("command centre help block skipped: %s", _he)
+            help_block = _block({}, source="help_centre", last_updated=None, status="empty")
+
         # ---- Data-source health ----
         health = [
             {"source": "subscriptions", "status": "connected", "kind": "app_record"},
@@ -143,6 +165,7 @@ def build_command_centre_router():
                 "growth": growth_block,
                 "support": support_block,
                 "marketing": marketing_block,
+                "help_centre": help_block,
                 "alerts": alerts_block,
                 "approvals": approvals_block,
             },

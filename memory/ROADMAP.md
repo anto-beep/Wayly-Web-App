@@ -3,15 +3,16 @@
 _Started Jun 2026. Historical implementation log lives in PRD.md (dated sections)._
 
 ## Recently shipped
-- **Iter 397 (Nov 2026)** — Phase 3A.1 Unified Support Inbox (`/admin/support-inbox`, read-only union of sup_*/enquiries/legacy, migration of 2 legacy tickets → WAY-0045/0046), Phase 5A Marketing Spend & Investment Register (`/admin/marketing-spend`, AUD-only, super/ops gated, campaigns + audit + CSV), Founder Command Centre MVP (`/admin/command-centre`). Preview only. 17/17 backend + full web E2E pass. Report iteration_397.
+- **Iter 398 (Nov 2026)** — Phase 3A.2 Help Centre (Milestone 1): public `/help` product-support knowledge base (own section, 11 categories, search, related, anonymous helpful/not-helpful with admin-private comments), admin `/admin/help-centre` CMS (draft→review→approve→publish + versions + outdated + reporting), 15 verified starter drafts (unpublished, awaiting founder approval), approved-only AI grounding retrieval, Command Centre help block. Preview only. 15/15 backend + full web E2E pass. Report iteration_398.
+- **Iter 397 (Nov 2026)** — Phase 3A.1 Unified Support Inbox, Phase 5A Marketing Spend Register, Founder Command Centre MVP. Preview only. Report iteration_397.
 - **Iter 321 (Jun 2026)** — Auth dark-mode fix (lighter warm cards + clay accents, readable Google label); invoice per-issue draft-letter parity; Fee Transparency + Confidence Legend on the statement decoder (web+mobile); app-wide sleek/less-round/no-hover button restyle; prod test-account cleanup script; confirmed Gateway Guardrail + /api/health already mitigated (off-loop LLM executor, 75s timeout, dependency-free liveness). Verified iteration_321.
 - **Iter 320 (Jun 2026)** — Blocked Statement Demo; Required/Optional badge sweep (mobile); Bulk Follow-up (web+mobile); Letter Preview (in-app WYSIWYG); landing dark-mode + button polish; Statement Decoder CTA pricing fix.
 
 ## P1 — next up
-- **Marketing Spend CSV import** — bulk-import historical marketing spend from a CSV (founder-requested "fast follow" to the manual-entry register; backend already has a duplicate/source_id guard ready for it).
-- **Phase 3A.2 / 3A.3** — public searchable Help Centre + AI draft-reply for support tickets.
-- **Phase 3B** — Customer Experience reporting (first-response time, resolution, CSAT trends, recurring-issue detection).
-- **Phase 4** — Marketing Growth Engine automated API integrations (Google Search Console, GA4, Metricool) feeding the register/command centre (currently manual entry only).
+- **Phase 3A.3** — human-approved AI Draft Replies in the existing ticket UI (grounded via the Help Centre `retrieve_help_knowledge` source) + ticket intelligence (categorisation, suggested priority, duplicate/related detection, escalation rules for privacy/billing/security/complaints/safeguarding). Never auto-sends.
+- **Phase 5A.1** — extend the Marketing Spend Register (media-placement fields: publisher, placement type, scheduled vs actual date, UTM, publisher-reported performance labelled as estimates; campaign budget vs committed vs actual vs remaining). NO CSV import (keep CSV export). Optional original-currency + recorded AUD-equivalent for overseas invoices.
+- **Phase 4 Measurement Foundation** — campaign-results model (reach/clicks/visits/enquiries/registrations/trial checkouts/paid subs where attributable), label manual vs publisher-reported, CPA/ROAS only where attribution exists else "Attribution unavailable". Integration-ready data model (GA4/GSC/Google Ads/Meta/Microsoft/Metricool) — no external integrations built.
+- **Founder Command Centre expansion** — richer support/help-centre/marketing/campaign sections with drill-down, data-quality labels, founder actions.
 - **Reviewer PDF Match** — the downloaded review PDF should include the same safety checks the family sees on screen.
 - **Printable Estimate** — turn the budget summary into a one-page printable sheet families can take to their provider.
 - **Fee Transparency** — break out care management, package management and GST as their own visible rows so the total always reconciles on screen.

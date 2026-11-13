@@ -13,6 +13,7 @@ const PRODUCT = [
 ];
 
 const RESOURCES = [
+    { to: "/help", label: "Help Centre" },
     { to: "/guides", label: "Caregiver Guides" },
     { to: "/faq", label: "FAQ" },
     { to: "/ask-wayly", label: "Ask Wayly" },
