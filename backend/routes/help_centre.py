@@ -46,17 +46,17 @@ _HASH_SECRET = os.environ.get("EMAIL_HASH_SECRET", "wayly-help-centre-fallback")
 
 # Fixed product-support categories (slug -> label). "other-tools" is the catch-all.
 CATEGORIES: Dict[str, str] = {
-    "getting-started": "Getting started",
-    "registration-trial": "Registration, card details & free trial",
+    "getting-started": "Getting Started",
+    "registration-trial": "Registration, Card Details & Free Trial",
     "onboarding": "Onboarding",
-    "billing-subscriptions": "Billing & subscriptions",
+    "billing-subscriptions": "Billing & Subscriptions",
     "statement-decoder": "Statement Decoder",
     "invoice-checker": "Invoice Checker",
     "ask-wayly": "Ask Wayly",
-    "account-privacy": "Account & privacy",
-    "technical-troubleshooting": "Technical troubleshooting",
+    "account-privacy": "Account & Privacy",
+    "technical-troubleshooting": "Technical Troubleshooting",
     "support-at-home-chsp": "Support at Home & CHSP",
-    "other-tools": "Other Wayly tools",
+    "other-tools": "Other Wayly Tools",
 }
 
 STATUSES = ("draft", "in_review", "approved", "published", "archived")
@@ -101,6 +101,13 @@ def _rate_limit(key: str, max_n: int, window_sec: int, msg: str) -> None:
     if len(_RL[key]) >= max_n:
         raise HTTPException(status_code=429, detail={"error": "rate_limit", "message": msg})
     _RL[key].append(now)
+
+
+async def _db_rate_count(collection, ip_hash: str, window_sec: int) -> int:
+    """Cross-instance abuse check: how many rows this hashed IP wrote recently.
+    Database-backed (no Redis / new dependency) so it holds across backend pods."""
+    since = (datetime.now(timezone.utc) - timedelta(seconds=window_sec)).isoformat()
+    return await collection.count_documents({"ip_hash": ip_hash, "ts": {"$gte": since}})
 
 
 def _public_article(a: dict) -> dict:
@@ -198,7 +205,7 @@ async def help_centre_metrics() -> dict:
     drafts = await db.help_articles.count_documents({"status": "draft"})
     in_review = await db.help_articles.count_documents({"status": "in_review"})
     approved_unpub = await db.help_articles.count_documents({"status": "approved"})
-    pending_approval = drafts + in_review  # awaiting a reviewer/approver
+    pending_approval = in_review  # only items explicitly submitted for review
     outdated = await db.help_articles.count_documents(
         {"$or": [{"is_outdated": True},
                  {"status": "published", "last_reviewed_at": {"$lt": stale_before}}]})
@@ -609,15 +616,18 @@ def build_help_centre_router():
         # Privacy-safe search logging (hashed IP only; used for knowledge-gap reporting).
         if q:
             try:
-                await db.help_searches.insert_one({
-                    "id": uuid.uuid4().hex,
-                    "query": q.strip()[:200],
-                    "query_norm": q.strip().lower()[:200],
-                    "results_count": len(rows),
-                    "category": category,
-                    "ip_hash": _ip_hash(_client_ip(request)),
-                    "ts": _now(),
-                })
+                ip_hash = _ip_hash(_client_ip(request))
+                # Cross-instance cap so logging can't be flooded (60/hour per hashed IP).
+                if await _db_rate_count(db.help_searches, ip_hash, 3600) < 60:
+                    await db.help_searches.insert_one({
+                        "id": uuid.uuid4().hex,
+                        "query": q.strip()[:200],
+                        "query_norm": q.strip().lower()[:200],
+                        "results_count": len(rows),
+                        "category": category,
+                        "ip_hash": ip_hash,
+                        "ts": _now(),
+                    })
             except Exception as exc:  # pragma: no cover
                 logger.warning("help search log skipped: %s", exc)
         return {"articles": rows, "total": len(rows), "query": q}
@@ -654,9 +664,11 @@ def build_help_centre_router():
     @r.post("/public/help/articles/{slug}/feedback")
     async def public_feedback(slug: str, body: FeedbackBody, request: Request):
         ip = _client_ip(request)
-        # Abuse protection: cap feedback per IP.
-        _rate_limit(f"help_fb:{_ip_hash(ip)}", max_n=20, window_sec=3600,
-                    msg="Thanks! You've sent a lot of feedback recently — please try again later.")
+        ip_hash = _ip_hash(ip)
+        # Abuse protection: cross-instance DB-backed cap (20/hour per hashed IP).
+        if await _db_rate_count(db.help_feedback, ip_hash, 3600) >= 20:
+            raise HTTPException(status_code=429, detail={"error": "rate_limit",
+                "message": "Thanks! You've sent a lot of feedback recently — please try again later."})
         a = await db.help_articles.find_one({"slug": slug, "status": "published"},
                                             {"_id": 0, "id": 1})
         if not a:
@@ -672,7 +684,7 @@ def build_help_centre_router():
             "article_slug": slug,
             "helpful": bool(body.helpful),
             "comment": comment,
-            "ip_hash": _ip_hash(ip),
+            "ip_hash": ip_hash,
             "ts": _now(),
         })
         field = "helpful_count" if body.helpful else "not_helpful_count"

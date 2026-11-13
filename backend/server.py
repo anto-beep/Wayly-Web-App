@@ -8062,6 +8062,38 @@ except Exception as _e:
     import logging as _logging
     _logging.getLogger("wayly").warning(f"routes.command_centre failed to load: {_e}")
 
+# Phase 5A.2 — Founder Command Centre actionable layer (trends/alerts/approvals/briefing)
+try:
+    from routes.command_centre_ext import build_command_centre_ext_router
+    api.include_router(build_command_centre_ext_router())
+except Exception as _e:
+    import logging as _logging
+    _logging.getLogger("wayly").warning(f"routes.command_centre_ext failed to load: {_e}")
+
+# BOS — unified Approval registry (shared by Growth Engine / Pipeline)
+try:
+    from bos_approvals import build_bos_approvals_router
+    api.include_router(build_bos_approvals_router())
+except Exception as _e:
+    import logging as _logging
+    _logging.getLogger("wayly").warning(f"bos_approvals failed to load: {_e}")
+
+# Phase 4A — Marketing & Brand Growth Engine
+try:
+    from routes.growth_engine import build_growth_engine_router
+    api.include_router(build_growth_engine_router())
+except Exception as _e:
+    import logging as _logging
+    _logging.getLogger("wayly").warning(f"routes.growth_engine failed to load: {_e}")
+
+# Phase 4B — Publicity, Partnerships, Referrals & Growth Experiments
+try:
+    from routes.growth_pipeline import build_growth_pipeline_router
+    api.include_router(build_growth_pipeline_router())
+except Exception as _e:
+    import logging as _logging
+    _logging.getLogger("wayly").warning(f"routes.growth_pipeline failed to load: {_e}")
+
 # Phase 3A.2 — Wayly Help Centre (public /help knowledge base + admin CMS)
 try:
     from routes.help_centre import build_help_centre_router

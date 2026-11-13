@@ -12,7 +12,7 @@ const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
  *
  *   <ContextualHelp toolKey="statement-decoder" />
  */
-export default function ContextualHelp({ toolKey, title = "Related help", limit = 3, className = "" }) {
+export default function ContextualHelp({ toolKey, title = "Related Help", limit = 3, className = "" }) {
     const [articles, setArticles] = useState([]);
 
     useEffect(() => {

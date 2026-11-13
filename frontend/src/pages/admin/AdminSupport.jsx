@@ -6,7 +6,7 @@ import {
     Loader2, ArrowLeft, FileText, ShieldAlert, MessageSquare, Lock,
     Search, Filter, X, Check, ChevronDown, Users, Tag, AlertTriangle,
     Download, PlusCircle, Zap, Clock, UserCheck, RefreshCcw, ListChecks,
-    Copy, MoreHorizontal, Flag, Archive, Paperclip,
+    Copy, MoreHorizontal, Flag, Archive, Paperclip, Sparkles, BookOpen,
 } from "lucide-react";
 
 const STATUS_LABEL = {
@@ -523,6 +523,8 @@ export function AdminSupportDetail() {
     const [resolution, setResolution] = useState("");
     const [newTag, setNewTag] = useState("");
     const [busy, setBusy] = useState(false);
+    const [aiBusy, setAiBusy] = useState(false);
+    const [ai, setAi] = useState(null);
 
     const load = useCallback(() => {
         adminApi.get(`/admin/support/tickets/${ticketId}`)
@@ -614,6 +616,18 @@ export function AdminSupportDetail() {
             toast.success("Triage feedback recorded.");
             load();
         } catch (e) { toast.error(extractMsg(e)); }
+    };
+
+    const draftWithAI = async () => {
+        setAiBusy(true);
+        try {
+            const r = await adminApi.post(`/admin/support/tickets/${ticketId}/ai-draft`);
+            setAi(r.data);
+            if (!r.data?.has_sufficient_knowledge) {
+                toast.warning("Limited approved knowledge matched — review the draft carefully before sending.");
+            }
+        } catch (e) { toast.error(extractMsg(e, "Could not generate an AI draft.")); }
+        finally { setAiBusy(false); }
     };
 
     const addTag = async () => {
@@ -807,6 +821,90 @@ export function AdminSupportDetail() {
                                         <span style={{ marginLeft: "auto", color: "var(--admin-muted)" }}>{fmt(row.created_at)}</span>
                                     </div>
                                 ))}
+                            </div>
+                        )}
+                    </section>
+
+                    {/* AI draft & suggestions (Phase 3A.3 — admin-triggered, never auto-sent) */}
+                    <section className="admin-card" style={{ marginBottom: 16, borderLeft: "3px solid #1565B8" }} data-testid="admin-support-ai">
+                        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, flexWrap: "wrap" }}>
+                            <h3 style={{ fontSize: 13, fontWeight: 600, margin: 0, display: "flex", alignItems: "center", gap: 6 }}>
+                                <Sparkles size={14} /> AI draft & suggestions
+                            </h3>
+                            <div style={{ display: "flex", gap: 6 }}>
+                                <button onClick={draftWithAI} disabled={aiBusy} className="admin-btn admin-btn-primary" style={{ fontSize: 12 }} data-testid="admin-support-ai-draft">
+                                    {aiBusy ? <><Loader2 size={12} className="admin-spin" /> Drafting…</> : (ai ? "Regenerate" : "Draft with AI")}
+                                </button>
+                                {ai && <button onClick={() => setAi(null)} className="admin-btn admin-btn-secondary" style={{ fontSize: 12 }} data-testid="admin-support-ai-discard">Discard</button>}
+                            </div>
+                        </div>
+                        <p style={{ fontSize: 11, color: "var(--admin-muted)", marginTop: 6 }}>
+                            Grounded only in approved Help Centre knowledge. Review and edit before sending — nothing is sent to the customer automatically.
+                        </p>
+                        {ai && (
+                            <div style={{ marginTop: 10 }} data-testid="admin-support-ai-result">
+                                {ai.escalation?.required && (
+                                    <div style={{ background: "rgba(180,35,24,0.08)", border: "1px solid #B42318", borderRadius: 6, padding: "8px 10px", marginBottom: 10, fontSize: 12 }} data-testid="admin-support-ai-escalation">
+                                        <strong style={{ color: "#B42318" }}>Escalation suggested: {(ai.escalation.type || "").replace(/_/g, " ")}</strong>
+                                        {ai.escalation.reason && <div style={{ marginTop: 2 }}>{ai.escalation.reason}</div>}
+                                        <div style={{ marginTop: 4, color: "var(--admin-muted)" }}>Handle via your existing complaints / safeguarding process. AI only flags; it does not resolve.</div>
+                                    </div>
+                                )}
+                                {!ai.has_sufficient_knowledge && (
+                                    <div style={{ background: "rgba(165,81,43,0.08)", border: "1px solid #A5512B", borderRadius: 6, padding: "8px 10px", marginBottom: 10, fontSize: 12 }} data-testid="admin-support-ai-lowknowledge">
+                                        No sufficiently matching approved knowledge was found. This is a safe holding draft — verify before sending or investigate manually.
+                                    </div>
+                                )}
+                                <div style={{ fontSize: 12, color: "var(--admin-muted)", marginBottom: 4 }}>Suggested reply draft:</div>
+                                <pre style={{ padding: 10, background: "#F4F1EA", color: "#0E4D52", borderRadius: 6, whiteSpace: "pre-wrap", fontSize: 12, margin: 0 }} data-testid="admin-support-ai-draft-text">{ai.reply_draft}</pre>
+                                <div style={{ display: "flex", gap: 6, marginTop: 8, flexWrap: "wrap" }}>
+                                    <button onClick={() => { setReply(ai.reply_draft); toast.success("Draft loaded into the reply box. Review before sending."); }} className="admin-btn admin-btn-secondary" style={{ fontSize: 12 }} data-testid="admin-support-ai-use">
+                                        Use this draft
+                                    </button>
+                                </div>
+                                {ai.uncertainty_notes && (
+                                    <p style={{ fontSize: 12, marginTop: 8 }}><strong>Uncertainty:</strong> {ai.uncertainty_notes}</p>
+                                )}
+                                {(ai.grounded_on || []).length > 0 && (
+                                    <div style={{ marginTop: 8, fontSize: 12 }} data-testid="admin-support-ai-sources">
+                                        <strong style={{ display: "inline-flex", alignItems: "center", gap: 4 }}><BookOpen size={12} /> Sources used:</strong>
+                                        <ul style={{ margin: "4px 0 0", paddingLeft: 18 }}>
+                                            {ai.grounded_on.filter((s) => (ai.cited_sources || []).includes(s.slug)).map((s) => (
+                                                <li key={s.slug}><a href={s.url} target="_blank" rel="noopener noreferrer" style={{ color: "#1565B8" }}>{s.title}</a></li>
+                                            ))}
+                                            {(ai.cited_sources || []).length === 0 && <li style={{ color: "var(--admin-muted)" }}>No approved article was cited.</li>}
+                                        </ul>
+                                    </div>
+                                )}
+                                <div style={{ display: "flex", gap: 14, marginTop: 10, flexWrap: "wrap", fontSize: 12 }} data-testid="admin-support-ai-suggestions">
+                                    {ai.suggested_category && <span><strong>Category:</strong> {ai.suggested_category.replace(/_/g, " ")}</span>}
+                                    {ai.suggested_priority && (
+                                        <span><strong>Priority:</strong> {ai.suggested_priority}
+                                            <button onClick={() => patch({ priority: ai.suggested_priority }, `Priority set to ${ai.suggested_priority}`)} className="admin-btn admin-btn-secondary" style={{ fontSize: 11, marginLeft: 6, padding: "2px 8px" }} data-testid="admin-support-ai-apply-priority">Apply</button>
+                                        </span>
+                                    )}
+                                </div>
+                                {(ai.duplicate_or_related || []).length > 0 && (
+                                    <div style={{ marginTop: 8, fontSize: 12 }} data-testid="admin-support-ai-related">
+                                        <strong>Possible duplicates / related:</strong>
+                                        <ul style={{ margin: "4px 0 0", paddingLeft: 18 }}>
+                                            {ai.duplicate_or_related.map((d, i) => <li key={i}>{d.reference}{d.why ? ` — ${d.why}` : ""}</li>)}
+                                        </ul>
+                                    </div>
+                                )}
+                                {(ai.internal_next_actions || []).length > 0 && (
+                                    <div style={{ marginTop: 8, fontSize: 12 }} data-testid="admin-support-ai-next-actions">
+                                        <strong>Suggested internal next actions:</strong>
+                                        <ul style={{ margin: "4px 0 0", paddingLeft: 18 }}>
+                                            {ai.internal_next_actions.map((a, i) => <li key={i}>{a}</li>)}
+                                        </ul>
+                                    </div>
+                                )}
+                                {ai.metrics && (
+                                    <p style={{ fontSize: 10, color: "var(--admin-muted)", marginTop: 10 }}>
+                                        {ai.model} · {ai.metrics.latency_ms} ms · ~{ai.metrics.estimated_tokens} tokens · est. ${ai.metrics.estimated_cost_usd} (AI-generated — verify before sending).
+                                    </p>
+                                )}
                             </div>
                         )}
                     </section>

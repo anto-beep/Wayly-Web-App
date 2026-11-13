@@ -33,6 +33,12 @@ from fastapi.responses import Response
 from motor.motor_asyncio import AsyncIOMotorClient
 from pydantic import BaseModel, Field
 
+from bos_core import to_decimal128, to_aud, expense_financials, dsum, D, compute_gst
+try:
+    from bson.decimal128 import Decimal128
+except Exception:  # pragma: no cover
+    Decimal128 = None  # type: ignore
+
 logger = logging.getLogger(__name__)
 
 _client = AsyncIOMotorClient(os.environ["MONGO_URL"])
@@ -87,6 +93,17 @@ OUTCOME_METRICS = (
     "impressions", "clicks", "visits", "enquiries",
     "registrations", "trial_customers", "paid_subscribers", "revenue_aud",
 )
+
+# Phase 5A.1 — outcome source classification (publisher-reported vs verified).
+OUTCOME_SOURCE_CLASS = (
+    "publisher_reported", "admin_recorded", "first_party", "ga4", "verified_api",
+)
+
+# New monetary fields (persisted as Decimal128; legacy cost_* stay as-is).
+NEW_MONEY_FIELDS = {
+    "planned_amount_aud", "committed_amount_aud", "incurred_amount_aud",
+    "amount_paid_aud", "credit_amount_aud",
+}
 
 
 def _now() -> str:
@@ -206,6 +223,7 @@ class OutcomeBody(BaseModel):
     metric: Literal[OUTCOME_METRICS] = "visits"  # type: ignore
     value: float = Field(ge=0)
     source: str = Field(min_length=2, max_length=120)
+    source_class: Literal[OUTCOME_SOURCE_CLASS] = "admin_recorded"  # type: ignore
     as_of_date: Optional[str] = None
     note: Optional[str] = Field(default=None, max_length=500)
 
@@ -245,6 +263,27 @@ class ExpenseCreate(BaseModel):
     data_source: Literal[DATA_SOURCE] = "manual"  # type: ignore
     source_system: Optional[str] = Field(default=None, max_length=80)
     source_id: Optional[str] = Field(default=None, max_length=160)
+    # Phase 5A.1 — distinct financial lenses (AUD; optional, never assumed)
+    planned_amount_aud: Optional[float] = Field(default=None, ge=0)
+    committed_amount_aud: Optional[float] = Field(default=None, ge=0)
+    incurred_amount_aud: Optional[float] = Field(default=None, ge=0)
+    amount_paid_aud: Optional[float] = Field(default=None, ge=0)
+    credit_amount_aud: Optional[float] = Field(default=None, ge=0)
+    # Phase 5A.1 — publisher / media placement (EDM, Solus, newsletter, advertorial)
+    publisher_name: Optional[str] = Field(default=None, max_length=160)
+    publication_name: Optional[str] = Field(default=None, max_length=160)
+    placement_format: Optional[str] = Field(default=None, max_length=120)
+    placement_objective: Optional[str] = Field(default=None, max_length=200)
+    audience_description: Optional[str] = Field(default=None, max_length=500)
+    quoted_audience_size: Optional[int] = Field(default=None, ge=0)
+    booked_distribution_date: Optional[str] = None
+    actual_distribution_date: Optional[str] = None
+    tracking_link: Optional[str] = Field(default=None, max_length=500)
+    utm_source: Optional[str] = Field(default=None, max_length=120)
+    utm_medium: Optional[str] = Field(default=None, max_length=120)
+    utm_campaign: Optional[str] = Field(default=None, max_length=120)
+    performance_report_url: Optional[str] = Field(default=None, max_length=500)
+    performance_notes: Optional[str] = Field(default=None, max_length=2000)
 
 
 class ExpensePatch(BaseModel):
@@ -274,21 +313,58 @@ class ExpensePatch(BaseModel):
     publisher_url: Optional[str] = Field(default=None, max_length=500)
     published_url: Optional[str] = Field(default=None, max_length=500)
     placement_confirmation: Optional[str] = Field(default=None, max_length=500)
+    planned_amount_aud: Optional[float] = Field(default=None, ge=0)
+    committed_amount_aud: Optional[float] = Field(default=None, ge=0)
+    incurred_amount_aud: Optional[float] = Field(default=None, ge=0)
+    amount_paid_aud: Optional[float] = Field(default=None, ge=0)
+    credit_amount_aud: Optional[float] = Field(default=None, ge=0)
+    publisher_name: Optional[str] = Field(default=None, max_length=160)
+    publication_name: Optional[str] = Field(default=None, max_length=160)
+    placement_format: Optional[str] = Field(default=None, max_length=120)
+    placement_objective: Optional[str] = Field(default=None, max_length=200)
+    audience_description: Optional[str] = Field(default=None, max_length=500)
+    quoted_audience_size: Optional[int] = Field(default=None, ge=0)
+    booked_distribution_date: Optional[str] = None
+    actual_distribution_date: Optional[str] = None
+    tracking_link: Optional[str] = Field(default=None, max_length=500)
+    utm_source: Optional[str] = Field(default=None, max_length=120)
+    utm_medium: Optional[str] = Field(default=None, max_length=120)
+    utm_campaign: Optional[str] = Field(default=None, max_length=120)
+    performance_report_url: Optional[str] = Field(default=None, max_length=500)
+    performance_notes: Optional[str] = Field(default=None, max_length=2000)
 
 
 class VoidBody(BaseModel):
     reason: str = Field(min_length=3, max_length=500)
 
 
+class BudgetBody(BaseModel):
+    approved_budget_aud: Optional[float] = Field(default=None, ge=0)
+    planned_budget_aud: Optional[float] = Field(default=None, ge=0)
+
+
+def _d128_to_float(v):
+    if Decimal128 is not None and isinstance(v, Decimal128):
+        return to_aud(v)
+    return v
+
+
 def _expense_public(e: dict) -> dict:
-    out = {k: v for k, v in e.items() if k not in ("_id", "attachments")}
+    out = {k: _d128_to_float(v) for k, v in e.items() if k not in ("_id", "attachments")}
     atts = e.get("attachments") or []
     out["attachments"] = [{
         "id": a.get("id"), "filename": a.get("filename"),
         "mime_type": a.get("mime_type"), "size_bytes": a.get("size_bytes"),
         "uploaded_at": a.get("uploaded_at"),
     } for a in atts]
+    # Phase 5A.1 — distinct planned/committed/incurred/paid lenses (honest basis).
+    out["financials"] = expense_financials(e)
     return out
+
+
+def _campaign_public(c: dict) -> dict:
+    """Serialise a campaign doc — converts Decimal128 (e.g. approved_budget_aud)."""
+    return {k: _d128_to_float(v) for k, v in c.items() if k != "_id"}
 
 
 # ===========================================================================
@@ -357,7 +433,7 @@ def build_marketing_spend_router():
         rows = []
         async for c in db.marketing_campaigns.find({}, {"_id": 0}).sort("created_at", -1):
             agg = await _campaign_totals(c["id"])
-            rows.append({**c, **agg})
+            rows.append({**_campaign_public(c), **agg})
         return {"campaigns": rows}
 
     @r.post("/campaigns")
@@ -390,7 +466,7 @@ def build_marketing_spend_router():
         ).sort("created_at", -1):
             expenses.append(_expense_public(e))
         totals = await _campaign_totals(campaign_id)
-        return {"campaign": c, "expenses": expenses, **totals}
+        return {"campaign": _campaign_public(c), "expenses": expenses, **totals}
 
     @r.patch("/campaigns/{campaign_id}")
     async def patch_campaign(campaign_id: str, body: CampaignPatch,
@@ -412,7 +488,8 @@ def build_marketing_spend_router():
             raise HTTPException(404, "Campaign not found")
         outcome = {
             "id": uuid.uuid4().hex, "metric": body.metric, "value": body.value,
-            "source": body.source.strip(), "as_of_date": body.as_of_date or _now()[:10],
+            "source": body.source.strip(), "source_class": body.source_class,
+            "as_of_date": body.as_of_date or _now()[:10],
             "note": body.note, "recorded_at": _now(), "recorded_by": admin.get("id"),
         }
         await db.marketing_campaigns.update_one(
@@ -541,6 +618,27 @@ def build_marketing_spend_router():
             "data_source": body.data_source,
             "source_system": body.source_system,
             "source_id": body.source_id,
+            # Phase 5A.1 — distinct financial lenses (Decimal128; None = not supplied)
+            "planned_amount_aud": to_decimal128(body.planned_amount_aud),
+            "committed_amount_aud": to_decimal128(body.committed_amount_aud),
+            "incurred_amount_aud": to_decimal128(body.incurred_amount_aud),
+            "amount_paid_aud": to_decimal128(body.amount_paid_aud),
+            "credit_amount_aud": to_decimal128(body.credit_amount_aud),
+            # Phase 5A.1 — publisher / media placement
+            "publisher_name": (body.publisher_name or "").strip() or None,
+            "publication_name": (body.publication_name or "").strip() or None,
+            "placement_format": body.placement_format,
+            "placement_objective": body.placement_objective,
+            "audience_description": body.audience_description,
+            "quoted_audience_size": body.quoted_audience_size,
+            "booked_distribution_date": body.booked_distribution_date,
+            "actual_distribution_date": body.actual_distribution_date,
+            "tracking_link": body.tracking_link,
+            "utm_source": body.utm_source,
+            "utm_medium": body.utm_medium,
+            "utm_campaign": body.utm_campaign,
+            "performance_report_url": body.performance_report_url,
+            "performance_notes": body.performance_notes,
             "voided": False,
             "approved_by": None,
             "approved_at": None,
@@ -612,6 +710,11 @@ def build_marketing_spend_router():
             "data_source", "campaign_id", "booking_date", "service_start_date",
             "service_end_date", "invoice_date", "payment_date", "expense_reporting_date",
             "invoice_reference",
+            "planned_amount_aud", "committed_amount_aud", "incurred_amount_aud",
+            "amount_paid_aud", "credit_amount_aud",
+            "publisher_name", "publication_name", "placement_format",
+            "booked_distribution_date", "actual_distribution_date",
+            "tracking_link", "utm_source", "utm_medium", "utm_campaign",
         ])
         async for e in db.marketing_expenses.find(query, {"_id": 0}).sort("expense_reporting_date", -1):
             w.writerow([_safe(e.get(k)) for k in (
@@ -621,6 +724,11 @@ def build_marketing_spend_router():
                 "data_source", "campaign_id", "booking_date", "service_start_date",
                 "service_end_date", "invoice_date", "payment_date", "expense_reporting_date",
                 "invoice_reference",
+                "planned_amount_aud", "committed_amount_aud", "incurred_amount_aud",
+                "amount_paid_aud", "credit_amount_aud",
+                "publisher_name", "publication_name", "placement_format",
+                "booked_distribution_date", "actual_distribution_date",
+                "tracking_link", "utm_source", "utm_medium", "utm_campaign",
             )])
         return Response(content=buf.getvalue(), media_type="text/csv",
                         headers={"Content-Disposition": "attachment; filename=marketing_expenses.csv"})
@@ -658,6 +766,9 @@ def build_marketing_spend_router():
             if v is not None and v != e.get(k):
                 changes[k] = {"from": e.get(k), "to": v}
                 update[k] = v
+        for mk in NEW_MONEY_FIELDS:
+            if mk in update:
+                update[mk] = to_decimal128(update[mk])
         if not update:
             return {"ok": True, "unchanged": True}
         update["updated_at"] = _now()
@@ -755,6 +866,42 @@ def build_marketing_spend_router():
         lo, hi, label = _resolve_period(period, date_from, date_to)
         return await _build_summary(lo, hi, label)
 
+    @r.post("/campaigns/{campaign_id}/budget")
+    async def set_campaign_budget(campaign_id: str, body: BudgetBody,
+                                  admin: dict = Depends(require_super_or_ops)):
+        c = await db.marketing_campaigns.find_one({"id": campaign_id}, {"_id": 1})
+        if not c:
+            raise HTTPException(404, "Campaign not found")
+        upd: Dict[str, Any] = {"updated_at": _now()}
+        if body.approved_budget_aud is not None:
+            upd["approved_budget_aud"] = to_decimal128(body.approved_budget_aud)
+        if body.planned_budget_aud is not None:
+            upd["planned_budget_aud"] = body.planned_budget_aud
+        await db.marketing_campaigns.update_one({"id": campaign_id}, {"$set": upd})
+        return {"ok": True}
+
+    @r.get("/campaigns/{campaign_id}/financials")
+    async def campaign_financials(campaign_id: str,
+                                  admin: dict = Depends(require_super_or_ops)):
+        c = await db.marketing_campaigns.find_one({"id": campaign_id}, {"_id": 0})
+        if not c:
+            raise HTTPException(404, "Campaign not found")
+        return await _campaign_financials(c)
+
+    @r.get("/placements")
+    async def list_placements(campaign_id: Optional[str] = Query(None),
+                              admin: dict = Depends(require_super_or_ops)):
+        """Media placements = expenses that carry a publisher/publication."""
+        q: Dict[str, Any] = {"voided": {"$ne": True},
+                             "$or": [{"publisher_name": {"$nin": [None, ""]}},
+                                     {"publication_name": {"$nin": [None, ""]}}]}
+        if campaign_id:
+            q["campaign_id"] = campaign_id
+        rows = []
+        async for e in db.marketing_expenses.find(q, {"_id": 0}).sort("booked_distribution_date", -1):
+            rows.append(_expense_public(e))
+        return {"placements": rows, "count": len(rows)}
+
     return r
 
 
@@ -785,27 +932,151 @@ def _resolve_period(period: str, date_from: Optional[str], date_to: Optional[str
 
 
 async def _campaign_totals(campaign_id: str) -> dict:
-    total = paid = committed = planned = 0.0
+    from decimal import Decimal as _Dec
+    tot = planned = committed = incurred = paid = outstanding = _Dec("0")
     n = 0
+    paid_unknown = False
     async for e in db.marketing_expenses.find(
-        {"campaign_id": campaign_id, "voided": {"$ne": True}},
-        {"_id": 0, "cost_inc_gst": 1, "payment_status": 1, "status": 1},
+        {"campaign_id": campaign_id, "voided": {"$ne": True}}, {"_id": 0},
     ):
-        amt = float(e.get("cost_inc_gst") or 0)
-        total += amt
         n += 1
-        if e.get("payment_status") == "paid":
-            paid += amt
-        elif e.get("status") in ("booked", "invoiced", "approved"):
-            committed += amt
-        elif e.get("status") == "planned":
-            planned += amt
+        tot += (D(e.get("cost_inc_gst")) or _Dec("0"))
+        f = expense_financials(e)
+        planned += (D(f["planned"]) or _Dec("0"))
+        committed += (D(f["committed"]) or _Dec("0"))
+        incurred += (D(f["incurred"]) or _Dec("0"))
+        paid += (D(f["paid"]) or _Dec("0"))
+        outstanding += (D(f["outstanding"]) or _Dec("0"))
+        if f["basis"]["paid"] == "unknown":
+            paid_unknown = True
     return {
         "expense_count": n,
-        "total_investment_aud": round(total, 2),
-        "paid_aud": round(paid, 2),
-        "committed_unpaid_aud": round(committed, 2),
-        "planned_aud": round(planned, 2),
+        "total_investment_aud": to_aud(tot) or 0.0,
+        "paid_aud": to_aud(paid) or 0.0,
+        "committed_unpaid_aud": to_aud(committed) or 0.0,
+        "committed_aud": to_aud(committed) or 0.0,
+        "incurred_aud": to_aud(incurred) or 0.0,
+        "outstanding_aud": to_aud(outstanding) or 0.0,
+        "planned_aud": to_aud(planned) or 0.0,
+        "paid_amount_unknown": paid_unknown,
+    }
+
+
+def _latest_outcome(c: dict, metric: str):
+    """Most recent recorded outcome for a metric: (value, source, source_class)."""
+    rows = [o for o in (c.get("outcomes") or []) if o.get("metric") == metric]
+    if not rows:
+        return None, None, None
+    rows.sort(key=lambda o: (o.get("as_of_date") or "", o.get("recorded_at") or ""), reverse=True)
+    o = rows[0]
+    try:
+        return float(o.get("value")), o.get("source"), o.get("source_class")
+    except (TypeError, ValueError):
+        return None, o.get("source"), o.get("source_class")
+
+
+async def _campaign_performance(c: dict, totals: dict) -> dict:
+    """Cost-efficiency + ROAS/ROI, honest about attribution.
+
+    Formulas (documented): cost basis = total recorded investment (AUD).
+      cost_per_X = cost / X (only when X > 0)
+      ROAS = attributed_revenue / cost
+      marketing_roi = (attributed_revenue - cost) / cost
+    Where a required outcome is missing, the metric is null and attribution is
+    reported as 'attribution_unavailable' — never a fabricated zero.
+    """
+    cost = float(totals.get("total_investment_aud") or 0)
+
+    def cpx(count):
+        if count and count > 0 and cost > 0:
+            return round(cost / count, 2)
+        return None
+
+    enquiries, _, enq_src = _latest_outcome(c, "enquiries")
+    registrations, _, reg_src = _latest_outcome(c, "registrations")
+    trials, _, tr_src = _latest_outcome(c, "trial_customers")
+    paid_subs, _, ps_src = _latest_outcome(c, "paid_subscribers")
+    revenue, _, rev_src = _latest_outcome(c, "revenue_aud")
+
+    roas = round(revenue / cost, 2) if (revenue is not None and cost > 0) else None
+    roi = round((revenue - cost) / cost, 2) if (revenue is not None and cost > 0) else None
+    attribution = "recorded" if revenue is not None else "attribution_unavailable"
+
+    return {
+        "cost_basis_aud": round(cost, 2),
+        "cost_per_enquiry_aud": cpx(enquiries),
+        "cost_per_registration_aud": cpx(registrations),
+        "cost_per_trial_checkout_aud": cpx(trials),
+        "cost_per_paid_subscriber_aud": cpx(paid_subs),
+        "attributed_revenue_aud": revenue,
+        "roas": roas,
+        "marketing_roi": roi,
+        "attribution": attribution,
+        "outcome_sources": {
+            "enquiries": enq_src, "registrations": reg_src,
+            "trial_customers": tr_src, "paid_subscribers": ps_src, "revenue_aud": rev_src,
+        },
+        "formulas": {
+            "cost_per_X": "total recorded investment / count of X (X>0)",
+            "roas": "attributed revenue / cost",
+            "marketing_roi": "(attributed revenue - cost) / cost",
+            "note": "ROAS and marketing ROI are separate. Publisher-reported outcomes "
+                    "are labelled and not treated as verified conversions.",
+        },
+    }
+
+
+async def _campaign_financials(c: dict) -> dict:
+    cid = c["id"]
+    totals = await _campaign_totals(cid)
+    approved_budget = to_aud(D(c.get("approved_budget_aud")))
+    planned_budget = c.get("planned_budget_aud")
+    budget = approved_budget if approved_budget is not None else planned_budget
+
+    by_channel: Dict[str, float] = {}
+    by_category: Dict[str, float] = {}
+    by_publisher: Dict[str, float] = {}
+    monthly: Dict[str, float] = {}
+    async for e in db.marketing_expenses.find(
+        {"campaign_id": cid, "voided": {"$ne": True}}, {"_id": 0}):
+        amt = float(D(e.get("cost_inc_gst")) or 0)
+        by_channel[e.get("channel") or "—"] = by_channel.get(e.get("channel") or "—", 0) + amt
+        by_category[e.get("category_name") or "—"] = by_category.get(e.get("category_name") or "—", 0) + amt
+        pub = e.get("publisher_name") or e.get("publication_name")
+        if pub:
+            by_publisher[pub] = by_publisher.get(pub, 0) + amt
+        mkey = (e.get("expense_reporting_date") or "")[:7] or "—"
+        monthly[mkey] = monthly.get(mkey, 0) + amt
+
+    committed = totals.get("committed_aud") or 0.0
+    remaining = round(budget - committed, 2) if budget is not None else None
+    variance = round(committed - budget, 2) if budget is not None else None
+    perf = await _campaign_performance(c, totals)
+
+    def _lst(d):
+        return [{"key": k, "total_aud": round(v, 2)} for k, v in
+                sorted(d.items(), key=lambda kv: kv[1], reverse=True)]
+
+    return {
+        "campaign": {"id": cid, "name": c.get("name"), "status": c.get("status")},
+        "budget": {
+            "approved_budget_aud": approved_budget,
+            "planned_budget_aud": planned_budget,
+            "effective_budget_aud": round(budget, 2) if budget is not None else None,
+        },
+        "totals": totals,
+        "remaining_uncommitted_aud": remaining,
+        "variance_vs_budget_aud": variance,
+        "by_channel": _lst(by_channel),
+        "by_category": _lst(by_category),
+        "by_publisher": _lst(by_publisher),
+        "monthly": [{"month": k, "total_aud": round(v, 2)} for k, v in sorted(monthly.items())],
+        "performance": perf,
+        "meta": {
+            "currency": CURRENCY,
+            "note": "Planned/committed/incurred/paid are distinct lenses, never summed. "
+                    "Remaining = effective budget − committed.",
+        },
     }
 
 
@@ -813,28 +1084,36 @@ async def _build_summary(lo: str, hi: str, label: str) -> dict:
     """All figures use expense_reporting_date as the single, labelled date
     basis. Cash payment dates are NOT mixed into the service-period totals."""
     q = {"voided": {"$ne": True}, "expense_reporting_date": {"$gte": lo, "$lt": hi}}
-    total = paid = committed = planned = refunds = 0.0
+    from decimal import Decimal as _Dec
+    total = planned = committed = incurred = paid = outstanding = refunds = _Dec("0")
+    paid_unknown = False
     by_channel: Dict[str, float] = {}
     by_vendor: Dict[str, float] = {}
     by_campaign: Dict[str, float] = {}
     by_category: Dict[str, float] = {}
     by_group: Dict[str, float] = {}
+    by_publisher: Dict[str, float] = {}
     n = 0
     last_updated: Optional[str] = None
     async for e in db.marketing_expenses.find(q, {"_id": 0}):
-        amt = float(e.get("cost_inc_gst") or 0)
-        total += amt
+        amt = float(D(e.get("cost_inc_gst")) or 0)
+        total += (D(e.get("cost_inc_gst")) or _Dec("0"))
         n += 1
-        if e.get("payment_status") == "paid":
-            paid += amt
-        elif e.get("status") in ("booked", "invoiced", "approved"):
-            committed += amt
-        elif e.get("status") == "planned":
-            planned += amt
-        refunds += float(e.get("refund_amount_aud") or 0)
+        f = expense_financials(e)
+        planned += (D(f["planned"]) or _Dec("0"))
+        committed += (D(f["committed"]) or _Dec("0"))
+        incurred += (D(f["incurred"]) or _Dec("0"))
+        paid += (D(f["paid"]) or _Dec("0"))
+        outstanding += (D(f["outstanding"]) or _Dec("0"))
+        if f["basis"]["paid"] == "unknown":
+            paid_unknown = True
+        refunds += (D(f["credit"]) or _Dec("0"))
         by_channel[e.get("channel") or "—"] = by_channel.get(e.get("channel") or "—", 0) + amt
         if e.get("vendor"):
             by_vendor[e["vendor"]] = by_vendor.get(e["vendor"], 0) + amt
+        pub = e.get("publisher_name") or e.get("publication_name")
+        if pub:
+            by_publisher[pub] = by_publisher.get(pub, 0) + amt
         if e.get("campaign_id"):
             by_campaign[e["campaign_id"]] = by_campaign.get(e["campaign_id"], 0) + amt
         by_category[e.get("category_name") or "—"] = by_category.get(e.get("category_name") or "—", 0) + amt
@@ -897,22 +1176,29 @@ async def _build_summary(lo: str, hi: str, label: str) -> dict:
     paid_media_groups = {"paid_media"}
     paid_media_spend = sum(v for k, v in by_group.items() if k in paid_media_groups)
 
+    total_f = to_aud(total) or 0.0
+    committed_f = to_aud(committed) or 0.0
     return {
         "period": {"label": label, "from": lo, "to": hi, "date_basis": "expense_reporting_date"},
         "totals": {
-            "total_investment_aud": round(total, 2),
+            "total_investment_aud": total_f,
             "paid_media_spend_aud": round(paid_media_spend, 2),
-            "other_marketing_aud": round(total - paid_media_spend, 2),
-            "paid_aud": round(paid, 2),
-            "committed_unpaid_aud": round(committed, 2),
-            "planned_aud": round(planned, 2),
-            "refunds_aud": round(refunds, 2),
+            "other_marketing_aud": round(total_f - paid_media_spend, 2),
+            "paid_aud": to_aud(paid) or 0.0,
+            "committed_unpaid_aud": committed_f,
+            "committed_aud": committed_f,
+            "incurred_aud": to_aud(incurred) or 0.0,
+            "outstanding_aud": to_aud(outstanding) or 0.0,
+            "planned_aud": to_aud(planned) or 0.0,
+            "refunds_aud": to_aud(refunds) or 0.0,
+            "paid_amount_unknown": paid_unknown,
             "expense_count": n,
             "planned_budget_aud": round(planned_budget, 2),
-            "budget_remaining_aud": round(planned_budget - (paid + committed), 2),
+            "budget_remaining_aud": round(planned_budget - committed_f, 2),
         },
         "by_channel": _top(by_channel),
         "by_vendor": _top(by_vendor)[:20],
+        "by_publisher": _top(by_publisher)[:20],
         "by_group": _top(by_group),
         "top_categories": _top(by_category)[:10],
         "by_campaign": campaign_rollup,
@@ -921,6 +1207,8 @@ async def _build_summary(lo: str, hi: str, label: str) -> dict:
             "source": "wayly_marketing_register",
             "currency": CURRENCY,
             "last_updated": last_updated,
-            "note": "Totals use expense_reporting_date. CPA/ROAS shown only where attribution is recorded.",
+            "note": "Planned/committed/incurred/paid are distinct lenses on the same "
+                    "expenses — never summed together. CPA/ROAS shown only where "
+                    "attribution is recorded; otherwise 'attribution unavailable'.",
         },
     }

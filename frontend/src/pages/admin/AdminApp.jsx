@@ -23,6 +23,8 @@ const NAV = [
         items: [
             { to: "/admin/command-centre", label: "Command Centre", icon: Gauge, testid: "admin-nav-command-centre" },
             { to: "/admin/marketing-spend", label: "Marketing Spend", icon: Megaphone, testid: "admin-nav-marketing-spend" },
+            { to: "/admin/growth-engine", label: "Growth Engine", icon: LineChart, testid: "admin-nav-growth-engine" },
+            { to: "/admin/growth-pipeline", label: "Growth Pipeline", icon: LifeBuoy, testid: "admin-nav-growth-pipeline" },
         ],
         rolesAllowed: ["super_admin", "operations_admin"],
     },
@@ -323,6 +325,8 @@ import AdminSupportInbox from "./AdminSupportInbox";
 import AdminMarketingSpend from "./AdminMarketingSpend";
 import AdminCommandCentre from "./AdminCommandCentre";
 import AdminHelpCentre from "./AdminHelpCentre";
+import AdminGrowthEngine from "./AdminGrowthEngine";
+import AdminGrowthPipeline from "./AdminGrowthPipeline";
 
 function AdminRoutes() {
     return (
@@ -377,6 +381,8 @@ function AdminRoutes() {
                 <Route path="command-centre" element={<AdminCommandCentre />} />
                 <Route path="marketing-spend" element={<AdminMarketingSpend />} />
                 <Route path="help-centre" element={<AdminHelpCentre />} />
+                <Route path="growth-engine" element={<AdminGrowthEngine />} />
+                <Route path="growth-pipeline" element={<AdminGrowthPipeline />} />
                 {/* P0 + P1 pages (AdminPhaseB) */}
                 {P0P1_ROUTES.map((r) => <Route key={r.path} path={r.path} element={r.element} />)}
                 {/* Fallback placeholders for any nav entry that remains unbuilt */}
@@ -395,6 +401,7 @@ function AdminRoutes() {
                         "blog", "glossary", "templates-library", "changelog",
                         "seo/indexnow", "support", "enquiries",
                         "support-inbox", "command-centre", "marketing-spend", "help-centre",
+                        "growth-engine", "growth-pipeline",
                     ].includes(path) || P0P1_BUILT_PATHS.has(path)) return null;
                     return <Route key={it.to} path={path} element={<Placeholder label={it.label} />} />;
                 })}

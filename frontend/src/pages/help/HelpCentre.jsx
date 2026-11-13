@@ -73,7 +73,7 @@ export default function HelpCentre() {
                 <section className="mx-auto max-w-5xl px-6 pt-12 pb-6" data-testid="help-centre-page">
                     <span className="overline inline-flex items-center gap-2"><LifeBuoy className="h-4 w-4" /> Help Centre</span>
                     <h1 className="font-heading text-4xl sm:text-5xl text-primary-k tracking-tight mt-4 leading-tight" data-testid="help-centre-h1">
-                        How can we help?
+                        How Can We Help?
                     </h1>
                     <p className="mt-4 text-lg text-muted-k max-w-2xl leading-relaxed">
                         Answers to the things Wayly customers ask most — plans, billing, the tools, your account, and the Support at Home program.
@@ -125,7 +125,7 @@ export default function HelpCentre() {
                 {!query.trim() && (
                     <>
                         <section className="mx-auto max-w-5xl px-6 pb-4" data-testid="help-categories">
-                            <h2 className="font-heading text-2xl text-primary-k tracking-tight">Browse by topic</h2>
+                            <h2 className="font-heading text-2xl text-primary-k tracking-tight">Browse by Topic</h2>
                             {categories === null ? (
                                 <p className="mt-4 text-sm text-muted-k">Loading…</p>
                             ) : activeCategories.length === 0 ? (
@@ -151,7 +151,7 @@ export default function HelpCentre() {
 
                         {popular.length > 0 && (
                             <section className="mx-auto max-w-5xl px-6 pt-6 pb-16" data-testid="help-popular">
-                                <h2 className="font-heading text-2xl text-primary-k tracking-tight">Popular articles</h2>
+                                <h2 className="font-heading text-2xl text-primary-k tracking-tight">Popular Articles</h2>
                                 <div className="mt-5 grid sm:grid-cols-2 gap-4">
                                     {popular.map((a) => <ArticleCard key={a.slug} a={a} />)}
                                 </div>
@@ -160,7 +160,7 @@ export default function HelpCentre() {
 
                         <section className="mx-auto max-w-5xl px-6 pb-20" data-testid="help-still-stuck">
                             <div className="rounded-2xl border border-kindred bg-surface p-6">
-                                <h2 className="font-heading text-xl text-primary-k">Still stuck?</h2>
+                                <h2 className="font-heading text-xl text-primary-k">Still Stuck?</h2>
                                 <p className="mt-2 text-sm text-muted-k">Ask Wayly for a plain-English answer, or send our team a question.</p>
                                 <div className="mt-4 flex flex-wrap gap-2">
                                     <Link to="/ask-wayly" data-testid="help-cta-ask" className="inline-flex items-center gap-2 rounded-lg bg-primary-k hover:bg-[#091D33] text-white px-5 py-2.5 text-sm font-semibold"><MessageCircle className="h-4 w-4" /> Ask Wayly</Link>
@@ -318,7 +318,7 @@ export function HelpArticle() {
 
                     {(article.related || []).length > 0 && (
                         <section className="mt-12 pt-8 border-t border-kindred" data-testid="help-article-related">
-                            <h2 className="font-heading text-xl text-primary-k inline-flex items-center gap-2"><BookOpen className="h-5 w-5" /> Related articles</h2>
+                            <h2 className="font-heading text-xl text-primary-k inline-flex items-center gap-2"><BookOpen className="h-5 w-5" /> Related Articles</h2>
                             <div className="mt-4 grid sm:grid-cols-2 gap-4">
                                 {article.related.map((r) => (
                                     <Link key={r.slug} to={`/help/a/${r.slug}`} data-testid={`help-related-${r.slug}`} className="block bg-surface border border-kindred rounded-2xl p-5 hover:border-[#2BC4D6] transition-colors">

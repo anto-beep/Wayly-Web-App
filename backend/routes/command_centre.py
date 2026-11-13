@@ -78,9 +78,14 @@ def build_command_centre_router():
             {"status": {"$in": ["open", "in_progress", "waiting_on_user"]}})
         new_enquiries = await db.contact_requests.count_documents(
             {"$or": [{"status": "new"}, {"status": None}]})
-        sla_breached = await db.sup_tickets.count_documents(
-            {"status": {"$in": ["received", "under_review", "awaiting_user"]},
-             "created_at": {"$lt": d7}})
+        # Phase 5A.2 — corrected SLA: CURRENT unresolved tickets past their
+        # per-priority first-response target with no staff reply (not every old ticket).
+        try:
+            from routes.command_centre_ext import _ticket_first_response_breaches
+            sla_breached = len(await _ticket_first_response_breaches())
+        except Exception as _se:
+            logger.warning("command centre SLA recompute skipped: %s", _se)
+            sla_breached = 0
         avg_csat = None
         async for row in db.sup_tickets.aggregate([
             {"$match": {"csat_score": {"$ne": None}}},
@@ -88,11 +93,24 @@ def build_command_centre_router():
         ]):
             avg_csat = {"avg": round(row["avg"], 2), "n": row["n"]}
         support_total = await db.sup_tickets.count_documents({})
+        # Phase 3A.3 — AI assist usage (drafts/failures/escalations/latency/cost).
+        ai = {}
+        try:
+            from routes.support_ai import support_ai_metrics
+            ai = await support_ai_metrics()
+        except Exception as _ae:
+            logger.warning("command centre support AI metrics skipped: %s", _ae)
         support_block = _block({
             "open_tickets": sup_open, "legacy_open": legacy_open,
             "new_enquiries": new_enquiries, "sla_breached": sla_breached,
             "avg_csat": avg_csat, "total_tickets": support_total,
-        }, source="sup_tickets+contact_requests", last_updated=now.isoformat(),
+            "ai_drafts_30d": ai.get("ai_drafts_30d", 0),
+            "ai_draft_failures_30d": ai.get("ai_draft_failures_30d", 0),
+            "ai_escalations_flagged_30d": ai.get("ai_escalations_flagged_30d", 0),
+            "ai_avg_latency_ms": ai.get("ai_avg_latency_ms"),
+            "ai_estimated_cost_usd_30d": ai.get("ai_estimated_cost_usd_30d", 0),
+            "ai_model": ai.get("model"),
+        }, source="sup_tickets+contact_requests+sup_ai_drafts", last_updated=now.isoformat(),
             status="ok" if (support_total or new_enquiries or legacy_open) else "empty")
 
         # ---- Marketing investment (this month, reuse register summary) ----

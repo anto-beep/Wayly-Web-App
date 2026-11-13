@@ -34,7 +34,7 @@ def _now() -> str:
 ARTICLES = [
     (
         "what-is-wayly", "getting-started",
-        "What is Wayly and who is it for?",
+        "What Is Wayly and Who Is It For?",
         "Wayly is independent Australian software that helps families understand and manage aged care at home under Support at Home and CHSP.",
         ["about", "overview"], [],
         "Wayly is independent software built in Australia. It helps older people and "
@@ -50,7 +50,7 @@ ARTICLES = [
     ),
     (
         "is-wayly-a-provider", "getting-started",
-        "Is Wayly a Support at Home provider?",
+        "Is Wayly a Support at Home Provider?",
         "No. Wayly is independent software. Your registered provider remains whoever you chose, and Wayly never takes commissions from providers.",
         ["provider", "independence"], [],
         "No. Wayly is **independent software**, not an aged care provider.\n\n"
@@ -63,7 +63,7 @@ ARTICLES = [
     ),
     (
         "how-the-free-trial-works", "registration-trial",
-        "How the 7-day free trial works",
+        "How the 7-Day Free Trial Works",
         "Paid plans start with a 7-day free trial for brand-new accounts. You can cancel anytime before it ends.",
         ["trial", "signup", "billing"], [],
         "When you sign up to a paid plan (Solo or Family), you start with a **7-day free "
@@ -77,7 +77,7 @@ ARTICLES = [
     ),
     (
         "why-card-details-at-signup", "registration-trial",
-        "Why do you ask for card details at sign-up?",
+        "Why Do You Ask for Card Details at Sign-Up?",
         "Card details let your plan continue smoothly after the free trial. Payments are handled securely by Stripe, and you can cancel before the trial ends.",
         ["card", "stripe", "trial"], [],
         "Collecting card details at sign-up means your plan can continue without "
@@ -91,7 +91,7 @@ ARTICLES = [
     ),
     (
         "wayly-plans-and-pricing", "billing-subscriptions",
-        "Wayly plans and pricing",
+        "Wayly Plans and Pricing",
         "Solo is $24.50 per fortnight and Family is $49.50 per fortnight, both with a 7-day free trial. The Statement Decoder is free to try without signing up.",
         ["pricing", "plans", "solo", "family"], [],
         "Wayly offers two paid plans, both with a **7-day free trial** and **cancel "
@@ -106,7 +106,7 @@ ARTICLES = [
     ),
     (
         "how-to-cancel", "billing-subscriptions",
-        "How to cancel your subscription",
+        "How to Cancel Your Subscription",
         "You can cancel anytime from Settings → Plan & Billing. Your access continues until the end of the current paid period.",
         ["cancel", "billing"], [],
         "You can cancel your Wayly subscription at any time:\n\n"
@@ -119,7 +119,7 @@ ARTICLES = [
     ),
     (
         "how-statement-decoder-works", "statement-decoder",
-        "How the Statement Decoder works",
+        "How the Statement Decoder Works",
         "Upload a provider statement and Wayly reads the line items, flags anomalies, and explains the charges in plain English.",
         ["statement", "decoder", "anomalies"], ["statement-decoder"],
         "The **Statement Decoder** turns a confusing provider statement into something you "
@@ -134,7 +134,7 @@ ARTICLES = [
     ),
     (
         "decoder-no-account", "statement-decoder",
-        "Do I need an account to use the Statement Decoder?",
+        "Do I Need an Account to Use the Statement Decoder?",
         "No. You can try the Statement Decoder for free without signing up. Creating a free account gives you more use and saves your results.",
         ["statement", "decoder", "free"], ["statement-decoder"],
         "No account is needed to try the **Statement Decoder** — it is free to use.\n\n"
@@ -146,7 +146,7 @@ ARTICLES = [
     ),
     (
         "how-invoice-checker-works", "invoice-checker",
-        "How the Invoice Checker works",
+        "How the Invoice Checker Works",
         "The Invoice Checker reviews a provider invoice line by line, compares charges to what you'd expect, and highlights anything worth querying.",
         ["invoice", "checker"], ["invoice-checker"],
         "The **Invoice Checker** helps you confirm a provider invoice looks right before you "
@@ -160,7 +160,7 @@ ARTICLES = [
     ),
     (
         "what-is-ask-wayly", "ask-wayly",
-        "What is Ask Wayly and what can it answer?",
+        "What Is Ask Wayly and What Can It Answer?",
         "Ask Wayly is a plain-English assistant for questions about Support at Home and using Wayly. Signed-in users can also ask about their own budget and statements.",
         ["ask-wayly", "assistant", "ai"], ["ask-wayly"],
         "**Ask Wayly** answers everyday questions in plain English.\n\n"
@@ -174,7 +174,7 @@ ARTICLES = [
     ),
     (
         "where-is-my-data-stored", "account-privacy",
-        "Where is my data stored and is it safe?",
+        "Where Is My Data Stored and Is It Safe?",
         "Your data is stored in Australia. Wayly never sells it and never uses it to train AI without your consent.",
         ["privacy", "data", "security"], [],
         "Your information is stored in **Australia**.\n\n"
@@ -187,7 +187,7 @@ ARTICLES = [
     ),
     (
         "export-or-delete-data", "account-privacy",
-        "How to export or delete your data",
+        "How to Export or Delete Your Data",
         "You can request an export of your information or ask for your data to be deleted at any time.",
         ["privacy", "export", "deletion"], [],
         "You are in control of your information.\n\n"
@@ -199,7 +199,7 @@ ARTICLES = [
     ),
     (
         "didnt-get-email", "technical-troubleshooting",
-        "I didn't get my verification or reset email",
+        "I Didn't Get My Verification or Reset Email",
         "Check your spam or junk folder, confirm the email address, and request the email again. If it still doesn't arrive, contact support.",
         ["email", "verification", "password", "troubleshooting"], [],
         "If a verification or password-reset email hasn't arrived:\n\n"
@@ -212,7 +212,7 @@ ARTICLES = [
     ),
     (
         "what-is-support-at-home", "support-at-home-chsp",
-        "What is Support at Home?",
+        "What Is Support at Home?",
         "Support at Home is the federal in-home aged care program that replaced Home Care Packages on 1 November 2025.",
         ["support-at-home", "program", "eligibility"], [],
         "**Support at Home** is the Australian Government's in-home aged care program. It "
@@ -226,7 +226,7 @@ ARTICLES = [
     ),
     (
         "wayly-tools-overview", "other-tools",
-        "Wayly tools at a glance",
+        "Wayly Tools at a Glance",
         "A quick tour of Wayly's tools: Statement Decoder, Invoice Checker, Ask Wayly, and the independent Provider Quality Index and Price Checker.",
         ["tools", "overview"], [],
         "Here's what each Wayly tool does:\n\n"

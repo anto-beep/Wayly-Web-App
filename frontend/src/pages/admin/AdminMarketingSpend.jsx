@@ -48,6 +48,11 @@ const EMPTY = {
     invoice_date: "", payment_date: "", expense_reporting_date: "", status: "planned",
     payment_status: "unpaid", publisher_url: "", published_url: "", placement_confirmation: "",
     data_source: "manual", source_id: "",
+    planned_amount_aud: "", committed_amount_aud: "", incurred_amount_aud: "", amount_paid_aud: "",
+    credit_amount_aud: "", publisher_name: "", publication_name: "", placement_format: "",
+    placement_objective: "", audience_description: "", quoted_audience_size: "",
+    booked_distribution_date: "", actual_distribution_date: "", tracking_link: "",
+    utm_source: "", utm_medium: "", utm_campaign: "", performance_report_url: "", performance_notes: "",
 };
 
 function ExpenseModal({ open, onClose, onSaved, categories, campaigns, editing }) {
@@ -71,6 +76,9 @@ function ExpenseModal({ open, onClose, onSaved, categories, campaigns, editing }
             cost_inc_gst: num(form.cost_inc_gst), cost_ex_gst: num(form.cost_ex_gst),
             gst_amount: num(form.gst_amount), planned_budget_aud: num(form.planned_budget_aud),
             refund_amount_aud: num(form.refund_amount_aud),
+            planned_amount_aud: num(form.planned_amount_aud), committed_amount_aud: num(form.committed_amount_aud),
+            incurred_amount_aud: num(form.incurred_amount_aud), amount_paid_aud: num(form.amount_paid_aud),
+            credit_amount_aud: num(form.credit_amount_aud), quoted_audience_size: num(form.quoted_audience_size),
             campaign_id: form.campaign_id || undefined,
         };
         Object.keys(payload).forEach((k) => payload[k] === "" && delete payload[k]);
@@ -146,6 +154,29 @@ function ExpenseModal({ open, onClose, onSaved, categories, campaigns, editing }
                     <Field label="Publisher / campaign URL"><input className="admin-input" value={form.publisher_url} onChange={set("publisher_url")} /></Field>
                     <Field label="Published article / newsletter URL"><input className="admin-input" value={form.published_url} onChange={set("published_url")} /></Field>
                 </div>
+                <div style={{ marginTop: 14, borderTop: "1px solid var(--admin-border)", paddingTop: 10 }}>
+                    <div style={{ fontSize: 12, fontWeight: 700, color: "#0E4D52", marginBottom: 8 }}>Financial detail (distinct lenses — never summed together)</div>
+                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12 }}>
+                        <Field label="Committed (AUD)"><input type="number" className="admin-input" data-testid="exp-committed" value={form.committed_amount_aud} onChange={set("committed_amount_aud")} /></Field>
+                        <Field label="Incurred (AUD)"><input type="number" className="admin-input" data-testid="exp-incurred" value={form.incurred_amount_aud} onChange={set("incurred_amount_aud")} /></Field>
+                        <Field label="Amount paid (AUD)"><input type="number" className="admin-input" data-testid="exp-paid" value={form.amount_paid_aud} onChange={set("amount_paid_aud")} /></Field>
+                        <Field label="Planned (AUD)"><input type="number" className="admin-input" value={form.planned_amount_aud} onChange={set("planned_amount_aud")} /></Field>
+                        <Field label="Credit / refund (AUD)"><input type="number" className="admin-input" value={form.credit_amount_aud} onChange={set("credit_amount_aud")} /></Field>
+                    </div>
+                </div>
+                <div style={{ marginTop: 14, borderTop: "1px solid var(--admin-border)", paddingTop: 10 }}>
+                    <div style={{ fontSize: 12, fontWeight: 700, color: "#0E4D52", marginBottom: 8 }}>Publisher & media placement (EDM, Solus, newsletter, advertorial)</div>
+                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+                        <Field label="Publisher name"><input className="admin-input" data-testid="exp-publisher" value={form.publisher_name} onChange={set("publisher_name")} /></Field>
+                        <Field label="Publication / newsletter"><input className="admin-input" value={form.publication_name} onChange={set("publication_name")} /></Field>
+                        <Field label="Placement format"><input className="admin-input" value={form.placement_format} onChange={set("placement_format")} placeholder="Solus EDM, advertorial…" /></Field>
+                        <Field label="Quoted audience size"><input type="number" className="admin-input" value={form.quoted_audience_size} onChange={set("quoted_audience_size")} /></Field>
+                        <Field label="Booked distribution date"><input type="date" className="admin-input" value={form.booked_distribution_date} onChange={set("booked_distribution_date")} /></Field>
+                        <Field label="Actual distribution date"><input type="date" className="admin-input" value={form.actual_distribution_date} onChange={set("actual_distribution_date")} /></Field>
+                        <Field label="Tracking link"><input className="admin-input" value={form.tracking_link} onChange={set("tracking_link")} /></Field>
+                        <Field label="UTM source"><input className="admin-input" value={form.utm_source} onChange={set("utm_source")} /></Field>
+                    </div>
+                </div>
                 <Field label="Description"><textarea className="admin-input" rows={2} value={form.description} onChange={set("description")} /></Field>
                 <Field label="Internal notes"><textarea className="admin-input" rows={2} value={form.internal_notes} onChange={set("internal_notes")} /></Field>
                 <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, marginTop: 14 }}>
@@ -205,9 +236,10 @@ function SummaryStrip({ summary, period, setPeriod }) {
     const cards = [
         ["Total investment", aud(t.total_investment_aud)],
         ["Paid media", aud(t.paid_media_spend_aud)],
-        ["Other marketing", aud(t.other_marketing_aud)],
+        ["Committed", aud(t.committed_aud)],
+        ["Incurred", aud(t.incurred_aud)],
         ["Paid", aud(t.paid_aud)],
-        ["Committed (unpaid)", aud(t.committed_unpaid_aud)],
+        ["Outstanding", aud(t.outstanding_aud)],
         ["Planned", aud(t.planned_aud)],
         ["Budget remaining", aud(t.budget_remaining_aud)],
     ];
@@ -232,6 +264,58 @@ function SummaryStrip({ summary, period, setPeriod }) {
     );
 }
 
+function CampaignFinancialsModal({ campaignId, onClose, onChanged }) {
+    const [fin, setFin] = useState(null);
+    const load = useCallback(async () => {
+        try { const r = await adminApi.get(`/admin/marketing/campaigns/${campaignId}/financials`); setFin(r.data); }
+        catch (e) { toast.error(extractMsg(e, "Could not load campaign financials.")); onClose(); }
+    }, [campaignId, onClose]);
+    useEffect(() => { load(); }, [load]);
+    const setBudget = async () => {
+        const v = window.prompt("Approved budget (AUD):");
+        if (v == null || v === "") return;
+        try { await adminApi.post(`/admin/marketing/campaigns/${campaignId}/budget`, { approved_budget_aud: Number(v) }); toast.success("Budget updated"); load(); onChanged && onChanged(); }
+        catch (e) { toast.error(extractMsg(e)); }
+    };
+    if (!fin) return null;
+    const t = fin.totals, p = fin.performance;
+    const perfRow = (label, val) => (
+        <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, padding: "3px 0" }}>
+            <span style={{ color: "var(--admin-muted)" }}>{label}</span><span style={{ fontWeight: 600 }}>{val}</span>
+        </div>
+    );
+    return (
+        <div className="admin-cmdk-overlay" onClick={onClose} data-testid="campaign-financials-modal">
+            <div className="admin-card" onClick={(e) => e.stopPropagation()} style={{ width: 640, maxWidth: "95vw", maxHeight: "90vh", overflowY: "auto", padding: 20 }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+                    <h2 style={{ margin: 0, fontSize: 18 }}>{fin.campaign.name} — financials</h2>
+                    <button className="admin-btn" onClick={onClose}><X size={16} /></button>
+                </div>
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(130px,1fr))", gap: 10, marginBottom: 14 }}>
+                    {[["Budget", aud(fin.budget.effective_budget_aud)], ["Planned", aud(t.planned_aud)], ["Committed", aud(t.committed_aud)],
+                    ["Incurred", aud(t.incurred_aud)], ["Paid", aud(t.paid_aud)], ["Outstanding", aud(t.outstanding_aud)],
+                    ["Remaining", aud(fin.remaining_uncommitted_aud)], ["Variance", aud(fin.variance_vs_budget_aud)]].map(([l, v]) => (
+                        <div key={l} className="admin-card" style={{ padding: "8px 12px" }}>
+                            <div style={{ fontSize: 10, color: "var(--admin-muted)", textTransform: "uppercase" }}>{l}</div>
+                            <div style={{ fontSize: 16, fontWeight: 700 }}>{v}</div>
+                        </div>
+                    ))}
+                </div>
+                <button className="admin-btn" onClick={setBudget} data-testid="campaign-set-budget" style={{ marginBottom: 14 }}>Set approved budget</button>
+                <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 6 }}>Performance <span style={{ fontWeight: 400, fontSize: 11, color: "var(--admin-muted)" }}>(attribution: {p.attribution.replace(/_/g, " ")})</span></div>
+                {perfRow("Cost basis", aud(p.cost_basis_aud))}
+                {perfRow("Cost per enquiry", p.cost_per_enquiry_aud == null ? "attribution unavailable" : aud(p.cost_per_enquiry_aud))}
+                {perfRow("Cost per registration", p.cost_per_registration_aud == null ? "attribution unavailable" : aud(p.cost_per_registration_aud))}
+                {perfRow("Cost per trial checkout", p.cost_per_trial_checkout_aud == null ? "attribution unavailable" : aud(p.cost_per_trial_checkout_aud))}
+                {perfRow("Cost per paid subscriber", p.cost_per_paid_subscriber_aud == null ? "attribution unavailable" : aud(p.cost_per_paid_subscriber_aud))}
+                {perfRow("ROAS", p.roas == null ? "attribution unavailable" : `${p.roas}×`)}
+                {perfRow("Marketing ROI", p.marketing_roi == null ? "attribution unavailable" : `${p.marketing_roi}×`)}
+                <p style={{ fontSize: 11, color: "var(--admin-muted)", marginTop: 10 }}>{fin.meta.note}</p>
+            </div>
+        </div>
+    );
+}
+
 export default function AdminMarketingSpend() {
     const [tab, setTab] = useState("expenses");
     const [categories, setCategories] = useState([]);
@@ -243,6 +327,7 @@ export default function AdminMarketingSpend() {
     const [modalOpen, setModalOpen] = useState(false);
     const [editing, setEditing] = useState(null);
     const [campModalOpen, setCampModalOpen] = useState(false);
+    const [finCampaign, setFinCampaign] = useState(null);
 
     const loadMeta = useCallback(async () => {
         try {
@@ -396,19 +481,20 @@ export default function AdminMarketingSpend() {
                     </div>
                     <div className="admin-card" style={{ overflowX: "auto" }}>
                         <table className="admin-table">
-                            <thead><tr><th>Campaign</th><th style={{ textAlign: "right" }}>Budget</th><th style={{ textAlign: "right" }}>Total</th><th style={{ textAlign: "right" }}>Paid</th><th style={{ textAlign: "right" }}>Committed</th><th style={{ textAlign: "right" }}>Planned</th><th style={{ textAlign: "right" }}>Expenses</th></tr></thead>
+                            <thead><tr><th>Campaign</th><th style={{ textAlign: "right" }}>Budget</th><th style={{ textAlign: "right" }}>Total</th><th style={{ textAlign: "right" }}>Paid</th><th style={{ textAlign: "right" }}>Committed</th><th style={{ textAlign: "right" }}>Planned</th><th style={{ textAlign: "right" }}>Expenses</th><th></th></tr></thead>
                             <tbody>
                                 {campaigns.length === 0 ? (
-                                    <tr><td colSpan={7} style={{ textAlign: "center", padding: 28, color: "var(--admin-muted)" }} data-testid="campaigns-empty">No campaigns yet. Group related expenses by creating one.</td></tr>
+                                    <tr><td colSpan={8} style={{ textAlign: "center", padding: 28, color: "var(--admin-muted)" }} data-testid="campaigns-empty">No campaigns yet. Group related expenses by creating one.</td></tr>
                                 ) : campaigns.map((c) => (
                                     <tr key={c.id} data-testid={`campaign-row-${c.id}`}>
                                         <td style={{ fontWeight: 600 }}>{c.name}</td>
                                         <td style={{ textAlign: "right" }}>{c.planned_budget_aud != null ? aud(c.planned_budget_aud) : "—"}</td>
                                         <td style={{ textAlign: "right", fontWeight: 700 }}>{aud(c.total_investment_aud)}</td>
                                         <td style={{ textAlign: "right", color: "#2f7d4a" }}>{aud(c.paid_aud)}</td>
-                                        <td style={{ textAlign: "right", color: "#A5512B" }}>{aud(c.committed_unpaid_aud)}</td>
+                                        <td style={{ textAlign: "right", color: "#A5512B" }}>{aud(c.committed_aud)}</td>
                                         <td style={{ textAlign: "right", color: "#6b6b6b" }}>{aud(c.planned_aud)}</td>
                                         <td style={{ textAlign: "right" }}>{c.expense_count}</td>
+                                        <td style={{ textAlign: "right" }}><button className="admin-btn" data-testid={`campaign-financials-${c.id}`} onClick={() => setFinCampaign(c.id)} style={{ padding: "3px 10px", fontSize: 12 }}>Financials</button></td>
                                     </tr>
                                 ))}
                             </tbody>
@@ -419,6 +505,7 @@ export default function AdminMarketingSpend() {
 
             <ExpenseModal open={modalOpen} onClose={() => setModalOpen(false)} onSaved={refreshAll} categories={categories} campaigns={campaigns} editing={editing} />
             <CampaignModal open={campModalOpen} onClose={() => setCampModalOpen(false)} onSaved={refreshAll} />
+            {finCampaign && <CampaignFinancialsModal campaignId={finCampaign} onClose={() => setFinCampaign(null)} onChanged={refreshAll} />}
         </div>
     );
 }

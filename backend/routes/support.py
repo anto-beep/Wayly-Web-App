@@ -115,6 +115,7 @@ TICKET_EVENT_TYPE = (
     "closed_by_user",
     "reopened_by_user",
     "attachment_added",
+    "ai_draft_generated",
 )
 
 TICKET_PRIORITY = ("low", "normal", "high", "urgent")
@@ -870,6 +871,15 @@ def build_support_router():
             loop.run_until_complete(_ensure_indexes())
     except Exception as exc:
         logger.warning("sup_* index task not scheduled: %s", exc)
+
+    # Phase 3A.3 — AI assist (admin-triggered draft + ticket intelligence).
+    try:
+        from routes.support_ai import ensure_indexes as _sup_ai_indexes
+        loop = asyncio.get_event_loop()
+        if loop.is_running():
+            loop.create_task(_sup_ai_indexes())
+    except Exception as exc:  # pragma: no cover
+        logger.warning("sup_ai index task not scheduled: %s", exc)
 
     r = APIRouter(tags=["support"])
 
@@ -1814,8 +1824,35 @@ def build_support_router():
             pass
         return {"ok": True}
 
+    @r.post("/admin/support/tickets/{ticket_id}/ai-draft")
+    async def admin_ai_draft(ticket_id: str, admin=Depends(get_current_admin)):
+        """Admin-triggered AI assist: returns a DRAFT reply + ticket-intelligence
+        suggestions grounded only in approved Help Centre knowledge. Never sends
+        a message, changes status, or notifies the customer."""
+        from routes.support_ai import generate_ai_assist
+        result = await generate_ai_assist(admin if isinstance(admin, dict) else {"id": getattr(admin, "id", None), "email": getattr(admin, "email", None)}, ticket_id)
+        await _write_event(
+            ticket_id=ticket_id,
+            event_type="ai_draft_generated",
+            actor_type="ai",
+            actor_id=admin.get("id") if isinstance(admin, dict) else None,
+            metadata={"model": result.get("model"),
+                      "has_knowledge": result.get("has_sufficient_knowledge"),
+                      "escalation": (result.get("escalation") or {}).get("required")},
+        )
+        return result
+
+    @r.get("/admin/support/tickets/{ticket_id}/ai-drafts")
+    async def admin_ai_draft_history(ticket_id: str, admin=Depends(get_current_admin)):
+        rows = []
+        async for d in db.sup_ai_drafts.find(
+            {"ticket_id": ticket_id}, {"_id": 0}
+        ).sort("created_at", -1).limit(20):
+            rows.append(d)
+        return {"drafts": rows}
+
     @r.post("/admin/support/tickets/{ticket_id}/attachments")
-    async def admin_upload_attachment(
+    async def admin_attach_file(
         ticket_id: str,
         file: UploadFile = File(...),
         admin=Depends(get_current_admin),
