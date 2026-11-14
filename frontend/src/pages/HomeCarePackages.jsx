@@ -100,22 +100,6 @@ export default function HomeCarePackages() {
                         <section key={s.id} id={s.id} data-testid={`hcp-section-${s.id}`}>
                             <h2 className="font-heading text-2xl sm:text-3xl text-primary-k tracking-tight">{s.heading}</h2>
                             <p className="mt-3 text-base text-muted-k leading-relaxed">{s.body}</p>
-                            {s.cta ? (
-                                <Link
-                                    to="/ai-tools/statement-decoder"
-                                    data-testid={`hcp-section-cta-${s.id}`}
-                                    className="mt-4 inline-flex items-center gap-2 rounded-lg bg-primary-k text-white px-5 py-2.5 text-sm font-semibold shadow-sm"
-                                >
-                                    Decode your statement free <ArrowRight className="h-4 w-4" />
-                                </Link>
-                            ) : (
-                                <Link
-                                    to="/ai-tools/statement-decoder"
-                                    className="mt-3 inline-flex items-center gap-1.5 text-sm font-semibold text-[#A5512B] underline underline-offset-2"
-                                >
-                                    Decode your statement free <ArrowRight className="h-3.5 w-3.5" />
-                                </Link>
-                            )}
                         </section>
                     ))}
                 </div>
