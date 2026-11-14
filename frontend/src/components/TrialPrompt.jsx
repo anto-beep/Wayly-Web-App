@@ -41,55 +41,55 @@ const CONTEXT = [
     {
         match: (p) => p.startsWith("/support-at-home-levels"),
         icon: Layers, eyebrow: "Support At Home",
-        title: "Know Exactly What Your Level Covers",
+        title: "Understand Your Level",
         body: "You're reading about Support at Home levels. Wayly turns your level, budget and statements into plain English, so you can see what's covered and what you should be paying.",
     },
     {
         match: (p) => p.startsWith("/home-care-packages") || p.startsWith("/hcp"),
         icon: Layers, eyebrow: "Home Care Packages",
-        title: "Move To Support At Home With Confidence",
+        title: "Your Move, Made Clear",
         body: "Wayly helps you make sense of the shift from Home Care Packages to Support at Home, decoding your statements and budgets so nothing catches you off guard.",
     },
     {
         match: (p) => p.startsWith("/ai-tools/statement-decoder"),
         icon: FileText, eyebrow: "Statement Decoder",
-        title: "Decode Any Statement In About A Minute",
+        title: "Decode Any Statement",
         body: "Paste a Support at Home statement and Wayly explains every line in plain English, flagging anything that looks off.",
     },
     {
         match: (p) => p.startsWith("/ai-tools/invoice-checker"),
         icon: ReceiptText, eyebrow: "Invoice Checker",
-        title: "Catch Overcharges Before You Pay",
+        title: "Catch Every Overcharge",
         body: "Wayly reads your invoice and flags double charges, wrong rates and fees that shouldn't be there, before the money leaves your account.",
     },
     {
         match: (p) => p.startsWith("/ai-tools/provider-price-checker"),
         icon: Scale, eyebrow: "Price Checker",
-        title: "Check If You're Paying A Fair Price",
+        title: "Pay A Fair Price",
         body: "Compare your provider's prices against the market, so you can spot when a rate is higher than it should be.",
     },
     {
         match: (p) => p.startsWith("/ai-tools/budget-calculator") || p.startsWith("/ai-tools/contribution-estimator"),
         icon: Calculator, eyebrow: "Budget Tools",
-        title: "See Your Whole Budget At A Glance",
+        title: "See Your Whole Budget",
         body: "Wayly maps your funding, your spending and what's left, so there are no end-of-quarter surprises.",
     },
     {
         match: (p) => p.startsWith("/ai-tools/care-plan-reviewer") || p.startsWith("/ai-tools/support-plan-reviewer"),
         icon: ClipboardList, eyebrow: "Care Plan Reviewer",
-        title: "Make Sure Your Care Plan Works For You",
+        title: "Review Your Care Plan",
         body: "Wayly reviews your care plan and highlights gaps, so you receive every bit of support you're entitled to.",
     },
     {
         match: (p) => p.startsWith("/ai-tools/letters-and-follow-ups") || p.startsWith("/ai-tools/reassessment-letter"),
         icon: Mail, eyebrow: "Letters & Follow-Ups",
-        title: "Send The Right Letter In Minutes",
+        title: "Send The Right Letter",
         body: "From reassessments to complaints, Wayly drafts clear, confident letters you can send straight away.",
     },
     {
         match: (p) => p.startsWith("/ai-tools"),
         icon: Sparkles, eyebrow: "The Wayly Toolkit",
-        title: "Every Wayly Tool, Yours To Explore",
+        title: "Your Whole Toolkit",
         body: "Decode statements, check invoices, compare prices and draft letters, all in one place and all in plain English.",
     },
     {
@@ -101,14 +101,14 @@ const CONTEXT = [
     {
         match: (p) => /^\/(resources|articles|guides|faq|glossary|templates|services|features|about|trust|for-gps|chsp)/i.test(p),
         icon: BookOpen, eyebrow: "Learn With Wayly",
-        title: "Put What You're Reading Into Action",
+        title: "Put It Into Action",
         body: "Guides are a great start. Wayly does the hard part for you, decoding statements, checking prices and drafting letters.",
     },
 ];
 
 const DEFAULT_CONTEXT = {
     icon: Sparkles, eyebrow: "Meet Wayly",
-    title: "Take The Guesswork Out Of Aged Care Costs",
+    title: "Aged Care, Made Clear",
     body: "Wayly reads your statements, checks your prices and drafts your letters, all in plain English, so you always know where you stand.",
 };
 
@@ -116,37 +116,37 @@ const DEFAULT_CONTEXT = {
 const ROTATION = [
     {
         icon: FileText, eyebrow: "Statement Decoder",
-        title: "Turn Any Statement Into Plain English",
+        title: "Statements, Decoded",
         body: "Wayly reads your Support at Home statement line by line and tells you what every charge really means, in seconds.",
     },
     {
         icon: ReceiptText, eyebrow: "Invoice Checker",
-        title: "Catch Overcharges Before You Pay",
+        title: "Catch Every Overcharge",
         body: "Upload an invoice and Wayly flags double charges, wrong rates and fees that shouldn't be there.",
     },
     {
         icon: Scale, eyebrow: "Price Checker",
-        title: "Know If You're Paying A Fair Price",
+        title: "Pay A Fair Price",
         body: "Compare your provider's prices against the market, so you can spot when something is too high.",
     },
     {
         icon: Calculator, eyebrow: "Budget Calculator",
-        title: "See Your Support At Home Budget Clearly",
+        title: "See Your Whole Budget",
         body: "Wayly maps your funding, spending and what's left over, so there are no end-of-quarter surprises.",
     },
     {
         icon: ClipboardList, eyebrow: "Care Plan Reviewer",
-        title: "Make Sure Your Care Plan Works For You",
+        title: "Review Your Care Plan",
         body: "Wayly reviews your care plan and highlights the gaps, so you get the support you're entitled to.",
     },
     {
         icon: Mail, eyebrow: "Letters & Follow-Ups",
-        title: "Send The Right Letter In Minutes",
+        title: "Send The Right Letter",
         body: "From reassessments to complaints, Wayly drafts clear, confident letters you can send straight away.",
     },
     {
         icon: Users, eyebrow: "Family Coordination",
-        title: "Keep The Whole Family In The Loop",
+        title: "Keep Family In The Loop",
         body: "Share updates, statements and tasks, so everyone caring for your loved one stays on the same page.",
     },
 ];
@@ -269,46 +269,52 @@ export default function TrialPrompt() {
 
             {/* Spotlight card */}
             <div
-                className={`relative w-full max-w-[26rem] sm:max-w-md overflow-hidden rounded-[28px] bg-[#F4F7F6] shadow-2xl ring-1 ring-black/5 transition-all duration-300 ease-out motion-reduce:transition-none ${visible ? "opacity-100 translate-y-0 scale-100" : "opacity-0 translate-y-4 scale-95"} max-h-[92vh] overflow-y-auto`}
+                className={`relative w-full max-w-[27rem] sm:max-w-lg overflow-hidden rounded-[32px] bg-[#F4F7F6] shadow-[0_30px_80px_-20px_rgba(6,32,31,0.55)] ring-1 ring-black/5 transition-all duration-300 ease-out motion-reduce:transition-none ${visible ? "opacity-100 translate-y-0 scale-100" : "opacity-0 translate-y-5 scale-95"} max-h-[92vh] overflow-y-auto`}
             >
-                {/* Teal header band with decorative orbs + icon tile */}
-                <div className="relative overflow-hidden bg-gradient-to-br from-[#0E4D52] to-[#15707a] px-6 pt-7 pb-8 sm:px-7">
-                    <div aria-hidden="true" className="pointer-events-none absolute -top-16 -right-10 h-44 w-44 rounded-full bg-[#A5512B]/30 blur-2xl" />
-                    <div aria-hidden="true" className="pointer-events-none absolute -bottom-20 -left-8 h-44 w-44 rounded-full bg-[#6B8F71]/30 blur-2xl" />
+                {/* Premium teal header — centered icon halo, gold badge, glows */}
+                <div className="relative overflow-hidden bg-gradient-to-br from-[#0A3B40] via-[#0E4D52] to-[#17757f] px-7 pt-9 pb-9 text-center sm:px-9">
+                    <div aria-hidden="true" className="pointer-events-none absolute -top-20 -right-12 h-52 w-52 rounded-full bg-[#D99E47]/25 blur-3xl" />
+                    <div aria-hidden="true" className="pointer-events-none absolute -bottom-24 -left-12 h-52 w-52 rounded-full bg-[#6B8F71]/30 blur-3xl" />
+                    <div aria-hidden="true" className="pointer-events-none absolute inset-0" style={{ background: "radial-gradient(120% 90% at 50% -10%, rgba(255,255,255,0.2), transparent 60%)" }} />
 
                     <button
                         type="button"
                         onClick={() => close(false)}
                         aria-label="Close"
                         data-testid="trial-prompt-close"
-                        className="absolute top-3.5 right-3.5 rounded-full p-1.5 text-white/80 transition-colors hover:bg-white/15 hover:text-white"
+                        className="absolute top-4 right-4 flex h-9 w-9 items-center justify-center rounded-full bg-white/20 text-white ring-1 ring-white/40 backdrop-blur-sm transition-all duration-200 hover:scale-105 hover:bg-white hover:text-[#0E4D52] focus:outline-none focus-visible:ring-2 focus-visible:ring-white motion-reduce:hover:scale-100"
                     >
-                        <X className="h-5 w-5" />
+                        <X className="h-[18px] w-[18px]" strokeWidth={2.5} />
                     </button>
 
-                    <div className="relative flex items-center gap-3.5">
-                        <span className="flex h-12 w-12 flex-none items-center justify-center rounded-2xl bg-white/15 ring-1 ring-white/25 backdrop-blur-sm">
-                            <Icon className="h-6 w-6 text-white" strokeWidth={2} />
+                    <div className="relative mx-auto flex h-16 w-16 items-center justify-center">
+                        <span aria-hidden="true" className="absolute inset-0 rounded-[20px] bg-white/10 blur-md" />
+                        <span className="relative flex h-16 w-16 items-center justify-center rounded-[20px] bg-white/15 ring-1 ring-white/30 backdrop-blur-sm">
+                            <Icon className="h-7 w-7 text-white" strokeWidth={2} />
                         </span>
-                        <div>
-                            <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-white/75">{content.eyebrow}</p>
-                            <span className="mt-1 inline-flex items-center gap-1.5 rounded-full bg-white/15 px-2.5 py-1 text-[11px] font-semibold text-white ring-1 ring-white/20">
-                                <Sparkles className="h-3 w-3" /> 7 Days Free
-                            </span>
-                        </div>
                     </div>
+
+                    <span className="relative mt-4 inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-[#F3D9A5] to-[#E3B261] px-3.5 py-1.5 text-[11px] font-bold uppercase tracking-[0.12em] text-[#5a3410] shadow-sm">
+                        <Sparkles className="h-3.5 w-3.5" /> 7 Days Free
+                    </span>
+
+                    <p className="relative mt-3 text-[11px] font-semibold uppercase tracking-[0.2em] text-white/70">{content.eyebrow}</p>
                 </div>
 
                 {/* Body */}
-                <div className="px-6 pt-6 pb-7 sm:px-7">
+                <div className="px-7 pb-9 pt-6 text-center sm:px-9">
                     <h2
                         id="trial-prompt-title"
-                        className="text-[1.6rem] leading-tight tracking-tight text-[#0A2022]"
-                        style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 500 }}
+                        className="leading-[1.08] tracking-tight [text-wrap:balance]"
+                        style={{ fontFamily: "'Fraunces', Georgia, 'Times New Roman', serif", fontWeight: 600, fontSize: "clamp(1.9rem, 5.5vw, 2.3rem)", color: "#0A2022" }}
                     >
                         {content.title}
                     </h2>
-                    <p id="trial-prompt-body" className="mt-3 text-[15px] leading-relaxed text-[#0A2022]/70">
+                    <p
+                        id="trial-prompt-body"
+                        className="mx-auto mt-3 max-w-sm text-[15px] leading-relaxed"
+                        style={{ color: "rgba(10,32,34,0.66)" }}
+                    >
                         {content.body}
                     </p>
 
@@ -317,13 +323,14 @@ export default function TrialPrompt() {
                         type="button"
                         onClick={startTrial}
                         data-testid="trial-prompt-cta"
-                        className="group mt-6 flex w-full items-center justify-center gap-2 rounded-full bg-[#0E4D52] px-6 py-3.5 text-[15px] font-semibold text-white shadow-lg shadow-[#0E4D52]/20 transition-all duration-200 ease-out hover:-translate-y-0.5 hover:bg-[#0c4248] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0E4D52] focus-visible:ring-offset-2 focus-visible:ring-offset-[#F4F7F6] motion-reduce:hover:translate-y-0 motion-reduce:transition-none"
+                        className="group relative mt-7 flex w-full items-center justify-center gap-2 overflow-hidden rounded-full bg-gradient-to-r from-[#B4551F] to-[#8F4323] px-6 py-4 text-[16px] font-bold text-white shadow-[0_14px_30px_-8px_rgba(165,81,43,0.65)] ring-1 ring-[#8F4323]/40 transition-all duration-200 ease-out hover:-translate-y-0.5 hover:shadow-[0_18px_38px_-8px_rgba(165,81,43,0.78)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#B4551F] focus-visible:ring-offset-2 focus-visible:ring-offset-[#F4F7F6] motion-reduce:hover:translate-y-0 motion-reduce:transition-none"
                     >
-                        Start Your 7-Day Free Trial
-                        <ArrowRight className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-0.5 motion-reduce:transition-none" />
+                        <span aria-hidden="true" className="pointer-events-none absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/25 to-transparent transition-transform duration-700 ease-out group-hover:translate-x-full motion-reduce:hidden" />
+                        <span className="relative">Start Your 7-Day Free Trial</span>
+                        <ArrowRight className="relative h-[18px] w-[18px] transition-transform duration-200 group-hover:translate-x-0.5 motion-reduce:transition-none" />
                     </button>
 
-                    <div className="mt-3 flex items-center justify-center gap-1.5 text-[12px] text-[#0A2022]/55">
+                    <div className="mt-3.5 flex items-center justify-center gap-1.5 text-[12px] font-medium" style={{ color: "rgba(10,32,34,0.55)" }}>
                         <ShieldCheck className="h-3.5 w-3.5 text-[#2D6A4F]" />
                         <span>No Charge Today &middot; Cancel Anytime</span>
                     </div>
@@ -332,7 +339,8 @@ export default function TrialPrompt() {
                         type="button"
                         onClick={() => close(false)}
                         data-testid="trial-prompt-later"
-                        className="mx-auto mt-3 block text-[13px] font-medium text-[#0A2022]/50 underline-offset-2 transition-colors hover:text-[#0A2022]/75 hover:underline"
+                        className="mx-auto mt-2.5 block text-[13px] font-medium underline-offset-2 transition-colors hover:underline"
+                        style={{ color: "rgba(10,32,34,0.45)" }}
                     >
                         Maybe Later
                     </button>
