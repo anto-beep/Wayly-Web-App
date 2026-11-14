@@ -3,6 +3,7 @@ import { X } from "lucide-react";
 import { useLocation } from "react-router-dom";
 import { QRCodeSVG } from "qrcode.react";
 import { APP_STORE_URL, PLAY_STORE_URL, detectDevice } from "@/components/AppStoreBadges";
+import { isWebinarCampaignActive } from "@/components/WebinarPromo";
 
 /**
  * AppDownloadPrompt
@@ -33,6 +34,9 @@ export default function AppDownloadPrompt() {
     }, []);
 
     const onAuthRoute = /^\/(login|signup|forgot|reset|verify-email)/i.test(pathname || "");
+    // While the webinar campaign is live it owns the top banner slot; stand down
+    // to avoid stacking two banners. Returns automatically after the event.
+    if (isWebinarCampaignActive()) return null;
     if (!ready || dismissed || onAuthRoute || (pathname || "").startsWith("/admin")) return null;
 
     const dismiss = () => {

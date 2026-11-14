@@ -198,6 +198,7 @@ export default function TrialPrompt() {
     useEffect(() => {
         const id = setInterval(() => {
             if (open) return;
+            if (typeof window !== "undefined" && window.__waylyWebinarPopupOpen) return;
             if (typeof document !== "undefined" && document.hidden) return;
             if (!loggedOut || blocked) return;
             try { if (sessionStorage.getItem(SESSION_SUPPRESS) === "1") return; } catch { /* ignore */ }

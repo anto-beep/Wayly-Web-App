@@ -170,6 +170,7 @@ import AccessibilityWidget, { bootAccessibilityPrefs } from "@/components/Access
 import ScrollHideWidgets from "@/components/ScrollHideWidgets";
 import AppDownloadPrompt from "@/components/AppDownloadPrompt";
 import TrialPrompt from "@/components/TrialPrompt";
+import WebinarPromo from "@/components/WebinarPromo";
 import InAppNudge from "@/components/InAppNudge";
 import ImpersonationBanner from "@/components/ImpersonationBanner";
 import { ParticipantsProvider } from "@/context/ParticipantsContext";
@@ -416,6 +417,7 @@ function App() {
                 <ConsumerWidgets />
                 <OfflineIndicator />
                 <PaywallModal />
+                <WebinarPromo />
                 <AppDownloadPrompt />
                 <TrialPrompt />
                 <InAppNudge />
