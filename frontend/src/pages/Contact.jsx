@@ -158,31 +158,34 @@ export default function Contact() {
                                     />
                                 </label>
                             </div>
-                            <label className="block">
-                                <span className="text-sm text-muted-k">Email <span className="ml-1 text-[11px] font-semibold uppercase tracking-wide text-terracotta">Required</span></span>
-                                <input
-                                    type="email"
-                                    value={form.email}
-                                    onChange={update("email")}
-                                    required
-                                    inputMode="email"
-                                    autoCapitalize="none"
-                                    data-testid="contact-email"
-                                    className="mt-1 w-full rounded-md border border-kindred bg-surface px-3 py-2.5 focus:outline-none focus:ring-2 ring-primary-k"
-                                />
-                            </label>
-
-                            {isDemo && (
+                            <div className="grid sm:grid-cols-2 gap-4">
                                 <label className="block">
-                                    <span className="text-sm text-muted-k">Phone (optional, for confirmation only)</span>
+                                    <span className="text-sm text-muted-k">Email <span className="ml-1 text-[11px] font-semibold uppercase tracking-wide text-terracotta">Required</span></span>
                                     <input
+                                        type="email"
+                                        value={form.email}
+                                        onChange={update("email")}
+                                        required
+                                        inputMode="email"
+                                        autoCapitalize="none"
+                                        data-testid="contact-email"
+                                        className="mt-1 w-full rounded-md border border-kindred bg-surface px-3 py-2.5 focus:outline-none focus:ring-2 ring-primary-k"
+                                    />
+                                </label>
+                                <label className="block">
+                                    <span className="text-sm text-muted-k">Phone number <span className="ml-1 text-[11px] font-semibold uppercase tracking-wide text-muted-k">Optional</span></span>
+                                    <input
+                                        type="tel"
                                         value={form.phone}
                                         onChange={update("phone")}
+                                        inputMode="tel"
+                                        autoComplete="tel"
+                                        placeholder={isDemo ? "For confirmation only" : ""}
                                         data-testid="contact-phone"
                                         className="mt-1 w-full rounded-md border border-kindred bg-surface px-3 py-2.5 focus:outline-none focus:ring-2 ring-primary-k"
                                     />
                                 </label>
-                            )}
+                            </div>
 
                             <div>
                                 <span className="text-sm text-muted-k">I am a… <span className="ml-1 text-[11px] font-semibold uppercase tracking-wide text-terracotta">Required</span></span>

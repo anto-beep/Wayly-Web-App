@@ -84,16 +84,6 @@ export default function HomeCarePackages() {
                     On 01/11/2025, the Home Care Packages Program was replaced by Support at Home across Australia. If you or a parent had a Home Care Package, you are now on Support at Home. Your care did not stop, and you did not need to do anything to move across. This page explains what changed, in plain English.
                 </p>
 
-                <div className="mt-6">
-                    <Link
-                        to="/ai-tools/statement-decoder"
-                        data-testid="hcp-intro-decoder-cta"
-                        className="inline-flex items-center gap-2 rounded-lg bg-primary-k text-white px-6 py-3 text-sm font-semibold shadow-sm"
-                    >
-                        Decode your statement free <ArrowRight className="h-4 w-4" />
-                    </Link>
-                </div>
-
                 {/* Sections */}
                 <div className="mt-12 space-y-10">
                     {SECTIONS.map((s) => (
