@@ -4,6 +4,7 @@ import { Info, ArrowRight, Sparkles } from "lucide-react";
 import SmartAISummary from "@/components/SmartAISummary";
 import StatementInsightGraphics from "@/components/StatementInsightGraphics";
 import DecoderResultView from "@/components/DecoderResultView";
+import { useAuth } from "@/context/AuthContext";
 
 // A STATIC, fully anonymised "what a decoded statement looks like" panel shown
 // inline on the Statement Decoder page. It renders the SAME output components a
@@ -75,6 +76,9 @@ const SAMPLE_RESULT = {
 };
 
 export default function DecoderSampleResult() {
+    const { user } = useAuth();
+    // Marketing sample — show only to unauthenticated visitors, not logged-in users.
+    if (user) return null;
     return (
         <section className="mt-10" data-testid="decoder-sample-output" aria-label="Example decoded statement">
             <div className="rounded-2xl border border-kindred bg-surface p-6 sm:p-8">
