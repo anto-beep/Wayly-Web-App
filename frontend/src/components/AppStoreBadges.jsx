@@ -7,7 +7,7 @@ import React, { useEffect, useState } from "react";
  * its badge renders as a "Coming soon" pill with no link (never a broken
  * 404). When iOS ships, set APP_STORE_URL and the badge auto-activates.
  */
-export const APP_STORE_URL = ""; // TODO: set when the iOS app ships (badge auto-activates)
+export const APP_STORE_URL = "https://apps.apple.com/app/wayly-aged-care-made-clear/id6811122907"; // iOS app live (region-neutral → redirects to the visitor's local App Store)
 export const PLAY_STORE_URL = "https://play.google.com/store/apps/details?id=au.com.wayly.app";
 
 export function detectDevice() {
