@@ -702,6 +702,38 @@ _PARTICIPANT_NAME_RE = re.compile(
 
 
 
+_NON_NAME_WORDS = {
+    "invoice", "statement", "contribution", "contributions", "tax",
+    "remittance", "receipt", "summary", "notice", "credit", "note",
+    "account", "quarterly", "period",
+}
+_NAME_STOP_WORDS = {
+    "my", "aged", "care", "id", "period", "dob", "date", "no", "number",
+    "ref", "reference", "invoice", "statement", "account", "abn", "acn",
+}
+
+
+def _clean_name_capture(cand: str) -> str:
+    """Trim a captured name at the first boundary/noise word after the first
+    token, e.g. 'Sam Burke My Aged' -> 'Sam Burke' (the 'My Aged Care ID'
+    label frequently trails the name on a 'Bill to:' line)."""
+    kept: List[str] = []
+    for i, t in enumerate(cand.split()):
+        if i > 0 and re.sub(r"[^a-z]", "", t.lower()) in _NAME_STOP_WORDS:
+            break
+        kept.append(t)
+    return " ".join(kept).strip().strip(".,-")
+
+
+def _looks_like_doc_term(cand: str) -> bool:
+    """True when the capture is a document-type phrase rather than a person,
+    e.g. the heading 'Participant Contribution Invoice' -> 'Contribution Invoice'."""
+    toks = [t for t in re.split(r"[^a-zA-Z]+", cand.lower()) if t]
+    if not toks:
+        return True
+    return any(t in _NON_NAME_WORDS for t in toks)
+
+
 def extract_invoice_header(text: str) -> dict:
     """Return `{invoice_date, due_date, provider_name, provider_abn,
     quarterly_budget}` from the top of the payable section. Every field
@@ -754,13 +786,20 @@ def extract_invoice_header(text: str) -> dict:
     if m:
         provider_name = m.group(1).strip()
 
+    # Scan ALL label matches and take the first that looks like a real person,
+    # skipping the document title (e.g. the heading "Participant Contribution
+    # Invoice" captured as "Contribution Invoice") and the provider name.
     participant_name: Optional[str] = None
-    m = _PARTICIPANT_NAME_RE.search(head)
-    if m:
-        cand = m.group("val").strip().strip(".,-")
-        # Reject a capture that is actually the provider (e.g. "Bill to: Acacia Care Services").
-        if cand and cand.lower() != (provider_name or "").lower():
-            participant_name = cand
+    for m in _PARTICIPANT_NAME_RE.finditer(head):
+        cand = _clean_name_capture(m.group("val").strip().strip(".,-"))
+        if not cand:
+            continue
+        if cand.lower() == (provider_name or "").lower():
+            continue
+        if _looks_like_doc_term(cand):
+            continue
+        participant_name = cand
+        break
 
     quarterly_budget: Optional[float] = None
     m = _QUARTERLY_BUDGET_RE.search(head)

@@ -93,7 +93,7 @@ export default function Terms() {
             <h2>9. Subscriptions and Billing</h2>
             <ul>
                 <li>Plans are billed fortnightly in advance (26 charges per year), in Australian dollars, including GST where applicable. Current pricing is on our pricing page.</li>
-                <li>Free trials are one per person and do not require a card. Before your first paid charge at the end of a trial, we send a single reminder email. Subsequent charges receive a receipt after the fact.</li>
+                <li>A valid payment card is required to sign up, including to start a free trial. Free trials are one per person. Before your first paid charge at the end of a trial, we send a single reminder email, and you can cancel any time before then to avoid being charged. Subsequent charges receive a receipt after the fact.</li>
                 <li>You can cancel any time from your account settings. Cancellation stops your next renewal, and you keep access until the end of your current billing period.</li>
                 <li>Upgrades take effect immediately and are prorated to the day. Downgrades and removals take effect at the end of your current billing period. We do not refund or credit part-used periods, subject to your rights under the ACL (clause 14).</li>
                 <li>If we change pricing, we will give you at least 30 days notice by email or in-app before it applies to your next renewal.</li>
