@@ -355,6 +355,79 @@ def _read_confidence(line: str, gross: Optional[float]) -> float:
     return max(0.0, min(1.0, score))
 
 
+_DESC_STRIP_RE = re.compile(r"[\d,.\s%$()\-:·/]")
+
+
+def _desc_char_count(line: str) -> int:
+    """Count the 'wordy' characters left after removing money + punctuation.
+    Used to tell a description line from a bare amount line."""
+    return len(_DESC_STRIP_RE.sub("", _MONEY_RE.sub(" ", line)))
+
+
+# Totals/tail lines that end the itemised section in an "amount-next-line"
+# layout (the generic _ROW_END_TOKENS set targets per-service tables).
+_TOTALS_LINE_RE = re.compile(
+    r"^\s*(?:sub\s*-?\s*total|subtotal|totals?|grand\s+total|total\s+due|"
+    r"gst|tax\b|amount\s+(?:due|payable|owing)|balance\s+(?:due|owing))",
+    re.IGNORECASE,
+)
+
+
+def _is_totals_line(line: str) -> bool:
+    return bool(_TOTALS_LINE_RE.match(line.strip()))
+
+
+def _has_amount_next_line_layout(lines: List[str]) -> bool:
+    """True when a two-column PDF has linearised to a description line
+    immediately followed by a bare amount line (e.g. 'Cleaning\\n$50.00').
+    Requires >= 2 such pairs so normal row-per-line invoices never trigger it."""
+    cleaned = [l.strip() for l in lines if l.strip()]
+    pairs = 0
+    for i in range(1, len(cleaned)):
+        prev, cur = cleaned[i - 1], cleaned[i]
+        if _is_totals_line(prev):
+            continue
+        cur_has_money = bool(_parse_all_money(cur))
+        prev_has_money = bool(_parse_all_money(prev))
+        if cur_has_money and _desc_char_count(cur) < 4 and not prev_has_money and _desc_char_count(prev) >= 4:
+            pairs += 1
+    return pairs >= 2
+
+
+def _reassemble_amount_next_line(lines: List[str]) -> List[str]:
+    """Merge 'description line' + 'amount line' pairs into single rows,
+    stopping at the first totals/tail line so Subtotal/GST/Total are not
+    counted as line items."""
+    rows: List[str] = []
+    pending: Optional[str] = None
+    for raw in lines:
+        line = raw.strip()
+        if not line:
+            continue
+        if _is_totals_line(line):
+            break
+        has_money = bool(_parse_all_money(line))
+        desc_chars = _desc_char_count(line)
+        if _is_line_header(line) and not has_money:
+            pending = None
+            continue
+        if has_money and desc_chars < 4:
+            # Bare amount → attach to the pending description.
+            if pending:
+                rows.append(pending + " " + line)
+                pending = None
+        elif has_money:
+            # A complete row already (description + amount on one line).
+            if pending:
+                rows.append(pending)
+            rows.append(line)
+            pending = None
+        else:
+            # Description-only line (may be a wrapped multi-line description).
+            pending = (pending + " " + line) if pending else line
+    return rows
+
+
 def _reassemble_rows(text: str) -> List[str]:
     """Group column-per-line PDF text back into row-per-line strings.
 
@@ -373,6 +446,9 @@ def _reassemble_rows(text: str) -> List[str]:
     lines = text.splitlines()
     has_column_mode = any(_ROW_START_DATE_RE.match(l.strip()) for l in lines)
     rows: List[str] = []
+
+    if not has_column_mode and _has_amount_next_line_layout(lines):
+        return _reassemble_amount_next_line(lines)
 
     if not has_column_mode:
         # Row-per-line: emit each dense line directly.
