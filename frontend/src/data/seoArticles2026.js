@@ -15,6 +15,149 @@
  * accordion, without us redesigning the existing article template.
  */
 export const SEO_ARTICLES_2026 = [
+    // -----------------------------------------------------------------
+    // Financial hardship assistance (fee reduction supplement) for
+    // Support at Home. Monetary constants verified against Services
+    // Australia / My Aged Care as at 18 Nov 2026. Hardship income test:
+    // retain < 15% of basic single Age Pension ($170.31/fortnight) after
+    // essential expenses = full supplement. Asset gate $48,270.30.
+    // Re-verify + bump `updated_at` after the next March/Sept indexation.
+    // -----------------------------------------------------------------
+    {
+        slug: "support-at-home-financial-hardship-assistance",
+        title: "Support at Home Financial Hardship Assistance: How to Apply and Get Help",
+        excerpt: "If a Support at Home contribution is genuinely unaffordable, the financial hardship assistance (the fee reduction supplement) can cover all or part of it. Here is who qualifies, the income and assets tests, and how to apply with form SA462, in plain English.",
+        published_at: "2026-11-18",
+        updated_at: "2026-11-18",
+        author: { name: "Wayly Editorial", role: "Wayly" },
+        reviewer: { name: "Wayly Editorial", role: "" },
+        hero_alt: "Older man and his daughter reading a Services Australia hardship assistance letter together at home",
+        meta: {
+            title: "Support at Home financial hardship assistance: how to apply (SA462)",
+            description: "Can't afford your Support at Home contribution? The fee reduction supplement can cover all or part of it. Who qualifies, the $170.31 income test, the $48,270.30 asset gate, and how to apply with SA462.",
+        },
+        key_takeaways: [
+            "Financial hardship assistance under Support at Home is the fee reduction supplement. It covers all or part of your contribution when paying it would cause genuine financial hardship, for reasons beyond your control.",
+            "The income test is about what you keep, not what you earn. If you hold on to less than 15% of the basic single Age Pension, currently $170.31 per fortnight, after your essential living expenses, you can be eligible for the full supplement. Keep more than that and a partial supplement may still apply.",
+            "There is an assets gate. Your assessable assets (excluding ones you genuinely cannot sell or access) must be under $48,270.30, indexed every March and September. Gifting more than the allowed limits can disqualify you.",
+            "You must have already completed the income and assets assessment for aged care (form SA456) before you can apply for hardship.",
+            "You apply with Services Australia form SA462. Services Australia aims to assess a complete claim within 28 days, and an approved supplement is backdated to your application date (but never earlier than 1 November 2025).",
+            "While your claim is being assessed you do not have to pay the contributions under review. Tell your provider so they pause collection. If the claim is refused, those paused contributions become payable.",
+        ],
+        intro_md: `Most of the money questions about Support at Home are about how much you will pay. This one is different. It is the question you ask when the answer to "how much" is "more than we can manage".
+
+If your parent's assessed contribution is genuinely beyond what the household can afford, there is a safety net built into the program: **financial hardship assistance**, officially the **fee reduction supplement**. The government steps in and covers all, or part, of the contribution so care does not stop because money ran out.
+
+It is deliberately not advertised. No provider makes money by telling you about it, and the eligibility tests look intimidating from the outside. This article takes them apart in plain English: who qualifies, the two tests that matter (what you keep each fortnight and what you own), exactly what [form SA462](https://www.servicesaustralia.gov.au/sa462) asks for, and what happens to your contributions while you wait for a decision.
+
+If you are not yet sure what the contribution should even be, start with the [Wayly Contribution Estimator](/ai-tools/contribution-estimator) and our guide on [how much you will actually pay](/resources/articles/how-much-will-i-pay-for-support-at-home). Hardship assistance is the last step, for when the correct, assessed contribution is still unaffordable, not a way around doing the SA456 assessment.`,
+        sections: [
+            {
+                heading: "What financial hardship assistance actually is",
+                body_md: `Financial hardship assistance is a government payment, the **fee reduction supplement**, that reduces or removes the contribution you would otherwise pay towards Support at Home services. When it is approved, the supplement is paid **directly to your provider** on your behalf. You do not receive cash; your bill simply goes down or to zero.
+
+It exists for people who cannot meet their aged care costs because of circumstances **beyond their control**. Think of a sudden drop in income, unavoidable medical or housing costs, or assets that exist on paper but cannot actually be turned into money. The government looks at each application individually and decides whether to cover **some or all** of your required contribution.
+
+Two things it is **not**. It is not a replacement for the income and assets assessment (SA456): you have to have done that first. And it is not means "not disclosed" relief, if you are being charged the maximum rate only because no assessment was completed, the fix is to complete the SA456, not to apply for hardship.`,
+            },
+            {
+                heading: "The income test: it is about what you keep, not what you earn",
+                body_md: `This is the test most people misread. Services Australia does not simply look at your income. It looks at what is **left over after your essential living expenses**, and compares that to a threshold.
+
+The threshold is **15% of the basic single Age Pension, currently $170.31 per fortnight** (indexed with the pension). The logic runs like this:
+
+- If, after paying your essential expenses, you keep **less than $170.31 per fortnight**, you can be eligible for the **full** fee reduction supplement.
+- If you keep **more than that**, you may still qualify for a **partial** supplement, assessed on your individual circumstances.
+
+"Essential expenses" are the ordinary costs of day-to-day life: food, utilities (gas, electricity, water), medical and dental costs, essential home maintenance, insurance, and transport. Your Support at Home contribution itself is generally **not** counted as an essential expense, unless you can show it is higher than would normally be expected.
+
+So the question the form is really asking is: once the necessities are paid, is there enough left to cover the care contribution? If the honest answer is no, this is the test that captures it.`,
+            },
+            {
+                heading: "The assets test and the gifting rules",
+                body_md: `Passing the income test is not enough on its own. There is also a gate on **what you own**.
+
+Your assessable assets, **excluding any you genuinely cannot sell or access** ("unrealisable assets"), must be **below $48,270.30**. That figure is set at 1.5 times the annual basic Age Pension (including supplements) and is **indexed every March and September**, so re-check it against Services Australia before you rely on it.
+
+The principal home is treated the way it is across aged care means testing, so do not assume the family home automatically tips you over, but second properties, investments and financial assets all count.
+
+There are also **gifting rules**, to stop people giving money away to qualify:
+
+- No more than **$10,000** gifted in the current financial year, and
+- No more than **$30,000** gifted across the current and previous four financial years.
+
+Gift above those limits and the amount is still counted as if you held it. Finally, you must have **started receiving aged care on or after 1 July 2014** to be eligible for this supplement under Support at Home.`,
+            },
+            {
+                heading: "Before you apply: the income and assets assessment (SA456)",
+                body_md: `You cannot jump straight to hardship. Services Australia needs your **income and assets assessment for aged care (SA456)** on file first, because the hardship decision is calculated on top of it.
+
+If your parent has not done the SA456 yet, do that first. It is the assessment that decides the normal contribution rate, and for many families completing it is enough on its own to bring the bill down to an affordable level, no hardship claim needed. Our guide on [how much you will actually pay](/resources/articles/how-much-will-i-pay-for-support-at-home) explains the SA456 in detail.
+
+Only once the assessed contribution is confirmed, and it is still unaffordable, does the hardship pathway make sense.`,
+            },
+            {
+                heading: "How to apply, step by step",
+                body_md: `The application is **form SA462, "Aged Care Claim for financial hardship assistance"**, lodged with Services Australia. Here is the practical sequence.
+
+1. **Confirm the SA456 is done.** Hardship sits on top of the income and assets assessment. If it is not lodged, do that first.
+2. **Get the SA462 form.** Download it from the [Services Australia website](https://www.servicesaustralia.gov.au/sa462), or call **1800 227 475** and ask them to send it.
+3. **Gather your evidence.** You will need proof of your **income over the last three months** and documentation of your **essential expenses**, rent or home costs, utilities, medical and dental, insurance, transport. The clearer the paperwork, the faster the decision.
+4. **Complete and lodge the form.** Submit it **online through your Centrelink account** (linked via myGov), or by post to *Services Australia, Aged Care, PO Box 7821, Canberra BC ACT 2610*.
+5. **Tell your provider you have applied.** Ask them to **pause collection** of the contributions under review while the claim is assessed.
+6. **Wait for the decision.** Services Australia aims to assess a complete claim **within 28 days** of receiving everything it needs.
+
+If something about the contribution itself looks wrong, not just unaffordable, Wayly's [Letters & Follow-ups](/ai-tools/letters-and-follow-ups) tool drafts the message to your provider or to Services Australia, citing the relevant rule, so you are not staring at a blank page.`,
+            },
+            {
+                heading: "What happens to your contributions while you wait",
+                body_md: `This is the part that gives families the most relief. While your hardship claim is being assessed, you are **not required to pay the contributions under review**. Tell your provider as soon as you lodge the SA462 so they pause collection rather than chasing payment.
+
+If your claim is **approved**, the fee reduction supplement is paid straight to your provider, and the approval is **backdated to the date you applied**, though never earlier than **1 November 2025**, the start date for Support at Home hardship claims. So the paused contributions from your application date onwards are covered.
+
+If your claim is **refused**, the contributions that were paused become payable. That is the one risk to understand up front: pausing is not forgiveness until the decision lands. If you are refused and think the decision is wrong, call **1800 227 475** to discuss it.`,
+            },
+            {
+                heading: "Where these numbers come from",
+                body_md: `Every figure on this page is taken from the body that issues it, not a repackaged provider blog. Here is the trail, so you can quote it to a provider with confidence.
+
+- **Income test (keep less than 15% of the basic single Age Pension = $170.31 per fortnight for the full supplement):** [My Aged Care · Financial hardship assistance](https://www.myagedcare.gov.au/financial-hardship-assistance) and the [SA462 form notes](https://www.servicesaustralia.gov.au/sa462).
+- **Assets gate ($48,270.30, 1.5× the annual basic Age Pension, indexed March and September):** [Services Australia · SA462](https://www.servicesaustralia.gov.au/sa462).
+- **Gifting limits ($10,000 per year / $30,000 over five years) and the 1 July 2014 start-of-care rule:** [Services Australia · SA462](https://www.servicesaustralia.gov.au/sa462).
+- **28-day assessment timeframe, payment direct to provider, backdating no earlier than 1 November 2025:** [My Aged Care · Financial hardship assistance](https://www.myagedcare.gov.au/financial-hardship-assistance) and [health.gov.au · Fee reduction supplement](https://www.health.gov.au/topics/aged-care/providing-aged-care-services/funding-for-aged-care-service-providers/fee-reduction-supplement).
+
+All figures are current as at **18 November 2026** and are due to reindex in **March 2027**. If you are reading this after that date, cross-check the $170.31 and $48,270.30 figures with My Aged Care before quoting them.
+
+For decisions about your specific situation, talk to Services Australia on **1800 227 475** or a licensed financial adviser. Wayly is a plain-English translator, not a licensed adviser. Nothing here is personal financial advice.`,
+            },
+        ],
+        howto: {
+            name: "How to apply for Support at Home financial hardship assistance",
+            description: "Apply for the Support at Home fee reduction supplement (financial hardship assistance) with Services Australia form SA462.",
+            steps: [
+                { name: "Confirm your income and assets assessment (SA456) is lodged", text: "Hardship assistance is calculated on top of the SA456. Complete it first if you have not." },
+                { name: "Get form SA462", text: "Download the Aged Care Claim for financial hardship assistance from servicesaustralia.gov.au/sa462 or call 1800 227 475." },
+                { name: "Gather evidence", text: "Collect proof of income over the last three months and documentation of your essential expenses." },
+                { name: "Lodge the form", text: "Submit online through your Centrelink account via myGov, or post it to Services Australia Aged Care, PO Box 7821, Canberra BC ACT 2610." },
+                { name: "Tell your provider", text: "Ask your provider to pause collection of the contributions under review while the claim is assessed." },
+                { name: "Wait for the decision", text: "Services Australia aims to assess a complete claim within 28 days. Approved supplements are backdated to the application date." },
+            ],
+        },
+        faqs: [
+            { q: "What is financial hardship assistance for Support at Home?", a: "It is the fee reduction supplement: a government payment that covers all or part of your Support at Home contribution when paying it would cause genuine financial hardship for reasons beyond your control. The supplement is paid directly to your provider, so your bill goes down or to zero rather than you receiving cash." },
+            { q: "Who is eligible for the fee reduction supplement?", a: "You must have already completed the income and assets assessment for aged care (SA456), have started receiving care on or after 1 July 2014, have assessable assets below $48,270.30 (excluding assets you genuinely cannot sell), and stay within the gifting limits. On income, if you keep less than 15% of the basic single Age Pension ($170.31 per fortnight) after essential expenses you can get the full supplement; keep more and a partial supplement may apply." },
+            { q: "How do I apply for Support at Home financial hardship assistance?", a: "Complete Services Australia form SA462, the Aged Care Claim for financial hardship assistance. Download it from servicesaustralia.gov.au/sa462 or call 1800 227 475, attach evidence of your income over the last three months and your essential expenses, then lodge it online through your Centrelink account or by post to Services Australia Aged Care, PO Box 7821, Canberra BC ACT 2610." },
+            { q: "Do I have to pay my contributions while my hardship claim is assessed?", a: "No. While the claim is being assessed you are not required to pay the contributions under review. Tell your provider as soon as you lodge the SA462 so they pause collection. Be aware that if the claim is refused, those paused contributions become payable." },
+            { q: "How long does a hardship decision take, and can it be backdated?", a: "Services Australia aims to assess a complete claim within 28 days of receiving all the documentation. If approved, the supplement is backdated to the date you applied, but never earlier than 1 November 2025." },
+            { q: "Can I apply for hardship instead of doing the SA456 income and assets assessment?", a: "No. The SA456 must be done first, because the hardship decision is calculated on top of it. In many cases completing the SA456 lowers the contribution enough on its own that a hardship claim is not needed." },
+        ],
+        related: [
+            "how-much-will-i-pay-for-support-at-home",
+            "support-at-home-costs-and-contributions",
+            "support-at-home-explained",
+        ],
+    },
+
     {
         slug: "how-to-complain-about-aged-care-commission",
         title: "How To Complain About Aged Care In Australia: What Actually Happens",
@@ -1348,7 +1491,7 @@ You do not pay a **percentage contribution** on care management. It comes out of
 
 **Ask for a reassessment when income drops.** If your parent's income has dropped since the last assessment (retired since assessment, super drawdown reduced, pension reinstated), that alone can move them to a lower band. Contact Services Australia within 28 days of the material change; you can ask them to backdate the recalculation to the change date.
 
-**Apply for financial hardship (SA462) if you genuinely can't afford the rate.** The [financial hardship supplement](https://www.myagedcare.gov.au) is designed for participants whose available fortnightly income is less than 15% of the basic single Age Pension (currently **$165.05 per fortnight**, indexed with the pension). If approved, the fee reduction supplement covers all or part of your contribution and is backdated to the application date. While the application is being processed, you do **not** need to pay contributions.
+**Apply for financial hardship (SA462) if you genuinely can't afford the rate.** The [financial hardship supplement](https://www.myagedcare.gov.au/financial-hardship-assistance) is designed for participants who, after paying essential living expenses, keep less than 15% of the basic single Age Pension (currently **$170.31 per fortnight**, indexed with the pension). Keep more than that and you may still qualify for a **partial** supplement, assessed case by case. If approved, the fee reduction supplement covers all or part of your contribution and is backdated to the application date. While the application is being processed, you do **not** need to pay the contributions under review. Our full guide on [financial hardship assistance](/resources/articles/support-at-home-financial-hardship-assistance) walks through the eligibility tests and the SA462 step by step.
 
 None of these is a loophole. They are how the system is designed to work when families actually engage with it. The problem is that no provider will proactively tell you about them because none of them makes the provider any money.`,
             },
@@ -1368,7 +1511,7 @@ Nothing else about the classification or the quarterly budget changes on 1 Octob
 - **"No worse off" cap ($88,934.57):** [My Aged Care · Changes to contributions while accessing Support at Home](https://www.myagedcare.gov.au).
 - **Contribution percentage bands (0% / 5% / 17.5% / 50% / 80%):** [Department of Health · Support at Home participant contributions fact sheet](https://www.health.gov.au). The "no worse off" cohort bands (0% and up to 25%) are from the same fact sheet.
 - **Care management cap (10% of the quarterly budget):** [health.gov.au · Care management for Support at Home](https://www.health.gov.au).
-- **Financial hardship threshold ($165.05 per fortnight):** [My Aged Care · Financial hardship assistance](https://www.myagedcare.gov.au).
+- **Financial hardship threshold ($170.31 per fortnight):** [My Aged Care · Financial hardship assistance](https://www.myagedcare.gov.au/financial-hardship-assistance).
 - **SA456 form:** [Services Australia · SA456](https://www.servicesaustralia.gov.au/sa456).
 - **SA462 hardship form:** [Services Australia · SA462](https://www.servicesaustralia.gov.au/sa462).
 
