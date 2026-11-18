@@ -14,8 +14,10 @@ import { ArrowLeft, ArrowRight, ShieldAlert, BookOpen, ExternalLink, ChevronDown
 import SeoHead, { articleLd, breadcrumbLd, canonicalFor } from "@/seo/SeoHead";
 import { SEO } from "@/seo/pageConfig";
 import { loadProgramReference, getProgramReferenceSync } from "@/lib/programReference";
-import { ArticleHero, SectionFigure, StepFlow, BarCompare } from "@/components/articles/ArticleVisuals";
-import { ARTICLE_HERO, ARTICLE_SECTION_VISUALS } from "@/data/articleMedia";
+import { ArticleHero, SectionFigure, StepFlow, BarCompare, PullQuote, FigureStats, NextStep, SourcesList } from "@/components/articles/ArticleVisuals";
+import { ARTICLE_HERO, ARTICLE_SECTION_VISUALS, heroForArticle } from "@/data/articleMedia";
+import { WAYLY_OFFER } from "@/data/waylyOffer";
+import { PDF_ARTICLE_OVERRIDES } from "@/data/pdfArticles2026";
 import { titleCaseHeading } from "@/lib/titleCase";
 
 // Resolve live Support at Home figures from INDEX-1 (program_reference) so
@@ -123,8 +125,10 @@ export default function ArticlesIndex() {
             .then((r) => {
                 const cms = r.data.articles || [];
                 const cmsSlugs = new Set(cms.map((a) => a.slug));
-                const structured = STRUCTURED_SEO_ARTICLES.filter((a) => !cmsSlugs.has(a.slug));
-                const olderStatic = STATIC_ARTICLES.filter((a) => !cmsSlugs.has(a.slug) && !structured.find((s) => s.slug === a.slug));
+                const structured = STRUCTURED_SEO_ARTICLES
+                    .filter((a) => !cmsSlugs.has(a.slug) && !SLUG_REDIRECTS[a.slug])
+                    .map((a) => (PDF_ARTICLE_OVERRIDES[a.slug] ? { ...a, ...PDF_ARTICLE_OVERRIDES[a.slug] } : a));
+                const olderStatic = STATIC_ARTICLES.filter((a) => !cmsSlugs.has(a.slug) && !SLUG_REDIRECTS[a.slug] && !structured.find((s) => s.slug === a.slug));
                 setArticles([...structured, ...cms, ...olderStatic]);
             })
             .catch(() => setArticles(ALL_STATIC_ARTICLES));
@@ -156,7 +160,7 @@ export default function ArticlesIndex() {
         <div className="min-h-screen bg-kindred">
             <SeoHead {...SEO.articlesIndex} />
             <MarketingHeader />
-            <section className="mx-auto max-w-5xl px-6 pt-12 pb-6" data-testid="articles-page">
+            <section className="mx-auto max-w-7xl px-6 pt-12 pb-6" data-testid="articles-page">
                 <Link to="/resources" className="text-sm text-muted-k hover:text-primary-k inline-flex items-center gap-1"><ArrowLeft className="h-3.5 w-3.5" /> Resources</Link>
                 <span className="overline mt-6 block">Articles</span>
                 <h1 className="font-heading text-5xl text-primary-k tracking-tight mt-4 leading-tight">Plain-English aged care, explained.</h1>
@@ -166,7 +170,7 @@ export default function ArticlesIndex() {
             </section>
 
             {/* Search + filters */}
-            <section className="mx-auto max-w-5xl px-6 pb-6" data-testid="articles-controls">
+            <section className="mx-auto max-w-7xl px-6 pb-6" data-testid="articles-controls">
                 <div className="flex flex-col sm:flex-row gap-3 sm:items-center">
                     <div className="relative flex-1 max-w-md">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-k" />
@@ -211,22 +215,22 @@ export default function ArticlesIndex() {
                 <p className="mt-3 text-sm text-muted-k" data-testid="articles-result-count">{list.length} {list.length === 1 ? "article" : "articles"}</p>
             </section>
 
-            <section className="mx-auto max-w-5xl px-6 pb-20 grid sm:grid-cols-2 gap-5" data-testid="articles-grid">
+            <section className="mx-auto max-w-7xl px-6 pb-20 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5" data-testid="articles-grid">
                 {list.length === 0 && (
-                    <div className="sm:col-span-2 rounded-2xl border border-kindred bg-surface p-10 text-center" data-testid="articles-empty">
+                    <div className="col-span-full rounded-2xl border border-kindred bg-surface p-10 text-center" data-testid="articles-empty">
                         <p className="text-muted-k">No articles match "{query}".</p>
                         <button type="button" onClick={() => { setQuery(""); setCategory("All"); }} className="mt-3 text-sm text-primary-k underline">Clear filters</button>
                     </div>
                 )}
-                {list.map((a) => (
+                {list.map((a) => {
+                    const hero = heroForArticle(a, deriveCategory(a));
+                    return (
                     <Link key={a.slug} to={`/resources/articles/${a.slug}`} className="block bg-surface border border-kindred rounded-2xl p-6 hover:border-[#2BC4D6] transition-colors" data-testid={`articles-card-${a.slug}`}>
-                        {ARTICLE_HERO[a.slug]?.src && (
-                            <div className="mb-4 -mx-6 -mt-6 overflow-hidden rounded-t-2xl aspect-[16/9] bg-surface-2" data-testid="articles-card-image">
-                                <img src={ARTICLE_HERO[a.slug].src} alt="" loading="lazy" className={`h-full w-full ${ARTICLE_HERO[a.slug].contain ? "object-contain p-2" : "object-cover"}`} />
-                            </div>
-                        )}
+                        <div className="mb-4 -mx-6 -mt-6 overflow-hidden rounded-t-2xl aspect-[16/9] bg-surface-2" data-testid="articles-card-image">
+                            <img src={hero.src} alt="" loading="lazy" className={`h-full w-full ${hero.contain ? "object-contain p-2" : "object-cover"}`} />
+                        </div>
                         <span className="inline-flex items-center rounded-full bg-surface-2 px-2.5 py-0.5 text-xs text-muted-k" data-testid="articles-card-category">{deriveCategory(a)}</span>
-                        <h2 className="font-heading text-xl text-primary-k mt-3">{a.title}</h2>
+                        <h2 className="font-heading text-xl text-primary-k mt-3">{titleCaseHeading(a.title)}</h2>
                         <p className="mt-2 text-sm text-muted-k leading-relaxed">{a.excerpt}</p>
                         {_artDate(a) && <p className="mt-3 text-xs text-muted-k" data-testid="articles-card-date">{fmtDate(_artDate(a))}</p>}
                         {a.is_draft_needs_review && (
@@ -234,7 +238,8 @@ export default function ArticlesIndex() {
                         )}
                         <span className="mt-3 inline-flex items-center gap-1 text-sm text-primary-k">Read <ArrowRight className="h-3.5 w-3.5" /></span>
                     </Link>
-                ))}
+                    );
+                })}
             </section>
             <Footer />
         </div>
@@ -245,6 +250,14 @@ export default function ArticlesIndex() {
 // to the canonical fresh article (SEO + no broken external links).
 const SLUG_REDIRECTS = {
     "support-at-home-vs-hcp": "support-at-home-vs-home-care-packages-what-changed",
+    // Editorial merges (Nov 2026 plan): thin/duplicate pages fold into the canonical article.
+    "the-three-streams": "three-streams-clinical-independence-everyday-living",
+    "lifetime-cap-explained": "lifetime-contribution-cap-most-families-do-not-worry",
+    "switching-providers": "how-to-switch-support-at-home-provider",
+    "switching-support-at-home-provider-practical-playbook": "how-to-switch-support-at-home-provider",
+    "reassessment-when-and-how": "when-to-request-support-at-home-reassessment",
+    "anomaly-watch-what-to-flag": "support-at-home-statement-flags-what-to-question",
+    "complaint-acqsc": "how-to-complain-about-aged-care-commission",
 };
 
 export function ArticleDetail() {
@@ -260,8 +273,9 @@ export function ArticleDetail() {
         setArticle(undefined);
         // Try the structured SEO article registries first (no API call needed,
         // we control the layout end-to-end for these).
+        const override = PDF_ARTICLE_OVERRIDES[slug];
         const seo = STRUCTURED_SEO_ARTICLES.find((a) => a.slug === slug);
-        if (seo) { setArticle({ ...seo, structured: true }); return; }
+        if (override || seo) { setArticle({ ...(seo || {}), ...(override || {}), structured: true }); return; }
         axios.get(`${API}/public/cms/articles/${slug}`)
             .then((r) => setArticle(r.data))
             .catch(() => {
@@ -347,7 +361,7 @@ export function ArticleDetail() {
             <article className="mx-auto max-w-3xl px-6 pt-12 pb-12" data-testid={`article-${slug}`}>
                 <Link to="/resources/articles" className="text-sm text-muted-k hover:text-primary-k inline-flex items-center gap-1"><ArrowLeft className="h-3.5 w-3.5" /> All Articles</Link>
                 <span className="overline mt-6 block">Article</span>
-                <h1 className="font-heading text-4xl sm:text-5xl text-primary-k tracking-tight mt-4 leading-tight">{article.title}</h1>
+                <h1 className="font-heading text-4xl sm:text-5xl text-primary-k tracking-tight mt-4 leading-tight">{titleCaseHeading(article.title)}</h1>
                 <p className="mt-4 text-lg text-muted-k leading-relaxed">{article.excerpt}</p>
 
                 {article.is_draft_needs_review && (
@@ -409,7 +423,11 @@ function StructuredArticle({ article, slug }) {
     );
     const relatedArticles = useMemo(
         () => (article.related || [])
-            .map((s) => STRUCTURED_SEO_ARTICLES.find((a) => a.slug === s) || STATIC_ARTICLES.find((a) => a.slug === s))
+            .map((s) => {
+                const base = STRUCTURED_SEO_ARTICLES.find((a) => a.slug === s) || STATIC_ARTICLES.find((a) => a.slug === s);
+                if (base) return { ...base, ...(PDF_ARTICLE_OVERRIDES[s] || {}) };
+                return PDF_ARTICLE_OVERRIDES[s] || null;
+            })
             .filter(Boolean),
         [article.related],
     );
@@ -484,7 +502,7 @@ function StructuredArticle({ article, slug }) {
             <article className="min-w-0 mx-auto w-full max-w-3xl lg:max-w-none lg:mx-0" data-testid={`article-${slug}`}>
                 <Link to="/resources/articles" className="text-sm text-muted-k hover:text-primary-k inline-flex items-center gap-1"><ArrowLeft className="h-3.5 w-3.5" /> All Articles</Link>
                 <span className="overline mt-6 block">Article</span>
-                <h1 className="font-heading text-4xl sm:text-5xl text-primary-k tracking-tight mt-4 leading-tight">{article.title}</h1>
+                <h1 className="font-heading text-4xl sm:text-5xl text-primary-k tracking-tight mt-4 leading-tight">{titleCaseHeading(article.title)}</h1>
                 <p className="mt-4 text-lg text-muted-k leading-relaxed">{article.excerpt}</p>
 
                 <div className="mt-6 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted-k" data-testid="article-meta">
@@ -547,6 +565,8 @@ function StructuredArticle({ article, slug }) {
                             <ProseBlock>{s.body_md}</ProseBlock>
                             {vis?.image && <SectionFigure src={vis.image.src} alt={vis.image.alt} caption={vis.image.caption} />}
                             {vis?.chart && <BarCompare title={vis.chart.title} note={vis.chart.note} items={vis.chart.items} />}
+                            {vis?.pullquote && <PullQuote value={vis.pullquote.value} label={vis.pullquote.label} />}
+                            {vis?.stats && <FigureStats title={vis.stats.title} items={vis.stats.items} />}
                         </section>
                     );
                 })}
@@ -556,8 +576,20 @@ function StructuredArticle({ article, slug }) {
                     <StepFlow title={titleCaseHeading(article.howto.name || "Step by Step")} steps={article.howto.steps} />
                 )}
 
+                {/* Your Next Step CTA (offer-correct) */}
+                {article.next_step && (
+                    <NextStep
+                        invite={article.next_step.invite}
+                        primary={typeof article.next_step.primary === "string" ? WAYLY_OFFER[article.next_step.primary] : article.next_step.primary}
+                        secondary={article.next_step.trial ? WAYLY_OFFER.trial : (article.next_step.secondary || null)}
+                    />
+                )}
+
                 {/* FAQ accordion */}
                 {article.faqs?.length > 0 && <FAQAccordion faqs={article.faqs} />}
+
+                {/* Sources */}
+                {article.sources?.length > 0 && <SourcesList items={article.sources} />}
 
                 {/* Related articles */}
                 {relatedArticles.length > 0 && (
@@ -566,7 +598,7 @@ function StructuredArticle({ article, slug }) {
                         <div className="mt-4 grid sm:grid-cols-2 gap-4">
                             {relatedArticles.map((r) => (
                                 <Link key={r.slug} to={`/resources/articles/${r.slug}`} className="block bg-surface border border-kindred rounded-2xl p-5 transition-colors" data-testid={`related-${r.slug}`}>
-                                    <h3 className="font-heading text-base text-primary-k">{r.title}</h3>
+                                    <h3 className="font-heading text-base text-primary-k">{titleCaseHeading(r.title)}</h3>
                                     <p className="mt-2 text-sm text-muted-k leading-relaxed">{r.excerpt}</p>
                                     <span className="mt-2 inline-flex items-center gap-1 text-sm text-primary-k">Read <ArrowRight className="h-3.5 w-3.5" /></span>
                                 </Link>

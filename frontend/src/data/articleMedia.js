@@ -96,29 +96,36 @@ export const ARTICLE_SECTION_VISUALS = {
         },
     },
     "how-much-will-i-pay-for-support-at-home": {
-        "worked-examples-what-each-cohort-actually-pays": {
+        "work-from-your-fee-advice": {
+            image: { src: PHOTO.B5, alt: "A senior reading their fee advice letter at the kitchen table" },
             chart: {
-                title: "Fortnightly contribution on the same care plan (before 1 October 2026)",
+                title: "What a full pensioner contributes, by category (standard arrangements)",
                 items: [
-                    { label: "Full pensioner", value: 84.28, display: "$84.28" },
-                    { label: "Part pensioner (mid-band)", value: 185.5, display: "$185.50" },
-                    { label: "Self-funded retiree", value: 398.75, display: "$398.75" },
-                ],
-                note: "Illustrative from the worked case above. From 1 October 2026 personal care drops to 0%, lowering every figure.",
-            },
-        },
-    },
-    "three-streams-clinical-independence-everyday-living": {
-        "why-three-streams-not-one": {
-            chart: {
-                title: "What a full pensioner contributes, by stream",
-                items: [
-                    { label: "Clinical care", value: 0.4, display: "0%" },
+                    { label: "Clinical supports", value: 0.4, display: "0%" },
                     { label: "Independence", value: 5, display: "5%" },
                     { label: "Everyday living", value: 17.5, display: "17.5%" },
                 ],
-                note: "Full-pensioner rates. Self-funded retirees contribute up to 50% (independence) and 80% (everyday living).",
+                note: "Full-pensioner rates. Other rates depend on your means and fee arrangements; check your fee advice.",
             },
+        },
+        "estimate-a-familiar-visit": {
+            pullquote: { value: "$14", label: "a full pensioner's 17.5% share of an $80 everyday-living visit. Four equivalent visits would total $56." },
+        },
+    },
+    "three-streams-clinical-independence-everyday-living": {
+        "clinical-supports-independence-and-everyday-living": {
+            chart: {
+                title: "What a full pensioner contributes, by category",
+                items: [
+                    { label: "Clinical supports", value: 0.4, display: "0%" },
+                    { label: "Independence (e.g. transport)", value: 5, display: "5%" },
+                    { label: "Everyday living (e.g. cleaning)", value: 17.5, display: "17.5%" },
+                ],
+                note: "Full-pensioner rates. Approved personal care is 0% from 1 October 2026. Check your fee advice for your rates.",
+            },
+        },
+        "a-quick-way-to-read-a-mixed-statement": {
+            image: { src: PHOTO.B4, alt: "An older couple reading a mixed statement line by line" },
         },
     },
     "support-at-home-costs-and-contributions": {
@@ -134,4 +141,56 @@ export const ARTICLE_SECTION_VISUALS = {
             },
         },
     },
+    "lifetime-contribution-cap-most-families-do-not-worry": {
+        "which-cap-applies": {
+            stats: {
+                items: [
+                    { value: "$140,652.80", label: "Standard arrangements", sub: "Began on 1 November 2025. Indexed. As at 20 September 2026." },
+                    { value: "$88,934.57", label: "No worse off arrangements", sub: "For eligible people. Indexed. As at 20 September 2026." },
+                ],
+            },
+        },
+        "how-will-i-know": {
+            image: { src: PHOTO.B3, alt: "An older man reading a letter from Services Australia at home" },
+        },
+    },
+    "what-happened-to-my-home-care-package": {
+        "where-did-my-package-balance-go": {
+            image: { src: PHOTO.C1, alt: "A statement and calculator on a table while checking a package balance" },
+        },
+    },
+    "support-at-home-explained": {
+        "before-you-sign-an-agreement": {
+            image: { src: PHOTO.G1, alt: "An older person going through a draft service agreement with a trusted helper" },
+        },
+    },
 };
+
+// Category-based fallback hero for CMS / legacy articles that are not in
+// ARTICLE_HERO, so every card and page still shows a relevant image.
+export const CATEGORY_HERO_FALLBACK = {
+    "Fees & contributions": { src: PHOTO.C3 },
+    "Billing & statements": { src: PHOTO.B5 },
+    "Complaints": { src: PHOTO.G5 },
+    "Equipment & AT-HM": { src: PHOTO.D3 },
+    "Assessment": { src: PHOTO.C2 },
+    "Levels & budgets": { src: PHOTO.C6 },
+    "Changing provider": { src: PHOTO.H4 },
+    "CHSP": { src: ILLUS.chspExtension, contain: true },
+    "Home Care Package transition": { src: ILLUS.whatChanged, contain: true },
+    "Support at Home basics": { src: PHOTO.A4 },
+};
+
+export const DEFAULT_HERO_FALLBACK = { src: PHOTO.A4 };
+
+// Resolve a hero image for any article (structured, CMS, or legacy static).
+export function heroForArticle(article, category) {
+    return (
+        ARTICLE_HERO[article.slug] ||
+        (article.hero_image && { src: article.hero_image }) ||
+        (article.cover_image && { src: article.cover_image }) ||
+        (article.image && { src: article.image }) ||
+        CATEGORY_HERO_FALLBACK[category] ||
+        DEFAULT_HERO_FALLBACK
+    );
+}

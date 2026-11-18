@@ -168,7 +168,6 @@ import TrialEndingModal from "@/components/TrialEndingModal";
 import AddToHomeScreenPrompt from "@/components/AddToHomeScreenPrompt";
 import AccessibilityWidget, { bootAccessibilityPrefs } from "@/components/AccessibilityWidget";
 import ScrollHideWidgets from "@/components/ScrollHideWidgets";
-import AppDownloadPrompt from "@/components/AppDownloadPrompt";
 import TrialPrompt from "@/components/TrialPrompt";
 import InAppNudge from "@/components/InAppNudge";
 import ImpersonationBanner from "@/components/ImpersonationBanner";
@@ -416,7 +415,6 @@ function App() {
                 <ConsumerWidgets />
                 <OfflineIndicator />
                 <PaywallModal />
-                <AppDownloadPrompt />
                 <TrialPrompt />
                 <InAppNudge />
                 <ErrorBoundary>

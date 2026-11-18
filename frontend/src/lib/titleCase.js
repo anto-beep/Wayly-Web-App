@@ -122,7 +122,7 @@ export function isTitleCase(input) {
 // after a colon/dash capitalises; common small words stay lowercase mid-title.
 // ---------------------------------------------------------------------------
 const _HEADING_SMALL = new Set([
-    "a", "an", "and", "as", "at", "but", "by", "for", "from", "if", "in",
+    "a", "an", "and", "as", "at", "but", "by", "for", "in",
     "into", "nor", "of", "on", "onto", "or", "over", "per", "the", "to",
     "vs", "via", "with", "within", "without", "up", "yet", "so", "than",
 ]);
@@ -132,7 +132,7 @@ function _capHeadingToken(tok, forceCap) {
     if (!m) return tok;
     const [, lead, core, trail] = m;
     if (!core) return tok;
-    if (/[A-Z]/.test(core) || /\d/.test(core)) return lead + core + trail;
+    if (/\d/.test(core) || (core.length >= 2 && core === core.toUpperCase())) return lead + core + trail;
     if (core.includes("-")) {
         const cased = core
             .split("-")

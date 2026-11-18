@@ -1,4 +1,5 @@
 import React from "react";
+import { Link } from "react-router-dom";
 
 // Shared article visual building blocks. Kept intentionally small and
 // token-driven (primary-k / muted-k / surface / kindred / gold + the teal
@@ -104,6 +105,59 @@ export function FigureStats({ title, items }) {
                     </div>
                 ))}
             </div>
+        </section>
+    );
+}
+
+// Bold branded stat callout, pulled out of the body for scannability.
+export function PullQuote({ value, label }) {
+    if (!value) return null;
+    return (
+        <figure className="my-8 rounded-2xl border-l-4 border-[#2BC4D6] bg-surface-2 p-6" data-testid="article-pullquote">
+            <div className="font-heading text-4xl sm:text-5xl text-[#0E4D52] tabular-nums leading-none">{value}</div>
+            {label && <figcaption className="mt-3 text-sm text-primary-k leading-relaxed">{label}</figcaption>}
+        </figure>
+    );
+}
+
+// Dark "Your Next Step" call-to-action with the correct offer disclosures.
+export function NextStep({ invite, primary, secondary }) {
+    if (!primary) return null;
+    return (
+        <section className="mt-12 rounded-3xl bg-[#0E4D52] text-white p-6 sm:p-8" data-testid="article-next-step">
+            <h2 className="font-heading text-xl text-white tracking-tight m-0">Your Next Step</h2>
+            {invite && <p className="mt-2 text-white/90 leading-relaxed">{invite}</p>}
+            <div className="mt-5 flex flex-col sm:flex-row flex-wrap gap-3">
+                <Link to={primary.href} className="inline-flex items-center justify-center rounded-full bg-white text-[#0E4D52] text-sm font-semibold px-5 py-2.5 hover:bg-white/90 transition-colors" data-testid="next-step-primary">
+                    {primary.label}
+                </Link>
+                {secondary && (
+                    <Link to={secondary.href} className="inline-flex items-center justify-center rounded-full border border-white/60 text-white text-sm font-semibold px-5 py-2.5 hover:bg-white/10 transition-colors" data-testid="next-step-secondary">
+                        {secondary.label}
+                    </Link>
+                )}
+            </div>
+            {primary.disclosure && <p className="mt-3 text-xs text-white/70 leading-relaxed">{primary.disclosure}</p>}
+            {secondary?.disclosure && <p className="mt-1 text-xs text-white/70 leading-relaxed">{secondary.disclosure}</p>}
+        </section>
+    );
+}
+
+// Sources list rendered at the foot of an article.
+export function SourcesList({ items }) {
+    if (!items?.length) return null;
+    return (
+        <section className="mt-10" data-testid="article-sources">
+            <h2 className="font-heading text-xl text-primary-k tracking-tight">Sources</h2>
+            <ul className="mt-3 space-y-1.5 text-sm">
+                {items.map((s, i) => (
+                    <li key={i} data-testid={`article-source-${i}`}>
+                        {s.href
+                            ? <a href={s.href} target="_blank" rel="noopener noreferrer" className="text-primary-k underline">{s.label}</a>
+                            : <span className="text-muted-k">{s.label}</span>}
+                    </li>
+                ))}
+            </ul>
         </section>
     );
 }
