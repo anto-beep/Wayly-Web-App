@@ -112,4 +112,53 @@ export function isTitleCase(input) {
     return toTitleCase(input) === input;
 }
 
+// ---------------------------------------------------------------------------
+// Heading-safe Title Case for LONG article headings.
+//
+// Unlike toTitleCase() (tuned for short UI labels), this PRESERVES verbatim any
+// word that already contains an uppercase letter or a digit, so embedded
+// references survive untouched: SA456, SA462, AT-HM, C1,C12, GST, 10%, 2026,
+// 01/10/2026, $140,652.80. First & last word always capitalise; the first word
+// after a colon/dash capitalises; common small words stay lowercase mid-title.
+// ---------------------------------------------------------------------------
+const _HEADING_SMALL = new Set([
+    "a", "an", "and", "as", "at", "but", "by", "for", "from", "if", "in",
+    "into", "nor", "of", "on", "onto", "or", "over", "per", "the", "to",
+    "vs", "via", "with", "within", "without", "up", "yet", "so", "than",
+]);
+
+function _capHeadingToken(tok, forceCap) {
+    const m = tok.match(/^([([{"'“‘]*)(.*?)([)\]}"'”’.,:;!?]*)$/);
+    if (!m) return tok;
+    const [, lead, core, trail] = m;
+    if (!core) return tok;
+    if (/[A-Z]/.test(core) || /\d/.test(core)) return lead + core + trail;
+    if (core.includes("-")) {
+        const cased = core
+            .split("-")
+            .map((seg) => (seg ? seg.charAt(0).toUpperCase() + seg.slice(1).toLowerCase() : seg))
+            .join("-");
+        return lead + cased + trail;
+    }
+    const lower = core.toLowerCase();
+    const cased = (!forceCap && _HEADING_SMALL.has(lower))
+        ? lower
+        : lower.charAt(0).toUpperCase() + lower.slice(1);
+    return lead + cased + trail;
+}
+
+export function titleCaseHeading(input) {
+    if (!input || typeof input !== "string") return input;
+    const tokens = input.trim().split(/\s+/);
+    const last = tokens.length - 1;
+    let afterBreak = false;
+    return tokens
+        .map((tok, i) => {
+            const out = _capHeadingToken(tok, i === 0 || i === last || afterBreak);
+            afterBreak = /[:—–]$/.test(tok);
+            return out;
+        })
+        .join(" ");
+}
+
 export default toTitleCase;

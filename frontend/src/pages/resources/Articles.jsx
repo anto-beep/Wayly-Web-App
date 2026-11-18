@@ -14,6 +14,9 @@ import { ArrowLeft, ArrowRight, ShieldAlert, BookOpen, ExternalLink, ChevronDown
 import SeoHead, { articleLd, breadcrumbLd, canonicalFor } from "@/seo/SeoHead";
 import { SEO } from "@/seo/pageConfig";
 import { loadProgramReference, getProgramReferenceSync } from "@/lib/programReference";
+import { ArticleHero, SectionFigure, StepFlow, BarCompare } from "@/components/articles/ArticleVisuals";
+import { ARTICLE_HERO, ARTICLE_SECTION_VISUALS } from "@/data/articleMedia";
+import { titleCaseHeading } from "@/lib/titleCase";
 
 // Resolve live Support at Home figures from INDEX-1 (program_reference) so
 // article prose never hardcodes a dollar figure. Tokens:
@@ -217,6 +220,11 @@ export default function ArticlesIndex() {
                 )}
                 {list.map((a) => (
                     <Link key={a.slug} to={`/resources/articles/${a.slug}`} className="block bg-surface border border-kindred rounded-2xl p-6 hover:border-[#2BC4D6] transition-colors" data-testid={`articles-card-${a.slug}`}>
+                        {ARTICLE_HERO[a.slug]?.src && (
+                            <div className="mb-4 -mx-6 -mt-6 overflow-hidden rounded-t-2xl aspect-[16/9] bg-surface-2" data-testid="articles-card-image">
+                                <img src={ARTICLE_HERO[a.slug].src} alt="" loading="lazy" className={`h-full w-full ${ARTICLE_HERO[a.slug].contain ? "object-contain p-2" : "object-cover"}`} />
+                            </div>
+                        )}
                         <span className="inline-flex items-center rounded-full bg-surface-2 px-2.5 py-0.5 text-xs text-muted-k" data-testid="articles-card-category">{deriveCategory(a)}</span>
                         <h2 className="font-heading text-xl text-primary-k mt-3">{a.title}</h2>
                         <p className="mt-2 text-sm text-muted-k leading-relaxed">{a.excerpt}</p>
@@ -396,7 +404,7 @@ function StructuredArticle({ article, slug }) {
     const url = canonicalFor(publicPath);
     const readingTime = useMemo(() => readingTimeMinutes(article), [article]);
     const tocItems = useMemo(
-        () => (article.sections || []).map((s) => ({ id: slugify(s.heading), text: s.heading })),
+        () => (article.sections || []).map((s) => ({ id: slugify(s.heading), text: titleCaseHeading(s.heading) })),
         [article.sections],
     );
     const relatedArticles = useMemo(
@@ -472,7 +480,8 @@ function StructuredArticle({ article, slug }) {
                 jsonLd={[jsonLd]}
             />
             <MarketingHeader />
-            <article className="mx-auto max-w-3xl px-6 pt-12 pb-12" data-testid={`article-${slug}`}>
+            <div className="mx-auto max-w-6xl px-6 pt-12 pb-12 lg:grid lg:grid-cols-[minmax(0,1fr)_280px] lg:gap-10 xl:gap-14">
+            <article className="min-w-0 mx-auto w-full max-w-3xl lg:max-w-none lg:mx-0" data-testid={`article-${slug}`}>
                 <Link to="/resources/articles" className="text-sm text-muted-k hover:text-primary-k inline-flex items-center gap-1"><ArrowLeft className="h-3.5 w-3.5" /> All Articles</Link>
                 <span className="overline mt-6 block">Article</span>
                 <h1 className="font-heading text-4xl sm:text-5xl text-primary-k tracking-tight mt-4 leading-tight">{article.title}</h1>
@@ -494,12 +503,16 @@ function StructuredArticle({ article, slug }) {
 
                 <ShareButtons title={article.title} onCopyLink={handleCopyLink} />
 
+                {ARTICLE_HERO[slug]?.src && (
+                    <ArticleHero src={ARTICLE_HERO[slug].src} alt={ARTICLE_HERO[slug].alt} contain={ARTICLE_HERO[slug].contain} />
+                )}
+
                 {/* Key takeaways callout */}
                 {article.key_takeaways?.length > 0 && (
                     <aside className="mt-10 rounded-2xl border-l-4 border-gold bg-surface-2 p-5" data-testid="article-key-takeaways" aria-labelledby="kt-heading">
                         <div className="flex items-center gap-2">
                             <Sparkles className="h-4 w-4 text-gold" />
-                            <h2 id="kt-heading" className="font-heading text-lg text-primary-k m-0">Key takeaways</h2>
+                            <h2 id="kt-heading" className="font-heading text-lg text-primary-k m-0">Key Takeaways</h2>
                         </div>
                         <ul className="mt-3 list-disc pl-6 space-y-2 text-sm text-primary-k leading-relaxed">
                             {article.key_takeaways.map((k, i) => <li key={i}>{k}</li>)}
@@ -514,8 +527,8 @@ function StructuredArticle({ article, slug }) {
 
                 {/* Table of contents */}
                 {tocItems.length > 2 && (
-                    <nav className="mt-10 rounded-2xl border border-kindred bg-surface p-5" data-testid="article-toc" aria-labelledby="toc-heading">
-                        <h2 id="toc-heading" className="font-heading text-base text-primary-k m-0">In this article</h2>
+                    <nav className="mt-10 rounded-2xl border border-kindred bg-surface p-5 lg:hidden" data-testid="article-toc" aria-labelledby="toc-heading">
+                        <h2 id="toc-heading" className="font-heading text-base text-primary-k m-0">In This Article</h2>
                         <ol className="mt-3 space-y-1.5 text-sm">
                             {tocItems.map((it) => (
                                 <li key={it.id}><a href={`#${it.id}`} className="text-primary-k hover:underline">{it.text}</a></li>
@@ -525,12 +538,23 @@ function StructuredArticle({ article, slug }) {
                 )}
 
                 {/* Sections */}
-                {(article.sections || []).map((s) => (
-                    <section key={s.heading} className="mt-10" data-testid={`section-${slugify(s.heading)}`}>
-                        <h2 id={slugify(s.heading)} className="font-heading text-2xl text-primary-k tracking-tight">{s.heading}</h2>
-                        <ProseBlock>{s.body_md}</ProseBlock>
-                    </section>
-                ))}
+                {(article.sections || []).map((s) => {
+                    const sid = slugify(s.heading);
+                    const vis = ARTICLE_SECTION_VISUALS[slug]?.[sid];
+                    return (
+                        <section key={s.heading} className="mt-10" data-testid={`section-${sid}`}>
+                            <h2 id={sid} className="font-heading text-2xl text-primary-k tracking-tight">{titleCaseHeading(s.heading)}</h2>
+                            <ProseBlock>{s.body_md}</ProseBlock>
+                            {vis?.image && <SectionFigure src={vis.image.src} alt={vis.image.alt} caption={vis.image.caption} />}
+                            {vis?.chart && <BarCompare title={vis.chart.title} note={vis.chart.note} items={vis.chart.items} />}
+                        </section>
+                    );
+                })}
+
+                {/* Branded step flow (articles with a how-to) */}
+                {article.howto?.steps?.length > 0 && (
+                    <StepFlow title={titleCaseHeading(article.howto.name || "Step by Step")} steps={article.howto.steps} />
+                )}
 
                 {/* FAQ accordion */}
                 {article.faqs?.length > 0 && <FAQAccordion faqs={article.faqs} />}
@@ -538,7 +562,7 @@ function StructuredArticle({ article, slug }) {
                 {/* Related articles */}
                 {relatedArticles.length > 0 && (
                     <section className="mt-12 pt-8 border-t border-kindred" data-testid="article-related">
-                        <h2 className="font-heading text-xl text-primary-k">Related reading</h2>
+                        <h2 className="font-heading text-xl text-primary-k">Related Reading</h2>
                         <div className="mt-4 grid sm:grid-cols-2 gap-4">
                             {relatedArticles.map((r) => (
                                 <Link key={r.slug} to={`/resources/articles/${r.slug}`} className="block bg-surface border border-kindred rounded-2xl p-5 transition-colors" data-testid={`related-${r.slug}`}>
@@ -577,6 +601,21 @@ function StructuredArticle({ article, slug }) {
                     </footer>
                 )}
             </article>
+            <aside className="hidden lg:block" data-testid="article-sidebar">
+                <div className="sticky top-24 space-y-6">
+                    {tocItems.length > 2 && (
+                        <nav className="rounded-2xl border border-kindred bg-surface p-5" data-testid="article-toc-sidebar" aria-labelledby="toc-sidebar-heading">
+                            <h2 id="toc-sidebar-heading" className="font-heading text-xs uppercase tracking-wide text-muted-k m-0">In This Article</h2>
+                            <ol className="mt-3 space-y-1.5 text-sm">
+                                {tocItems.map((it) => (
+                                    <li key={it.id}><a href={`#${it.id}`} className="text-primary-k hover:underline">{it.text}</a></li>
+                                ))}
+                            </ol>
+                        </nav>
+                    )}
+                </div>
+            </aside>
+            </div>
             <Footer />
         </div>
     );
@@ -608,7 +647,7 @@ function FAQAccordion({ faqs }) {
     const [openIdx, setOpenIdx] = useState(null);
     return (
         <section className="mt-12" data-testid="article-faq" aria-labelledby="faq-heading">
-            <h2 id="faq-heading" className="font-heading text-2xl text-primary-k tracking-tight">Frequently asked questions</h2>
+            <h2 id="faq-heading" className="font-heading text-2xl text-primary-k tracking-tight">Frequently Asked Questions</h2>
             <dl className="mt-5 divide-y divide-kindred border border-kindred rounded-2xl bg-surface overflow-hidden">
                 {faqs.map((f, i) => {
                     const open = openIdx === i;

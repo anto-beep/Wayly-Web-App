@@ -62,26 +62,68 @@ export default function AppDownloadPrompt() {
 
     return (
         <div data-testid="app-download-prompt" className="relative z-[40] bg-[#0E4D52] text-white">
-            <div className="mx-auto max-w-7xl px-4 sm:px-6 py-2.5 flex items-center justify-center gap-3 flex-wrap pr-10 sm:pr-12">
+            <div className="mx-auto max-w-7xl px-4 sm:px-6 py-2.5 flex items-center justify-center gap-x-4 gap-y-2 flex-wrap pr-10 sm:pr-12">
                 <span className="text-sm font-medium text-center">{message}</span>
-                {showCta && (
-                    <a
-                        href={href}
-                        rel="noopener noreferrer"
-                        data-testid="app-download-cta"
-                        onClick={dismiss}
-                        className="inline-flex items-center gap-1.5 rounded-full bg-white text-[#0E4D52] text-xs font-semibold px-3.5 py-1.5 hover:bg-white/90 transition-colors"
-                    >
-                        {ctaLabel}
-                    </a>
-                )}
-                {device === "both" && PLAY_STORE_URL && (
-                    <span className="hidden md:inline-flex items-center gap-2 pl-1" data-testid="app-download-qr">
-                        <span className="rounded-md bg-white p-1 leading-none">
-                            <QRCodeSVG value={PLAY_STORE_URL} size={48} level="M" fgColor="#0E2A47" bgColor="#ffffff" />
+                {device === "both" ? (
+                    <>
+                        <span className="inline-flex items-center gap-2 flex-wrap justify-center">
+                            {PLAY_STORE_URL && (
+                                <a
+                                    href={PLAY_STORE_URL}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    data-testid="app-download-cta-android"
+                                    onClick={dismiss}
+                                    className="inline-flex items-center gap-1.5 rounded-full bg-white text-[#0E4D52] text-xs font-semibold px-3.5 py-1.5 hover:bg-white/90 transition-colors"
+                                >
+                                    Get it on Google Play
+                                </a>
+                            )}
+                            {APP_STORE_URL && (
+                                <a
+                                    href={APP_STORE_URL}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    data-testid="app-download-cta-ios"
+                                    onClick={dismiss}
+                                    className="inline-flex items-center gap-1.5 rounded-full bg-white text-[#0E4D52] text-xs font-semibold px-3.5 py-1.5 hover:bg-white/90 transition-colors"
+                                >
+                                    Download on the App Store
+                                </a>
+                            )}
                         </span>
-                        <span className="text-xs text-white/80">Scan to install</span>
-                    </span>
+                        <span className="hidden md:inline-flex items-center gap-3 pl-1" data-testid="app-download-qr">
+                            {PLAY_STORE_URL && (
+                                <span className="inline-flex flex-col items-center gap-0.5">
+                                    <span className="rounded-md bg-white p-1 leading-none">
+                                        <QRCodeSVG value={PLAY_STORE_URL} size={40} level="M" fgColor="#0E2A47" bgColor="#ffffff" />
+                                    </span>
+                                    <span className="text-[9px] uppercase tracking-wide text-white/80">Google Play</span>
+                                </span>
+                            )}
+                            {APP_STORE_URL && (
+                                <span className="inline-flex flex-col items-center gap-0.5" data-testid="app-download-qr-ios">
+                                    <span className="rounded-md bg-white p-1 leading-none">
+                                        <QRCodeSVG value={APP_STORE_URL} size={40} level="M" fgColor="#0E2A47" bgColor="#ffffff" />
+                                    </span>
+                                    <span className="text-[9px] uppercase tracking-wide text-white/80">App Store</span>
+                                </span>
+                            )}
+                        </span>
+                    </>
+                ) : (
+                    showCta && (
+                        <a
+                            href={href}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            data-testid="app-download-cta"
+                            onClick={dismiss}
+                            className="inline-flex items-center gap-1.5 rounded-full bg-white text-[#0E4D52] text-xs font-semibold px-3.5 py-1.5 hover:bg-white/90 transition-colors"
+                        >
+                            {ctaLabel}
+                        </a>
+                    )
                 )}
             </div>
             <button
