@@ -173,6 +173,29 @@ export const ARTICLE_SECTION_VISUALS = {
         "follow-the-balance": {
             pullquote: { value: "$940", label: "closing balance in the worked example: $1,200 opening, minus $300 of funded services, plus a $40 credit." },
         },
+        "read-the-line-descriptions": {
+            image: { src: "https://images.pexels.com/photos/7545330/pexels-photo-7545330.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940", alt: "An older woman in reading glasses going through her statement line by line at home", caption: "Read each line by its date, units and price rather than guessing at a percentage." },
+        },
+    },
+    "sah-invoice-checker-verify-support-at-home-invoice-five-minutes": {
+        "use-the-checker-as-a-second-reader": {
+            image: { src: "https://images.pexels.com/photos/7477690/pexels-photo-7477690.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940", alt: "An older couple checking their bills and documents together at home", caption: "Use the Checker alongside the original invoice and your delivery record, not instead of them." },
+        },
+    },
+    "wayly-contribution-estimator-support-at-home-fees": {
+        "compare-the-same-service-twice": {
+            pullquote: { value: "$8", label: "the difference one extra $80 cleaning visit makes at a 10% rate: $16 for two visits, $24 for three." },
+        },
+    },
+    "wayly-budget-calculator-support-at-home-quarterly-budget": {
+        "a-quarter-end-example": {
+            pullquote: { value: "$1,200", label: "the carryover cap in the example: 10% of a $12,000 ongoing quarterly budget, which is higher than the $1,000 floor." },
+        },
+    },
+    "wayly-provider-price-checker-support-at-home-prices": {
+        "a-worked-comparison": {
+            pullquote: { value: "$160 vs $95", label: "one hour of cleaning when Provider A has a two-hour minimum at $80/hr and Provider B charges $95 for a one-hour minimum." },
+        },
     },
 };
 

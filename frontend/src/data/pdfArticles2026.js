@@ -499,6 +499,179 @@ If one line still looks wrong, request an itemised explanation. Ask what happens
         ],
         related: ["sah-invoice-checker-verify-support-at-home-invoice-five-minutes", "support-at-home-statement-vs-invoice-explained"],
     },
+
+    // ---- Batch 3: the Wayly tool guides (verified editorial copy) ----
+    {
+        slug: "wayly-contribution-estimator-support-at-home-fees",
+        title: "Why Your Support at Home Invoice Can Change After a Home Care Package",
+        excerpt: "A bigger invoice can come from more visits, a different price, a different mix of services or a change to your assessed contribution. Here is how to narrow down the reason using your last two invoices, your service agreement and your fee letter.",
+        published_at: "2026-11-22",
+        updated_at: "2026-11-25",
+        author: { name: "Wayly Editorial", role: "Wayly" },
+        reviewer: { name: "Wayly Editorial", role: "" },
+        key_takeaways: [],
+        faqs: [],
+        howto: null,
+        meta: {
+            title: "Why your Support at Home invoice can change | Wayly",
+            description: "A bigger invoice can come from more visits, a different price, a different service mix or a changed contribution. How to narrow the reason with your invoices, agreement and fee letter.",
+        },
+        intro_md: `A higher invoice can come from more visits, a different price, a different mix of services or a change to your assessed contribution. You can narrow down the reason with your last two invoices, your service agreement and your fee letter.`,
+        sections: [
+            {
+                heading: "Compare the Same Service Twice",
+                body_md: `Suppose cleaning cost $80 per visit in both months and your illustrative rate stayed at 10%. Two visits would cost you $16 and three would cost $24. The extra $8 comes from another visit. If the number of visits stayed the same, check the agreed price and the rate used on the invoice instead.`,
+            },
+            {
+                heading: "Check Whether Transition Protections Apply",
+                body_md: `People already receiving a package, or approved and waiting for one by 12 September 2024, have special contribution arrangements. A later transfer into Support at Home alone does not establish which rules apply. Ask Services Australia to confirm your arrangement and ask your provider to explain any price change in writing.`,
+            },
+            {
+                heading: "Ask for the Calculation, Not Just a New Total",
+                body_md: `> "On my last invoice I paid $18 for domestic assistance and this month it is $30. Please show me the visits, the unit price and the contribution rate used in each month."
+
+If the unit price changed, ask for the notice or agreement. If the percentage changed, compare the effective date with your latest fee letter.`,
+            },
+        ],
+        next_step: {
+            invite: "Try the Contribution Estimator to explore how changing one service affects an estimate. Use your fee letter for your actual rate.",
+            primary: "estimator",
+            trial: true,
+        },
+        sources: [
+            { label: "Former Home Care Package fee arrangements", href: "https://www.servicesaustralia.gov.au/aged-care" },
+            { label: "Lifetime caps and changes to contributions", href: "https://www.myagedcare.gov.au/support-at-home" },
+        ],
+        related: ["wayly-budget-calculator-support-at-home-quarterly-budget", "wayly-provider-price-checker-support-at-home-prices", "support-at-home-costs-and-contributions"],
+    },
+    {
+        slug: "wayly-budget-calculator-support-at-home-quarterly-budget",
+        title: "How to Plan a Quarterly Support at Home Budget",
+        excerpt: "Start with the quarter and the amount available for services, then test one change at a time. Here is how the two different 10% rules work and how to read a carryover at quarter end.",
+        published_at: "2026-11-22",
+        updated_at: "2026-11-25",
+        author: { name: "Wayly Editorial", role: "Wayly" },
+        reviewer: { name: "Wayly Editorial", role: "" },
+        key_takeaways: [],
+        faqs: [],
+        howto: null,
+        meta: {
+            title: "How to plan a quarterly Support at Home budget | Wayly",
+            description: "Start with the amount available for services, understand the two different 10% rules, and work a carryover example before rearranging the services you need.",
+        },
+        intro_md: `Begin with the quarter and the amount available for services. If your statement already shows a balance after the care management allocation, use that figure. Deducting the allocation again would make it look as though you have less money available.`,
+        sections: [
+            {
+                heading: "Two Different Uses of 10%",
+                body_md: `For ongoing services, 10% of the quarterly budget is allocated to pooled care management. There is a separate rule for carrying unspent ongoing funds into the next quarter. You can carry forward the amount left, up to the higher of $1,000 or 10% of the quarterly budget including supplements. Retained Home Care Package funds are accounted for separately.`,
+            },
+            {
+                heading: "Try Changing the Number of Visits",
+                body_md: `Imagine your provider confirms $1,800 is available for services for six weeks. Planned funded spending of $250 per week would use $1,500, leaving $300 before other activity or adjustments. Add a $75 funded visit every week and the projection rises by $450. Ask which planned visits could change before treating a projection as a commitment.`,
+            },
+            {
+                heading: "A Quarter-End Example",
+                body_md: `Suppose your ongoing quarterly budget including supplements is $12,000 and $1,350 is unspent. Ten per cent is $1,200, which is higher than $1,000. In this example, up to $1,200 of the remaining ongoing budget carries forward. If only $600 remained, the carryover would be $600. Review the numbers with your provider before rearranging services you need.`,
+            },
+        ],
+        next_step: {
+            invite: "Open Wayly's Budget Calculator and test one change to your schedule at a time.",
+            primary: "budget_calculator",
+            trial: true,
+        },
+        sources: [
+            { label: "Managing quarterly and retained balances", href: "https://www.myagedcare.gov.au/support-at-home" },
+            { label: "Pooled care management funding", href: "https://www.health.gov.au/our-work/support-at-home" },
+            { label: "Former Home Care Package fee arrangements", href: "https://www.servicesaustralia.gov.au/aged-care" },
+        ],
+        related: ["wayly-statement-decoder-support-at-home-statement-explained", "wayly-contribution-estimator-support-at-home-fees", "support-at-home-costs-and-contributions"],
+    },
+    {
+        slug: "wayly-provider-price-checker-support-at-home-prices",
+        title: "How to Compare Two Provider Prices for the Same Service",
+        excerpt: "Ask both providers for the price for the same day, visit length and suburb. A cheaper hourly rate can come with a longer minimum visit, so here is how to compare like for like.",
+        published_at: "2026-11-22",
+        updated_at: "2026-11-25",
+        author: { name: "Wayly Editorial", role: "Wayly" },
+        reviewer: { name: "Wayly Editorial", role: "" },
+        key_takeaways: [],
+        faqs: [],
+        howto: null,
+        meta: {
+            title: "How to compare two provider prices for the same service | Wayly",
+            description: "Ask both providers for the same day, visit length and suburb. A worked comparison, what a price check can and cannot tell you, and why price, availability and continuity differ.",
+        },
+        intro_md: `Start with a service you actually use. Ask both providers for the price for the same day, visit length and suburb. A cheaper hourly rate may come with a longer minimum visit, which changes the cost of the booking.`,
+        sections: [
+            {
+                heading: "A Worked Comparison",
+                body_md: `Imagine Provider A quotes $80 an hour with a two-hour minimum and Provider B quotes $95 for one hour with a one-hour minimum. If you need one hour, the bookings would cost $160 and $95 respectively. Those are illustrative service prices. Your assessed contribution and the amount charged to your budget are separate questions.`,
+            },
+            {
+                heading: "What a Price Check Can Tell You",
+                body_md: `Use a published comparison as a starting point. Ask where the reference price came from, what period it covers and whether travel or weekend work changes your quote. A lower price tells you little about whether a worker is available at the time you need. Request the final offer in writing.`,
+            },
+            {
+                heading: "What a Published Comparison Can Miss",
+                body_md: `A regional provider may travel farther between clients. One provider may offer a regular worker, while another may be able to cover weekends. Ask each provider how it would deliver the same visit you described. Price, availability and continuity each answer a different part of the choice.`,
+            },
+        ],
+        next_step: {
+            invite: "Try the Provider Price Checker with one comparable visit. Take the written quote into your provider conversation.",
+            primary: "price_checker",
+            trial: true,
+        },
+        sources: [
+            { label: "How providers set and publish prices", href: "https://www.myagedcare.gov.au/support-at-home" },
+            { label: "Government price-cap announcement", href: "https://www.health.gov.au/our-work/support-at-home" },
+        ],
+        related: ["wayly-statement-decoder-support-at-home-statement-explained", "wayly-contribution-estimator-support-at-home-fees", "what-happened-to-my-home-care-package"],
+    },
+    {
+        slug: "wayly-classification-self-check-support-at-home-levels",
+        title: "What to Do When Your Support at Home Classification Feels Too Low",
+        excerpt: "The clearest sign your plan needs attention is often something ordinary you can no longer manage. Here is how to record the gap, prepare with a self-check, and do it alongside a parent.",
+        published_at: "2026-11-22",
+        updated_at: "2026-11-25",
+        author: { name: "Wayly Editorial", role: "Wayly" },
+        reviewer: { name: "Wayly Editorial", role: "" },
+        key_takeaways: [],
+        faqs: [],
+        howto: null,
+        meta: {
+            title: "When your Support at Home classification feels too low | Wayly",
+            description: "Start with the gap between your week on paper and the week you lived. Make a short record, use a self-check to prepare, and keep the person's own priorities in any review request.",
+        },
+        intro_md: `The clearest sign that your plan needs attention may be something ordinary you can no longer manage. Start with the gap between your week on paper and the week you actually experienced. A classification number on its own cannot describe that gap.`,
+        sections: [
+            {
+                heading: "Make a Short Record",
+                body_md: `Pick two tasks, such as getting dressed or preparing dinner. Write down how often you needed help, who helped, which days were uncovered and what happened. Describe a typical day as well as a difficult one. Ask the person receiving care which change would make the biggest difference.`,
+            },
+            {
+                heading: "Use a Self-Check to Prepare",
+                body_md: `Wayly's Classification Self-Check can help organise a conversation. An aged care assessor decides your official classification. Take specific examples back to your provider or My Aged Care and ask which review is appropriate. Your current decision letter and support plan are the starting documents.`,
+            },
+            {
+                heading: "If You Are Doing This With a Parent",
+                body_md: `Read the self-check questions aloud if that helps and let your parent describe their own experience first.
+
+> "I manage the stairs" might mean they do them comfortably, or it might mean they make only one trip a day and avoid going out.
+
+Ask what a normal week looks like. Include the person's own priorities in any request for a review.`,
+            },
+        ],
+        next_step: {
+            invite: "Try the Classification Self-Check to prepare a summary you can check in your own words.",
+            primary: "classification",
+            trial: true,
+        },
+        sources: [
+            { label: "My Aged Care funding tables and contributions", href: "https://www.myagedcare.gov.au/support-at-home" },
+            { label: "When to request a review or reassessment", href: "https://www.myagedcare.gov.au/assessment" },
+        ],
+        related: ["wayly-reassessment-letter-generator-support-at-home-reassessment", "wayly-care-plan-reviewer-support-at-home-care-plan", "support-at-home-costs-and-contributions"],
+    },
 ];
 
 export const PDF_ARTICLE_OVERRIDES = PDF_ARTICLES_2026.reduce((acc, a) => {

@@ -32,4 +32,16 @@ export const WAYLY_OFFER = {
         href: "/ai-tools/invoice-checker",
         disclosure: "Part of the separate 7-day trial. Card required. After 7 days, Solo is A$24.50 per fortnight or Family is A$49.50 per fortnight unless you cancel.",
     },
+    budget_calculator: {
+        label: "Explore the Budget Calculator",
+        href: "/ai-tools/budget-calculator",
+    },
+    price_checker: {
+        label: "Explore the Provider Price Checker",
+        href: "/ai-tools/provider-price-checker",
+    },
+    classification: {
+        label: "Explore the Classification Self-Check",
+        href: "/ai-tools/classification-self-check",
+    },
 };

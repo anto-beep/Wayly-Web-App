@@ -526,7 +526,7 @@ Wayly explains statements in plain English. This article is general information,
         reviewer: { name: "Wayly Editorial", role: "" },
         hero_alt: "Family member reading a Services Australia letter about aged care contributions",
         tags: ["Support at Home", "no worse off", "grandfathering", "home care package transition", "lifetime cap"],
-        related: ["support-at-home-explained", "support-at-home-costs-and-contributions", "home-care-package-vs-support-at-home"],
+        related: ["support-at-home-explained", "support-at-home-costs-and-contributions", "what-happened-to-my-home-care-package"],
         meta: {
             title: "Support at Home \u201cNo Worse Off\u201d Rule Explained (2026)",
             description: "Had a Home Care Package on or before 12/09/2024? How the no worse off rule protects your fees, your lifetime cap and your unspent funds under Support at Home.",
@@ -1006,7 +1006,7 @@ If you would rather have those checks done for you every month, Wayly can read t
         related: [
             "wayly-statement-decoder-support-at-home-statement-explained",
             "wayly-budget-calculator-support-at-home-quarterly-budget",
-            "home-care-package-vs-support-at-home",
+            "what-happened-to-my-home-care-package",
             "support-at-home-costs-and-contributions",
         ],
     },
@@ -1243,7 +1243,7 @@ Start with the My Aged Care fee estimator to get a guide, then let Wayly keep tr
             "wayly-contribution-estimator-support-at-home-fees",
             "wayly-care-plan-reviewer-support-at-home-care-plan",
             "support-at-home-statement",
-            "home-care-package-vs-support-at-home",
+            "what-happened-to-my-home-care-package",
         ],
     },
     // -----------------------------------------------------------------
