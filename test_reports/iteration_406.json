@@ -1,0 +1,50 @@
+{
+  "summary": "Web-only frontend QA for Batch 5 of PDF article rewrites (13 new slugs + title-case bug fix). Title-case fix verified ('Than' now capitalises on the HCP vs SaH comparison headline). 12 of 13 new articles render as fully structured articles with H1, intro, sections, 'Your Next Step' CTA, Sources, and Related Reading - no visible legacy Key Takeaways / FAQ / step-flow blocks (the only 'FAQ' string found on each page is the global footer navigation link, not legacy content). AT-HM bar chart renders with correct tiers $513 / $2,052 / $15,390 inside a 768x289 box (no overflow). Pull-quote blocks render on the costs article ('An Example Week') and the 1-October-2026 article ('Read Across the Line Before Querying It'). All 13 hero images load (naturalWidth > 100). Articles index keeps its 4-column desktop grid, 0 broken images, all new titles visible. All 9 CTA destination routes return 200. However, two notable defects were found: (1) CRITICAL - the slug 'home-care-package-vs-support-at-home' is intercepted by a SLUG_REDIRECTS entry in Articles.jsx line 269 that redirects it to 'what-happened-to-my-home-care-package', making the new Batch-5 override article unreachable and causing a wrong H1/title to render; (2) MINOR title-case edge case - 'What Will Support at Home Actually Cost? a 2026 Guide...' leaves 'a' lowercase after a question-mark break because the heading afterBreak regex in titleCase.js only matches ':', '—', '–', not '?' or '!'.",
+  "platforms_tested": ["web"],
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "web": {
+      "ui_bugs": [
+        {
+          "component": "ArticleDetail routing - home-care-package-vs-support-at-home",
+          "issue": "SLUG_REDIRECTS entry in /app/frontend/src/pages/resources/Articles.jsx line 269 maps 'home-care-package-vs-support-at-home' -> 'what-happened-to-my-home-care-package' BEFORE the PDF_ARTICLE_OVERRIDES lookup runs, so the new Batch-5 override (title: 'Home Care Package vs Support at Home: What Actually Changed for Your Family') is unreachable. Visiting /resources/articles/home-care-package-vs-support-at-home window.location.replace()'s to /resources/articles/what-happened-to-my-home-care-package and renders H1 'What Happened to My Home Care Package?'. This defect also silently poisons Related Reading cards: pdfArticles2026.js has two articles whose related[] arrays reference 'home-care-package-vs-support-at-home', so clicks from those cards redirect to the wrong article too.",
+          "selector": "/app/frontend/src/pages/resources/Articles.jsx:269 (SLUG_REDIRECTS)",
+          "priority": "CRITICAL"
+        },
+        {
+          "component": "titleCaseHeading (lib/titleCase.js)",
+          "issue": "H1 on /resources/articles/support-at-home-costs-and-contributions renders 'What Will Support at Home Actually Cost? a 2026 Guide to Fees and Contributions' with a lowercase 'a' after the question mark. The afterBreak detection at titleCase.js line 158 (`/[:—–]$/`) only treats colon/em-dash/en-dash as a break that forces the next word to capitalise; '?' and '!' are not in that set, so small-words stay lowercase after a sentence break inside a heading.",
+          "selector": "/app/frontend/src/lib/titleCase.js:158",
+          "priority": "MINOR"
+        }
+      ],
+      "integration_issues": [
+        {
+          "flow": "Related Reading navigation",
+          "issue": "Related-reading cards that link to slug 'home-care-package-vs-support-at-home' (used by two Batch-5 articles in pdfArticles2026.js) will redirect the reader to a different article ('What Happened to My Home Care Package?') due to the SLUG_REDIRECTS bug above. Same symptom as the primary routing bug; listed here because it is user-visible from inside other articles.",
+          "affected_selectors": ["a[href='/resources/articles/home-care-package-vs-support-at-home']"]
+        }
+      ],
+      "design_issues": []
+    },
+    "mobile": {"ui_bugs": [], "integration_issues": [], "design_issues": [], "react_native_issues": []}
+  },
+  "parity_issues": [],
+  "test_report_links": [],
+  "action_items": [
+    "Remove the line 269 entry 'home-care-package-vs-support-at-home': 'what-happened-to-my-home-care-package' from SLUG_REDIRECTS in /app/frontend/src/pages/resources/Articles.jsx so the new Batch-5 override article can render at its own URL. The two legacy slugs are now distinct articles under the PDF rewrite plan (one is 'What Happened to My HCP?', the other is 'HCP vs Support at Home: What Actually Changed for Your Family').",
+    "(MINOR) Decide whether the title-case rule should capitalise the word after '?' and '!' inside headings. If yes, extend the afterBreak regex at titleCase.js:158 from `/[:—–]$/` to `/[:?!—–]$/` so 'Cost? a 2026 Guide' becomes 'Cost? A 2026 Guide'.",
+    "(OPTIONAL) Confirm the two 'personal-care-free' variant slugs (support-at-home-personal-care-free-october-2026 and -free-1-october-2026) are intentionally the same article; both resolve to the same page via SLUG_REDIRECTS line 268, which is editorially fine but worth a sanity check against the PDF plan."
+  ],
+  "critical_code_review_comments": [
+    "SLUG_REDIRECTS is evaluated inside useEffect BEFORE PDF_ARTICLE_OVERRIDES. If new overrides share a slug with a previously-merged legacy page, the redirect silently wins. Consider inverting the order (check for override first, fall through to redirect) or removing stale redirect entries when a slug is newly materialised in PDF_ARTICLE_OVERRIDES.",
+    "No tests exist to guarantee each slug listed in PDF_ARTICLE_OVERRIDES is actually reachable (i.e., not shadowed by SLUG_REDIRECTS). A one-shot unit test over Object.keys(PDF_ARTICLE_OVERRIDES) asserting not-in-SLUG_REDIRECTS would have caught this regression immediately."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "N/A (skipped per request)", "frontend": "92% (12/13 Batch-5 articles reachable and structured; 1 critical routing bug + 1 minor title-case edge case)"},
+  "seed_data_creation": "none",
+  "retest_needed": true,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "Batch 5 adds 13 new overrides to PDF_ARTICLE_OVERRIDES. The title-case stop-word fix (removed 'than'/'without' from _HEADING_SMALL in lib/titleCase.js) is verified working on /resources/articles/will-i-pay-more-under-support-at-home-than-home-care-package - H1 reads 'Will I Pay More Under Support at Home Than My Home Care Package?' with capital T. After main agent removes the SLUG_REDIRECTS line-269 entry, retest /resources/articles/home-care-package-vs-support-at-home - expected H1 is 'Home Care Package vs Support at Home: What Actually Changed for Your Family' and document.title should start 'Home Care Package vs Support at Home'. All 9 AI tool CTA target routes (/ai-tools/support-plan-reviewer, /ai-tools/family-coordinator, /ai-tools/letters-and-follow-ups, /ai-tools/provider-price-checker, /ai-tools/budget-calculator, /ai-tools/invoice-checker, /ai-tools/contribution-estimator, /ai-tools/statement-decoder, /ask-wayly) returned HTTP 200 on this run - no CTA 404 risk.",
+  "rca of the issue": "ArticleDetail's useEffect (Articles.jsx:276-294) checks SLUG_REDIRECTS before PDF_ARTICLE_OVERRIDES. When Batch 5 materialised the new 'home-care-package-vs-support-at-home' override, the pre-existing editorial-merge redirect for that slug (added when it was a thin duplicate of 'what-happened-to-my-home-care-package') was never removed, so the override is never read. Reproduction: open /resources/articles/home-care-package-vs-support-at-home in a clean tab -> URL immediately replaces to /resources/articles/what-happened-to-my-home-care-package and the wrong H1 renders. Mitigation: delete Articles.jsx line 269; if the main agent also wants belt-and-braces, add a guard in the useEffect: `if (SLUG_REDIRECTS[slug] && !PDF_ARTICLE_OVERRIDES[slug]) { ... }`."
+}

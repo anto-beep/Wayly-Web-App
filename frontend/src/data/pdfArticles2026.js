@@ -503,8 +503,8 @@ If one line still looks wrong, request an itemised explanation. Ask what happens
     // ---- Batch 3: the Wayly tool guides (verified editorial copy) ----
     {
         slug: "wayly-contribution-estimator-support-at-home-fees",
-        title: "Why Your Support at Home Invoice Can Change After a Home Care Package",
-        excerpt: "A bigger invoice can come from more visits, a different price, a different mix of services or a change to your assessed contribution. Here is how to narrow down the reason using your last two invoices, your service agreement and your fee letter.",
+        title: "Wayly Contribution Estimator: What Will You Pay Under Support at Home?",
+        excerpt: "An estimate helps when you have a choice to make, like whether to add a cleaning visit. Here is how to change one thing at a time, and what to check if the estimate differs from your invoice.",
         published_at: "2026-11-22",
         updated_at: "2026-11-25",
         author: { name: "Wayly Editorial", role: "Wayly" },
@@ -513,34 +513,28 @@ If one line still looks wrong, request an itemised explanation. Ask what happens
         faqs: [],
         howto: null,
         meta: {
-            title: "Why your Support at Home invoice can change | Wayly",
-            description: "A bigger invoice can come from more visits, a different price, a different service mix or a changed contribution. How to narrow the reason with your invoices, agreement and fee letter.",
+            title: "Wayly Contribution Estimator: what will you pay? | Wayly",
+            description: "An estimate helps when you have a choice to make. Change one thing at a time with your provider's quote and fee advice, and check the result against your invoice.",
         },
-        intro_md: `A higher invoice can come from more visits, a different price, a different mix of services or a change to your assessed contribution. You can narrow down the reason with your last two invoices, your service agreement and your fee letter.`,
+        intro_md: `An estimate is useful when you have a choice to make, such as whether to add another cleaning visit. Have your provider's quote, the service category and your latest fee advice beside you. Services Australia determines your official contribution rate.`,
         sections: [
             {
-                heading: "Compare the Same Service Twice",
-                body_md: `Suppose cleaning cost $80 per visit in both months and your illustrative rate stayed at 10%. Two visits would cost you $16 and three would cost $24. The extra $8 comes from another visit. If the number of visits stayed the same, check the agreed price and the rate used on the invoice instead.`,
+                heading: "Change One Thing at a Time",
+                body_md: `For a fictional $100 everyday living service at an assumed rate of 17.5%, your contribution would be $17.50. Two identical visits would be $35. Keep the rate and price unchanged first, then vary the number of visits. That makes it easier to see what caused the estimate to move.`,
             },
             {
-                heading: "Check Whether Transition Protections Apply",
-                body_md: `People already receiving a package, or approved and waiting for one by 12 September 2024, have special contribution arrangements. A later transfer into Support at Home alone does not establish which rules apply. Ask Services Australia to confirm your arrangement and ask your provider to explain any price change in writing.`,
-            },
-            {
-                heading: "Ask for the Calculation, Not Just a New Total",
-                body_md: `> "On my last invoice I paid $18 for domestic assistance and this month it is $30. Please show me the visits, the unit price and the contribution rate used in each month."
-
-If the unit price changed, ask for the notice or agreement. If the percentage changed, compare the effective date with your latest fee letter.`,
+                heading: "If the Result Differs From Your Invoice",
+                body_md: `Check the service date, visit length, category and fee arrangement. Approved personal care delivered from 1 October 2026 has a zero participant contribution. An estimate using a cleaning rate for that service would give the wrong answer. Ask your provider about the classification and Services Australia about the assessed rate.`,
             },
         ],
         next_step: {
-            invite: "Try the Contribution Estimator to explore how changing one service affects an estimate. Use your fee letter for your actual rate.",
+            invite: "Try the Contribution Estimator with a real quote before deciding which questions to ask.",
             primary: "estimator",
             trial: true,
         },
         sources: [
-            { label: "Former Home Care Package fee arrangements", href: "https://www.servicesaustralia.gov.au/aged-care" },
-            { label: "Lifetime caps and changes to contributions", href: "https://www.myagedcare.gov.au/support-at-home" },
+            { label: "Official contribution schedules", href: "https://www.health.gov.au/our-work/support-at-home" },
+            { label: "Personal care contribution changes", href: "https://www.health.gov.au/our-work/support-at-home" },
         ],
         related: ["wayly-budget-calculator-support-at-home-quarterly-budget", "wayly-provider-price-checker-support-at-home-prices", "support-at-home-costs-and-contributions"],
     },
@@ -672,6 +666,564 @@ Ask what a normal week looks like. Include the person's own priorities in any re
         ],
         related: ["wayly-reassessment-letter-generator-support-at-home-reassessment", "wayly-care-plan-reviewer-support-at-home-care-plan", "support-at-home-costs-and-contributions"],
     },
+
+    // ---- Batch 4: transition / switching / reassessment guides (verified editorial copy) ----
+    {
+        slug: "will-i-pay-more-under-support-at-home-than-home-care-package",
+        title: "Will I Pay More Under Support at Home Than My Home Care Package?",
+        excerpt: "A bigger invoice can come from more visits, a different price, a different mix of services or a change to your assessed contribution. Here is how to narrow down the reason using your last two invoices, your service agreement and your fee letter.",
+        published_at: "2026-11-20",
+        updated_at: "2026-11-25",
+        author: { name: "Wayly Editorial", role: "Wayly" },
+        reviewer: { name: "Wayly Editorial", role: "" },
+        key_takeaways: [],
+        faqs: [],
+        howto: null,
+        meta: {
+            title: "Will I pay more under Support at Home than my Home Care Package? | Wayly",
+            description: "A bigger invoice can come from more visits, a different price, a different service mix or a changed contribution. How to narrow the reason with your invoices, agreement and fee letter.",
+        },
+        intro_md: `A higher invoice can come from more visits, a different price, a different mix of services or a change to your assessed contribution. You can narrow down the reason with your last two invoices, your service agreement and your fee letter.`,
+        sections: [
+            { heading: "Compare the Same Service Twice", body_md: `Suppose cleaning cost $80 per visit in both months and your illustrative rate stayed at 10%. Two visits would cost you $16 and three would cost $24. The extra $8 comes from another visit. If the number of visits stayed the same, check the agreed price and the rate used on the invoice instead.` },
+            { heading: "Check Whether Transition Protections Apply", body_md: `People already receiving a package, or approved and waiting for one by 12 September 2024, have special contribution arrangements. A later transfer into Support at Home alone does not establish which rules apply. Ask Services Australia to confirm your arrangement and ask your provider to explain any price change in writing.` },
+            { heading: "Ask for the Calculation, Not Just a New Total", body_md: `> "On my last invoice I paid $18 for domestic assistance and this month it is $30. Please show me the visits, the unit price and the contribution rate used in each month."
+
+If the unit price changed, ask for the notice or agreement. If the percentage changed, compare the effective date with your latest fee letter.` },
+        ],
+        next_step: { invite: "Try the Contribution Estimator to explore how changing one service affects an estimate. Use your fee letter for your actual rate.", primary: "estimator", trial: true },
+        sources: [
+            { label: "Former Home Care Package fee arrangements", href: "https://www.servicesaustralia.gov.au/aged-care" },
+            { label: "Lifetime caps and changes to contributions", href: "https://www.myagedcare.gov.au/support-at-home" },
+        ],
+        related: ["how-much-will-i-pay-for-support-at-home", "wayly-contribution-estimator-support-at-home-fees", "support-at-home-no-worse-off"],
+    },
+    {
+        slug: "how-to-switch-support-at-home-provider",
+        title: "How to Switch Your Support at Home Provider (Without Losing Your Unspent Funds)",
+        excerpt: "Start with the visits you would struggle to miss, then arrange the handover and ask where each balance is held. Here is how to change provider without a gap in care or a lost balance.",
+        published_at: "2026-11-19",
+        updated_at: "2026-11-25",
+        author: { name: "Wayly Editorial", role: "Wayly" },
+        reviewer: { name: "Wayly Editorial", role: "" },
+        key_takeaways: [],
+        faqs: [],
+        howto: null,
+        meta: {
+            title: "How to switch your Support at Home provider | Wayly",
+            description: "Arrange the handover, reactivate your referral code, and ask where each balance is held. The 60-day invoice and 70-day refund timeframes explained in plain English.",
+        },
+        intro_md: `Start with the visits you would struggle to miss. Before agreeing on an end date, ask the new provider whether it can deliver those services at the times you need and at a price you understand. A provider taking enquiries may still have a waiting list for a particular worker or suburb.`,
+        sections: [
+            { heading: "Arrange the Handover", body_md: `Check the notice conditions in your agreement. Contact My Aged Care to reactivate your referral code and give it to the new provider. Confirm the last visit with your current provider and the first visit with the new one. Ask both for a named contact if the dates shift. Request a written schedule for essential visits during the change.` },
+            { heading: "Ask Where Each Balance Is Held", body_md: `Government-held unspent Home Care Package funds and unspent fees you personally contributed are handled differently. Ask your outgoing provider for an itemised closing statement showing outstanding invoices, funds held by Services Australia and any personal fees to be refunded. Give the incoming provider your latest statement so it can plan while the final balances are settled.` },
+            { heading: "What Happens to an Old Package Balance After I Leave?", body_md: `My Aged Care's switching guide distinguishes outstanding claims, Commonwealth-held funds and fees you paid. It allows the outgoing provider 60 days from exit to finalise outstanding service invoices. Unspent participant contributions are repaid within 70 days after services stop. Ask which balance the provider means before treating either timeframe as a deadline for all funds.` },
+        ],
+        next_step: { invite: "Use the free decoder to read the closing statement, then ask each provider about the entries it is responsible for.", primary: "free_decode", trial: true },
+        sources: [
+            { label: "Official provider handover guide", href: "https://www.myagedcare.gov.au/changing-your-aged-care-provider" },
+        ],
+        related: ["wayly-provider-price-checker-support-at-home-prices", "support-at-home-explained", "when-to-request-support-at-home-reassessment"],
+    },
+    {
+        slug: "when-to-request-support-at-home-reassessment",
+        title: "When to Ask for a Support Plan Review or Reassessment",
+        excerpt: "Moving a visit to a better day may be a scheduling question. Needing daily help with a task you used to manage may call for a review. Here is how to tell the difference and what to take to the call.",
+        published_at: "2026-11-18",
+        updated_at: "2026-11-25",
+        author: { name: "Wayly Editorial", role: "Wayly" },
+        reviewer: { name: "Wayly Editorial", role: "" },
+        key_takeaways: [],
+        faqs: [],
+        howto: null,
+        meta: {
+            title: "When to ask for a Support at Home review or reassessment | Wayly",
+            description: "Tell a scheduling change from a change in your assessed needs, and know what to take to the call: your current plan, a short record of difficult tasks and your contact details.",
+        },
+        intro_md: `Start by describing the outcome you need. Moving a visit to a better day may be something your provider can arrange within your existing care plan. Needing daily help with a task you previously did alone may call for a review of your assessed needs.`,
+        sections: [
+            { heading: "Two Conversations You Might Have", body_md: `"My daughter can take me shopping on Friday now. Can we move the visit to Tuesday?" is a scheduling question. "My daughter is no longer able to drive, and I cannot get to appointments" describes a change in available support. Tell your provider or My Aged Care about changes that are affecting your daily life.` },
+            { heading: "What to Take to the Call", body_md: `Have your current plan, a short record of missed or difficult tasks and your preferred contact details. Ask what can be adjusted now, whether a support plan review is needed and when you should expect an update. If another change occurs while you wait, report it rather than relying on the original request.` },
+        ],
+        next_step: { invite: "Use the Classification Self-Check to organise your examples before calling.", primary: "classification", trial: true },
+        sources: [
+            { label: "When to request a review or reassessment", href: "https://www.myagedcare.gov.au/assessment" },
+        ],
+        related: ["wayly-classification-self-check-support-at-home-levels", "wayly-reassessment-letter-generator-support-at-home-reassessment", "home-care-package-levels-support-at-home-classifications"],
+    },
+    {
+        slug: "home-care-package-levels-support-at-home-classifications",
+        title: "Home Care Package Levels and the New Support at Home Classifications",
+        excerpt: "If your letter says \u201cTransitioned HCP Level 3\u201d, keep that whole description. Here is how transitioned levels differ from the eight ongoing classifications, and where to look in the funding tables.",
+        published_at: "2026-11-17",
+        updated_at: "2026-11-25",
+        author: { name: "Wayly Editorial", role: "Wayly" },
+        reviewer: { name: "Wayly Editorial", role: "" },
+        key_takeaways: [],
+        faqs: [],
+        howto: null,
+        meta: {
+            title: "Home Care Package levels and Support at Home classifications | Wayly",
+            description: "Why a transitioned HCP level is not the same row as an ongoing classification, what to do if the funding no longer covers your needs, and where to look in the official tables.",
+        },
+        intro_md: `If your letter says "Transitioned HCP Level 3", keep that whole description when speaking with your provider. The word "transitioned" matters. Support at Home has four classifications for people moving across at an equivalent package level and eight classifications for ongoing funding assessed under the new system.`,
+        sections: [
+            { heading: "Read the Label Before Comparing Amounts", body_md: `An old Level 3 package maps to the transitioned Level 3 classification. Looking up classification 3 in the eight-level table can give you a different figure. Find the table headed "Transitioned Home Care Package classifications" in the official funding guide. Check the effective date and whether the table shows a quarter or a year.` },
+            { heading: "What If the Funding No Longer Covers the Help I Need?", body_md: `Bring your support plan, recent statement and an example of a task you now need help with. Ask what can be changed within your current plan. If your needs have changed, ask about a support plan review. Approval, allocation of funding and the first visit are separate steps. Request the next contact for each.` },
+            { heading: "Where to Look in the Funding Tables", body_md: `If the letter names an old Level 1, 2, 3 or 4, look for Transitioned HCP Level 1, 2, 3 or 4 respectively. If it names an ongoing Support at Home classification, use the eight-classification table. For scale, the official table effective 1 October 2026 lists $5,645.23 per quarter for ongoing classification 3. Use the transitioned table if your letter says "Transitioned HCP Level 3". Your statement shows what is actually available after allocations, services and adjustments.` },
+        ],
+        next_step: { invite: "Use Wayly to prepare a short list of changes you want to discuss at your next care review.", primary: "classification", trial: true },
+        sources: [
+            { label: "My Aged Care funding tables and contributions", href: "https://www.myagedcare.gov.au/support-at-home" },
+            { label: "When to request a review or reassessment", href: "https://www.myagedcare.gov.au/assessment" },
+        ],
+        related: ["wayly-classification-self-check-support-at-home-levels", "what-happened-to-my-home-care-package", "support-at-home-explained"],
+    },
+    {
+        slug: "at-hm-scheme-assistive-technology-home-modifications",
+        title: "The AT-HM Scheme: How Grab Rails, Ramps and Equipment Are Funded Under Support at Home",
+        excerpt: "Equipment and home modifications are funded separately under Support at Home. Here is what the scheme can pay for, which funding figure applies from 1 July 2026, and what to ask before a contractor visits.",
+        published_at: "2026-11-26",
+        updated_at: "2026-11-26",
+        author: { name: "Wayly Editorial", role: "Wayly" },
+        reviewer: { name: "Wayly Editorial", role: "" },
+        key_takeaways: [],
+        faqs: [],
+        howto: null,
+        meta: {
+            title: "The AT-HM scheme: grab rails, ramps and equipment | Wayly",
+            description: "How the Assistive Technology and Home Modifications scheme funds equipment and changes to your home under Support at Home, the funding tiers from 1 July 2026, and what to ask before work begins.",
+        },
+        intro_md: `If stepping into the shower has become difficult, explain what happens on an ordinary morning. That description helps an assessor understand what you need. Under Support at Home, the Assistive Technology and Home Modifications scheme can provide separate funding for approved equipment or changes to your home.`,
+        sections: [
+            { heading: "What Could the Scheme Pay For?", body_md: `A shower chair is equipment. A fixed grab rail is a home modification. Your assessment and decision letter record which support you are approved for. Your provider can arrange a qualified professional where a prescription or a home modification assessment is needed. Before ordering anything, ask who must approve the item, organise the work and confirm any contribution.` },
+            { heading: "Which Funding Figure Applies?", body_md: `For people commencing from 1 July 2026, the dated My Aged Care costs table lists low funding of $513, medium funding of $2,052 and high funding of $15,390. Higher-cost assistive technology may be available for a prescribed need. Ask for an itemised quote covering assessment, supply, installation and follow-up, then check it against your approval.` },
+            { heading: "What to Ask Before a Contractor Visits", body_md: `Before any work is agreed, put your questions in writing.
+
+> "Is my approval for equipment, home modifications or both? Do I need a prescription? What contribution, if any, would I pay? Who will arrange installation and what happens if the quote is higher than the approval?"
+
+The published tiers usually cover 12 months. Complex modifications can qualify for a further 12 months with evidence. Check the date in your decision letter before agreeing to work.` },
+        ],
+        next_step: {
+            invite: "Use free Ask Wayly for a general question about equipment funding. To prepare for a meeting about your own plan, explore the Support Plan Reviewer in the 7-day trial.",
+            primary: "ask_wayly",
+            secondary: "support_plan_reviewer",
+        },
+        sources: [
+            { label: "Equipment and home modification approvals", href: "https://www.myagedcare.gov.au/support-at-home" },
+            { label: "My Aged Care funding tables and contributions", href: "https://www.myagedcare.gov.au/support-at-home" },
+        ],
+        related: ["support-at-home-explained", "wayly-care-plan-reviewer-support-at-home-care-plan"],
+    },
+    {
+        slug: "support-at-home-no-worse-off",
+        title: "The \u201cNo Worse Off\u201d Rule: What It Means If You Had a Home Care Package",
+        excerpt: "The date to look for is 12 September 2024. Here is how the no-worse-off contribution arrangements work, what to check on your invoice, and the separate protection for people approved before 1 July 2014.",
+        published_at: "2026-11-26",
+        updated_at: "2026-11-26",
+        author: { name: "Wayly Editorial", role: "Wayly" },
+        reviewer: { name: "Wayly Editorial", role: "" },
+        key_takeaways: [],
+        faqs: [],
+        howto: null,
+        meta: {
+            title: "The \u201cNo Worse Off\u201d rule for Home Care Package recipients | Wayly",
+            description: "If you had a Home Care Package on 12 September 2024, special contribution arrangements apply under Support at Home. What the rule means, what to check on your invoice, and the pre-July 2014 protection.",
+        },
+        intro_md: `The date to look for is 12 September 2024. If you were receiving a Home Care Package on that date, or had already been approved and were waiting for a package, special contribution arrangements apply when you move into Support at Home.`,
+        sections: [
+            { heading: "Two Letters That Sound Similar", body_md: `Imagine Ruth was approved in August 2024 and was still waiting in September. Her first visit was in 2025. Her earlier approval matters. David first applied in August but was only approved in November 2024. An application date alone does not establish the same protection. These examples illustrate the date rule. Your fee advice records the arrangement used for you.` },
+            { heading: "What Should I Check on My Invoice?", body_md: `Compare your assessed contribution with the service category and the price you agreed with your provider. Different numbers of visits can change your total even if your fee arrangement stays the same. If dates are missing, ask Services Australia to confirm your approval history and the rates applied.` },
+            { heading: "What If I Started Receiving a Package Before July 2014?", body_md: `There is a separate protection for people who were receiving or approved for a Home Care Package before 1 July 2014. My Aged Care treats them as having reached the lifetime contribution cap. If this applies and you are asked to pay, ask what the charge is for and check your circumstances with Services Australia.` },
+        ],
+        next_step: {
+            invite: "Use Wayly to explore an estimate once you know which fee arrangement applies. Keep the official letter for comparison.",
+            primary: "estimator",
+            trial: true,
+        },
+        sources: [
+            { label: "Former Home Care Package fee arrangements", href: "https://www.servicesaustralia.gov.au/aged-care" },
+            { label: "Pre-July 2014 fee arrangements", href: "https://www.servicesaustralia.gov.au/aged-care" },
+        ],
+        related: ["what-happened-to-my-home-care-package", "lifetime-contribution-cap-most-families-do-not-worry"],
+    },
+    {
+        slug: "chsp-extension-2029-what-it-means",
+        title: "The CHSP Extension to 30 June 2029: What It Means for Older Australians and Their Families",
+        excerpt: "Commonwealth Home Support Program grant funding is extended to 30 June 2029. Here is what to expect from your provider, what to do if you now need more help, and three questions for your next call.",
+        published_at: "2026-11-26",
+        updated_at: "2026-11-26",
+        author: { name: "Wayly Editorial", role: "Wayly" },
+        reviewer: { name: "Wayly Editorial", role: "" },
+        key_takeaways: [],
+        faqs: [],
+        howto: null,
+        meta: {
+            title: "The CHSP extension to 30 June 2029 explained | Wayly",
+            description: "The Government extended CHSP grant funding to 30 June 2029. What it means for your own service arrangements, what to do if your needs change, and the questions to ask your provider.",
+        },
+        intro_md: `The Australian Government has extended Commonwealth Home Support Program grant funding to 30 June 2029. If you receive help with shopping, transport, meals or another entry-level service through CHSP, the announcement concerns the program that funds that help.`,
+        sections: [
+            { heading: "What Can I Expect From My Provider?", body_md: `Your own service arrangements still matter. Ask whether your visit day, local availability or contribution is changing, and when the provider will tell you about any proposed change. Keep its response with your service agreement. The national extension alone does not tell you which worker will visit or what a particular provider will charge.` },
+            { heading: "What If I Now Need More Help?", body_md: `Tell your provider what has changed and ask My Aged Care about a review. Someone who needs several coordinated services may need a fresh assessment. Ask which program you receive before using a fee calculator. A Support at Home contribution estimate is for a different program.` },
+            { heading: "Three Questions for Your Next Call", body_md: `Keep the questions short and write the contact name beside each answer.
+
+> "Can you confirm that my service is funded through CHSP? Who will contact me if my service changes? If my current help stops meeting my needs, who can arrange a review?"
+
+If you receive services under different programs, keep the program name beside each service so you know whom to call.` },
+        ],
+        next_step: {
+            invite: "For a general Support at Home question, try free Ask Wayly. If you are discussing a change in your support, Wayly's 7-day trial includes tools for preparing a review request.",
+            primary: "ask_wayly",
+            secondary: "letters",
+        },
+        sources: [
+            { label: "CHSP extension announcement", href: "https://www.health.gov.au/our-work/commonwealth-home-support-programme-chsp" },
+            { label: "When to request a review or reassessment", href: "https://www.myagedcare.gov.au/assessment" },
+        ],
+        related: ["support-at-home-explained", "when-to-request-support-at-home-reassessment"],
+    },
+    {
+        slug: "support-at-home-personal-care-free-1-october-2026",
+        title: "Personal Care Under Support at Home Becomes Free on 1 October 2026: What to Check on Your First Invoice",
+        excerpt: "Approved personal care delivered from 1 October 2026 has no participant contribution. Here is how to read across a line before querying it, what to ask your provider, and what a full price on your statement means.",
+        published_at: "2026-11-26",
+        updated_at: "2026-11-26",
+        author: { name: "Wayly Editorial", role: "Wayly" },
+        reviewer: { name: "Wayly Editorial", role: "" },
+        key_takeaways: [],
+        faqs: [],
+        howto: null,
+        meta: {
+            title: "Personal care free from 1 October 2026: check your first invoice | Wayly",
+            description: "Approved personal care under Support at Home has no participant contribution from 1 October 2026. How to read your invoice line by line, what to ask your provider, and why a service price is not a charge to you.",
+        },
+        intro_md: `If you receive approved personal care under Support at Home, you pay no participant contribution for those services delivered from 1 October 2026. Help with showering and dressing are examples. The service still has a price and uses available funding.`,
+        sections: [
+            { heading: "Read Across the Line Before Querying It", body_md: `In a fictional example, a 12 October shower visit shows a service price of $90 and a participant contribution of $0. Seeing $90 in the service column is expected. If $9 also appears in the amount payable by you, first check whether it belongs to the same visit.` },
+            { heading: "What to Ask Your Provider", body_md: `Point to the exact line and keep the question specific.
+
+> "My invoice shows a personal contribution against showering assistance on 12 October. Can you confirm the service type and explain which part, if any, I need to pay?"
+
+If September and October visits appear together, check their delivery dates separately. Keep the response and any adjustment with the original invoice.` },
+            { heading: "What If My Statement Still Shows a Full Price?", body_md: `Look for the amount funded and the amount payable by you. A statement can show the price of an approved shower visit because provider time still has a cost. If the participant contribution is zero, the service price alone is no reason to expect a refund. If the paperwork only shows one figure, ask which amount it represents.` },
+        ],
+        next_step: {
+            invite: "Want a second look at the layout? Use Wayly's Invoice Checker during the trial and take any question back to your provider.",
+            primary: "invoice_checker",
+            trial: true,
+        },
+        sources: [
+            { label: "Personal care contribution changes", href: "https://www.health.gov.au/our-work/support-at-home" },
+            { label: "Official monthly statement requirements", href: "https://www.health.gov.au/our-work/support-at-home" },
+        ],
+        related: ["support-at-home-personal-care-free-october-2026", "sah-invoice-checker-verify-support-at-home-invoice-five-minutes"],
+    },
+    {
+        slug: "support-at-home-personal-care-free-october-2026",
+        title: "Personal Care Becomes Free Under Support at Home From 1 October 2026",
+        excerpt: "If cost previously stopped you asking for help with showering or dressing, you can speak to your provider again. Here is what to do if personal care is already approved, and what to say if your needs have changed.",
+        published_at: "2026-11-26",
+        updated_at: "2026-11-26",
+        author: { name: "Wayly Editorial", role: "Wayly" },
+        reviewer: { name: "Wayly Editorial", role: "" },
+        key_takeaways: [],
+        faqs: [],
+        howto: null,
+        meta: {
+            title: "Personal care becomes free from 1 October 2026 | Wayly",
+            description: "Approved personal care under Support at Home has no participant contribution from 1 October 2026. What to do if it is already approved and what to say if your needs have changed.",
+        },
+        intro_md: `If cost previously stopped you asking for help with dressing or showering, you can speak to your provider again. Approved personal care delivered under Support at Home from 1 October 2026 has no participant contribution. Your approval and available budget still determine what can be arranged.`,
+        sections: [
+            { heading: "If Personal Care Is Already Approved", body_md: `Ask your care partner to show you what another visit would use from your budget each week. Tell them which days matter most and what help you already receive. If the approved service is in your plan, the contribution change alone does not require another assessment.` },
+            { heading: "If Your Needs Have Changed", body_md: `Explain the change in everyday terms.
+
+> "I used to manage the shower on weekdays. I now need someone there when I get in and out."
+
+Ask whether a change to your care plan or a support plan review would help. Request the agreed next step and who will contact you.` },
+        ],
+        next_step: {
+            invite: "Use the Budget Calculator during a Wayly trial to explore a different visit pattern before your next care planning conversation.",
+            primary: "budget_calculator",
+            trial: true,
+        },
+        sources: [
+            { label: "Personal care contribution changes", href: "https://www.health.gov.au/our-work/support-at-home" },
+            { label: "When to request a review or reassessment", href: "https://www.myagedcare.gov.au/assessment" },
+        ],
+        related: ["support-at-home-personal-care-free-1-october-2026", "wayly-budget-calculator-support-at-home-quarterly-budget"],
+    },
+    {
+        slug: "support-at-home-costs-and-contributions",
+        title: "What Will Support at Home Actually Cost? A 2026 Guide to Fees and Contributions",
+        excerpt: "Choose a typical week and list each visit against the rate from your fee advice. Here is a worked example week, what to do when a monthly total surprises you, and how to compare two provider prices.",
+        published_at: "2026-11-26",
+        updated_at: "2026-11-26",
+        author: { name: "Wayly Editorial", role: "Wayly" },
+        reviewer: { name: "Wayly Editorial", role: "" },
+        key_takeaways: [],
+        faqs: [],
+        howto: null,
+        meta: {
+            title: "What will Support at Home cost? A 2026 guide to fees | Wayly",
+            description: "A practical 2026 guide to Support at Home fees and contributions: a worked example week, what to check when a monthly total surprises you, and how to compare two providers on the same service.",
+        },
+        intro_md: `Choose a typical week from your calendar. List each visit and its agreed price. Beside it, write the rate from your fee advice for that service category. This gives you a practical way to discuss the week you want with your care partner.`,
+        sections: [
+            { heading: "An Example Week", body_md: `Imagine one approved nursing visit, one approved shower visit delivered after 1 October 2026 and one $80 cleaning visit. The clinical and personal care visits have no participant contribution. At an illustrative everyday living rate of 17.5%, the cleaning visit contributes $14 to the amount you pay. All three services still have a cost.` },
+            { heading: "When a Monthly Total Surprises You", body_md: `Count the actual visits. A month can contain five visits on a weekday you usually count as four. Ask your provider to show its calculation for a shorter visit, a changed service or a credit. If costs are becoming hard to manage, contact Services Australia about hardship assistance.` },
+            { heading: "What If Two Providers Charge Different Prices?", body_md: `Ask for quotes for the same work. Compare the day, visit length, minimum booking and total price. An amount quoted per visit may include more time than an amount quoted per hour. Keep the personal contribution and funded share alongside the full price so you can judge both the cost to you and the effect on your care budget.` },
+        ],
+        next_step: {
+            invite: "Start a Wayly trial to model a typical week and compare the estimate with your provider's written quote.",
+            primary: "estimator",
+            trial: true,
+        },
+        sources: [
+            { label: "My Aged Care funding tables and contributions", href: "https://www.myagedcare.gov.au/support-at-home" },
+            { label: "Personal care contribution changes", href: "https://www.health.gov.au/our-work/support-at-home" },
+        ],
+        related: ["how-much-will-i-pay-for-support-at-home", "wayly-contribution-estimator-support-at-home-fees"],
+    },
+    {
+        slug: "home-care-package-vs-support-at-home",
+        title: "Home Care Package vs Support at Home: What Actually Changed for Your Family",
+        excerpt: "When several relatives help, give everyone the same starting point. Here is what to record together, how to resolve conflicting recollections, and why a service can be free to you but still have a price.",
+        published_at: "2026-11-26",
+        updated_at: "2026-11-26",
+        author: { name: "Wayly Editorial", role: "Wayly" },
+        reviewer: { name: "Wayly Editorial", role: "" },
+        key_takeaways: [],
+        faqs: [],
+        howto: null,
+        meta: {
+            title: "Home Care Package vs Support at Home for families | Wayly",
+            description: "Support at Home replaced Home Care Packages on 1 November 2025. What families should record together, how to resolve conflicting recollections, and why free-to-you services still show a price.",
+        },
+        intro_md: `When several relatives help, give everyone the same starting point: the person's preferred routine, the current provider and the date of the last agreement. Support at Home replaced Home Care Packages on 1 November 2025. Old package language can still appear in balances or transitioned classifications.`,
+        sections: [
+            { heading: "What to Record Together", body_md: `With permission, write down where the approval letter is kept, who checks the monthly statement and who calls if a regular visit changes. Record your family member's preferences about sharing. Someone who arranges transport may only need the time of an appointment.` },
+            { heading: "How to Resolve Conflicting Recollections", body_md: `If one person recalls that a service was free, look up the actual service and date. Check what was charged to the budget and what the participant paid. For an approved personal care visit delivered from 1 October 2026, those two amounts can be different even when the participant pays nothing.` },
+        ],
+        next_step: {
+            invite: "Try a free statement decode together. Let the person receiving care choose the first question to take back to the provider.",
+            primary: "free_decode",
+            trial: true,
+        },
+        sources: [
+            { label: "Former Home Care Package fee arrangements", href: "https://www.servicesaustralia.gov.au/aged-care" },
+            { label: "Managing quarterly and retained balances", href: "https://www.myagedcare.gov.au/support-at-home" },
+            { label: "Personal care contribution changes", href: "https://www.health.gov.au/our-work/support-at-home" },
+        ],
+        related: ["what-happened-to-my-home-care-package", "wayly-family-coordinator-managing-parents-aged-care"],
+    },
+    {
+        slug: "support-at-home-vs-home-care-packages-what-changed",
+        title: "Support at Home vs Home Care Packages: What Actually Changed",
+        excerpt: "Support at Home replaced Home Care Packages on 1 November 2025 and your care moved across. Here is where your package balance went, which fee rules apply, and what to do if a familiar visit has disappeared.",
+        published_at: "2026-11-26",
+        updated_at: "2026-11-26",
+        author: { name: "Wayly Editorial", role: "Wayly" },
+        reviewer: { name: "Wayly Editorial", role: "" },
+        key_takeaways: [],
+        faqs: [],
+        howto: null,
+        meta: {
+            title: "Support at Home vs Home Care Packages: what changed | Wayly",
+            description: "Support at Home replaced Home Care Packages on 1 November 2025. Where your package balance went, which fee rules apply to you, and what to do if a familiar visit has disappeared from your schedule.",
+        },
+        intro_md: `Support at Home is the new program that replaced Home Care Packages on 1 November 2025. If you were receiving a Home Care Package at that time, your care moved across. You did not have to start a new application. Your paperwork now shows a quarterly budget, and your first statement may use different names for services you already know.`,
+        sections: [
+            { heading: "Where Did My Package Balance Go?", body_md: `Ask your provider to show you three figures separately: your opening Support at Home budget, any unspent Home Care Package funds and what has been used since the change. Different rules apply to money carried across from the old program. A smaller number on the front page may only be one part of the picture.` },
+            { heading: "Which Fee Rules Apply to Me?", body_md: `Find your original approval letter. If you were already receiving a package on 12 September 2024, or had approval and were waiting for a package by then, special contribution arrangements apply. Give Services Australia your approval date if your fee advice looks unexpected. Your provider can explain the price of each visit.` },
+            { heading: "What to Do If a Familiar Visit Has Disappeared", body_md: `Start with your service agreement and ask your provider to compare the old schedule with the new one.
+
+> "My Thursday domestic assistance used to appear twice a month. I can only see one visit on the new schedule. Is this a change to the plan, a booking still to be made or a difference in how it is recorded?"
+
+Request the answer and the next visit date in writing.` },
+        ],
+        next_step: {
+            invite: "Have your first new statement handy? Decode it to see which figures are worth taking to your next provider call.",
+            primary: "free_decode",
+            trial: true,
+        },
+        sources: [
+            { label: "Former Home Care Package fee arrangements", href: "https://www.servicesaustralia.gov.au/aged-care" },
+            { label: "Managing quarterly and retained balances", href: "https://www.myagedcare.gov.au/support-at-home" },
+        ],
+        related: ["what-happened-to-my-home-care-package", "home-care-package-vs-support-at-home"],
+    },
+    {
+        slug: "switching-support-at-home-provider-practical-playbook",
+        title: "Switching Providers: The Practical Playbook",
+        excerpt: "A provider can operate in your suburb and still be unable to cover the times you need. Here is what to say to a new provider, what to confirm with your current one, and how to arrange the handover.",
+        published_at: "2026-11-26",
+        updated_at: "2026-11-26",
+        author: { name: "Wayly Editorial", role: "Wayly" },
+        reviewer: { name: "Wayly Editorial", role: "" },
+        key_takeaways: [],
+        faqs: [],
+        howto: null,
+        meta: {
+            title: "Switching Support at Home providers: a practical playbook | Wayly",
+            description: "A practical playbook for switching Support at Home providers: what to ask a new provider, what to confirm with your current one, and how to arrange the handover without losing visits.",
+        },
+        intro_md: `A provider can operate in your suburb and still be unable to cover the times you need. Before you give notice, make a short call to each provider you are considering. Lead with the visit that would be hardest to miss.`,
+        sections: [
+            { heading: "What to Say to the New Provider", body_md: `Lead with the visit that matters most and ask for the details in writing.
+
+> "I need help getting ready on Mondays and Thursdays before 9 am. Do you have workers available at those times? What is the minimum visit length, what would one visit cost and who would arrange cover if the worker is away? Please send the details and your earliest available start date in writing."` },
+            { heading: "What to Confirm With the Current Provider", body_md: `Check your agreement and agree on an end date. Ask for a list of remaining visits, outstanding invoices and the person handling the final statement. Contact My Aged Care about reactivating your referral code. Confirm the last and first visits with both providers before relying on the handover.` },
+        ],
+        next_step: {
+            invite: "Compare the written offers in Wayly's Provider Price Checker during the trial. Keep the appointment times alongside the prices.",
+            primary: "price_checker",
+            trial: true,
+        },
+        sources: [
+            { label: "Official provider handover guide", href: "https://www.myagedcare.gov.au/changing-your-aged-care-provider" },
+            { label: "How providers set and publish prices", href: "https://www.myagedcare.gov.au/support-at-home" },
+        ],
+        related: ["how-to-switch-support-at-home-provider", "wayly-provider-price-checker-support-at-home-prices"],
+    },
+    {
+        slug: "wayly-statement-decoder-support-at-home-statement-explained",
+        title: "Wayly Statement Decoder: How to Read Your Support at Home Statement and Spot Hidden Charges",
+        excerpt: "Try the Statement Decoder once every 120 days with no sign-up or card. Here is how to start with one familiar visit, turn a flag into a useful question, and what to do if you have used your free decode.",
+        published_at: "2026-11-26",
+        updated_at: "2026-11-26",
+        author: { name: "Wayly Editorial", role: "Wayly" },
+        reviewer: { name: "Wayly Editorial", role: "" },
+        key_takeaways: [],
+        faqs: [],
+        howto: null,
+        meta: {
+            title: "Wayly Statement Decoder: read your statement and spot charges | Wayly",
+            description: "How to use the free Wayly Statement Decoder: start with one familiar visit, turn a flag into a useful question for your provider, and what to do once your free decode is used.",
+        },
+        intro_md: `You can try the Statement Decoder once every 120 days without signing up or entering a card. Open the tool and choose a statement you are authorised to use. If you would rather practise first, choose the example statement on the tool page.`,
+        sections: [
+            { heading: "Start With One Familiar Visit", body_md: `Paste the text or use the upload option. Read the plain-English explanation beside the original statement. Find one service you remember and check that its date, units and price match. If a scan is hard to read, check the figures yourself before relying on the explanation.` },
+            { heading: "Turn a Flag Into a Useful Question", body_md: `Imagine the original lists a credit but the summary treats it as another charge. Check the sign and the closing balance. Ask your provider:
+
+> "Can you show me how this credit affected the amount available?"
+
+Wayly can help you prepare that question. Your records and your provider's explanation are what settle it.` },
+            { heading: "What If I Have Already Used My Free Decode?", body_md: `You can wait until your next free use. You can also read a statement yourself by following the date, service, units, price and contribution across each row. If you want to use Wayly more often or also review invoices, you can choose a separate 7-day trial. Starting that trial requires a card.` },
+        ],
+        next_step: {
+            invite: "Decode one statement free. If you also want to review a contribution invoice or plan a budget, those tools are included in the separate 7-day trial.",
+            primary: "free_decode",
+            trial: true,
+        },
+        sources: [
+            { label: "Wayly public Statement Decoder", href: "/ai-tools/statement-decoder" },
+            { label: "Pooled care management funding", href: "https://www.health.gov.au/our-work/support-at-home" },
+        ],
+        related: ["support-at-home-statement", "support-at-home-statement-flags-what-to-question"],
+    },
+    {
+        slug: "wayly-reassessment-letter-generator-support-at-home-reassessment",
+        title: "Wayly Letters & Follow-Ups: How to Request a Support at Home Reassessment",
+        excerpt: "A useful request describes what changed and what you would like someone to do. Here is a letter you can adapt, what to do after you send it, and how to follow up if you have not heard back.",
+        published_at: "2026-11-26",
+        updated_at: "2026-11-26",
+        author: { name: "Wayly Editorial", role: "Wayly" },
+        reviewer: { name: "Wayly Editorial", role: "" },
+        key_takeaways: [],
+        faqs: [],
+        howto: null,
+        meta: {
+            title: "How to request a Support at Home reassessment: a letter you can adapt | Wayly",
+            description: "A plain-English Support at Home reassessment request you can adapt, what to keep after you send it, and how to follow up with your provider or My Aged Care if you have not heard back.",
+        },
+        intro_md: `A useful request describes what changed and what you would like someone to do. You can make the request yourself or ask someone you trust to help. If writing on another person's behalf, check the wording with them and explain your authority to act.`,
+        sections: [
+            { heading: "A Letter You Can Adapt", body_md: `Keep it short, specific and in your own words.
+
+> "Hello, I would like my current support arrangements reviewed. Since my partner returned to work in October, I have been managing lunch alone on weekdays. On three days last week I could not prepare a meal. Could we discuss what can change within my current plan and whether I need a support plan review? Please call me in the afternoon and let me know who will follow this up."` },
+            { heading: "After You Send It", body_md: `Keep the sent message, the recipient and any reference number. If you follow up, refer to the original date and describe any further change. If you have not heard back, contact the provider or My Aged Care directly. Ask what you can do while you wait.` },
+        ],
+        next_step: {
+            invite: "Use Wayly's letter tool to draft your request, then remove anything that does not sound like you before sending it.",
+            primary: "letters",
+            trial: true,
+        },
+        sources: [
+            { label: "When to request a review or reassessment", href: "https://www.myagedcare.gov.au/assessment" },
+            { label: "Wayly tool directory", href: "/ai-tools" },
+        ],
+        related: ["when-to-request-support-at-home-reassessment", "wayly-care-plan-reviewer-support-at-home-care-plan"],
+    },
+    {
+        slug: "wayly-care-plan-reviewer-support-at-home-care-plan",
+        title: "Wayly Support Plan Reviewer: Does Your Care Plan Match Your Support at Home Level?",
+        excerpt: "A useful care plan connects what you want to do with the support you receive. Here is how to read the plan from the participant's side, take one question into the review, and write a one-page meeting note.",
+        published_at: "2026-11-26",
+        updated_at: "2026-11-26",
+        author: { name: "Wayly Editorial", role: "Wayly" },
+        reviewer: { name: "Wayly Editorial", role: "" },
+        key_takeaways: [],
+        faqs: [],
+        howto: null,
+        meta: {
+            title: "Wayly Support Plan Reviewer: does your plan match your level? | Wayly",
+            description: "How to review your Support at Home care plan from the participant's side, prepare one question for the review, and bring a one-page meeting note that captures who will follow up and when.",
+        },
+        intro_md: `A useful care plan connects the things you want to do with the support you receive. Start with one goal that matters to you. "I want to get to choir on Thursday" gives you a better starting point than "I need transport".`,
+        sections: [
+            { heading: "Read the Plan From the Participant's Side", body_md: `Find the goal, the service intended to support it, when it will happen and who will organise it. If one piece is missing, write a question beside it. For example: "Transport is listed, but choir finishes after 7 pm. Can the service cover the return journey?"` },
+            { heading: "Take One Question Into the Review", body_md: `Wayly's Support Plan Reviewer can help you prepare questions about a plan. Check its summary against the original wording. Your assessed classification alone does not establish a particular entitlement to individual services or care management hours. Your provider can explain what is approved, funded and available.` },
+            { heading: "A One-Page Meeting Note", body_md: `Write the goal at the top, copy the relevant line from your plan and leave a space for the answer.
+
+> "Goal: attend choir. Current plan: transport to community activities. Question: does the arrangement cover the journey home?"
+
+At the meeting, add who will check, how you will hear back and when you will review the arrangement.` },
+        ],
+        next_step: {
+            invite: "Try the Support Plan Reviewer with one goal in mind. Bring the question that matters most to your next meeting.",
+            primary: "support_plan_reviewer",
+            trial: true,
+        },
+        sources: [
+            { label: "When to request a review or reassessment", href: "https://www.myagedcare.gov.au/assessment" },
+            { label: "Pooled care management funding", href: "https://www.health.gov.au/our-work/support-at-home" },
+        ],
+        related: ["home-care-package-levels-support-at-home-classifications", "wayly-reassessment-letter-generator-support-at-home-reassessment"],
+    },
+    {
+        slug: "wayly-family-coordinator-managing-parents-aged-care",
+        title: "Wayly Family Hub: Managing a Parent's Aged Care as a Family",
+        excerpt: "Start with the person receiving care and ask who they want involved. Here is how to try a handover for one appointment, set up sharing together, and make a plan for the first week.",
+        published_at: "2026-11-26",
+        updated_at: "2026-11-26",
+        author: { name: "Wayly Editorial", role: "Wayly" },
+        reviewer: { name: "Wayly Editorial", role: "" },
+        key_takeaways: [],
+        faqs: [],
+        howto: null,
+        meta: {
+            title: "Wayly Family Hub: managing a parent's aged care as a family | Wayly",
+            description: "How to coordinate a parent's aged care as a family on Wayly: try a handover for one appointment, set up role-based sharing together, and make a simple plan for the first week.",
+        },
+        intro_md: `Start with the person receiving care. Ask who they want involved, what each person can see and which decisions they want to make themselves. A family member who drives to appointments may need the visit time without needing access to financial documents.`,
+        sections: [
+            { heading: "Try a Handover for One Appointment", body_md: `Imagine your mother wants you to check her next invoice and your brother to take her to a review. Ask her permission to record those two jobs. Write down who will act, the date and the one thing each person needs. After the appointment, check with her before passing on new information.` },
+            { heading: "Set Up Sharing Together", body_md: `Open the Family plan details and review the roles available. Before inviting anyone, read what that role can view or change. Check the invitation address together. Agree on how you will revisit access if a relative steps back. Sharing inside a family app is separate from authority to speak on someone's behalf with Services Australia or a provider.` },
+            { heading: "A Plan for the First Week", body_md: `Choose one shared job, such as preparing for Tuesday's care review. Agree who will read the plan, who will join the meeting and who will record the answer. After the meeting, ask the person receiving care whether the arrangement helped. If it created more noise or shared too much, narrow the task or change who has access.` },
+        ],
+        next_step: {
+            invite: "Explore Wayly Family together and decide whether its sharing options suit the people your family wants involved.",
+            primary: "family_hub",
+        },
+        sources: [
+            { label: "Wayly plans and trial pricing", href: "/pricing" },
+            { label: "Wayly privacy policy", href: "/legal/privacy" },
+        ],
+        related: ["home-care-package-vs-support-at-home", "what-happened-to-my-home-care-package"],
+    },
+
 ];
 
 export const PDF_ARTICLE_OVERRIDES = PDF_ARTICLES_2026.reduce((acc, a) => {

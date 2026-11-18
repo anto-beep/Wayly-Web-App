@@ -124,7 +124,7 @@ export function isTitleCase(input) {
 const _HEADING_SMALL = new Set([
     "a", "an", "and", "as", "at", "but", "by", "for", "in",
     "into", "nor", "of", "on", "onto", "or", "over", "per", "the", "to",
-    "vs", "via", "with", "within", "without", "up", "yet", "so", "than",
+    "vs", "via", "with", "up", "yet", "so",
 ]);
 
 function _capHeadingToken(tok, forceCap) {
@@ -155,7 +155,7 @@ export function titleCaseHeading(input) {
     return tokens
         .map((tok, i) => {
             const out = _capHeadingToken(tok, i === 0 || i === last || afterBreak);
-            afterBreak = /[:—–]$/.test(tok);
+            afterBreak = /[:?!—–]$/.test(tok);
             return out;
         })
         .join(" ");

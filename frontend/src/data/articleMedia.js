@@ -86,13 +86,37 @@ export const ARTICLE_HERO = {
     "wayly-family-coordinator-managing-parents-aged-care": { src: PHOTO.E6, alt: "Three generations of a family together around a laptop" },
     "sah-invoice-checker-verify-support-at-home-invoice-five-minutes": { src: PHOTO.B2, alt: "Older family members going through documents together" },
     "nine-most-common-support-at-home-invoice-errors": { src: "https://images.pexels.com/photos/7651555/pexels-photo-7651555.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940", alt: "A hand checking a printed invoice with a pen" },
+
+    // Legacy CMS + static articles: a warm lead photo so every detail page opens with an image.
+    "what-changes-for-hcp-families-july-2026": { src: PHOTO.A3, alt: "An older woman considering what the aged care changes mean for her" },
+    "reassessment-requests-how-and-when": { src: "https://images.pexels.com/photos/6964050/pexels-photo-6964050.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940", alt: "A woman noting down what has changed before requesting a reassessment" },
+    "personal-care-becomes-free-1-october-2026": { src: PHOTO.F2, alt: "A nurse supporting an older patient during a home personal-care visit" },
+    "support-at-home-means-test-contributions-explained": { src: "https://images.pexels.com/photos/8439648/pexels-photo-8439648.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940", alt: "An older couple going through their contribution assessment with an adviser" },
+    "understanding-your-first-support-at-home-statement": { src: PHOTO.B1, alt: "An older man reading his first Support at Home statement with help" },
+    "support-at-home-price-caps-july-2026": { src: PHOTO.C1, alt: "A calculator resting on printed provider price paperwork" },
+    "home-care-package-to-support-at-home-what-changes-2025": { src: ILLUS.whatChanged, alt: "Illustration of the move from Home Care Packages to Support at Home", contain: true },
+    "the-statement-of-rights": { src: PHOTO.G5, alt: "An adviser explaining an older person's rights across a table" },
+    "advisor-conversation-prep": { src: PHOTO.G4, alt: "A financial adviser going through the numbers with senior clients" },
+    "voice-first-for-the-participant": { src: PHOTO.E6, alt: "Three generations of a family together around a laptop" },
+    "what-kindred-doesnt-do": { src: PHOTO.A4, alt: "A home carer helping an older woman move safely around her home" },
 };
 
 // slug -> { [sectionSlug]: { image?: {src,alt,caption}, chart?: {title,note,items} } }
 export const ARTICLE_SECTION_VISUALS = {
     "at-hm-scheme-assistive-technology-home-modifications": {
-        "what-is-the-at-hm-scheme": {
-            image: { src: PHOTO.D2, alt: "A grab rail fitted beside a toilet", caption: "Grab rails are one of the most common AT-HM funded modifications." },
+        "what-could-the-scheme-pay-for": {
+            image: { src: PHOTO.D2, alt: "A grab rail fitted beside a toilet", caption: "A shower chair is equipment; a fixed grab rail is a home modification. Your letter records which you are approved for." },
+        },
+        "which-funding-figure-applies": {
+            chart: {
+                title: "AT-HM funding tiers for people commencing from 1 July 2026",
+                items: [
+                    { label: "Low", value: 513, display: "$513" },
+                    { label: "Medium", value: 2052, display: "$2,052" },
+                    { label: "High", value: 15390, display: "$15,390" },
+                ],
+                note: "From the dated My Aged Care costs table. Higher-cost assistive technology may be available for a prescribed need. Tiers usually cover 12 months.",
+            },
         },
     },
     "how-much-will-i-pay-for-support-at-home": {
@@ -129,6 +153,9 @@ export const ARTICLE_SECTION_VISUALS = {
         },
     },
     "support-at-home-costs-and-contributions": {
+        "an-example-week": {
+            pullquote: { value: "$14", label: "a full pensioner's 17.5% everyday-living share of an $80 cleaning visit. The approved nursing and post-October shower visits add $0 to your share, though all three still have a cost." },
+        },
         "what-are-the-contribution-rates": {
             chart: {
                 title: "Contribution rates by cohort (independence / everyday living)",
@@ -183,8 +210,36 @@ export const ARTICLE_SECTION_VISUALS = {
         },
     },
     "wayly-contribution-estimator-support-at-home-fees": {
+        "change-one-thing-at-a-time": {
+            pullquote: { value: "$17.50", label: "a full 17.5% everyday-living share of a $100 visit. Two identical visits would be $35." },
+        },
+    },
+    "will-i-pay-more-under-support-at-home-than-home-care-package": {
         "compare-the-same-service-twice": {
             pullquote: { value: "$8", label: "the difference one extra $80 cleaning visit makes at a 10% rate: $16 for two visits, $24 for three." },
+        },
+    },
+    "how-to-switch-support-at-home-provider": {
+        "arrange-the-handover": {
+            image: { src: "https://images.pexels.com/photos/8123854/pexels-photo-8123854.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940", alt: "An older man on the phone arranging his handover to a new provider", caption: "Confirm the last visit with your current provider and the first with the new one, in writing." },
+        },
+        "what-happens-to-an-old-package-balance-after-i-leave": {
+            stats: {
+                items: [
+                    { value: "60 days", label: "To finalise outstanding invoices", sub: "The outgoing provider has 60 days from exit to finalise outstanding service invoices." },
+                    { value: "70 days", label: "To repay your unspent contributions", sub: "Unspent participant contributions are repaid within 70 days after services stop." },
+                ],
+            },
+        },
+    },
+    "when-to-request-support-at-home-reassessment": {
+        "what-to-take-to-the-call": {
+            image: { src: "https://images.pexels.com/photos/6975081/pexels-photo-6975081.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940", alt: "An older woman writing a short record of missed or difficult tasks before her call", caption: "Bring your current plan and a short record of missed or difficult tasks to the call." },
+        },
+    },
+    "home-care-package-levels-support-at-home-classifications": {
+        "where-to-look-in-the-funding-tables": {
+            pullquote: { value: "$5,645.23", label: "per quarter for ongoing classification 3 in the official table effective 1 October 2026. Use the transitioned table if your letter says \u201cTransitioned HCP Level 3\u201d." },
         },
     },
     "wayly-budget-calculator-support-at-home-quarterly-budget": {
@@ -195,6 +250,11 @@ export const ARTICLE_SECTION_VISUALS = {
     "wayly-provider-price-checker-support-at-home-prices": {
         "a-worked-comparison": {
             pullquote: { value: "$160 vs $95", label: "one hour of cleaning when Provider A has a two-hour minimum at $80/hr and Provider B charges $95 for a one-hour minimum." },
+        },
+    },
+    "support-at-home-personal-care-free-1-october-2026": {
+        "read-across-the-line-before-querying-it": {
+            pullquote: { value: "$0", label: "the participant contribution for an approved 12 October shower visit, even though the service price still shows $90. A price in the service column is not a charge to you." },
         },
     },
 };

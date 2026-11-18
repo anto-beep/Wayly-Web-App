@@ -44,4 +44,13 @@ export const WAYLY_OFFER = {
         label: "Explore the Classification Self-Check",
         href: "/ai-tools/classification-self-check",
     },
+    support_plan_reviewer: {
+        label: "Explore the Support Plan Reviewer",
+        href: "/ai-tools/support-plan-reviewer",
+    },
+    family_hub: {
+        label: "Explore Wayly Family",
+        href: "/ai-tools/family-coordinator",
+        disclosure: "Card required. After 7 days, Family is A$49.50 per fortnight unless you cancel. Cancel before your first charge in Settings → Billing.",
+    },
 };

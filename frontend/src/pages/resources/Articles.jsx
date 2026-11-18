@@ -126,7 +126,7 @@ export default function ArticlesIndex() {
                 const cms = r.data.articles || [];
                 const cmsSlugs = new Set(cms.map((a) => a.slug));
                 const structured = STRUCTURED_SEO_ARTICLES
-                    .filter((a) => !cmsSlugs.has(a.slug) && !SLUG_REDIRECTS[a.slug])
+                    .filter((a) => !cmsSlugs.has(a.slug) && (!SLUG_REDIRECTS[a.slug] || PDF_ARTICLE_OVERRIDES[a.slug]))
                     .map((a) => (PDF_ARTICLE_OVERRIDES[a.slug] ? { ...a, ...PDF_ARTICLE_OVERRIDES[a.slug] } : a));
                 const olderStatic = STATIC_ARTICLES.filter((a) => !cmsSlugs.has(a.slug) && !SLUG_REDIRECTS[a.slug] && !structured.find((s) => s.slug === a.slug));
                 setArticles([...structured, ...cms, ...olderStatic]);
@@ -274,8 +274,10 @@ export function ArticleDetail() {
     const [article, setArticle] = useState(undefined); // undefined=loading, null=not found
 
     useEffect(() => {
-        // Redirect legacy slugs before hitting any lookup.
-        if (SLUG_REDIRECTS[slug]) {
+        // Redirect legacy slugs before hitting any lookup, UNLESS the slug now
+        // has a rewritten PDF override (a once-deduped slug that has since been
+        // given its own distinct article must render, not redirect).
+        if (SLUG_REDIRECTS[slug] && !PDF_ARTICLE_OVERRIDES[slug]) {
             window.location.replace(`/resources/articles/${SLUG_REDIRECTS[slug]}`);
             return;
         }
@@ -372,6 +374,11 @@ export function ArticleDetail() {
                 <span className="overline mt-6 block">Article</span>
                 <h1 className="font-heading text-4xl sm:text-5xl text-primary-k tracking-tight mt-4 leading-tight">{titleCaseHeading(article.title)}</h1>
                 <p className="mt-4 text-lg text-muted-k leading-relaxed">{article.excerpt}</p>
+
+                {(() => {
+                    const hero = heroForArticle(article, deriveCategory(article));
+                    return hero?.src ? <ArticleHero src={hero.src} alt={hero.alt || article.hero_alt || ""} contain={hero.contain} /> : null;
+                })()}
 
                 {article.is_draft_needs_review && (
                     <div className="mt-6 flex items-start gap-3 rounded-2xl border border-amber-300 bg-amber-50 p-4 text-amber-900" data-testid="article-draft-banner">
