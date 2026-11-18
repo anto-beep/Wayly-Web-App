@@ -60,7 +60,7 @@ export const ARTICLE_HERO = {
     "support-at-home-statement-vs-invoice-explained": { src: PHOTO.B5, alt: "A senior man in glasses reading a document at the kitchen table" },
     "support-at-home-statement": { src: PHOTO.B4, alt: "An older couple reviewing their statement together at home" },
     "home-care-package-vs-support-at-home": { src: PHOTO.G6, alt: "An adviser talking an older couple through their options" },
-    "support-at-home-costs-and-contributions": { src: PHOTO.B6, alt: "A senior man reviewing financial paperwork at home" },
+    "support-at-home-costs-and-contributions": { src: "https://images.pexels.com/photos/6963031/pexels-photo-6963031.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940", alt: "An older couple reviewing household bills with a calculator at home" },
     "support-at-home-personal-care-free-october-2026": { src: PHOTO.F2, alt: "A nurse smiling with an older patient during a home visit" },
     "how-much-will-i-pay-for-support-at-home": { src: PHOTO.G4, alt: "A consultant going through the numbers with senior clients" },
     "how-to-switch-support-at-home-provider": { src: PHOTO.H4, alt: "A couple carrying moving boxes into a new home" },
@@ -85,7 +85,7 @@ export const ARTICLE_HERO = {
     "wayly-care-plan-reviewer-support-at-home-care-plan": { src: PHOTO.F1, alt: "A clinician talking through a care plan with an older patient" },
     "wayly-family-coordinator-managing-parents-aged-care": { src: PHOTO.E6, alt: "Three generations of a family together around a laptop" },
     "sah-invoice-checker-verify-support-at-home-invoice-five-minutes": { src: PHOTO.B2, alt: "Older family members going through documents together" },
-    "nine-most-common-support-at-home-invoice-errors": { src: PHOTO.B6, alt: "A senior man checking an invoice at home" },
+    "nine-most-common-support-at-home-invoice-errors": { src: "https://images.pexels.com/photos/7651555/pexels-photo-7651555.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940", alt: "A hand checking a printed invoice with a pen" },
 };
 
 // slug -> { [sectionSlug]: { image?: {src,alt,caption}, chart?: {title,note,items} } }
@@ -164,6 +164,16 @@ export const ARTICLE_SECTION_VISUALS = {
             image: { src: PHOTO.G1, alt: "An older person going through a draft service agreement with a trusted helper" },
         },
     },
+    "support-at-home-statement-vs-invoice-explained": {
+        "how-the-figures-fit-together": {
+            pullquote: { value: "$15", label: "what you pay on an illustrative $100 visit. The statement shows the $100 service price; the invoice asks only for your $15 share." },
+        },
+    },
+    "support-at-home-statement": {
+        "follow-the-balance": {
+            pullquote: { value: "$940", label: "closing balance in the worked example: $1,200 opening, minus $300 of funded services, plus a $40 credit." },
+        },
+    },
 };
 
 // Category-based fallback hero for CMS / legacy articles that are not in
@@ -181,7 +191,7 @@ export const CATEGORY_HERO_FALLBACK = {
     "Support at Home basics": { src: PHOTO.A4 },
 };
 
-export const DEFAULT_HERO_FALLBACK = { src: PHOTO.A4 };
+export const DEFAULT_HERO_FALLBACK = { src: "https://images.pexels.com/photos/39191087/pexels-photo-39191087.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940" };
 
 // Resolve a hero image for any article (structured, CMS, or legacy static).
 export function heroForArticle(article, category) {

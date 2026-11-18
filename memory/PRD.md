@@ -8362,3 +8362,14 @@ Verified by frontend testing agent (iteration_403.json): all critical criteria p
 - **Title Case** now applied to ALL article headings AND titles (index cards + H1 + related) via `titleCaseHeading` in `lib/titleCase.js`: lowercases small words (and/the/to/for/a), preserves acronyms (SA456, CHSP, AT-HM, GST) and figures (10%, $140,652.80); "From"/"If" capitalised to match the editorial plan.
 - **REMAINING (next batches):** load the verified copy for the other ~44 articles; finish any remaining merges from the register; offer-wording sweep on non-article surfaces. Google Analytics remains PAUSED per user.
 - Preview only; goes live on wayly.com.au after the next Publish.
+
+## Nov 2026 — Resources full-width + editorial plan Batch 2 (web, PREVIEW DONE, needs Publish)
+Self-verified via screenshots + DOM assertions (index + complaints + 3 invoice/statement guides). Batch 1 was QA'd in iteration_403.
+- **Resources index now full-width** (`w-full px-6 lg:px-10`, grid fills the viewport) with a **reorganised controls toolbar**: search left, result count + sort right, a "Browse by topic" divider above the category chips, all inside one rounded surface card. Still 4 cards per row on desktop.
+- **Image fixes** (per visual edits): removed the duplicated "man with tattoo" (PHOTO.B6) — support-at-home-costs-and-contributions and nine-invoice-errors now use distinct bill/invoice photos; `DEFAULT_HERO_FALLBACK` changed off A4 so legacy cards don't duplicate a hero.
+- **Batch 2 — 7 guides rewritten** with verified PDF copy (added to `pdfArticles2026.js` override layer; old Key Takeaways/FAQs cleared): how-to-complain-about-aged-care-commission, support-at-home-statement-vs-invoice-explained, support-at-home-statement, home-care-package-statement-vs-support-at-home-statement, support-at-home-statement-flags-what-to-question, sah-invoice-checker-verify-support-at-home-invoice-five-minutes, nine-most-common-support-at-home-invoice-errors.
+- **Offer/CTA expanded** in `waylyOffer.js` (ask_wayly → /ask-wayly free; letters → /ai-tools/letters-and-follow-ups trial; invoice_checker → /ai-tools/invoice-checker trial) and the NextStep resolver now maps a `secondary` offer key. Complaints uses Ask Wayly + Letters; the invoice guides use Invoice Checker + free decode; statement guides use free decode + trial.
+- **2 more merges/redirects** (index 44 → 42): support-at-home-personal-care-free-october-2026 → support-at-home-personal-care-free-1-october-2026; home-care-package-vs-support-at-home → what-happened-to-my-home-care-package. All clearly-identifiable duplicate pages from the register are now merged.
+- Pull-quotes added to statement-vs-invoice ($15) and read-statement ($940).
+- **REMAINING:** ~30 more articles' verified copy in later batches; offer-wording sweep on non-article surfaces; Google Analytics still PAUSED.
+- Preview only; live on wayly.com.au after the next Publish.

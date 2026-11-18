@@ -17,4 +17,19 @@ export const WAYLY_OFFER = {
         href: "/pricing",
         disclosure: "Card required. After 7 days, Solo is A$24.50 per fortnight or Family is A$49.50 per fortnight unless you cancel. Cancel before your first charge in Settings → Billing.",
     },
+    ask_wayly: {
+        label: "Ask Wayly a question",
+        href: "/ask-wayly",
+        disclosure: "Free. No card required.",
+    },
+    letters: {
+        label: "Explore Letters & Follow-ups",
+        href: "/ai-tools/letters-and-follow-ups",
+        disclosure: "Part of the separate 7-day trial. Card required; cancel before your first charge in Settings → Billing.",
+    },
+    invoice_checker: {
+        label: "Explore the Invoice Checker",
+        href: "/ai-tools/invoice-checker",
+        disclosure: "Part of the separate 7-day trial. Card required. After 7 days, Solo is A$24.50 per fortnight or Family is A$49.50 per fortnight unless you cancel.",
+    },
 };

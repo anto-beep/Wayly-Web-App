@@ -160,7 +160,7 @@ export default function ArticlesIndex() {
         <div className="min-h-screen bg-kindred">
             <SeoHead {...SEO.articlesIndex} />
             <MarketingHeader />
-            <section className="mx-auto max-w-7xl px-6 pt-12 pb-6" data-testid="articles-page">
+            <section className="w-full px-6 lg:px-10 pt-12 pb-6" data-testid="articles-page">
                 <Link to="/resources" className="text-sm text-muted-k hover:text-primary-k inline-flex items-center gap-1"><ArrowLeft className="h-3.5 w-3.5" /> Resources</Link>
                 <span className="overline mt-6 block">Articles</span>
                 <h1 className="font-heading text-5xl text-primary-k tracking-tight mt-4 leading-tight">Plain-English aged care, explained.</h1>
@@ -169,53 +169,60 @@ export default function ArticlesIndex() {
                 </p>
             </section>
 
-            {/* Search + filters */}
-            <section className="mx-auto max-w-7xl px-6 pb-6" data-testid="articles-controls">
-                <div className="flex flex-col sm:flex-row gap-3 sm:items-center">
-                    <div className="relative flex-1 max-w-md">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-k" />
-                        <input
-                            type="text"
-                            value={query}
-                            onChange={(e) => setQuery(e.target.value)}
-                            placeholder="Search articles by topic or keyword"
-                            data-testid="articles-search"
-                            className="w-full rounded-full border border-kindred bg-surface pl-10 pr-10 py-2.5 text-sm text-primary-k placeholder:text-muted-k focus:outline-none focus:ring-2 focus:ring-gold"
-                        />
-                        {query && (
-                            <button type="button" onClick={() => setQuery("")} aria-label="Clear search" data-testid="articles-search-clear" className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-k hover:text-primary-k"><X className="h-4 w-4" /></button>
-                        )}
-                    </div>
-                    <select
-                        value={sort}
-                        onChange={(e) => setSort(e.target.value)}
-                        data-testid="articles-sort"
-                        className="rounded-full border border-kindred bg-surface px-4 py-2.5 text-sm text-primary-k focus:outline-none focus:ring-2 focus:ring-gold"
-                    >
-                        <option value="newest">Newest first</option>
-                        <option value="oldest">Oldest first</option>
-                    </select>
-                </div>
-                <div className="mt-4 flex flex-wrap gap-2" data-testid="articles-category-filters">
-                    {["All", ...categories].map((c) => {
-                        const active = category === c;
-                        return (
-                            <button
-                                key={c}
-                                type="button"
-                                onClick={() => setCategory(c)}
-                                data-testid={`articles-category-${c.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`}
-                                className={`rounded-full px-4 py-1.5 text-sm font-medium border transition-colors ${active ? "bg-primary-k text-white border-primary-k" : "bg-surface text-primary-k border-kindred hover:bg-surface-2"}`}
+            {/* Search + filters toolbar */}
+            <section className="w-full px-6 lg:px-10 pb-6" data-testid="articles-controls">
+                <div className="rounded-2xl border border-kindred bg-surface p-4 sm:p-5">
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                        <div className="relative w-full sm:max-w-md">
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-k" />
+                            <input
+                                type="text"
+                                value={query}
+                                onChange={(e) => setQuery(e.target.value)}
+                                placeholder="Search articles by topic or keyword"
+                                data-testid="articles-search"
+                                className="w-full rounded-full border border-kindred bg-surface-2 pl-10 pr-10 py-2.5 text-sm text-primary-k placeholder:text-muted-k focus:outline-none focus:ring-2 focus:ring-gold"
+                            />
+                            {query && (
+                                <button type="button" onClick={() => setQuery("")} aria-label="Clear search" data-testid="articles-search-clear" className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-k hover:text-primary-k"><X className="h-4 w-4" /></button>
+                            )}
+                        </div>
+                        <div className="flex items-center justify-between gap-3 sm:justify-end">
+                            <span className="text-sm text-muted-k whitespace-nowrap" data-testid="articles-result-count">{list.length} {list.length === 1 ? "article" : "articles"}</span>
+                            <select
+                                value={sort}
+                                onChange={(e) => setSort(e.target.value)}
+                                data-testid="articles-sort"
+                                className="rounded-full border border-kindred bg-surface-2 px-4 py-2.5 text-sm text-primary-k focus:outline-none focus:ring-2 focus:ring-gold"
                             >
-                                {c}
-                            </button>
-                        );
-                    })}
+                                <option value="newest">Newest first</option>
+                                <option value="oldest">Oldest first</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div className="mt-4 pt-4 border-t border-kindred">
+                        <span className="block text-xs uppercase tracking-wide text-muted-k mb-2.5">Browse by topic</span>
+                        <div className="flex flex-wrap gap-2" data-testid="articles-category-filters">
+                            {["All", ...categories].map((c) => {
+                                const active = category === c;
+                                return (
+                                    <button
+                                        key={c}
+                                        type="button"
+                                        onClick={() => setCategory(c)}
+                                        data-testid={`articles-category-${c.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`}
+                                        className={`rounded-full px-4 py-1.5 text-sm font-medium border transition-colors ${active ? "bg-primary-k text-white border-primary-k" : "bg-surface-2 text-primary-k border-kindred hover:bg-kindred"}`}
+                                    >
+                                        {c}
+                                    </button>
+                                );
+                            })}
+                        </div>
+                    </div>
                 </div>
-                <p className="mt-3 text-sm text-muted-k" data-testid="articles-result-count">{list.length} {list.length === 1 ? "article" : "articles"}</p>
             </section>
 
-            <section className="mx-auto max-w-7xl px-6 pb-20 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5" data-testid="articles-grid">
+            <section className="w-full px-6 lg:px-10 pb-20 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5" data-testid="articles-grid">
                 {list.length === 0 && (
                     <div className="col-span-full rounded-2xl border border-kindred bg-surface p-10 text-center" data-testid="articles-empty">
                         <p className="text-muted-k">No articles match "{query}".</p>
@@ -258,6 +265,8 @@ const SLUG_REDIRECTS = {
     "reassessment-when-and-how": "when-to-request-support-at-home-reassessment",
     "anomaly-watch-what-to-flag": "support-at-home-statement-flags-what-to-question",
     "complaint-acqsc": "how-to-complain-about-aged-care-commission",
+    "support-at-home-personal-care-free-october-2026": "support-at-home-personal-care-free-1-october-2026",
+    "home-care-package-vs-support-at-home": "what-happened-to-my-home-care-package",
 };
 
 export function ArticleDetail() {
@@ -581,7 +590,9 @@ function StructuredArticle({ article, slug }) {
                     <NextStep
                         invite={article.next_step.invite}
                         primary={typeof article.next_step.primary === "string" ? WAYLY_OFFER[article.next_step.primary] : article.next_step.primary}
-                        secondary={article.next_step.trial ? WAYLY_OFFER.trial : (article.next_step.secondary || null)}
+                        secondary={article.next_step.secondary
+                            ? (typeof article.next_step.secondary === "string" ? WAYLY_OFFER[article.next_step.secondary] : article.next_step.secondary)
+                            : (article.next_step.trial ? WAYLY_OFFER.trial : null)}
                     />
                 )}
 
