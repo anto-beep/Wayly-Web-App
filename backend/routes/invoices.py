@@ -48,7 +48,7 @@ from lib.inv1 import (
     OverallVerdict,
     SituationProfile,
 )
-from lib.inv1.extractor import extract_invoice_header
+from lib.inv1.extractor import extract_invoice_header, extract_invoice_totals
 from lib.inv1.summariser import generate_summary
 from lib.inv1.schema import PensionStatus, YesNoUnknown
 from lib.upload_guard import classify_upload
@@ -332,6 +332,19 @@ def build_invoices_router(
             quarterly_budget=header.get("quarterly_budget"),
             ppc_snapshot=ppc_snapshot or None,
         ).to_dict()
+
+        # Match the figure we show to the invoice's printed totals: use the
+        # grand total (GST-inclusive) when present, and surface subtotal + GST
+        # so the UI/summary can say "including $X GST". Falls back to the
+        # ex-GST line-item sum when a total isn't printed.
+        _p_sub, _p_gst, _p_total = extract_invoice_totals(payable_text)
+        _sum_gross = reconciliation.get("invoice_total")
+        reconciliation["invoice_subtotal"] = _p_sub if _p_sub is not None else _sum_gross
+        reconciliation["invoice_gst"] = _p_gst
+        if _p_total is not None:
+            reconciliation["invoice_total"] = _p_total
+        elif _p_sub is not None and _p_gst:
+            reconciliation["invoice_total"] = round(_p_sub + _p_gst, 2)
 
         # AI plain-English summary. Non-blocking failure, the fallback
         # template kicks in if the LLM is unavailable.

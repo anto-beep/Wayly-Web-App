@@ -157,7 +157,23 @@ def _build_prompt(
     parts: List[str] = []
     parts.append(f"Overall verdict: {verdict}")
     parts.append(f"Number of line items: {len(lines)}")
-    parts.append(f"Total gross on the invoice: ${total_gross:,.2f}")
+    inv_total = reconciliation.get("invoice_total")
+    inv_sub = reconciliation.get("invoice_subtotal")
+    inv_gst = reconciliation.get("invoice_gst")
+    if inv_total is not None and inv_gst:
+        _sub = inv_sub if inv_sub is not None else (inv_total - inv_gst)
+        parts.append(
+            f"Invoice total: ${inv_total:,.2f} including ${inv_gst:,.2f} GST "
+            f"(subtotal before GST ${_sub:,.2f}). State this total (${inv_total:,.2f}) "
+            f"as the amount the invoice is for, and mention it includes GST."
+        )
+    elif inv_total is not None:
+        parts.append(
+            f"Invoice total: ${inv_total:,.2f} (no separate GST line shown). "
+            f"State this as the amount the invoice is for."
+        )
+    else:
+        parts.append(f"Total gross on the invoice: ${total_gross:,.2f}")
 
     # Service-level breakdown so the summary can explain what was actually
     # billed (INV-1 depth upgrade, matching the Statement Decoder style), not

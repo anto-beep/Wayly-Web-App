@@ -74,6 +74,8 @@ export function InvoiceResultBanner({ result }) {
     const lines = rec.lines || [];
 
     const invoiceTotal = Number(rec.invoice_total ?? result?.invoice_total ?? 0);
+    const invoiceGst = rec.invoice_gst != null ? Number(rec.invoice_gst) : null;
+    const invoiceSubtotal = rec.invoice_subtotal != null ? Number(rec.invoice_subtotal) : null;
     const refundOwed = _sum(findings);
     const disputedLineIds = new Set(
         findings.flatMap((f) => f?.line_ids || f?.affected_line_ids || (f?.line_number ? [f.line_number] : []))
@@ -95,6 +97,9 @@ export function InvoiceResultBanner({ result }) {
                 <div>
                     <div className="text-[10px] uppercase tracking-wider text-white/70">Amount billed</div>
                     <div className="text-2xl mt-1 tabular-nums">{aud(invoiceTotal)}</div>
+                    {invoiceGst ? (
+                        <div className="text-[10px] text-white/60 mt-0.5" data-testid="inv1-gst-note">incl. {aud(invoiceGst)} GST</div>
+                    ) : null}
                 </div>
                 <div>
                     <div className="text-[10px] uppercase tracking-wider text-white/70">Potential refund</div>
@@ -111,6 +116,7 @@ export function InvoiceResultBanner({ result }) {
             </div>
             <div className="mt-4 pt-4 border-t border-white/15 flex flex-wrap gap-x-5 gap-y-1 text-[11px] text-white/70" data-testid="inv1-summary-meta">
                 {lines.length ? <span>{lines.length} line item{lines.length === 1 ? "" : "s"}</span> : null}
+                {invoiceSubtotal != null && invoiceGst ? <span>Subtotal {aud(invoiceSubtotal)} + GST {aud(invoiceGst)}</span> : null}
                 {disputedCount ? <span>{disputedCount} disputed</span> : null}
                 {result?.provider_abn ? <span>ABN {result.provider_abn}</span> : null}
                 {result?.due_date ? <span>Due {new Date(result.due_date).toLocaleDateString("en-AU")}</span> : null}

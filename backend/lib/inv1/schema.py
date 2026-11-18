@@ -243,6 +243,11 @@ class ReconciliationPayload:
     # Total amount billed on the invoice (sum of line gross_cost). Surfaced by
     # the results banner ("Amount billed") on web + mobile.
     invoice_total: Optional[float] = None
+    # Printed footer figures so the displayed total matches the invoice itself:
+    # subtotal (ex-GST) and GST. ``invoice_total`` holds the GST-inclusive grand
+    # total when the invoice prints one.
+    invoice_subtotal: Optional[float] = None
+    invoice_gst: Optional[float] = None
 
     def to_dict(self) -> Dict[str, Any]:
         return {
@@ -259,6 +264,8 @@ class ReconciliationPayload:
             "statement_schema_version": self.statement_schema_version,
             "ppc_snapshot_id": self.ppc_snapshot_id,
             "invoice_total": self.invoice_total,
+            "invoice_subtotal": self.invoice_subtotal,
+            "invoice_gst": self.invoice_gst,
         }
 
 

@@ -691,6 +691,63 @@ def extract_line_items(text: str, invoice_year: Optional[int] = None) -> List[Ex
         _default_year = previous_year
 
 
+_SUBTOTAL_START_RE = re.compile(r"^\s*sub\s*-?\s*total\b", re.IGNORECASE)
+_GST_START_RE = re.compile(r"^\s*(?:gst|g\.s\.t|tax)\b", re.IGNORECASE)
+_GRAND_TOTAL_START_RE = re.compile(
+    r"^\s*(?:total\s+due|amount\s+due|amount\s+payable|balance\s+due|"
+    r"grand\s+total|invoice\s+total|total\s+payable|total\b)",
+    re.IGNORECASE,
+)
+
+
+def extract_invoice_totals(
+    text: str,
+) -> Tuple[Optional[float], Optional[float], Optional[float]]:
+    """Parse the printed Subtotal / GST / Total figures from the invoice footer.
+
+    Returns ``(subtotal, gst, total)``. Each amount is read next to its label,
+    either on the same line or on the following line (two-column PDFs that
+    linearise the amount onto its own line). Values are never inferred — a
+    missing label yields ``None``. ``total`` keeps the last match, which is the
+    grand/total-due line (GST-inclusive) on a standard tax invoice.
+    """
+    if not text:
+        return (None, None, None)
+    lines = [l.strip() for l in text.splitlines()]
+    n = len(lines)
+
+    def amount_at(idx: int) -> Optional[float]:
+        here = _parse_all_money(lines[idx])
+        if here:
+            return here[-1]
+        for j in range(idx + 1, min(idx + 3, n)):
+            if not lines[j]:
+                continue
+            nxt = _parse_all_money(lines[j])
+            if nxt and _desc_char_count(lines[j]) < 4:
+                return nxt[-1]
+            break
+        return None
+
+    subtotal = gst = total = None
+    for i, ln in enumerate(lines):
+        if not ln:
+            continue
+        if _SUBTOTAL_START_RE.match(ln):
+            v = amount_at(i)
+            if v is not None:
+                subtotal = v
+        elif _GST_START_RE.match(ln):
+            v = amount_at(i)
+            if v is not None:
+                gst = v
+        elif _GRAND_TOTAL_START_RE.match(ln):
+            v = amount_at(i)
+            if v is not None:
+                total = v
+    return (subtotal, gst, total)
+
+
 def find_duplicates(lines: List[ExtractedLine]) -> List[Tuple[str, str, str]]:
     """Return a list of `(line_id_a, line_id_b, reason)` tuples for lines
     that appear to be duplicates. Two lines are considered duplicates when:
