@@ -18,16 +18,10 @@ function aud(n) {
 }
 
 function _findingImpact(f) {
-    return Number(
-        f?.financial_impact?.amount
-            ?? f?.observed?.overcharge_amount
-            ?? f?.observed?.refund_amount
-            ?? f?.observed?.excess_amount
-            ?? f?.observed?.difference
-            ?? f?.observed?.gst_amount
-            ?? f?.observed?.contribution_amount
-            ?? 0
-    );
+    // Only a backend-computed, traceable financial_impact is a refund. Never
+    // infer a dollar figure from arbitrary observed.* context fields (that
+    // produced impossible refunds larger than the amount billed).
+    return Number(f?.financial_impact?.amount ?? 0);
 }
 
 function _sum(findings) {
@@ -63,6 +57,7 @@ const _CHECK_TITLES = {
     C10: "About your lifetime contribution cap",
     C11: "Duplicate line",
     C12: "Rate above your provider's own rate",
+    C13: "The invoice total is higher than the lines add up to",
 };
 function _titleForCheck(ref) {
     return _CHECK_TITLES[String(ref).toUpperCase()] || `Check ${ref}`;
@@ -76,7 +71,8 @@ export function InvoiceResultBanner({ result }) {
     const invoiceTotal = Number(rec.invoice_total ?? result?.invoice_total ?? 0);
     const invoiceGst = rec.invoice_gst != null ? Number(rec.invoice_gst) : null;
     const invoiceSubtotal = rec.invoice_subtotal != null ? Number(rec.invoice_subtotal) : null;
-    const refundOwed = _sum(findings);
+    const _refundRaw = rec.refund_total != null ? Number(rec.refund_total) : _sum(findings);
+    const refundOwed = invoiceTotal > 0 ? Math.min(_refundRaw, invoiceTotal) : _refundRaw;
     const disputedLineIds = new Set(
         findings.flatMap((f) => f?.line_ids || f?.affected_line_ids || (f?.line_number ? [f.line_number] : []))
     );

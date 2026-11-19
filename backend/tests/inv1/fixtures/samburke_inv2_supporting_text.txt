@@ -1,0 +1,131 @@
+Sam Burke - supporting records for invoice BC-SAH-2026-10-0417
+Page 1
+Test fixture SAMBURKE-INV-2 v1. Blueberry Care Pty Ltd is a fictional provider and all details are synthetic test data generated for Wayly quality assurance.
+Sam Burke - Supporting Records for Invoice BC-SAH-2026-10-0417
+Ground truth for checking the October 2026 participant contribution invoice. Provider: Blueberry Care Pty Ltd. Participant: Mr Sam Burke,
+My Aged Care ID AC 4471 8820, Support at Home classification 6.
+1. Service Agreement, Schedule A - Agreed Prices Effective 01/07/2026
+Service
+Category from
+01/10/2026
+Weekday
+Saturday
+Sunday
+Public holiday
+Personal care
+Clinical supports
+ $82.00
+ $114.00
+ $148.00
+ $172.00
+Nursing care - registered nurse
+Clinical supports
+ $148.00
+ $200.00
+ $256.00
+ $296.00
+Social support - individual
+Independence
+ $78.00
+ $108.00
+ $140.00
+ $164.00
+Flexible respite - individual
+Independence
+ $82.00
+ $114.00
+ $148.00
+ $172.00
+Domestic assistance
+Everyday living
+ $76.00
+ $106.00
+ $137.00
+ $160.00
+Meal preparation
+Everyday living
+ $74.00
+ $103.00
+ $133.00
+ $155.00
+Gardening
+Everyday living
+ $80.00
+ not available
+ not available
+ not available
+All prices are per hour and are all-inclusive. Care management is drawn from the care management account at 10% of the quarterly budget,
+which is $411.38 per month for classification 6.
+2. Service Agreement, Relevant Clauses
+Clause 7.2 Prices. The prices in Schedule A are all-inclusive and cover package management, administration and travel. No
+separate administration, package management, travel, entry or exit fee is payable.
+Clause 7.4 Price variation. Prices may be varied once each year with effect from 01 July. We will give you at least 30 days
+written notice in advance of any variation. No price variation notice was issued to Mr Burke after 01/07/2026.
+Clause 9.3 Cancellation. If you cancel a scheduled service with at least 24 hours notice, no charge applies. If you cancel with
+less than 24 hours notice, the full price of the service may be charged.
+Clause 9.5 Absence and hospital leave. No charge applies for a service that is not delivered because you are in hospital, in
+residential respite or otherwise on leave.
+3. Services Australia Contribution Advice, Dated 18/06/2026
+Service category
+Mr Burke's contribution rate
+Clinical supports
+ 0%
+Independence
+ 12.5%
+Everyday living
+ 42.5%
+Care management
+ 0%
+Status: part pension. Rates effective 01/07/2026 and unchanged at the date of the invoice. Lifetime contribution cap not reached. Not a no
+worse off participant.
+4. Support Plan, Approved Service Types and Agreed Frequency
+Service
+Agreed frequency
+Duration
+Personal care, morning
+3 days per week, Monday, Wednesday, Friday
+1.5 hours
+Nursing care, wound review
+Weekly, Wednesday
+0.75 hours
+Domestic assistance
+Fortnightly, Thursday
+2 hours
+Meal preparation
+Weekly, Friday
+2 hours
+Social support - individual
+Fortnightly, Tuesday
+2 hours
+Gardening
+Monthly
+2 hours
+Flexible respite - individual
+As arranged
+As arranged
+5. Care Record, October 2026
+Date
+Event
+05/10/2026
+ACT Labour Day public holiday. Personal care delivered as scheduled at the agreed public
+holiday rate.
+13/10/2026
+Mr Burke cancelled the flexible respite session scheduled for Saturday 17/10/2026, giving 4
+days notice.
+
+Sam Burke - supporting records for invoice BC-SAH-2026-10-0417
+Page 2
+Test fixture SAMBURKE-INV-2 v1. Blueberry Care Pty Ltd is a fictional provider and all details are synthetic test data generated for Wayly quality assurance.
+Date
+Event
+17/10/2026
+Registered nurse wound review delivered as an additional Saturday visit at the agreed
+Saturday rate. Flexible respite not delivered.
+20/10/2026
+Admitted to Canberra Hospital.
+20/10/2026 to 24/10/2026
+In hospital. No Support at Home services delivered.
+24/10/2026
+Discharged home. Services resumed Monday 26/10/2026.
+31/10/2026
+No services delivered. Saturday, not a scheduled service day.

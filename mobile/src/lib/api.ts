@@ -352,3 +352,71 @@ export async function uploadFile<T = any>(
   }
   return data as T;
 }
+
+// Multipart upload for TWO (or more) files in a single request — used by the
+// Invoice Checker when an optional "Supporting Records" PDF accompanies the
+// invoice. React Native's global fetch + FormData cannot stream file:// parts,
+// and expo-file-system's File.upload only supports ONE file field, so here we
+// read each file into a Blob with expo/fetch (which handles file:// on native
+// and web) and post a single multipart body.
+export async function uploadMultipart<T = any>(
+  path: string,
+  files: { fieldName: string; file: UploadPart }[],
+  opts: { fields?: Record<string, string>; auth?: boolean } = {}
+): Promise<T> {
+  const { fields = {}, auth = true } = opts;
+
+  if (_readOnlyMode && !_isAllowedReadOnlyWrite(path)) {
+    throw new ApiError(402, READ_ONLY_MESSAGE, {
+      detail: { error: "trial_expired", message: READ_ONLY_MESSAGE, read_only: true },
+    });
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  const { fetch: expoFetch } = require("expo/fetch");
+
+  const buildHeaders = async (): Promise<Record<string, string>> => {
+    const h: Record<string, string> = {};
+    if (auth) {
+      const token = await getToken();
+      if (token) h["Authorization"] = `Bearer ${token}`;
+      const pid = await getActiveParticipantId();
+      if (pid) h["X-Participant-Id"] = pid;
+    }
+    return h;
+  };
+
+  const send = async (headers: Record<string, string>): Promise<{ status: number; body: string }> => {
+    const form = new FormData();
+    for (const { fieldName, file } of files) {
+      const blob = await (await expoFetch(file.uri)).blob();
+      form.append(fieldName, blob, file.name);
+    }
+    Object.entries(fields).forEach(([k, v]) => form.append(k, v));
+    const res = await expoFetch(`${API}${path}`, { method: "POST", headers, body: form });
+    return { status: res.status, body: await res.text() };
+  };
+
+  let headers = await buildHeaders();
+  let out = await send(headers);
+  if (out.status === 401 && auth) {
+    const fresh = await refreshAccessToken();
+    if (fresh) {
+      headers = await buildHeaders();
+      out = await send(headers);
+    }
+  }
+
+  let data: any = null;
+  try {
+    data = out.body ? JSON.parse(out.body) : null;
+  } catch {
+    data = out.body;
+  }
+  if (out.status < 200 || out.status >= 300) {
+    const detail =
+      (data && (data.detail?.message || data.detail || data.message)) || `Request failed (${out.status})`;
+    throw new ApiError(out.status, typeof detail === "string" ? detail : "Request failed", data);
+  }
+  return data as T;
+}

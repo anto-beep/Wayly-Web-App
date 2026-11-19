@@ -256,6 +256,38 @@ def check_c4_care_management_and_prohibited(
                 ),
             ))
 
+    # Separate travel / mileage charges: under Support at Home the agreed unit
+    # prices are all-inclusive of travel (no separate travel fee payable), so a
+    # standalone travel or per-km line billed to the participant is worth a query.
+    for ln in lines:
+        if ln.service_category in _PROHIBITED_CATEGORIES:
+            continue
+        st = (ln.service_type or "").lower()
+        is_travel = ("travel" in st or "mileage" in st) and (
+            "km" in st or "mileage" in st or "vehicle" in st or "/km" in st
+        )
+        charged = (ln.contribution_amount or 0) or (ln.gross_cost or 0)
+        if is_travel and charged > 0:
+            findings.append(Finding(
+                check_id=CheckId.C4_care_mgmt_and_prohibited_fees,
+                tier=Tier.T4_check_before_paying,
+                line_ids=[ln.line_id],
+                observed={"amount": charged, "category": "travel"},
+                expected={"amount": 0},
+                expected_source=ExpectedSource.program_rule,
+                confidence=Confidence.high,
+                title="A separate travel charge that may not be allowed",
+                suggested_question=(
+                    "Support at Home unit prices are meant to be all-inclusive of travel. "
+                    f"Can you check this separate travel charge of ${charged:,.2f} and "
+                    "remove it if it applies?"
+                ),
+                escalation="acqsc",
+                narrative=(
+                    f"A separate travel/mileage line of ${charged:,.2f} appears on this invoice."
+                ),
+            ))
+
     # Care management cap
     cap_pct_raw = _index_get("care_management.cap_pct", default=10)
     try:
@@ -838,6 +870,356 @@ def _rollup_c3(c3_findings: List[Finding]) -> List[Finding]:
     return rolled
 
 
+# ---------------------------------------------------------------------------
+# C13 · Invoice footing (printed total vs sum of line contributions)
+# ---------------------------------------------------------------------------
+
+def check_c13_footing(
+    lines: List[ExtractedLine],
+    printed_total_payable: Optional[float],
+) -> List[Finding]:
+    """The printed "amount payable by you" should equal the sum of the
+    per-line contribution amounts. When the printed total is higher, the
+    invoice doesn't foot and the difference is worth querying."""
+    findings: List[Finding] = []
+    if not printed_total_payable or printed_total_payable <= 0:
+        return findings
+    col = round(sum((ln.contribution_amount or 0.0) for ln in lines), 2)
+    if col <= 0:
+        return findings
+    diff = round(printed_total_payable - col, 2)
+    if diff > 0.5:
+        findings.append(Finding(
+            check_id=CheckId.C13_invoice_footing,
+            tier=Tier.T3_worth_a_question,
+            line_ids=[],
+            observed={
+                "printed_total": round(printed_total_payable, 2),
+                "lines_sum": col,
+                "difference": diff,
+            },
+            expected={"total_matches_line_sum": True},
+            expected_source=ExpectedSource.program_rule,
+            confidence=Confidence.high,
+            title="The invoice total is higher than the lines add up to",
+            suggested_question=(
+                f"The amount payable is ${printed_total_payable:,.2f}, but the individual "
+                f"contribution amounts on the invoice add up to ${col:,.2f}. "
+                f"Can you check the ${diff:,.2f} difference?"
+            ),
+            narrative=(
+                f"Printed total payable ${printed_total_payable:,.2f} exceeds the sum of the "
+                f"line contributions ${col:,.2f} by ${diff:,.2f}."
+            ),
+        ))
+    return findings
+
+
+# ---------------------------------------------------------------------------
+# Supporting-records cross-checks (rate vs agreed Schedule A; not-delivered)
+# ---------------------------------------------------------------------------
+
+_RATE_CHECK_CATEGORIES = {ServiceCategory.everyday_living, ServiceCategory.independence}
+_CARE_SERVICE_CATEGORIES = {
+    ServiceCategory.everyday_living, ServiceCategory.independence,
+    ServiceCategory.personal_care, ServiceCategory.clinical,
+}
+
+
+def _day_type(iso: Optional[str], public_holidays: set) -> Optional[str]:
+    d = _parse_iso(iso)
+    if d is None:
+        return None
+    if (iso or "")[:10] in public_holidays:
+        return "public_holiday"
+    return {5: "saturday", 6: "sunday"}.get(d.weekday(), "weekday")
+
+
+def check_rate_vs_agreed(
+    lines: List[ExtractedLine],
+    agreed_rates: Dict[str, Dict[str, Optional[float]]],
+    public_holidays: Optional[List[str]] = None,
+) -> List[Finding]:
+    """Compare each hourly service line's unit price against the participant's
+    OWN agreed Schedule A price for that service and day-type (weekday /
+    Saturday / Sunday / public holiday). Catches a weekend rate billed on a
+    weekday and any rate above the agreed schedule. One finding per service."""
+    from lib.inv1.supporting import canonical_service
+    findings: List[Finding] = []
+    if not agreed_rates:
+        return findings
+    ph = set(public_holidays or [])
+    groups: Dict[str, Dict[str, Any]] = {}
+    for ln in lines:
+        if ln.service_category not in _RATE_CHECK_CATEGORIES:
+            continue
+        if ln.unit_price is None or ln.service_date is None or ln.units_or_hours is None:
+            continue
+        key = canonical_service(ln.service_type)
+        rates = agreed_rates.get(key)
+        if not rates:
+            continue
+        dt = _day_type(ln.service_date, ph)
+        if dt is None:
+            continue
+        agreed = rates.get(dt)
+        if agreed is None:
+            continue
+        if ln.unit_price > agreed * 1.01:
+            gross_over = round((ln.unit_price - agreed) * ln.units_or_hours, 2)
+            rate = (ln.contribution_rate or 0.0) / 100.0
+            contrib_over = round(gross_over * rate, 2) if rate else gross_over
+            g = groups.setdefault(key, {"line_ids": [], "overcharge": 0.0, "examples": []})
+            g["line_ids"].append(ln.line_id)
+            g["overcharge"] = round(g["overcharge"] + contrib_over, 2)
+            g["examples"].append((ln.service_date, ln.unit_price, agreed, dt))
+    for key, g in groups.items():
+        if g["overcharge"] <= 0:
+            continue
+        date0, charged0, agreed0, dt0 = g["examples"][0]
+        label = key.title()
+        dt_word = {"weekday": "weekday", "saturday": "Saturday", "sunday": "Sunday",
+                   "public_holiday": "public holiday"}.get(dt0, dt0)
+        findings.append(Finding(
+            check_id=CheckId.C12_price_vs_published,
+            tier=Tier.T3_worth_a_question,
+            line_ids=g["line_ids"],
+            observed={
+                "contribution_overcharge": g["overcharge"],
+                "charged_rate": charged0,
+                "agreed_rate": agreed0,
+                "day_type": dt0,
+                "lines": len(g["line_ids"]),
+            },
+            expected={"agreed_rate": agreed0},
+            expected_source=ExpectedSource.published_price,
+            confidence=Confidence.high,
+            title=f"{label} charged above your agreed rate",
+            suggested_question=(
+                f"Your service agreement lists {label.lower()} at ${agreed0:,.2f} an hour "
+                f"for a {dt_word}, but this invoice charges ${charged0:,.2f}. "
+                "Can you check the rate and refund the difference?"
+            ),
+            escalation="acqsc",
+            narrative=(
+                f"{label} billed at ${charged0:,.2f}/hr against the agreed {dt_word} rate of "
+                f"${agreed0:,.2f}/hr; your contribution overcharge is ${g['overcharge']:,.2f}."
+            ),
+        ))
+    return findings
+
+
+def check_services_not_delivered(
+    lines: List[ExtractedLine],
+    cancellations: Optional[List[Dict[str, Any]]] = None,
+    absences: Optional[List[Dict[str, str]]] = None,
+) -> List[Finding]:
+    """Flag service lines billed for a date the participant's records show the
+    service was NOT delivered , either cancelled with notice (Clause 9.3) or
+    while the participant was in hospital / on leave (Clause 9.5)."""
+    from lib.inv1.supporting import canonical_service
+    findings: List[Finding] = []
+    cancels = cancellations or []
+    abss = absences or []
+    if not cancels and not abss:
+        return findings
+    for ln in lines:
+        if ln.service_category not in _CARE_SERVICE_CATEGORIES:
+            continue
+        if not ln.service_date:
+            continue
+        sd = ln.service_date[:10]
+        key = canonical_service(ln.service_type)
+        amt = ln.contribution_amount if ln.contribution_amount is not None else ln.gross_cost
+        reason = None
+        for c in cancels:
+            if c.get("with_notice") and c.get("service_key") == key and c.get("date") == sd:
+                reason = "cancelled"
+                break
+        if reason is None:
+            for a in abss:
+                st, en = a.get("start"), a.get("end")
+                if st and en and st <= sd <= en:
+                    reason = "absence"
+                    break
+        if reason == "cancelled":
+            findings.append(Finding(
+                check_id=CheckId.C5_charged_after_delivery,
+                tier=Tier.T4_check_before_paying,
+                line_ids=[ln.line_id],
+                observed={"service_date": ln.service_date, "reason": "cancelled_with_notice",
+                          "contribution_amount": amt},
+                expected={"charge": 0},
+                expected_source=ExpectedSource.program_rule,
+                confidence=Confidence.high,
+                title="Charged for a service you cancelled with notice",
+                suggested_question=(
+                    f"Your records show the {ln.service_type} on {_fmt_au(ln.service_date)} was "
+                    "cancelled with at least 24 hours notice, so under your agreement no charge "
+                    "applies. Can you remove it?"
+                ),
+                escalation="acqsc",
+                narrative=(
+                    f"{ln.service_type} on {_fmt_au(ln.service_date)} was cancelled with notice "
+                    f"but still billed ${(amt or 0):,.2f}."
+                ),
+            ))
+        elif reason == "absence":
+            findings.append(Finding(
+                check_id=CheckId.C5_charged_after_delivery,
+                tier=Tier.T4_check_before_paying,
+                line_ids=[ln.line_id],
+                observed={"service_date": ln.service_date, "reason": "in_hospital",
+                          "contribution_amount": amt},
+                expected={"charge": 0},
+                expected_source=ExpectedSource.program_rule,
+                confidence=Confidence.high,
+                title="Charged for a service during a hospital stay",
+                suggested_question=(
+                    f"Your records show you were in hospital / on leave on {_fmt_au(ln.service_date)} "
+                    f"and no service was delivered, so under your agreement this {ln.service_type} "
+                    "charge should not apply. Can you remove it?"
+                ),
+                escalation="acqsc",
+                narrative=(
+                    f"{ln.service_type} on {_fmt_au(ln.service_date)} was billed ${(amt or 0):,.2f} "
+                    "while the participant was in hospital / on leave."
+                ),
+            ))
+    return findings
+
+
+# ---------------------------------------------------------------------------
+# Rollup + traceable financial impact
+# ---------------------------------------------------------------------------
+
+def _rollup_same_check(findings: List[Finding], check_id: CheckId) -> List[Finding]:
+    """Collapse all findings of ``check_id`` into a single finding carrying
+    every affected line id. Used for C1/C2 so the results screen shows one
+    "personal care should be free" card, not eleven."""
+    group = [f for f in findings if f.check_id == check_id]
+    if len(group) <= 1:
+        return findings
+    rest = [f for f in findings if f.check_id != check_id]
+    head = group[0]
+    line_ids = [lid for f in group for lid in (f.line_ids or [])]
+    merged = Finding(
+        check_id=head.check_id,
+        tier=head.tier,
+        line_ids=line_ids,
+        observed={"line_count": len(group)},
+        expected=head.expected,
+        expected_source=head.expected_source,
+        confidence=head.confidence,
+        suggested_question=head.suggested_question,
+        escalation=head.escalation,
+        rule_effective_from=head.rule_effective_from,
+        narrative=head.narrative,
+        title=head.title,
+    )
+    # Preserve the original finding order: put the merged finding where the
+    # first member was.
+    out: List[Finding] = []
+    inserted = False
+    for f in findings:
+        if f.check_id == check_id:
+            if not inserted:
+                out.append(merged)
+                inserted = True
+            continue
+        out.append(f)
+    return out
+
+
+# Checks whose dollar impact is the FULL contribution on their lines (money
+# the participant can get back entirely).
+_FULL_CONTRIBUTION_CHECKS = {
+    CheckId.C1_clinical_nil,
+    CheckId.C2_personal_care_after_oct_2026,
+    CheckId.C4_care_mgmt_and_prohibited_fees,
+    CheckId.C5_charged_after_delivery,
+}
+
+
+def _annotate_financial_impact(
+    findings: List[Finding],
+    lines: List[ExtractedLine],
+) -> None:
+    """Attach a traceable ``financial_impact`` (contribution dollars the
+    participant could recover) to each finding. Every amount is derived from a
+    named line or a named figure, never inferred, and is bounded by the line's
+    own contribution so a refund can never exceed what was billed."""
+    by_id = {ln.line_id: ln for ln in lines}
+
+    def contrib(ln: Optional[ExtractedLine]) -> float:
+        if ln is None:
+            return 0.0
+        if ln.contribution_amount is not None:
+            return float(ln.contribution_amount)
+        return float(ln.gross_cost or 0.0)
+
+    for f in findings:
+        cid = f.check_id
+        lns = [by_id[i] for i in (f.line_ids or []) if i in by_id]
+        amount = 0.0
+        basis = None
+        if cid in _FULL_CONTRIBUTION_CHECKS:
+            amount = round(sum(contrib(ln) for ln in lns), 2)
+            basis = "sum of the contribution charged on the affected line(s)"
+        elif cid == CheckId.C11_duplicate_billing:
+            # Refund ONE copy of a duplicated pair.
+            amount = round(contrib(lns[0]), 2) if lns else 0.0
+            basis = "one copy of the duplicated line's contribution"
+        elif cid == CheckId.C6_line_arithmetic:
+            ln = lns[0] if lns else None
+            if ln and ln.unit_price is not None and ln.units_or_hours is not None and ln.gross_cost is not None:
+                expected = round(ln.unit_price * ln.units_or_hours, 2)
+                gross_excess = max(0.0, round(ln.gross_cost - expected, 2))
+                rate = (ln.contribution_rate or 0.0) / 100.0
+                amount = round(gross_excess * rate, 2) if rate else gross_excess
+                basis = "your contribution share of the over-stated line total"
+        elif cid == CheckId.C12_price_vs_published:
+            obs = f.observed if isinstance(f.observed, dict) else {}
+            amount = round(float(obs.get("contribution_overcharge") or 0.0), 2)
+            basis = "your contribution share of the rate above the agreed price"
+        elif cid == CheckId.C13_invoice_footing:
+            obs = f.observed if isinstance(f.observed, dict) else {}
+            amount = round(float(obs.get("difference") or 0.0), 2)
+            basis = "the gap between the printed total and the lines"
+        # C7/C8/C9/C10 and anything else: informational, no refund.
+        if amount and amount > 0:
+            f.financial_impact = {"amount": amount, "basis": basis}
+        else:
+            f.financial_impact = {"amount": 0.0}
+
+
+def refund_total(findings: List[Dict[str, Any]], amount_billed: Optional[float]) -> float:
+    """Sum the traceable per-finding impacts (de-duplicated by check + lines)
+    and clamp to ``amount_billed`` so a refund can never exceed what was
+    billed (fail-closed guard, spec defect D1)."""
+    seen = set()
+    total = 0.0
+    for f in findings or []:
+        fi = (f.get("financial_impact") or {}) if isinstance(f, dict) else {}
+        try:
+            amt = float(fi.get("amount") or 0.0)
+        except (TypeError, ValueError):
+            amt = 0.0
+        if amt <= 0:
+            continue
+        ids = "|".join(sorted(f.get("line_ids") or []))
+        key = f"{f.get('check_id')}::{ids}" if ids else f"raw::{id(f)}"
+        if key in seen:
+            continue
+        seen.add(key)
+        total += amt
+    total = round(total, 2)
+    if amount_billed is not None and total > amount_billed:
+        logger.warning("inv1 refund %.2f exceeds amount billed %.2f; clamping", total, amount_billed)
+        total = round(float(amount_billed), 2)
+    return total
+
+
 def run_checks(
     *,
     lines: List[ExtractedLine],
@@ -849,6 +1231,8 @@ def run_checks(
     statement: Optional[Dict[str, Any]] = None,
     ppc_snapshot: Optional[Dict[str, float]] = None,
     lifetime_running_total: Optional[float] = None,
+    printed_total_payable: Optional[float] = None,
+    supporting: Optional[Dict[str, Any]] = None,
     ce2_schema_version: Optional[str] = None,
     statement_schema_version: Optional[str] = None,
     ppc_snapshot_id: Optional[str] = None,
@@ -870,24 +1254,28 @@ def run_checks(
     findings.extend(check_c9_adjustments(lines))
     findings.extend(check_c10_lifetime_cap(lines, lifetime_running_total, situation))
     findings.extend(check_c11_duplicates(lines))
-    # C12: unit price vs published. If the caller did not pass a
-    # provider-specific PPC snapshot, we fall back to the SaH indicative
-    # pricebook (Feb 2026) so we still catch obvious over-charging.
-    effective_snapshot = ppc_snapshot
-    if not effective_snapshot:
-        try:
-            from lib.inv1.sah_pricebook import (
-                build_snapshot_for_lines,
-                SAH_PRICEBOOK_VERSION,
-            )
-            effective_snapshot = build_snapshot_for_lines(
-                [ln.service_type for ln in lines if ln.service_type]
-            )
-            if effective_snapshot and not ppc_snapshot_id:
-                ppc_snapshot_id = f"sah_indicative_{SAH_PRICEBOOK_VERSION}"
-        except Exception:  # pragma: no cover
-            effective_snapshot = None
-    findings.extend(check_c12_price_vs_published(lines, effective_snapshot))
+    findings.extend(check_c13_footing(lines, printed_total_payable))
+    # C12: unit price vs published. Only runs when the caller passes a
+    # provider-specific PPC snapshot (e.g. the agreed Schedule A prices). The
+    # generic SaH indicative pricebook is NOT used as a fallback: its ceilings
+    # sit below many providers' legitimately agreed rates and firing against it
+    # floods the family with false positives on ordinary lines.
+    if ppc_snapshot:
+        findings.extend(check_c12_price_vs_published(lines, ppc_snapshot))
+
+    # Supporting-records cross-checks: agreed Schedule A rate comparison and
+    # services billed while cancelled-with-notice or in hospital / on leave.
+    if supporting:
+        findings.extend(check_rate_vs_agreed(
+            lines,
+            supporting.get("agreed_rates") or {},
+            supporting.get("public_holidays") or [],
+        ))
+        findings.extend(check_services_not_delivered(
+            lines,
+            supporting.get("cancellations") or [],
+            supporting.get("absences") or [],
+        ))
 
     # Input state derivation
     if statement and ce2_schema_version:
@@ -899,6 +1287,12 @@ def run_checks(
 
     # Total amount billed = sum of line gross_cost (spec §10 banner "Amount billed").
     _invoice_total = round(sum((ln.gross_cost or 0) for ln in lines), 2) if lines else None
+
+    # Roll C1/C2 up to a single card each, then attach a traceable dollar
+    # impact to every finding (refund can never exceed the line's own charge).
+    findings = _rollup_same_check(findings, CheckId.C1_clinical_nil)
+    findings = _rollup_same_check(findings, CheckId.C2_personal_care_after_oct_2026)
+    _annotate_financial_impact(findings, lines)
 
     return ReconciliationPayload(
         schema_version=INV1_SCHEMA_VERSION,

@@ -155,7 +155,8 @@ export function InvoiceResultBanner({ result }: { result: any }) {
   const findings = rec.findings || [];
   const lines = rec.lines || [];
   const invoiceTotal = Number(rec.invoice_total ?? result?.invoice_total ?? 0);
-  const refundOwed = sumRefund(findings);
+  const refundRaw = rec.refund_total != null ? Number(rec.refund_total) : sumRefund(findings);
+  const refundOwed = invoiceTotal > 0 ? Math.min(refundRaw, invoiceTotal) : refundRaw;
   const disputed = new Set(findings.flatMap((f: any) => f?.line_ids || f?.affected_line_ids || (f?.line_number ? [f.line_number] : [])));
   const netPayable = Math.max(0, invoiceTotal - refundOwed);
   const metaBits = [

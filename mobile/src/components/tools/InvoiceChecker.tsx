@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { Alert, Pressable, ScrollView, StyleSheet, View } from "react-native";
 import { router } from "expo-router";
 import * as DocumentPicker from "expo-document-picker";
-import { Upload, ArrowRight, AlertTriangle, FileText, ReceiptText } from "lucide-react-native";
+import { Upload, ArrowRight, AlertTriangle, FileText, ReceiptText, FolderInput } from "lucide-react-native";
 
 import { AppHeader, Button, Card, T } from "@/src/components/ui";
 import ToolExplainer from "@/src/components/ToolExplainer";
@@ -11,9 +11,10 @@ import InvoiceResultView from "@/src/components/invoices/InvoiceResultView";
 import UploadGuardNotice from "@/src/components/UploadGuardNotice";
 import ResultActions from "@/src/components/tools/ResultActions";
 import ReportIssueButton from "@/src/components/ReportIssueButton";
+import InvoiceSampleResult from "@/src/components/invoices/InvoiceSampleResult";
 import { SmartAISummary } from "@/src/components/SmartAISummary";
 import { useScrollToResult } from "@/src/hooks/useScrollToResult";
-import { apiFetch, ApiError, uploadFile } from "@/src/lib/api";
+import { apiFetch, ApiError, uploadFile, uploadMultipart } from "@/src/lib/api";
 import { useTheme } from "@/src/theme/ThemeContext";
 import { fonts, radius, spacing } from "@/src/theme/tokens";
 import { shortDate } from "@/src/utils/format";
@@ -21,6 +22,7 @@ import { shortDate } from "@/src/utils/format";
 export default function InvoiceChecker() {
   const { colors } = useTheme();
   const [file, setFile] = useState<{ uri: string; name: string; mimeType?: string } | null>(null);
+  const [supporting, setSupporting] = useState<{ uri: string; name: string; mimeType?: string } | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [result, setResult] = useState<any>(null);
@@ -28,8 +30,10 @@ export default function InvoiceChecker() {
   const [dupe, setDupe] = useState<any>(null);
   const { scrollRef, onResultLayout, scrollToResult } = useScrollToResult();
 
+  const DOC_TYPES = ["application/pdf", "image/*", "text/*", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"];
+
   const pick = async () => {
-    const res = await DocumentPicker.getDocumentAsync({ type: ["application/pdf", "image/*", "text/*", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"], copyToCacheDirectory: true });
+    const res = await DocumentPicker.getDocumentAsync({ type: DOC_TYPES, copyToCacheDirectory: true });
     if (!res.canceled && res.assets?.[0]) {
       const a = res.assets[0];
       setFile({ uri: a.uri, name: a.name, mimeType: a.mimeType });
@@ -37,11 +41,25 @@ export default function InvoiceChecker() {
     }
   };
 
+  const pickSupporting = async () => {
+    const res = await DocumentPicker.getDocumentAsync({ type: DOC_TYPES, copyToCacheDirectory: true });
+    if (!res.canceled && res.assets?.[0]) {
+      const a = res.assets[0];
+      setSupporting({ uri: a.uri, name: a.name, mimeType: a.mimeType });
+    }
+  };
+
   const upload = async (override = false) => {
     if (!file) return;
     setBusy(true); setError(""); setResult(null); setGuard(null); setDupe(null);
     try {
-      const data: any = await uploadFile("/invoices/upload", { uri: file.uri, name: file.name, mimeType: file.mimeType }, { fields: override ? { override_guard: "true" } : {} });
+      const fields: Record<string, string> = override ? { override_guard: "true" } : {};
+      const data: any = supporting
+        ? await uploadMultipart("/invoices/upload", [
+            { fieldName: "file", file },
+            { fieldName: "supporting_file", file: supporting },
+          ], { fields })
+        : await uploadFile("/invoices/upload", { uri: file.uri, name: file.name, mimeType: file.mimeType }, { fields });
       if (data?.upload_guard && data.upload_guard.decision !== "accept") { setGuard(data.upload_guard); return; }
       setResult(data);
       scrollToResult();
@@ -55,9 +73,10 @@ export default function InvoiceChecker() {
     } finally { setBusy(false); }
   };
 
-  const reset = () => { setFile(null); setResult(null); setError(""); setGuard(null); setDupe(null); };
+  const reset = () => { setFile(null); setSupporting(null); setResult(null); setError(""); setGuard(null); setDupe(null); };
 
   const isStatement = result?.document_shape === "statement";
+  const idle = !file && !result && !guard && !dupe;
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
@@ -87,6 +106,31 @@ export default function InvoiceChecker() {
                   <FileText size={16} color={colors.heading} />
                   <T variant="small" testID="inv1-file-name" numberOfLines={1} style={{ maxWidth: 220 }}>{file.name}</T>
                 </View>
+
+                <View style={[styles.supporting, { borderColor: colors.border, backgroundColor: colors.surface }]} testID="inv1-supporting-block">
+                  <View style={{ flexDirection: "row", alignItems: "flex-start", gap: 8 }}>
+                    <FolderInput size={18} color={colors.heading} style={{ marginTop: 1 }} />
+                    <View style={{ flex: 1 }}>
+                      <T style={{ fontFamily: fonts.bodySemi, fontSize: 13, color: colors.heading }}>Add supporting records <T style={{ fontFamily: fonts.body, fontSize: 12, color: colors.muted }}>(optional)</T></T>
+                      <T variant="small" style={{ color: colors.muted, marginTop: 2, lineHeight: 17 }}>Your service agreement or care diary. Wayly cross-checks agreed rates, cancellations and hospital stays to catch overcharges the invoice alone can&apos;t show.</T>
+                      {!supporting ? (
+                        <Pressable testID="inv1-supporting-pick" onPress={pickSupporting} style={{ flexDirection: "row", alignItems: "center", gap: 5, marginTop: 8 }}>
+                          <Upload size={14} color={colors.heading} />
+                          <T style={{ fontFamily: fonts.bodySemi, fontSize: 13, color: colors.heading, textDecorationLine: "underline" }}>Attach a second file</T>
+                        </Pressable>
+                      ) : (
+                        <View style={{ flexDirection: "row", alignItems: "center", gap: 8, marginTop: 8 }}>
+                          <FileText size={14} color={colors.heading} />
+                          <T variant="small" testID="inv1-supporting-name" numberOfLines={1} style={{ flex: 1 }}>{supporting.name}</T>
+                          <Pressable testID="inv1-supporting-clear" onPress={() => setSupporting(null)}>
+                            <T style={{ fontFamily: fonts.bodySemi, fontSize: 12, color: colors.terracotta, textDecorationLine: "underline" }}>Remove</T>
+                          </Pressable>
+                        </View>
+                      )}
+                    </View>
+                  </View>
+                </View>
+
                 <Button label={busy ? "Reading your invoice…" : "Check my invoice"} testID="inv1-upload-submit" icon={ArrowRight} onPress={() => upload()} loading={busy} />
                 <Pressable testID="inv1-reset" onPress={reset}><T variant="small" style={{ color: colors.muted, textDecorationLine: "underline" }}>Choose a different file</T></Pressable>
               </View>
@@ -173,6 +217,8 @@ export default function InvoiceChecker() {
           </View>
         ) : null}
 
+        {idle ? <InvoiceSampleResult /> : null}
+
         <ToolExplainer toolKey="invoice-checker" />
       </ScrollView>
     </View>
@@ -182,4 +228,5 @@ export default function InvoiceChecker() {
 const styles = StyleSheet.create({
   drop: { borderWidth: 2, borderStyle: "dashed", borderRadius: radius.md, padding: spacing.lg, marginTop: spacing.md, alignItems: "center" },
   err: { flexDirection: "row", gap: 8, alignItems: "center", borderRadius: radius.md, padding: spacing.md },
+  supporting: { width: "100%", borderWidth: 1, borderStyle: "dashed", borderRadius: radius.md, padding: spacing.md, marginTop: 4 },
 });

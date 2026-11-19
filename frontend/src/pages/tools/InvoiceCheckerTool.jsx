@@ -271,6 +271,7 @@ export default function InvoiceCheckerTool() {
     const access = useToolAccess();
     const { user } = useAuth();
     const [file, setFile] = useState(null);
+    const [supportingFile, setSupportingFile] = useState(null);
     const [dragActive, setDragActive] = useState(false);
     const [loading, setLoading] = useState(false);
     const [result, setResult] = useState(null);
@@ -283,6 +284,7 @@ export default function InvoiceCheckerTool() {
     const [vaultSaved, setVaultSaved] = useState(null);
     const [comparing, setComparing] = useState(false);
     const fileRef = useRef(null);
+    const supportingRef = useRef(null);
     const resultRef = useScrollToResult(Boolean(result));
     // Meta Pixel: fire ToolComplete once when a result is shown (no params, no user data).
     const toolCompleteRef = useRef(false);
@@ -368,6 +370,16 @@ export default function InvoiceCheckerTool() {
         }
     };
 
+    const onPickSupporting = (e) => {
+        const f = e.target.files?.[0];
+        if (f) setSupportingFile(f);
+    };
+
+    const onClearSupporting = () => {
+        setSupportingFile(null);
+        if (supportingRef.current) supportingRef.current.value = "";
+    };
+
     const onUpload = async (override = false) => {
         if (!file) return;
         setLoading(true);
@@ -378,6 +390,7 @@ export default function InvoiceCheckerTool() {
         try {
             const fd = new FormData();
             fd.append("file", file);
+            if (supportingFile) fd.append("supporting_file", supportingFile);
             if (override) fd.append("override_guard", "true");
             const resp = await api.post("/invoices/upload", fd, {
                 headers: { "Content-Type": "multipart/form-data" },
@@ -401,12 +414,14 @@ export default function InvoiceCheckerTool() {
 
     const onReset = () => {
         setFile(null);
+        setSupportingFile(null);
         setResult(null);
         setError(null);
         setGuard(null);
         setDupe(null);
         setVaultSaved(null);
         if (fileRef.current) fileRef.current.value = "";
+        if (supportingRef.current) supportingRef.current.value = "";
     };
 
     if (access === "loading") {
@@ -497,6 +512,54 @@ export default function InvoiceCheckerTool() {
                     ) : (
                         <div className="mt-6">
                             <FilePreviewPanel file={file} onClear={onReset} />
+                        </div>
+                    )}
+
+                    {file && (
+                        <div className="mt-4 rounded-xl border border-dashed border-kindred bg-surface-2/60 p-4" data-testid="inv1-supporting-block">
+                            <input
+                                ref={supportingRef}
+                                type="file"
+                                accept=".pdf,.doc,.docx,.txt,.csv,.jpg,.jpeg,.png,.heic,.heif,.webp"
+                                onChange={onPickSupporting}
+                                className="hidden"
+                                data-testid="inv1-supporting-input"
+                            />
+                            <div className="flex items-start gap-3">
+                                <FolderInput className="h-5 w-5 text-primary-k mt-0.5 shrink-0" />
+                                <div className="flex-1 min-w-0">
+                                    <div className="text-sm font-semibold text-primary-k">
+                                        Add supporting records <span className="font-normal text-muted-k">(optional)</span>
+                                    </div>
+                                    <p className="text-xs text-muted-k mt-0.5 leading-relaxed">
+                                        Your service agreement or care diary. Wayly cross-checks agreed rates, cancellations and
+                                        hospital stays to catch overcharges the invoice alone can&apos;t show.
+                                    </p>
+                                    {!supportingFile ? (
+                                        <button
+                                            type="button"
+                                            onClick={() => supportingRef.current?.click()}
+                                            data-testid="inv1-supporting-pick"
+                                            className="mt-2 inline-flex items-center gap-1.5 text-sm font-medium text-primary-k underline hover:no-underline"
+                                        >
+                                            <Upload className="h-3.5 w-3.5" /> Attach a second file
+                                        </button>
+                                    ) : (
+                                        <div className="mt-2 flex items-center gap-2 text-sm text-primary-k">
+                                            <FileText className="h-4 w-4 shrink-0" />
+                                            <span className="truncate max-w-[220px]" data-testid="inv1-supporting-name">{supportingFile.name}</span>
+                                            <button
+                                                type="button"
+                                                onClick={onClearSupporting}
+                                                data-testid="inv1-supporting-clear"
+                                                className="text-xs text-terracotta underline hover:no-underline"
+                                            >
+                                                Remove
+                                            </button>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
                         </div>
                     )}
 

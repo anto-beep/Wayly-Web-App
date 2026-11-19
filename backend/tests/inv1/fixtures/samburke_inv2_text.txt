@@ -1,0 +1,326 @@
+Blueberry Care Pty Ltd  -  Invoice BC-SAH-2026-10-0417  -  Mr Sam Burke  -  Service period 01/10/2026 to 31/10/2026
+Page 1
+Test fixture SAMBURKE-INV-2 v1. Blueberry Care Pty Ltd is a fictional provider and all details are synthetic test data generated for Wayly quality assurance.
+Blueberry Care Pty Ltd
+ABN 12 345 678 901
+Registered Support at Home provider
+Unit 7, 112 Northbourne Avenue, Braddon ACT 2612
+Telephone 02 6100 4400
+accounts@blueberrycare.example.au
+Participant contribution invoice
+Invoice number
+BC-SAH-2026-10-0417
+Invoice date
+04/11/2026
+Service period
+01/10/2026 to 31/10/2026
+Payment due
+18/11/2026
+Invoice to
+Mr Sam Burke
+14 Monash Place, Kaleen ACT 2617
+My Aged Care ID: AC 4471 8820
+Date of birth: 12/03/1948
+Support at Home classification: 6
+Quarterly budget: $12,341.32
+Quarter: 01/10/2026 to 31/12/2026
+Your contribution rates
+Service category
+ Your rate
+Clinical supports
+ 0%
+Independence
+ 12.5%
+Everyday living
+ 42.5%
+Rates as advised by Services Australia, effective 01/07/2026.
+Part pension status.
+Services Delivered and Your Contribution
+Date delivered
+Service
+Category
+Units
+Unit price
+Service price
+Rate
+Your share
+01/10/2026 (Thu)
+Domestic assistance
+Everyday living
+ 2 hr
+ $76.00
+ $152.00
+ 42.5%
+ $64.60
+02/10/2026 (Fri)
+Meal preparation
+Everyday living
+ 2 hr
+ $79.00
+ $158.00
+ 42.5%
+ $67.15
+02/10/2026 (Fri)
+Personal care
+Independence
+ 1.5 hr
+ $82.00
+ $123.00
+ 12.5%
+ $15.38
+05/10/2026 (Mon)
+Personal care
+Independence
+ 1.5 hr
+ $172.00
+ $258.00
+ 12.5%
+ $32.25
+06/10/2026 (Tue)
+Social support - individual
+Independence
+ 2 hr
+ $78.00
+ $156.00
+ 12.5%
+ $19.50
+07/10/2026 (Wed)
+Nursing care - registered nurse
+Clinical supports
+ 0.75 hr
+ $148.00
+ $111.00
+ 0%
+ $0.00
+07/10/2026 (Wed)
+Personal care
+Independence
+ 1.5 hr
+ $82.00
+ $123.00
+ 12.5%
+ $15.38
+08/10/2026 (Thu)
+Gardening
+Everyday living
+ 2 hr
+ $80.00
+ $180.00
+ 42.5%
+ $76.50
+09/10/2026 (Fri)
+Meal preparation
+Everyday living
+ 2 hr
+ $79.00
+ $158.00
+ 42.5%
+ $67.15
+09/10/2026 (Fri)
+Personal care
+Independence
+ 1.5 hr
+ $82.00
+ $123.00
+ 12.5%
+ $15.38
+12/10/2026 (Mon)
+Personal care
+Independence
+ 1.5 hr
+ $82.00
+ $123.00
+ 12.5%
+ $15.38
+14/10/2026 (Wed)
+Nursing care - registered nurse
+Clinical supports
+ 0.75 hr
+ $148.00
+ $111.00
+ 0%
+ $0.00
+14/10/2026 (Wed)
+Personal care
+Independence
+ 1.5 hr
+ $82.00
+ $123.00
+ 12.5%
+ $15.38
+15/10/2026 (Thu)
+Domestic assistance
+Everyday living
+ 2 hr
+ $76.00
+ $152.00
+ 42.5%
+ $64.60
+15/10/2026 (Thu)
+Domestic assistance
+Everyday living
+ 2 hr
+ $76.00
+ $152.00
+ 42.5%
+ $64.60
+16/10/2026 (Fri)
+Meal preparation
+Everyday living
+ 2 hr
+ $79.00
+ $158.00
+ 42.5%
+ $67.15
+16/10/2026 (Fri)
+Personal care
+Independence
+ 1.5 hr
+ $82.00
+ $123.00
+ 12.5%
+ $15.38
+17/10/2026 (Sat)
+Flexible respite - individual
+Independence
+ 3 hr
+ $114.00
+ $342.00
+ 12.5%
+ $42.75
+17/10/2026 (Sat)
+Nursing care - registered nurse
+Clinical supports
+ 0.75 hr
+ $200.00
+ $150.00
+ 0%
+ $0.00
+19/10/2026 (Mon)
+Personal care
+Independence
+ 1.5 hr
+ $82.00
+ $123.00
+ 12.5%
+ $15.38
+20/10/2026 (Tue)
+Social support - individual
+Independence
+ 2 hr
+ $78.00
+ $156.00
+ 12.5%
+ $19.50
+26/10/2026 (Mon)
+Personal care
+Independence
+ 1.5 hr
+ $82.00
+ $123.00
+ 12.5%
+ $15.38
+27/10/2026 (Tue)
+Social support - individual
+Independence
+ 2 hr
+ $78.00
+ $156.00
+ 12.5%
+ $19.50
+28/10/2026 (Wed)
+Nursing care - registered nurse
+Clinical supports
+ 0.75 hr
+ $148.00
+ $111.00
+ 0%
+ $0.00
+28/10/2026 (Wed)
+Personal care
+Independence
+ 1.5 hr
+ $82.00
+ $123.00
+ 12.5%
+ $15.38
+29/10/2026 (Thu)
+Domestic assistance
+Everyday living
+ 2 hr
+ $106.00
+ $212.00
+ 42.5%
+ $90.10
+30/10/2026 (Fri)
+Meal preparation
+Everyday living
+ 2 hr
+ $79.00
+ $158.00
+ 42.5%
+ $67.15
+30/10/2026 (Fri)
+Personal care
+Independence
+ 1.5 hr
+ $82.00
+ $123.00
+ 12.5%
+ $15.38
+31/10/2026
+Care management
+Care management
+ 1
+ $411.38
+ $411.38
+ 0%
+ $0.00
+31/10/2026
+Monthly account administration fee
+Additional charges
+ 1
+ $22.00
+ $22.00
+ 100%
+ $22.00
+31/10/2026
+Travel - carer vehicle (62 km @
+$0.98/km)
+Additional charges
+ 62 km
+ $0.98
+ $60.76
+ 100%
+ $60.76
+
+Blueberry Care Pty Ltd  -  Invoice BC-SAH-2026-10-0417  -  Mr Sam Burke  -  Service period 01/10/2026 to 31/10/2026
+Page 2
+Test fixture SAMBURKE-INV-2 v1. Blueberry Care Pty Ltd is a fictional provider and all details are synthetic test data generated for Wayly quality assurance.
+Total price of services delivered
+ $4,755.14
+Funded by the Australian Government
+ $3,756.08
+Total amount payable by you
+ $1,019.06
+Notes
+- Clinical supports are fully funded by the Australian Government and attract no
+participant contribution.
+- From 01/10/2026 personal care moved from the independence category to the clinical
+supports category under Support at Home and is fully funded by the Australian
+Government.
+- Care management is drawn from the care management account, which is 10% of your
+quarterly budget.
+- Unit prices are those set out in Schedule A of your service agreement dated
+01/07/2026.
+- If you believe an amount on this invoice is incorrect, contact our accounts team within
+30 days of the invoice date.
+How to pay
+Direct debit
+Deducted on 18/11/2026 if arranged.
+BPAY
+Biller code 779112
+Reference 4471 8820
+Electronic transfer
+BSB 000-000 Account 0000 0000
+Reference BC-SAH-2026-10-0417

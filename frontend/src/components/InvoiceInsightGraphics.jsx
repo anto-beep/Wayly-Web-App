@@ -7,11 +7,9 @@ function aud(n) {
     return isFinite(v) ? `$${v.toLocaleString("en-AU", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : "—";
 }
 function impact(f) {
-    return Number(
-        f?.financial_impact?.amount ?? f?.observed?.overcharge_amount ?? f?.observed?.refund_amount ??
-        f?.observed?.excess_amount ?? f?.observed?.difference ?? f?.observed?.gst_amount ??
-        f?.observed?.contribution_amount ?? 0
-    );
+    // Only a backend-computed, traceable financial_impact counts as a refund.
+    // Never infer a dollar figure from arbitrary observed.* context fields.
+    return Number(f?.financial_impact?.amount ?? 0);
 }
 function sumRefund(findings) {
     const seen = new Set();
@@ -51,7 +49,8 @@ export default function InvoiceInsightGraphics({ reconciliation }) {
     const rec = reconciliation || {};
     const findings = rec.findings || [];
     const billed = Number(rec.invoice_total || 0);
-    const refund = sumRefund(findings);
+    const refundRaw = rec.refund_total != null ? Number(rec.refund_total) : sumRefund(findings);
+    const refund = billed > 0 ? Math.min(refundRaw, billed) : refundRaw;
     const net = Math.max(0, billed - refund);
     const bands = { high: 0, medium: 0, low: 0 };
     findings.forEach((f) => { bands[bandOf(f)] += 1; });

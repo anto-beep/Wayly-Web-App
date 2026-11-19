@@ -604,6 +604,183 @@ def _parse_invoice_category_table(text: str) -> Optional[List["ExtractedLine"]]:
     return out
 
 
+# ---------------------------------------------------------------------------
+# Per-service "Services Delivered" vertical table (field-per-line / two-column
+# PDFs). Some providers lay out the service table with every cell on its own
+# line and a "DD/MM/YYYY (Day)" date starting each row, e.g.
+#
+#     Services Delivered and Your Contribution
+#     Date delivered  Service  Category  Units  Unit price  Service price  Rate  Your share
+#     01/10/2026 (Thu)
+#     Domestic assistance
+#     Everyday living
+#      2 hr
+#      $76.00
+#      $152.00
+#      42.5%
+#      $64.60
+#
+# The generic row reassembler mis-reads this (the "(Thu)" suffix stops it
+# recognising the date as a row start, and header dates fold junk rows). We
+# parse it deterministically here: find the services section, split its body
+# into per-date blocks, and map the money columns to unit price / service
+# price (gross) / your share (contribution).
+# ---------------------------------------------------------------------------
+_SERVICES_HEADER_RE = re.compile(r"services?\s+delivered|date\s+delivered", re.IGNORECASE)
+_SVC_ROW_DATE_RE = re.compile(r"^\s*\d{1,2}/\d{1,2}/\d{4}\b")
+_SVC_BODY_END_RE = re.compile(
+    r"total\s+price\s+of\s+services|total\s+amount\s+payable|"
+    r"funded\s+by\s+the\s+australian\s+government|^\s*notes\b|how\s+to\s+pay",
+    re.IGNORECASE,
+)
+_SVC_FOOTER_SKIP_RE = re.compile(
+    r"test\s+fixture|^\s*page\s+\d|pty\s+ltd\s+.*invoice\s+[a-z0-9\-]",
+    re.IGNORECASE,
+)
+
+
+def _map_printed_category(printed: str) -> Optional[ServiceCategory]:
+    """Map an invoice's printed category column to a ServiceCategory stream,
+    or None when it doesn't name a known stream (e.g. 'Additional charges')."""
+    s = (printed or "").lower()
+    if "clinical" in s:
+        return ServiceCategory.clinical
+    if "independence" in s:
+        return ServiceCategory.independence
+    if "everyday" in s:
+        return ServiceCategory.everyday_living
+    if "care management" in s or "package management" in s:
+        return ServiceCategory.care_management
+    return None
+
+
+def _svc_block_to_line(block: List[str]) -> Optional["ExtractedLine"]:
+    """Parse one per-date block of a Services-Delivered vertical table into an
+    ExtractedLine. Money columns read as [unit_price, service_price (gross),
+    your_share (contribution)] from the TAIL so a stray amount inside the
+    service name (e.g. "Travel (62 km @ $0.98/km)") doesn't shift the mapping."""
+    row = " ".join(block)
+    monies = _parse_all_money(row)
+    if not monies:
+        return None
+    rate = _parse_rate(row)
+    units = _parse_units(row)
+    service_date = _parse_date(block[0]) or _parse_date(row)
+
+    # Clean service name = the text segments before the numeric columns.
+    text_parts: List[str] = []
+    for seg in block[1:]:
+        seg_s = seg.strip()
+        if _parse_all_money(seg_s) or _RATE_RE.search(seg_s):
+            break
+        text_parts.append(seg_s)
+    service_name = (text_parts[0] if text_parts else row).split("(")[0].strip()
+    printed_cat = text_parts[1] if len(text_parts) > 1 else ""
+    # Name-driven categories (clinical, personal care, care/package management,
+    # admin/exit fees) drive C1/C2/C4 and MUST win over the printed column.
+    # For the everyday-living vs independence STREAM (which only sets C3's rate
+    # expectation), trust the category the invoice itself printed so a service
+    # the provider classed as Independence is not re-streamed to Everyday living.
+    name_category = _classify_category(service_name)
+    if name_category == ServiceCategory.unknown:
+        name_category = _classify_category(row)
+    printed_category = _map_printed_category(printed_cat)
+    _NAME_WINS = {
+        ServiceCategory.clinical, ServiceCategory.personal_care,
+        ServiceCategory.care_management, ServiceCategory.admin_fee,
+        ServiceCategory.exit_fee,
+    }
+    if name_category in _NAME_WINS:
+        category = name_category
+    elif printed_category is not None:
+        category = printed_category
+    else:
+        category = name_category
+
+    gross: Optional[float] = None
+    unit_price: Optional[float] = None
+    contribution_amount: Optional[float] = None
+    if len(monies) >= 3 and rate is not None:
+        unit_price = monies[-3]
+        gross = monies[-2]
+        contribution_amount = monies[-1]
+    elif len(monies) >= 2:
+        unit_price = monies[-2]
+        gross = monies[-2]
+        contribution_amount = monies[-1]
+    else:
+        gross = monies[-1]
+    if contribution_amount is None and rate is not None and gross is not None:
+        contribution_amount = round(gross * rate / 100.0, 2)
+
+    gst_amount, _gst_inclusive = _extract_gst(row, gross)
+    return ExtractedLine(
+        line_id=str(uuid.uuid4()),
+        service_category=category,
+        service_type=(service_name or row)[:120],
+        service_date=service_date,
+        units_or_hours=units,
+        unit_price=unit_price,
+        gross_cost=gross,
+        contribution_rate=rate,
+        contribution_amount=contribution_amount,
+        gst_amount=gst_amount,
+        read_confidence=0.9 if gross is not None else 0.4,
+        raw_text=row.strip()[:400],
+    )
+
+
+def _parse_services_delivered_table(text: str) -> Optional[List["ExtractedLine"]]:
+    """Parse a "Services Delivered … Your share" per-date vertical table into
+    one ExtractedLine per row. Returns None unless that layout is present."""
+    if not text or not text.strip():
+        return None
+    low = text.lower()
+    if "your share" not in low:
+        return None
+    if "services delivered" not in low and "date delivered" not in low:
+        return None
+    raw_lines = text.splitlines()
+    start = None
+    seen_header = False
+    for i, l in enumerate(raw_lines):
+        s = l.strip()
+        if not s:
+            continue
+        if not seen_header and _SERVICES_HEADER_RE.search(s):
+            seen_header = True
+            continue
+        if seen_header and _SVC_ROW_DATE_RE.match(s):
+            start = i
+            break
+    if start is None:
+        return None
+    blocks: List[List[str]] = []
+    cur: Optional[List[str]] = None
+    for l in raw_lines[start:]:
+        s = l.strip()
+        if not s:
+            continue
+        if _SVC_BODY_END_RE.search(s):
+            break
+        if _SVC_FOOTER_SKIP_RE.search(s):
+            continue
+        if _SVC_ROW_DATE_RE.match(s):
+            if cur:
+                blocks.append(cur)
+            cur = [s]
+        elif cur is not None:
+            cur.append(s)
+    if cur:
+        blocks.append(cur)
+    out: List[ExtractedLine] = []
+    for b in blocks:
+        ln = _svc_block_to_line(b)
+        if ln is not None and ln.gross_cost is not None:
+            out.append(ln)
+    return out or None
+
+
 def extract_line_items(text: str, invoice_year: Optional[int] = None) -> List[ExtractedLine]:
     """Parse the payable section into a list of :class:`ExtractedLine`.
 
@@ -632,6 +809,9 @@ def extract_line_items(text: str, invoice_year: Optional[int] = None) -> List[Ex
         cat_lines = _parse_invoice_category_table(text)
         if cat_lines is not None:
             return cat_lines
+        svc_lines = _parse_services_delivered_table(text)
+        if svc_lines is not None:
+            return svc_lines
         lines = _reassemble_rows(text)
         items: List[ExtractedLine] = []
 
@@ -827,8 +1007,8 @@ _PERIOD_END_RE = re.compile(
 _PARTICIPANT_NAME_RE = re.compile(
     r"""(?:participant|client|care[ \t]*recipient|recipient|prepared[ \t]*for|
         bill(?:ed)?[ \t]*to|patient|resident|name[ \t]*of[ \t]*participant|
-        care[ \t]*for|invoice[ \t]*for)
-        [ \t]*[:\-]?[ \t]*
+        care[ \t]*for|invoice[ \t]*(?:to|for))
+        [ \t]*[:\-]?[ \t]*\n?[ \t]*
         (?P<val>[A-Z][A-Za-z'.\-]+(?:[ \t]+[A-Z][A-Za-z'.\-]+){0,3})""",
     re.VERBOSE | re.IGNORECASE,
 )

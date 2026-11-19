@@ -98,6 +98,7 @@ class CheckId(str, Enum):
     C10_lifetime_cap_indicative = "C10"
     C11_duplicate_billing = "C11"
     C12_price_vs_published = "C12"
+    C13_invoice_footing = "C13"
 
 
 class ServiceCategory(str, Enum):
@@ -203,6 +204,11 @@ class Finding:
     escalation: Optional[str] = None                  # "acqsc" or None
     rule_effective_from: Optional[str] = None         # ISO date, from INDEX-1
     narrative: str = ""                               # persona-agnostic "what we saw"
+    title: Optional[str] = None                       # optional explicit headline
+    # Traceable dollar amount this finding would put back in the participant's
+    # pocket (contribution terms). Always sourced from a named line / constant;
+    # 0.0 for informational findings. Consumed by the results banner + donut.
+    financial_impact: Optional[Dict[str, Any]] = None
 
     def to_dict(self) -> Dict[str, Any]:
         return {
@@ -217,6 +223,8 @@ class Finding:
             "escalation": self.escalation,
             "rule_effective_from": self.rule_effective_from,
             "narrative": self.narrative,
+            "title": self.title,
+            "financial_impact": self.financial_impact,
         }
 
 

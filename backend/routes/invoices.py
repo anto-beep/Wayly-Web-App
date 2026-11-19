@@ -74,6 +74,7 @@ _LETTER_CHECK_TITLES = {
     "C10": "A note about the lifetime contribution cap",
     "C11": "A possible duplicate line",
     "C12": "A rate that exceeds the published price",
+    "C13": "The invoice total is higher than the lines add up to",
 }
 
 
@@ -151,6 +152,7 @@ def build_invoices_router(
     async def upload_invoice(
         request: Request,
         file: UploadFile = File(...),
+        supporting_file: Optional[UploadFile] = File(None),
         override_guard: bool = Form(False),
         user: dict = Depends(_current_user),
     ) -> dict:
@@ -323,6 +325,34 @@ def build_invoices_router(
             except Exception:      # pragma: no cover - defensive
                 combined_statement_lines = []
 
+        # Read the invoice's printed totals BEFORE running checks so the
+        # footing check (C13) can compare the amount payable against the sum of
+        # the line contributions, and the refund can be capped at what was billed.
+        _p_sub, _p_gst, _p_total = extract_invoice_totals(payable_text)
+
+        # Optional supporting records (service agreement Schedule A + care
+        # diary). When supplied, cross-check the invoice against the agreed
+        # rates and the cancellation/hospital record.
+        supporting_snapshot = None
+        supporting_meta = None
+        if supporting_file is not None:
+            try:
+                s_raw = await supporting_file.read()
+                if s_raw:
+                    s_name = (supporting_file.filename or "supporting-records").strip()
+                    s_text, _sm, _sp, _sw = await extract_document(s_name, s_raw)
+                    from lib.inv1.supporting import parse_supporting_records
+                    supporting_snapshot = parse_supporting_records(s_text or "")
+                    supporting_meta = {
+                        "filename": s_name,
+                        "has_rates": bool(supporting_snapshot.get("agreed_rates")),
+                        "cancellations": len(supporting_snapshot.get("cancellations") or []),
+                        "absences": len(supporting_snapshot.get("absences") or []),
+                    }
+            except Exception as e:  # pragma: no cover - defensive
+                logger.warning("supporting-records parse failed: %s", e)
+                supporting_snapshot = None
+
         reconciliation = run_checks(
             lines=lines,
             situation=situation,
@@ -331,13 +361,16 @@ def build_invoices_router(
             period_end=header.get("period_end"),
             quarterly_budget=header.get("quarterly_budget"),
             ppc_snapshot=ppc_snapshot or None,
+            printed_total_payable=_p_total,
+            supporting=supporting_snapshot,
         ).to_dict()
+        if supporting_meta is not None:
+            reconciliation["supporting_records"] = supporting_meta
 
         # Match the figure we show to the invoice's printed totals: use the
         # grand total (GST-inclusive) when present, and surface subtotal + GST
         # so the UI/summary can say "including $X GST". Falls back to the
         # ex-GST line-item sum when a total isn't printed.
-        _p_sub, _p_gst, _p_total = extract_invoice_totals(payable_text)
         _sum_gross = reconciliation.get("invoice_total")
         reconciliation["invoice_subtotal"] = _p_sub if _p_sub is not None else _sum_gross
         reconciliation["invoice_gst"] = _p_gst
@@ -345,6 +378,15 @@ def build_invoices_router(
             reconciliation["invoice_total"] = _p_total
         elif _p_sub is not None and _p_gst:
             reconciliation["invoice_total"] = round(_p_sub + _p_gst, 2)
+
+        # Authoritative, capped potential-refund total (traceable per-finding
+        # impacts, clamped to the amount billed). The web + mobile banners read
+        # this instead of re-summing arbitrary fields.
+        from lib.inv1.checks import refund_total as _refund_total
+        reconciliation["refund_total"] = _refund_total(
+            reconciliation.get("findings") or [],
+            reconciliation.get("invoice_total"),
+        )
 
         # AI plain-English summary. Non-blocking failure, the fallback
         # template kicks in if the LLM is unavailable.
@@ -1194,6 +1236,7 @@ def build_invoices_router(
         "C10": "Lifetime cap indicative check",
         "C11": "Duplicate line",
         "C12": "Rate exceeds published price",
+        "C13": "Invoice total higher than the lines add up to",
     }
 
     @router.get("/invoices/{invoice_id}/download")

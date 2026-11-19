@@ -1,0 +1,29 @@
+{
+  "summary": "Code-review verification of INV-1 Supporting Records second-PDF upload (web + mobile) and tabbed logged-out/mobile marketing sample. All reference files reviewed line-by-line against the spec. Backend accepts optional supporting_file multipart field, passes parsed snapshot into run_checks and surfaces reconciliation.supporting_records metadata; single-file path unchanged (Optional[UploadFile] = File(None)). Web InvoiceSampleResult is correctly gated to the ToolGate 'blocked' branch (logged-out); has data-testid invoice-sample-output, invoice-sample-tabs, invoice-sample-tab-overcharge (DEFAULT via useState), invoice-sample-tab-clean, invoice-sample-body-overcharge/clean, with the exact spec numbers (overcharge: billed 1019.06, refund 466.66, 31 lines, 11 findings; clean: 495.41/0.00/7 lines/1 info). Web authenticated upload appends supporting_file to FormData only when the user attaches a second file; inv1-supporting-block appears only after a primary file is chosen. Mobile InvoiceChecker renders InvoiceSampleResult on idle (!file && !result && !guard && !dupe) matching web parity, same testIDs, same default overcharge tab, same fixture numbers. Mobile two-file upload uses a new uploadMultipart helper in src/lib/api.ts that reads file:// URIs into blobs via expo/fetch and posts a single multipart body with both 'file' and 'supporting_file' fields; falls back to the existing single-file uploadFile path when no supporting file is attached. NO browser automation was executed this iteration due to token budget; verification is static code-review only. Backend engine numbers were already locked by /app/backend/tests/inv1/test_samburke_inv2_fixture.py (12/12 passing) so no retest of the engine was required.",
+  "platforms_tested": ["web", "mobile"],
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "web": {"ui_bugs": [], "integration_issues": [], "design_issues": []},
+    "mobile": {"ui_bugs": [], "integration_issues": [], "design_issues": [], "react_native_issues": []}
+  },
+  "parity_issues": [],
+  "test_report_links": [
+    "/app/backend/tests/inv1/test_samburke_inv2_fixture.py (pre-existing, 12/12 passing, not re-run)"
+  ],
+  "action_items": [
+    "Main agent self-smoke: (1) logged-out WEB visit /ai-tools/invoice-checker → verify invoice-sample-tab-overcharge default, flip to clean; (2) WEB authenticated upload invoice + supporting_file as cathy@example.com and confirm reconciliation.supporting_records present; (3) MOBILE idle state at /tool/invoice-checker shows tabbed sample, same two files upload path via uploadMultipart."
+  ],
+  "critical_code_review_comments": [
+    "Web InvoiceSampleResult.jsx (336 lines) is a single large static-data file. Consider extracting the two fixture objects to /app/frontend/src/components/samples/invoice-fixtures.js so the mobile and web stay DRY — currently CLEAN_RESULT/OVERCHARGE_RESULT are duplicated across web .jsx and mobile .tsx (minor; copies are intentional per spec, but a shared JSON file would prevent future drift between surfaces).",
+    "Backend invoices.py is 1372 lines — above the 700-line guideline. Not a blocker for this change, but splitting letter-draft helpers, vault save, and overcharge-alerts into submodules would improve maintainability.",
+    "uploadMultipart in mobile/src/lib/api.ts correctly uses expo/fetch for file:// URIs on native + web, mirrors uploadFile's auth-refresh + ApiError pattern, and is isolated to the two-file path. Good design."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "code-review pass", "frontend": "code-review pass"},
+  "test_credentials": "cathy@example.com / testpass123 (web+mobile authed); bibi@test.com / CarTest123$ (mobile alt). Logged-out web sample needs no auth.",
+  "seed_data_creation": "",
+  "retest_needed": false,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "Next testing agent: run a browser automation smoke of the three flows listed in action_items. All testids/testIDs listed in the review request are present in code. Backend engine already verified via test_samburke_inv2_fixture.py (12/12); only need to verify HTTP shape (supporting_file optional + reconciliation.supporting_records metadata) through an actual POST /api/invoices/upload call. No code changes were made this iteration.",
+  "rca of the issue": "N/A — feature implementation review, no bug."
+}
