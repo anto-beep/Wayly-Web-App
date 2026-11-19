@@ -47,12 +47,26 @@ const ILLUS = {
     whatChanged: "https://static.prod-images.emergentagent.com/jobs/8d74dc1c-0092-4bc2-8a55-b38254dd7592/images/aae78a7cdaa59a4a7d1d370fda5d8e20265b378d8b50049964db4df285f01dc8.jpeg",
 };
 
+// Real user-supplied aged-care photos (uploaded by the client).
+const UPLOAD = {
+    personalCareNurse: "https://customer-assets-eiarnc6j.emergentagent.net/job_8d74dc1c-0092-4bc2-8a55-b38254dd7592/artifacts/1f39d2d65baf3e88_iStock-870060028.jpg",
+    parkHug: "https://customer-assets-eiarnc6j.emergentagent.net/job_8d74dc1c-0092-4bc2-8a55-b38254dd7592/artifacts/2341263656ab5582_iStock-2032240867.jpg",
+    coupleAdviser: "https://customer-assets-eiarnc6j.emergentagent.net/job_8d74dc1c-0092-4bc2-8a55-b38254dd7592/artifacts/31d197cd94ea31ba_iStock-1461147338.jpg",
+    wheelchairHome: "https://customer-assets-eiarnc6j.emergentagent.net/job_8d74dc1c-0092-4bc2-8a55-b38254dd7592/artifacts/2aa60857b6b8fbb4_iStock-1316202210.jpg",
+    carHelp: "https://customer-assets-eiarnc6j.emergentagent.net/job_8d74dc1c-0092-4bc2-8a55-b38254dd7592/artifacts/583f5e4eefd1bb5f_iStock-1796974854.jpg",
+    inHomeCare: "https://customer-assets-eiarnc6j.emergentagent.net/job_8d74dc1c-0092-4bc2-8a55-b38254dd7592/artifacts/53878629ab08f46f_in%20homee%20care.jpg",
+    appointment: "https://customer-assets-eiarnc6j.emergentagent.net/job_8d74dc1c-0092-4bc2-8a55-b38254dd7592/artifacts/4bd79627bca2ddd3_appointment1.webp",
+    cooking: "https://customer-assets-eiarnc6j.emergentagent.net/job_8d74dc1c-0092-4bc2-8a55-b38254dd7592/artifacts/b89eede37cd926d9_cooking_1.webp",
+    shopping: "https://customer-assets-eiarnc6j.emergentagent.net/job_8d74dc1c-0092-4bc2-8a55-b38254dd7592/artifacts/7dca43f22749268d_shopping2.webp",
+    careSupport: "https://customer-assets-eiarnc6j.emergentagent.net/job_8d74dc1c-0092-4bc2-8a55-b38254dd7592/artifacts/10e23dd73ff1af67_domestic%20assistance2.webp",
+};
+
 // slug -> { src, alt, contain? }  (contain=true keeps illustrations un-cropped)
 export const ARTICLE_HERO = {
     // SEO_ARTICLES_2026
     "support-at-home-financial-hardship-assistance": { src: PHOTO.C3, alt: "Older couple going through household finances together at home" },
     "how-to-complain-about-aged-care-commission": { src: PHOTO.G5, alt: "An adviser explaining options to an older couple across a table" },
-    "at-hm-scheme-assistive-technology-home-modifications": { src: PHOTO.D3, alt: "An accessible bathroom with grab rails and a step-free shower" },
+    "at-hm-scheme-assistive-technology-home-modifications": { src: UPLOAD.wheelchairHome, alt: "An older woman using a wheelchair sharing a warm moment with a carer at home" },
     "support-at-home-explained": { src: PHOTO.A4, alt: "A home carer helping an older woman move safely around her home" },
     "support-at-home-no-worse-off": { src: ILLUS.noWorseOff, alt: "Illustration of a protective shield over a home", contain: true },
     "chsp-extension-2029-what-it-means": { src: ILLUS.chspExtension, alt: "Illustration of a care program timeline extended to a future date", contain: true },
@@ -61,10 +75,10 @@ export const ARTICLE_HERO = {
     "support-at-home-statement": { src: PHOTO.B4, alt: "An older couple reviewing their statement together at home" },
     "home-care-package-vs-support-at-home": { src: PHOTO.G6, alt: "An adviser talking an older couple through their options" },
     "support-at-home-costs-and-contributions": { src: "https://images.pexels.com/photos/6963031/pexels-photo-6963031.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940", alt: "An older couple reviewing household bills with a calculator at home" },
-    "support-at-home-personal-care-free-october-2026": { src: PHOTO.F2, alt: "A nurse smiling with an older patient during a home visit" },
+    "support-at-home-personal-care-free-october-2026": { src: UPLOAD.personalCareNurse, alt: "A nurse resting a reassuring hand on an older woman's shoulder during a home visit" },
     "how-much-will-i-pay-for-support-at-home": { src: PHOTO.G4, alt: "A consultant going through the numbers with senior clients" },
     "how-to-switch-support-at-home-provider": { src: PHOTO.H4, alt: "A couple carrying moving boxes into a new home" },
-    "support-at-home-vs-home-care-packages-what-changed": { src: ILLUS.whatChanged, alt: "Illustration of a transition from an old scheme to a new one", contain: true },
+    "support-at-home-vs-home-care-packages-what-changed": { src: UPLOAD.coupleAdviser, alt: "An older couple talking with an adviser about what has changed in their care" },
     "three-streams-clinical-independence-everyday-living": { src: ILLUS.threeStreams, alt: "Illustration of three care funding streams flowing in parallel", contain: true },
     "lifetime-contribution-cap-most-families-do-not-worry": { src: ILLUS.lifetimeCap, alt: "Illustration of rising bars meeting a protective ceiling line", contain: true },
     "switching-support-at-home-provider-practical-playbook": { src: PHOTO.H2, alt: "A couple settling into a new home after a move" },
@@ -90,11 +104,11 @@ export const ARTICLE_HERO = {
     // Legacy CMS + static articles: a warm lead photo so every detail page opens with an image.
     "what-changes-for-hcp-families-july-2026": { src: PHOTO.A3, alt: "An older woman considering what the aged care changes mean for her" },
     "reassessment-requests-how-and-when": { src: "https://images.pexels.com/photos/6964050/pexels-photo-6964050.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940", alt: "A woman noting down what has changed before requesting a reassessment" },
-    "personal-care-becomes-free-1-october-2026": { src: PHOTO.F2, alt: "A nurse supporting an older patient during a home personal-care visit" },
+    "personal-care-becomes-free-1-october-2026": { src: UPLOAD.inHomeCare, alt: "A home carer smiling as she brings a meal to an older man in his armchair" },
     "support-at-home-means-test-contributions-explained": { src: "https://images.pexels.com/photos/8439648/pexels-photo-8439648.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940", alt: "An older couple going through their contribution assessment with an adviser" },
     "understanding-your-first-support-at-home-statement": { src: PHOTO.B1, alt: "An older man reading his first Support at Home statement with help" },
     "support-at-home-price-caps-july-2026": { src: PHOTO.C1, alt: "A calculator resting on printed provider price paperwork" },
-    "home-care-package-to-support-at-home-what-changes-2025": { src: ILLUS.whatChanged, alt: "Illustration of the move from Home Care Packages to Support at Home", contain: true },
+    "home-care-package-to-support-at-home-what-changes-2025": { src: UPLOAD.carHelp, alt: "A younger woman helping an older woman from a car while out and about" },
     "the-statement-of-rights": { src: PHOTO.G5, alt: "An adviser explaining an older person's rights across a table" },
     "advisor-conversation-prep": { src: PHOTO.G4, alt: "A financial adviser going through the numbers with senior clients" },
     "voice-first-for-the-participant": { src: PHOTO.E6, alt: "Three generations of a family together around a laptop" },
@@ -255,6 +269,19 @@ export const ARTICLE_SECTION_VISUALS = {
     "support-at-home-personal-care-free-1-october-2026": {
         "read-across-the-line-before-querying-it": {
             pullquote: { value: "$0", label: "the participant contribution for an approved 12 October shower visit, even though the service price still shows $90. A price in the service column is not a charge to you." },
+        },
+    },
+    "support-at-home-personal-care-free-october-2026": {
+        "if-your-needs-have-changed": {
+            image: { src: UPLOAD.appointment, alt: "A person writing notes on a clipboard at home", caption: "Explain the change in everyday terms and write down the agreed next step before your care planning conversation." },
+        },
+    },
+    "support-at-home-vs-home-care-packages-what-changed": {
+        "what-to-record-together": {
+            image: { src: UPLOAD.parkHug, alt: "A carer and an older woman laughing together outdoors", caption: "Start with the person receiving care: their preferred routine, current provider and the date of the last agreement." },
+        },
+        "how-to-resolve-conflicting-recollections": {
+            image: { src: UPLOAD.careSupport, alt: "A younger man helping an older man check his medication and paperwork at a table", caption: "If one person recalls a service was free, look up the actual service and date together, then check what was charged." },
         },
     },
 };
