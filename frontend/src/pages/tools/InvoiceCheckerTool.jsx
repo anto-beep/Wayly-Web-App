@@ -26,6 +26,7 @@ import ToolHero from "@/components/ToolHero";
 import HcpBridgeLine from "@/components/HcpBridgeLine";
 import ToolWalkthroughVideo from "@/components/ToolWalkthroughVideo";
 import ToolGate from "@/components/ToolGate";
+import InvoiceSampleResult from "@/components/InvoiceSampleResult";
 import ToolExplainer from "@/components/ToolExplainer";
 import ContextualHelp from "@/components/ContextualHelp";
 import ToolRelatedLinks from "@/components/ToolRelatedLinks";
@@ -435,6 +436,7 @@ export default function InvoiceCheckerTool() {
                         </p>
                     </div>
                 </ToolGate>
+                <InvoiceSampleResult />
                 <ToolWalkthroughVideo slug="invoice-checker" />
                 <section className="max-w-5xl mx-auto px-4 sm:px-8">
                     <ToolExplainer toolKey="invoice-checker" />
