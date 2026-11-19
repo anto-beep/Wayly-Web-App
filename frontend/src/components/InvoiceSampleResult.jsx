@@ -75,7 +75,7 @@ export default function InvoiceSampleResult() {
                     <span className="text-primary-k">See Exactly What the Invoice Checker </span>
                     <span className="text-[#A5512B]">Hands You</span>
                 </h2>
-                <p className="mt-3 text-muted-k leading-relaxed max-w-2xl">
+                <p className="mt-3 text-muted-k leading-relaxed">
                     Here is a real October invoice run through Wayly. This is the exact output you get after a check —
                     the money at a glance, every line read for you in plain English, and a clear verdict on whether it
                     is fine to pay or worth a question. No upload needed to look.
