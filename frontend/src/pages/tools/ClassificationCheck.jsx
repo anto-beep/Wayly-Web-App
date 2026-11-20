@@ -9,6 +9,7 @@ import ToolHero from "@/components/ToolHero";
 import HcpBridgeLine from "@/components/HcpBridgeLine";
 import ToolWalkthroughVideo from "@/components/ToolWalkthroughVideo";
 import ToolGate from "@/components/ToolGate";
+import ClassificationSampleResult from "@/components/tool-samples/ClassificationSampleResult";
 import { ScreenshotStatement } from "@/components/Screenshots";
 import useToolAccess from "@/hooks/useToolAccess";
 import useScrollToResult from "@/hooks/useScrollToResult";
@@ -997,6 +998,7 @@ export default function ClassificationCheck() {
             <ToolHero toolKey="classification-self-check" wide />
                         <HcpBridgeLine className="mt-4" />
             <ToolGate toolName="Classification Self-Check"><ScreenshotStatement /></ToolGate>
+            <ClassificationSampleResult />
             <ToolWalkthroughVideo slug="classification-self-check" />
             <section className="max-w-5xl mx-auto px-4 sm:px-8"><ToolExplainer toolKey="classification-self-check" /></section>
             <ToolRelatedLinks slug="classification-self-check" />

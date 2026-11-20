@@ -9,6 +9,7 @@ import MarkdownText from "@/components/MarkdownText";
 import ToolExplainer from "@/components/ToolExplainer";
 import ToolHero from "@/components/ToolHero";
 import ToolGate from "@/components/ToolGate";
+import QaSampleResult from "@/components/tool-samples/QaSampleResult";
 import { ScreenshotFamilyThread } from "@/components/Screenshots";
 import useToolAccess from "@/hooks/useToolAccess";
 import AIAccuracyBanner, { TOOL_DISCLAIMERS } from "@/components/AIAccuracyBanner";
@@ -71,7 +72,7 @@ export default function FamilyCoordinator() {
             <MarketingHeader /><div className="mx-auto max-w-4xl px-6 py-20 flex items-center justify-center text-muted-k"><Loader2 className="h-5 w-5 animate-spin" /></div><ToolRelatedLinks slug="family-coordinator" />
             <Footer /></div>);
     if (access === "blocked") return (<div className="min-h-screen bg-kindred"><SeoHead {...SEO.toolFamilyCoordinator} jsonLd={_toolJsonLd(SEO.toolFamilyCoordinator)} />
-    <MarketingHeader /><ToolHero toolKey="family-coordinator" /><ToolGate toolName="Aged Care Q&A"><ScreenshotFamilyThread /></ToolGate><section className="max-w-5xl mx-auto px-4 sm:px-8"><ToolExplainer toolKey="family-coordinator" /></section><ToolRelatedLinks slug="family-coordinator" />
+    <MarketingHeader /><ToolHero toolKey="family-coordinator" wide /><ToolGate toolName="Aged Care Q&A"><ScreenshotFamilyThread /></ToolGate><QaSampleResult /><section className="max-w-5xl mx-auto px-4 sm:px-8"><ToolExplainer toolKey="family-coordinator" /></section><ToolRelatedLinks slug="family-coordinator" />
             <Footer /></div>);
 
     return (

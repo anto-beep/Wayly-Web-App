@@ -14,6 +14,7 @@ import { ToolSummary, NumberMono } from "@/components/ToolShell";
 import { Loader2, ArrowRight, Sparkles, AlertTriangle, Printer } from "lucide-react";
 import { toast } from "sonner";
 import ToolGate from "@/components/ToolGate";
+import BudgetSampleResult from "@/components/tool-samples/BudgetSampleResult";
 import { ScreenshotBudget } from "@/components/Screenshots";
 import useToolAccess from "@/hooks/useToolAccess";
 import { useParticipants } from "@/context/ParticipantsContext";
@@ -202,10 +203,11 @@ export default function BudgetCalculatorTool() {
             <div className="min-h-screen bg-kindred">
                 <SeoHead {...SEO.toolBudgetCalculator} jsonLd={_toolJsonLd(SEO.toolBudgetCalculator)} />
                 <MarketingHeader />
-                <ToolHero toolKey="budget-calculator" />
+                <ToolHero toolKey="budget-calculator" wide />
                 <ToolGate toolName="Budget Calculator">
                     <ScreenshotBudget />
                 </ToolGate>
+                <BudgetSampleResult />
                 <ToolWalkthroughVideo slug="budget-calculator" />
                 <section className="max-w-5xl mx-auto px-4 sm:px-8">
                     <ToolExplainer toolKey="budget-calculator" />

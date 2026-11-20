@@ -267,7 +267,7 @@ export default function InvoiceSampleResult() {
     if (user) return null;
     const tab = TABS.find((t) => t.key === active) || TABS[0];
     return (
-        <section className="mx-auto max-w-[1100px] px-6 mt-4 mb-6" data-testid="invoice-sample-output" aria-label="Example checked invoice">
+        <section className="mx-auto max-w-[1720px] px-6 mt-4 mb-6" data-testid="invoice-sample-output" aria-label="Example checked invoice">
             <div className="rounded-2xl border border-kindred bg-surface p-6 sm:p-8">
                 <span
                     className="inline-flex items-center gap-1.5 rounded-full border border-gold/40 bg-gold/10 px-3 py-1 text-xs font-semibold text-[#A5512B]"

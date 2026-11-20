@@ -442,7 +442,7 @@ export default function InvoiceCheckerTool() {
             <div className="min-h-screen bg-kindred">
                 <SeoHead {...SEO.toolInvoiceChecker} jsonLd={_toolJsonLd(SEO.toolInvoiceChecker)} />
                 <MarketingHeader />
-                <ToolHero toolKey="invoice-checker" />
+                <ToolHero toolKey="invoice-checker" wide />
                 <ToolGate toolName="Invoice Checker">
                     <div className="mx-auto max-w-3xl rounded-2xl border border-kindred bg-surface p-8 text-center">
                         <ReceiptText className="h-10 w-10 text-primary-k mx-auto" />

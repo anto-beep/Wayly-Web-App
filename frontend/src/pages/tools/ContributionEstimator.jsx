@@ -11,6 +11,7 @@ import ToolHero from "@/components/ToolHero";
 import HcpBridgeLine from "@/components/HcpBridgeLine";
 import ToolWalkthroughVideo from "@/components/ToolWalkthroughVideo";
 import ToolGate from "@/components/ToolGate";
+import ContributionSampleResult from "@/components/tool-samples/ContributionSampleResult";
 import { ScreenshotStatement } from "@/components/Screenshots";
 import useToolAccess from "@/hooks/useToolAccess";
 import AIAccuracyBanner, { TOOL_DISCLAIMERS } from "@/components/AIAccuracyBanner";
@@ -207,8 +208,9 @@ export default function ContributionEstimator() {
         <div className="min-h-screen bg-kindred">
             <SeoHead {...SEO.toolContribution} jsonLd={_toolJsonLd(SEO.toolContribution)} />
             <MarketingHeader />
-            <ToolHero toolKey="contribution-estimator" />
+            <ToolHero toolKey="contribution-estimator" wide />
             <ToolGate toolName="Contribution Estimator"><ScreenshotStatement /></ToolGate>
+            <ContributionSampleResult />
             <ToolWalkthroughVideo slug="contribution-estimator" />
             <section className="max-w-5xl mx-auto px-4 sm:px-8"><ToolExplainer toolKey="contribution-estimator" /></section>
             <ToolRelatedLinks slug="contribution-estimator" />

@@ -12,6 +12,7 @@ import ToolExplainer from "@/components/ToolExplainer";
 import ToolHero from "@/components/ToolHero";
 import ToolWalkthroughVideo from "@/components/ToolWalkthroughVideo";
 import ToolGate from "@/components/ToolGate";
+import PriceSampleResult from "@/components/tool-samples/PriceSampleResult";
 import { ScreenshotStatement } from "@/components/Screenshots";
 import useToolAccess from "@/hooks/useToolAccess";
 import { useAuth } from "@/context/AuthContext";
@@ -277,8 +278,9 @@ export default function PriceCheckerTool() {
             <section className="mx-auto max-w-4xl px-6 pt-8">
                 <CapDeferralNote note={result?.cap_deferral_note} />
             </section>
-            <ToolHero toolKey="provider-price-checker" />
+            <ToolHero toolKey="provider-price-checker" wide />
             <ToolGate toolName="Provider Price Checker"><ScreenshotStatement /></ToolGate>
+            <PriceSampleResult />
             <ToolWalkthroughVideo slug="provider-price-checker" />
             <section className="max-w-5xl mx-auto px-4 sm:px-8">
                 <ToolExplainer toolKey="provider-price-checker" />

@@ -9,6 +9,7 @@ import { ToolSummary } from "@/components/ToolShell";
 import ToolExplainer from "@/components/ToolExplainer";
 import ToolHero from "@/components/ToolHero";
 import ToolGate from "@/components/ToolGate";
+import ReassessmentSampleResult from "@/components/tool-samples/ReassessmentSampleResult";
 import { ScreenshotStatement } from "@/components/Screenshots";
 import useToolAccess from "@/hooks/useToolAccess";
 import { useParticipantPrefill } from "@/hooks/useParticipantPrefill";
@@ -189,7 +190,7 @@ export default function ReassessmentLetter() {
             <MarketingHeader /><div className="mx-auto max-w-4xl px-6 py-20 flex items-center justify-center text-muted-k"><Loader2 className="h-5 w-5 animate-spin" /></div><ToolRelatedLinks slug="reassessment-letter" />
             <Footer /></div>);
     if (access === "blocked") return (<div className="min-h-screen bg-kindred"><SeoHead {...SEO.toolReassessment} jsonLd={_toolJsonLd(SEO.toolReassessment)} />
-    <MarketingHeader /><ToolHero toolKey="reassessment-letter" /><ToolGate toolName="Reassessment Letter Drafter"><ScreenshotStatement /></ToolGate><section className="max-w-5xl mx-auto px-4 sm:px-8"><ToolExplainer toolKey="reassessment-letter" /></section><ToolRelatedLinks slug="reassessment-letter" />
+    <MarketingHeader /><ToolHero toolKey="reassessment-letter" wide /><ToolGate toolName="Reassessment Letter Drafter"><ScreenshotStatement /></ToolGate><ReassessmentSampleResult /><section className="max-w-5xl mx-auto px-4 sm:px-8"><ToolExplainer toolKey="reassessment-letter" /></section><ToolRelatedLinks slug="reassessment-letter" />
             <Footer /></div>);
 
     return (

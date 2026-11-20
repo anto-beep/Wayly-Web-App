@@ -6,6 +6,7 @@ import Footer from "@/components/Footer";
 import ToolExplainer from "@/components/ToolExplainer";
 import ToolHero from "@/components/ToolHero";
 import ToolGate from "@/components/ToolGate";
+import LettersSampleResult from "@/components/tool-samples/LettersSampleResult";
 import { ScreenshotStatement } from "@/components/Screenshots";
 import ToolRelatedLinks from "@/components/ToolRelatedLinks";
 import useToolAccess from "@/hooks/useToolAccess";
@@ -229,8 +230,9 @@ export default function LettersFollowUps() {
     if (access === "blocked") return (
         <div className="min-h-screen bg-kindred">
             <MarketingHeader />
-            <ToolHero toolKey="letters-and-follow-ups" />
+            <ToolHero toolKey="letters-and-follow-ups" wide />
             <ToolGate toolName="Letters & Follow-Ups"><ScreenshotStatement /></ToolGate>
+            <LettersSampleResult />
             <section className="max-w-5xl mx-auto px-4 sm:px-8">
                 <ToolExplainer toolKey="letters-and-follow-ups" />
             </section>
