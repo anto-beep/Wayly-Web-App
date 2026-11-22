@@ -13,7 +13,7 @@ const TONE = {
     info: { bg: "rgba(14,77,82,0.06)", border: "rgba(14,77,82,0.20)", icon: "#0E4D52", title: "#0E4D52" },
 };
 
-export default function FundtrackAlerts({ alerts, onAction }) {
+export default function FundtrackAlerts({ alerts }) {
     if (!alerts || alerts.length === 0) return null;
     return (
         <div className="space-y-2" data-testid="fundtrack-alerts">
@@ -27,16 +27,6 @@ export default function FundtrackAlerts({ alerts, onAction }) {
                         <div className="min-w-0 flex-1">
                             <p className="text-sm font-semibold" style={{ color: t.title }}>{a.title}</p>
                             <p className="text-sm text-primary-k/80 mt-0.5 leading-relaxed">{a.body}</p>
-                            {(a.actions || []).length > 0 && onAction && (
-                                <div className="mt-2 flex flex-wrap gap-2">
-                                    {a.actions.map((act, i) => (
-                                        <button key={i} onClick={() => onAction(act.action)} data-testid={`ft-alert-action-${act.action}`}
-                                            className="text-xs font-semibold rounded-full bg-white border border-primary-k/20 px-3 py-1.5 text-primary-k hover:border-clay/50 transition-colors">
-                                            {act.label}
-                                        </button>
-                                    ))}
-                                </div>
-                            )}
                         </div>
                     </div>
                 );

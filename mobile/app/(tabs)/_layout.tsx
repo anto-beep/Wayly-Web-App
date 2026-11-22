@@ -90,7 +90,7 @@ function TabsInner() {
         />
         <Tabs.Screen name="settings" options={{ href: null }} />
         <Tabs.Screen name="family" options={{ href: null }} />
-        <Tabs.Screen name="ask" options={{ href: null }} />
+        <Tabs.Screen name="ask" options={{ href: null, tabBarStyle: { display: "none" } }} />
       </Tabs>
       <AppDrawer />
       <PlanComplianceGuard />

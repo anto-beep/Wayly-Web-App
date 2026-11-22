@@ -1,7 +1,11 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
-  ActivityIndicator, FlatList, KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, StyleSheet, TextInput, View,
+  ActivityIndicator, FlatList, Keyboard, Modal, Platform, Pressable, ScrollView, StyleSheet, TextInput, View,
 } from "react-native";
+import { KeyboardAvoidingView } from "react-native-keyboard-controller";
+import Animated, { FadeIn, FadeOut } from "react-native-reanimated";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 
 import { AppHeader, T } from "@/src/components/ui";
@@ -43,6 +47,7 @@ export default function AskWayly() {
   const { active } = useParticipants();
   const { colors } = useTheme();
   const styles = useMemo(() => makeStyles(colors), [colors]);
+  const insets = useSafeAreaInsets();
   const participantId = active?.id || "default";
 
   const [conv, setConv] = useState<Conv | null>(null);
@@ -107,60 +112,71 @@ export default function AskWayly() {
   };
 
   const visibleMsgs = (conv?.messages || []).filter((m) => m.role === "user" || (m.content || "").length > 0 || sending);
+  const typing = input.trim().length > 0;
+  const showWelcome = !conv && !typing;
+  const goBack = () => { if (router.canGoBack()) router.back(); else router.replace("/(tabs)"); };
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
-      <AppHeader title="Ask Wayly" right={
+      <AppHeader title="Ask Wayly" onBack={goBack} right={
         <Pressable testID="aw2-toggle-settings" onPress={() => { setShowSettings(true); loadCtx(); }} hitSlop={8}>
           <Ionicons name="options-outline" size={22} color={colors.heading} />
         </Pressable>
       } />
-      <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === "ios" ? "padding" : undefined} keyboardVerticalOffset={Platform.OS === "ios" ? 90 : 0}>
-        {!conv ? (
-          <ScrollView contentContainerStyle={{ padding: spacing.lg, paddingBottom: spacing.xxl }} keyboardShouldPersistTaps="handled">
-            <View style={{ alignItems: "center", marginTop: spacing.xl, gap: spacing.md }} testID="aw2-empty">
-              <View style={styles.orb}><Ionicons name="sparkles" size={30} color={colors.heading} /></View>
-              <T variant="h2" style={{ textAlign: "center" }}>How can I help today?</T>
-              <T variant="bodyMuted" style={{ textAlign: "center", marginTop: -4 }}>Tap the settings icon to choose what Wayly can read. Your session is retained per your policy.</T>
-              <View style={{ marginTop: spacing.md, gap: spacing.sm, alignSelf: "stretch" }}>
-                {SUGGESTIONS.map((s) => (
-                  <Pressable key={s} testID={`ask-suggestion-${s.slice(0, 10)}`} onPress={() => handleSend(s)} style={({ pressed }) => [styles.suggestion, pressed && { opacity: 0.85 }]}>
-                    <Ionicons name="arrow-forward-circle" size={20} color={colors.gold} />
-                    <T style={{ flex: 1, fontFamily: fonts.bodyMedium, color: colors.text }}>{s}</T>
-                  </Pressable>
-                ))}
-              </View>
-            </View>
-          </ScrollView>
-        ) : (
-          <FlatList
-            ref={listRef}
-            data={visibleMsgs}
-            keyExtractor={(m) => m.id}
-            contentContainerStyle={{ padding: spacing.lg, gap: spacing.md }}
-            renderItem={({ item }) => <Bubble msg={item} colors={colors} onFeedback={feedback} />}
-            onContentSizeChange={() => listRef.current?.scrollToEnd({ animated: true })}
-            ListFooterComponent={<StartFresh onPress={() => setConv(null)} colors={colors} />}
-          />
-        )}
+      <KeyboardAvoidingView style={{ flex: 1 }} behavior="translate-with-padding" keyboardVerticalOffset={0}>
+        {/* Message area — tapping empty space dismisses the keyboard */}
+        <Pressable style={{ flex: 1 }} onPress={() => Keyboard.dismiss()} accessible={false}>
+          {!conv ? (
+            <ScrollView
+              contentContainerStyle={{ padding: spacing.lg, paddingBottom: spacing.xl, flexGrow: 1, justifyContent: "center" }}
+              keyboardShouldPersistTaps="handled"
+              keyboardDismissMode="on-drag"
+              showsVerticalScrollIndicator={false}
+            >
+              {showWelcome ? (
+                <Animated.View entering={FadeIn.duration(260)} exiting={FadeOut.duration(140)} style={{ alignItems: "center", gap: spacing.md }} testID="aw2-empty">
+                  <View style={styles.orb}><Ionicons name="sparkles" size={30} color={colors.heading} /></View>
+                  <T variant="h2" style={{ textAlign: "center" }}>How can I help today?</T>
+                  <T variant="bodyMuted" style={{ textAlign: "center", marginTop: -4 }}>Ask about statements, budgets or anything Support at Home. Tap the settings icon to choose what Wayly can read.</T>
+                  <View style={{ marginTop: spacing.sm, gap: spacing.sm, alignSelf: "stretch" }}>
+                    {SUGGESTIONS.map((s) => (
+                      <Pressable key={s} testID={`ask-suggestion-${s.slice(0, 10)}`} onPress={() => handleSend(s)} style={({ pressed }) => [styles.suggestion, pressed && { opacity: 0.85 }]}>
+                        <Ionicons name="arrow-forward-circle" size={20} color={colors.gold} />
+                        <T style={{ flex: 1, fontFamily: fonts.bodyMedium, color: colors.text }}>{s}</T>
+                      </Pressable>
+                    ))}
+                  </View>
+                </Animated.View>
+              ) : null}
+            </ScrollView>
+          ) : (
+            <FlatList
+              ref={listRef}
+              data={visibleMsgs}
+              keyExtractor={(m) => m.id}
+              contentContainerStyle={{ padding: spacing.lg, gap: spacing.md }}
+              renderItem={({ item }) => <Bubble msg={item} colors={colors} onFeedback={feedback} />}
+              onContentSizeChange={() => listRef.current?.scrollToEnd({ animated: true })}
+              keyboardShouldPersistTaps="handled"
+              keyboardDismissMode={Platform.OS === "ios" ? "interactive" : "on-drag"}
+              onScrollBeginDrag={() => Keyboard.dismiss()}
+              showsVerticalScrollIndicator={false}
+              ListFooterComponent={<ChatFooter onFresh={() => setConv(null)} onReport={() => setShowReport(true)} colors={colors} />}
+            />
+          )}
+        </Pressable>
 
         {sending && !(conv && conv.messages.length > 0 && conv.messages[conv.messages.length - 1].role === "assistant" && conv.messages[conv.messages.length - 1].content.length > 0) ? (
           <View style={styles.typing}><ActivityIndicator size="small" color={colors.heading} /><T variant="small">Wayly is thinking…</T></View>
         ) : null}
 
-        <View style={styles.inputBar}>
-          <TextInput testID="ask-input" value={input} onChangeText={setInput} placeholder="Ask a question…" placeholderTextColor={colors.muted} style={styles.input} multiline />
-          <Pressable testID="ask-send-button" onPress={() => handleSend()} disabled={sending || !input.trim()} style={[styles.sendBtn, (sending || !input.trim()) && { opacity: 0.5 }]}>
-            <Ionicons name="send" size={20} color="#fff" />
-          </Pressable>
-        </View>
-
-        {/* Report an issue — sits BELOW the chat bar (parity with web aw2-report-issue) */}
-        <View style={{ flexDirection: "row", justifyContent: "flex-end", paddingHorizontal: spacing.md, paddingBottom: Platform.OS === "ios" ? spacing.sm : spacing.xs }} testID="aw2-report-issue">
-          <Pressable testID="aw2-report-issue-btn" onPress={() => setShowReport(true)} style={({ pressed }) => [{ flexDirection: "row", alignItems: "center", gap: 6, opacity: pressed ? 0.7 : 1 }]}>
-            <Ionicons name="alert-circle-outline" size={15} color={colors.gold} />
-            <T variant="small" style={{ color: colors.gold, fontFamily: fonts.bodySemi, fontSize: 12 }}>Report an issue with an answer</T>
-          </Pressable>
+        <View style={[styles.composer, { paddingBottom: insets.bottom + spacing.sm }]}>
+          <View style={styles.inputBar}>
+            <TextInput testID="ask-input" value={input} onChangeText={setInput} placeholder="Ask a question…" placeholderTextColor={colors.muted} style={styles.input} multiline />
+            <Pressable testID="ask-send-button" onPress={() => handleSend()} disabled={sending || !typing} style={[styles.sendBtn, (sending || !typing) && { opacity: 0.4 }]}>
+              <Ionicons name="arrow-up" size={22} color="#fff" />
+            </Pressable>
+          </View>
         </View>
       </KeyboardAvoidingView>
 
@@ -203,11 +219,17 @@ function Bubble({ msg, colors, onFeedback }: { msg: Msg; colors: Palette; onFeed
   );
 }
 
-function StartFresh({ onPress, colors }: { onPress: () => void; colors: Palette }) {
+function ChatFooter({ onFresh, onReport, colors }: { onFresh: () => void; onReport: () => void; colors: Palette }) {
   return (
-    <Pressable testID="aw2-start-fresh" onPress={onPress} style={{ paddingVertical: spacing.md, alignItems: "center" }}>
-      <T variant="small" style={{ color: colors.muted }}>Start a new session</T>
-    </Pressable>
+    <View style={{ paddingTop: spacing.md, gap: spacing.sm, alignItems: "center" }} testID="aw2-report-issue">
+      <Pressable testID="aw2-report-issue-btn" onPress={onReport} style={({ pressed }) => [{ flexDirection: "row", alignItems: "center", gap: 6, opacity: pressed ? 0.7 : 1 }]}>
+        <Ionicons name="alert-circle-outline" size={15} color={colors.gold} />
+        <T variant="small" style={{ color: colors.gold, fontFamily: fonts.bodySemi, fontSize: 12 }}>Report an issue with an answer</T>
+      </Pressable>
+      <Pressable testID="aw2-start-fresh" onPress={onFresh} style={{ paddingVertical: spacing.xs }}>
+        <T variant="small" style={{ color: colors.muted }}>Start a new session</T>
+      </Pressable>
+    </View>
   );
 }
 
@@ -290,7 +312,8 @@ const makeStyles = (colors: Palette) =>
     userBubble: { backgroundColor: colors.primary, borderBottomRightRadius: 4 },
     aiBubble: { backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border, borderBottomLeftRadius: 4 },
     typing: { flexDirection: "row", alignItems: "center", gap: 8, paddingHorizontal: spacing.lg, paddingBottom: 6 },
-    inputBar: { flexDirection: "row", alignItems: "flex-end", gap: spacing.sm, padding: spacing.md, borderTopWidth: 1, borderTopColor: colors.border, backgroundColor: colors.surface },
-    input: { flex: 1, maxHeight: 120, minHeight: 46, borderRadius: radius.lg, backgroundColor: colors.bg, borderWidth: 1, borderColor: colors.border, paddingHorizontal: spacing.md, paddingTop: Platform.OS === "ios" ? 12 : 8, fontFamily: fonts.body, fontSize: 15, color: colors.text },
-    sendBtn: { width: 46, height: 46, borderRadius: radius.pill, backgroundColor: colors.gold, alignItems: "center", justifyContent: "center" },
+    composer: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.border, backgroundColor: colors.surface, paddingHorizontal: spacing.md, paddingTop: spacing.sm },
+    inputBar: { flexDirection: "row", alignItems: "flex-end", gap: spacing.sm },
+    input: { flex: 1, maxHeight: 120, minHeight: 44, borderRadius: radius.lg, backgroundColor: colors.bg, borderWidth: 1, borderColor: colors.border, paddingHorizontal: spacing.md, paddingTop: Platform.OS === "ios" ? 12 : 8, paddingBottom: Platform.OS === "ios" ? 12 : 8, fontFamily: fonts.body, fontSize: 15, color: colors.text },
+    sendBtn: { width: 44, height: 44, borderRadius: radius.pill, backgroundColor: colors.primary, alignItems: "center", justifyContent: "center" },
   });

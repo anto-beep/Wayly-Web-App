@@ -102,11 +102,11 @@ export function WhatIfCareSheet({ pid, savedServices = [], visible, onClose, onS
           <ScrollView contentContainerStyle={{ paddingHorizontal: spacing.lg, paddingBottom: spacing.lg, gap: spacing.md }} keyboardShouldPersistTaps="handled">
             {savedServices.length > 0 ? (
               <Select label="Pick from your usual care" testID="whatif-saved" value={""} onChange={pickSaved} placeholder="Choose a service…"
-                options={savedServices.slice(0, 12).map((s: any) => ({ value: s.service_id, label: `${s.service_name} · ${money(s.last_amount)}` }))} />
+                options={savedServices.map((s: any) => ({ value: s.service_id, label: `${s.service_name} · ${money(s.last_amount)}` }))} />
             ) : null}
             <Field label="Service" value={serviceName} onChangeText={setServiceName} placeholder="e.g. Cleaning" testID="whatif-service" />
             <View style={{ flexDirection: "row", gap: spacing.md }}>
-              <View style={{ flex: 1 }}><Field label="Price per visit" value={unitPrice} onChangeText={setUnitPrice} keyboardType="decimal-pad" placeholder="0" testID="whatif-price" /></View>
+              <View style={{ flex: 1 }}><Field label="Price per visit ($)" value={unitPrice} onChangeText={setUnitPrice} keyboardType="decimal-pad" placeholder="0" testID="whatif-price" /></View>
               <View style={{ flex: 1 }}><Select label="Category" value={stream} onChange={setStream} options={STREAMS} testID="whatif-stream" /></View>
             </View>
             <View style={{ flexDirection: "row", gap: spacing.md }}>

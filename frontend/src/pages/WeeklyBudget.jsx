@@ -16,9 +16,12 @@ import ChargeEntryDialog from "@/components/fundtrack/ChargeEntryDialog";
 import WhatIfCareDialog from "@/components/fundtrack/WhatIfCareDialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Plus, CalendarClock, RefreshCw, X, CheckCircle2, Archive, Clock, Loader2, CalendarDays } from "lucide-react";
+import { Plus, CalendarClock, RefreshCw, X, CheckCircle2, Archive, Clock, Loader2, CalendarDays, Pencil, Trash2, Search, ArrowUpDown } from "lucide-react";
 
 const AUD = (n) => new Intl.NumberFormat("en-AU", { style: "currency", currency: "AUD" }).format(Number(n) || 0);
+const toTitle = (s) => String(s || "").replace(/\w\S*/g, (w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase());
+const SOURCE_LABEL = { entered: "You Entered", invoice: "From An Invoice", catch_up: "Catch-Up", booked: "Booked" };
+const sourceLabel = (s) => SOURCE_LABEL[s] || "You Entered";
 const fmtDate = (iso) => { if (!iso) return ""; try { return new Date(iso).toLocaleDateString("en-AU", { weekday: "short", day: "numeric", month: "short" }); } catch { return iso; } };
 const weekRange = () => {
     const now = new Date();
@@ -133,22 +136,9 @@ export default function WeeklyBudget() {
                         <ActionCard testid="weekly-something-changed" Icon={RefreshCw} title="Something changed" hint="A visit was missed or different" onClick={() => setChangeVisit(data.booked?.[0] || { blank: true })} tone="gold" />
                     </div>
 
-                    {/* what you've used */}
+                    {/* what you've recorded — sortable/filterable table with edit + delete */}
                     {(data.used || []).length > 0 && (
-                        <div className="rounded-2xl border border-primary-k/10 bg-white p-4" data-testid="weekly-used">
-                            <h2 className="font-heading text-lg text-primary-k mb-2 inline-flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-sage" /> What you've recorded this quarter</h2>
-                            <ul className="divide-y divide-primary-k/10">
-                                {data.used.slice(0, 12).map((u) => (
-                                    <li key={u.id} className="flex items-center justify-between gap-3 py-2" data-testid={`weekly-used-${u.id}`}>
-                                        <span className="min-w-0">
-                                            <span className="block text-sm text-primary-k truncate">{u.service_name}</span>
-                                            <span className="block text-xs text-muted-k">{fmtDate(u.date)} · {u.source === "invoice" ? "from an invoice" : u.source === "catch_up" ? "catch-up" : "you entered"}</span>
-                                        </span>
-                                        <span className="text-sm font-semibold text-primary-k tabular-nums shrink-0">{u.unpriced ? "unpriced" : AUD(u.amount)}</span>
-                                    </li>
-                                ))}
-                            </ul>
-                        </div>
+                        <UsedEntriesTable items={data.used} onChanged={load} />
                     )}
 
                     {/* superseded by a statement */}
@@ -270,6 +260,162 @@ function VisitChangeDialog({ pid, visit, onClose, onSaved }) {
                 <div className="mt-4 flex justify-end gap-2">
                     <button onClick={onClose} className="text-sm text-primary-k px-4 py-2 rounded-md hover:bg-primary-k/5">Cancel</button>
                     <Button onClick={submit} disabled={busy} data-testid="visit-change-save">{busy ? <Loader2 className="w-4 h-4 animate-spin" /> : "Save"}</Button>
+                </div>
+            </div>
+        </div>
+    );
+}
+
+/** Sortable + filterable table of recorded entries, with edit + delete. */
+function UsedEntriesTable({ items, onChanged }) {
+    const [query, setQuery] = useState("");
+    const [source, setSource] = useState("all");
+    const [sortKey, setSortKey] = useState("date");
+    const [sortDir, setSortDir] = useState("desc");
+    const [editing, setEditing] = useState(null);
+    const [confirmId, setConfirmId] = useState(null);
+    const [busyId, setBusyId] = useState(null);
+
+    const sources = Array.from(new Set(items.map((i) => i.source))).filter(Boolean);
+    const filtered = items
+        .filter((i) => source === "all" || i.source === source)
+        .filter((i) => !query.trim() || (i.service_name || "").toLowerCase().includes(query.trim().toLowerCase()));
+    const sorted = [...filtered].sort((a, b) => {
+        let av, bv;
+        if (sortKey === "service") { av = (a.service_name || "").toLowerCase(); bv = (b.service_name || "").toLowerCase(); }
+        else if (sortKey === "amount") { av = a.amount ?? -1; bv = b.amount ?? -1; }
+        else { av = a.date || ""; bv = b.date || ""; }
+        if (av < bv) return sortDir === "asc" ? -1 : 1;
+        if (av > bv) return sortDir === "asc" ? 1 : -1;
+        return 0;
+    });
+
+    const toggleSort = (key) => {
+        if (sortKey === key) setSortDir((d) => (d === "asc" ? "desc" : "asc"));
+        else { setSortKey(key); setSortDir(key === "service" ? "asc" : "desc"); }
+    };
+
+    const del = async (id) => {
+        setBusyId(id);
+        try { await api.delete(`/fundtrack/charges/${id}`); toast.success("Entry Deleted."); setConfirmId(null); onChanged?.(); }
+        catch (e) { toast.error(e?.response?.data?.detail || "Could not delete that entry."); }
+        finally { setBusyId(null); }
+    };
+
+    const SortHead = ({ k, children, align = "left" }) => (
+        <th className={`px-3 py-2 font-semibold text-${align}`}>
+            <button onClick={() => toggleSort(k)} data-testid={`weekly-used-sort-${k}`} className={`inline-flex items-center gap-1 hover:text-primary-k ${align === "right" ? "flex-row-reverse" : ""}`}>
+                {children}
+                <ArrowUpDown className={`w-3 h-3 ${sortKey === k ? "text-primary-k" : "text-muted-k/40"}`} />
+            </button>
+        </th>
+    );
+
+    return (
+        <div className="rounded-2xl border border-primary-k/10 bg-white p-4" data-testid="weekly-used">
+            <div className="flex items-center justify-between gap-3 flex-wrap mb-3">
+                <h2 className="font-heading text-lg text-primary-k inline-flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-sage" /> What You Have Recorded This Quarter</h2>
+                <div className="flex items-center gap-2 flex-wrap">
+                    <div className="relative">
+                        <Search className="w-3.5 h-3.5 text-muted-k absolute left-2.5 top-1/2 -translate-y-1/2" />
+                        <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search Services" data-testid="weekly-used-search"
+                            className="pl-7 pr-3 py-1.5 text-sm rounded-lg border border-primary-k/15 bg-white w-40 sm:w-48" />
+                    </div>
+                    <select value={source} onChange={(e) => setSource(e.target.value)} data-testid="weekly-used-filter-source"
+                        className="py-1.5 px-2 text-sm rounded-lg border border-primary-k/15 bg-white text-primary-k">
+                        <option value="all">All Sources</option>
+                        {sources.map((s) => <option key={s} value={s}>{sourceLabel(s)}</option>)}
+                    </select>
+                </div>
+            </div>
+            {sorted.length === 0 ? (
+                <p className="text-sm text-muted-k py-6 text-center" data-testid="weekly-used-empty">No Entries Match Your Filter.</p>
+            ) : (
+                <div className="overflow-x-auto">
+                    <table className="w-full text-sm border-collapse" data-testid="weekly-used-table">
+                        <thead>
+                            <tr className="text-xs uppercase tracking-wider text-muted-k border-b border-primary-k/10">
+                                <SortHead k="service">Service</SortHead>
+                                <SortHead k="date">Date</SortHead>
+                                <th className="px-3 py-2 text-left font-semibold">Source</th>
+                                <SortHead k="amount" align="right">Amount</SortHead>
+                                <th className="px-3 py-2 text-right font-semibold">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {sorted.map((u) => (
+                                <tr key={u.id} className="border-b border-primary-k/5 hover:bg-primary-k/[0.03] transition-colors" data-testid={`weekly-used-${u.id}`}>
+                                    <td className="px-3 py-2.5 text-primary-k font-medium">{toTitle(u.service_name)}</td>
+                                    <td className="px-3 py-2.5 text-muted-k whitespace-nowrap">{fmtDate(u.date)}</td>
+                                    <td className="px-3 py-2.5"><span className="inline-block rounded-pill bg-primary-k/[0.08] px-2 py-0.5 text-xs font-medium text-primary-k whitespace-nowrap">{sourceLabel(u.source)}</span></td>
+                                    <td className="px-3 py-2.5 text-right font-semibold text-primary-k tabular-nums whitespace-nowrap">{u.unpriced ? "Unpriced" : AUD(u.amount)}</td>
+                                    <td className="px-3 py-2.5">
+                                        {confirmId === u.id ? (
+                                            <div className="flex items-center justify-end gap-3">
+                                                <button onClick={() => del(u.id)} disabled={busyId === u.id} data-testid={`weekly-used-delete-confirm-${u.id}`} className="text-xs font-semibold text-terracotta hover:underline">{busyId === u.id ? "…" : "Confirm Delete"}</button>
+                                                <button onClick={() => setConfirmId(null)} className="text-xs text-muted-k hover:underline">Cancel</button>
+                                            </div>
+                                        ) : (
+                                            <div className="flex items-center justify-end gap-3">
+                                                <button onClick={() => setEditing(u)} data-testid={`weekly-used-edit-${u.id}`} className="inline-flex items-center gap-1 text-xs text-primary-k hover:underline"><Pencil className="w-3.5 h-3.5" /> Edit</button>
+                                                <button onClick={() => setConfirmId(u.id)} data-testid={`weekly-used-delete-${u.id}`} className="inline-flex items-center gap-1 text-xs text-terracotta hover:underline"><Trash2 className="w-3.5 h-3.5" /> Delete</button>
+                                            </div>
+                                        )}
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
+            )}
+            {editing && <EditEntryDialog entry={editing} onClose={() => setEditing(null)} onSaved={() => { setEditing(null); onChanged?.(); }} />}
+        </div>
+    );
+}
+
+/** Edit a recorded entry (service / date / amount) via PATCH. */
+function EditEntryDialog({ entry, onClose, onSaved }) {
+    const [serviceName, setServiceName] = useState(entry.service_name || "");
+    const [date, setDate] = useState((entry.date || "").slice(0, 10));
+    const [amount, setAmount] = useState(entry.amount != null ? String(entry.amount) : "");
+    const [busy, setBusy] = useState(false);
+
+    const save = async () => {
+        setBusy(true);
+        try {
+            await api.patch(`/fundtrack/charges/${entry.id}`, {
+                service_name: serviceName.trim(),
+                date,
+                amount: amount === "" ? null : Number(amount),
+            });
+            toast.success("Entry Updated.");
+            onSaved?.();
+        } catch (e) { toast.error(e?.response?.data?.detail || "Could not update that entry."); }
+        finally { setBusy(false); }
+    };
+
+    return (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40" data-testid="edit-entry-dialog" onClick={onClose}>
+            <div className="bg-white rounded-2xl p-5 max-w-sm w-full shadow-xl" onClick={(e) => e.stopPropagation()}>
+                <div className="flex items-center justify-between">
+                    <h3 className="font-heading text-lg text-primary-k">Edit Entry</h3>
+                    <button onClick={onClose} className="text-muted-k hover:text-primary-k" data-testid="edit-entry-close"><X className="w-5 h-5" /></button>
+                </div>
+                <div className="mt-3 space-y-3">
+                    <label className="block"><span className="text-xs text-muted-k">Service</span>
+                        <Input value={serviceName} onChange={(e) => setServiceName(e.target.value)} data-testid="edit-entry-service" className="mt-1" /></label>
+                    <div className="grid grid-cols-2 gap-3">
+                        <label className="block"><span className="text-xs text-muted-k">Date</span>
+                            <Input type="date" value={date} onChange={(e) => setDate(e.target.value)} data-testid="edit-entry-date" className="mt-1" /></label>
+                        <label className="block"><span className="text-xs text-muted-k">Amount</span>
+                            <div className="relative mt-1">
+                                <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-k">$</span>
+                                <Input type="number" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="Unpriced" data-testid="edit-entry-amount" className="pl-7" /></div></label>
+                    </div>
+                </div>
+                <div className="mt-4 flex justify-end gap-2">
+                    <button onClick={onClose} className="text-sm text-primary-k px-4 py-2 rounded-md hover:bg-primary-k/5">Cancel</button>
+                    <Button onClick={save} disabled={busy || !serviceName.trim()} data-testid="edit-entry-save">{busy ? <Loader2 className="w-4 h-4 animate-spin" /> : "Save Changes"}</Button>
                 </div>
             </div>
         </div>

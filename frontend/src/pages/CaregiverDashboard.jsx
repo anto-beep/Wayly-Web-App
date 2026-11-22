@@ -151,13 +151,13 @@ function BudgetDonut({ pctFill, pctLabel, tone, size = 168, stroke = 20, onDark 
 
 // A compact, uniform metric tile used inside the budget hero — label + value +
 // a mini progress bar, so each figure reads as a small graphic at a glance.
-function GlanceTile({ label, value, pct = 0, barColor = "#fff", tintClass = "bg-white/10 ring-white/15", testid }) {
+function GlanceTile({ label, value, pct = 0, bg = "#2E9E74", testid }) {
     return (
-        <div data-testid={testid} className={`rounded-xl ring-1 px-3 py-3 ${tintClass}`}>
-            <div className="text-[10px] sm:text-[11px] uppercase tracking-[0.1em] font-semibold text-white">{label}</div>
+        <div data-testid={testid} className="rounded-xl px-3 py-3 shadow-sm" style={{ backgroundColor: bg }}>
+            <div className="text-[10px] sm:text-[11px] uppercase tracking-[0.1em] font-semibold text-white/85">{label}</div>
             <div className="mt-1 font-heading text-xl sm:text-2xl leading-none tabular-nums text-white">{value}</div>
-            <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-white/15">
-                <div className="h-full rounded-full transition-[width] duration-700" style={{ width: `${Math.max(0, Math.min(100, pct))}%`, backgroundColor: barColor }} />
+            <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-white/25">
+                <div className="h-full rounded-full bg-white/90 transition-[width] duration-700" style={{ width: `${Math.max(0, Math.min(100, pct))}%` }} />
             </div>
         </div>
     );
@@ -198,44 +198,43 @@ function AtAGlance({ budget, statements, alertCount, toReviewHref, lifetimeCapHr
         >
             {/* Headline — a premium, colour-blocked budget hero with several
                 clear graphics (ring, gauge, metric tiles) on one type scale. */}
-            <div className="relative overflow-hidden p-6 sm:p-8 text-white bg-[linear-gradient(135deg,#0E4D52,#13646A)]">
-                <div aria-hidden="true" className="pointer-events-none absolute -right-20 -top-24 h-56 w-56 rounded-full bg-white/[0.05]" />
-                <div aria-hidden="true" className="pointer-events-none absolute right-10 -bottom-20 h-44 w-44 rounded-full bg-white/[0.03]" />
+            <div className="relative overflow-hidden p-6 sm:p-8 bg-surface text-primary-k">
+                <div aria-hidden="true" className="pointer-events-none absolute -right-20 -top-24 h-56 w-56 rounded-full bg-primary-k/[0.04]" />
+                <div aria-hidden="true" className="pointer-events-none absolute right-10 -bottom-20 h-44 w-44 rounded-full bg-gold/[0.05]" />
 
                 {/* header */}
                 <div className="relative flex items-center justify-between gap-3 flex-wrap">
-                    <span className="inline-flex items-center gap-1.5 rounded-pill bg-[#F3C98B]/20 px-3 py-1 text-xs uppercase tracking-[0.18em] font-bold text-white ring-1 ring-[#F3C98B]/30">This quarter&apos;s care budget</span>
+                    <span className="inline-flex items-center gap-1.5 rounded-pill bg-gold/15 px-3 py-1 text-xs uppercase tracking-[0.18em] font-bold text-[#6B4A0F] ring-1 ring-gold/30">This quarter&apos;s care budget</span>
                     {budget.quarter_label && (
-                        <span data-testid="glance-quarter-months" className="inline-flex items-center gap-1.5 rounded-pill bg-white/20 px-3 py-1.5 text-xs font-bold text-white ring-1 ring-white/25">
-                            <Calendar className="h-3.5 w-3.5 text-white" />
+                        <span data-testid="glance-quarter-months" className="inline-flex items-center gap-1.5 rounded-pill bg-primary-k/[0.06] px-3 py-1.5 text-xs font-bold text-primary-k ring-1 ring-primary-k/15">
+                            <Calendar className="h-3.5 w-3.5 text-primary-k" />
                             {String(budget.quarter_label).replace(/-/, " – ")}
-                            {elapsedPct != null && <span style={{ color: elapsedPct >= 85 ? "#F0857A" : elapsedPct >= 55 ? "#F3C98B" : "#7FC8A0" }}>· {elapsedPct}% through</span>}
+                            {elapsedPct != null && <span style={{ color: elapsedPct >= 85 ? "#C0392B" : elapsedPct >= 55 ? "#B07A14" : "#2E7D55" }}>· {elapsedPct}% through</span>}
                         </span>
                     )}
                 </div>
 
                 {/* main: ring + headline figure + budget gauge */}
                 <div className="relative mt-6 flex flex-col sm:flex-row items-center gap-7 sm:gap-10">
-                    <BudgetDonut pctFill={pctUsed} pctLabel={pctUsedDisplay} tone={toneHex} onDark size={152} stroke={18} />
+                    <BudgetDonut pctFill={pctUsed} pctLabel={pctUsedDisplay} tone={toneHex} size={152} stroke={18} />
                     <div className="min-w-0 flex-1 w-full text-center sm:text-left">
                         <div className="flex items-baseline gap-2 flex-wrap justify-center sm:justify-start">
-                            <span className="font-heading text-3xl sm:text-4xl leading-none tabular-nums text-white" data-testid="glance-left">{formatAUD2(Math.abs(left))}</span>
+                            <span className="font-heading text-3xl sm:text-4xl leading-none tabular-nums text-primary-k" data-testid="glance-left">{formatAUD2(Math.abs(left))}</span>
                         </div>
-                        <p className="mt-1.5 text-sm text-white/70">
-                            {over ? "over your available budget" : "left for care"} · of <span className="font-semibold text-white tabular-nums" data-testid="glance-budget">{formatAUD2(available)}</span> available
+                        <p className="mt-1.5 text-sm text-muted-k">
+                            {over ? "over your available budget" : "left for care"} · of <span className="font-semibold text-primary-k tabular-nums" data-testid="glance-budget">{formatAUD2(available)}</span> available
                         </p>
 
                         {/* budget gauge */}
                         <div className="mt-5">
-                            <div className="relative h-3 w-full overflow-hidden rounded-full bg-white/15" aria-hidden="true">
-                                <div className="h-full rounded-full transition-[width] duration-700" style={{ width: `${pctUsed}%`, backgroundColor: over || pctUsed >= 90 ? "#F0857A" : "#F3C98B" }} />
+                            <div className="relative h-3 w-full overflow-hidden rounded-full bg-primary-k/20" aria-hidden="true">
+                                <div className="h-full rounded-full transition-[width] duration-700" style={{ width: `${pctUsed}%`, backgroundColor: over || pctUsed >= 90 ? "#C0392B" : "#CE912E" }} />
                                 {elapsedPct != null && (
-                                    <span className="absolute top-1/2 -translate-y-1/2 h-4 w-[2px] rounded bg-white/70" style={{ left: `calc(${Math.max(0, Math.min(100, elapsedPct))}% - 1px)` }} title="Time elapsed this quarter" />
+                                    <span className="absolute top-1/2 -translate-y-1/2 h-4 w-[2px] rounded bg-primary-k/50" style={{ left: `calc(${Math.max(0, Math.min(100, elapsedPct))}% - 1px)` }} title="Time elapsed this quarter" />
                                 )}
                             </div>
-                            <div className="mt-1.5 flex items-center justify-between text-xs font-semibold text-white tabular-nums">
+                            <div className="mt-1.5 flex items-center justify-between text-xs font-semibold text-primary-k tabular-nums">
                                 <span>{pctUsedDisplay}% spent</span>
-                                {elapsedPct != null && <span className="text-white/80">{elapsedPct}% of time gone</span>}
                             </div>
                         </div>
                     </div>
@@ -243,42 +242,42 @@ function AtAGlance({ budget, statements, alertCount, toReviewHref, lifetimeCapHr
 
                 {/* uniform metric tiles, each with a mini bar */}
                 <div className="relative mt-6 grid grid-cols-3 gap-2.5 sm:gap-3">
-                    <GlanceTile label="Available" value={formatAUD2(available)} pct={100} barColor="#9FE4BE" tintClass="bg-[#2E9E74]/55 ring-[#7FC8A0]/70" />
-                    <GlanceTile testid="glance-spent" label="Used" value={formatAUD2(spent)} pct={pctUsed} barColor="#FFB0A6" tintClass="bg-[#C73B2E]/55 ring-[#F0857A]/75" />
-                    <GlanceTile testid="glance-spare" label="Spare" value={formatAUD2(spare)} pct={available > 0 ? (spare / available) * 100 : 0} barColor="#FBD9A0" tintClass="bg-[#CE912E]/55 ring-[#F3C98B]/75" />
+                    <GlanceTile label="Available" value={formatAUD2(available)} pct={100} bg="#0E4D52" />
+                    <GlanceTile testid="glance-spent" label="Used" value={formatAUD2(spent)} pct={pctUsed} bg="#9E2F23" />
+                    <GlanceTile testid="glance-spare" label="Spare" value={formatAUD2(spare)} pct={available > 0 ? (spare / available) * 100 : 0} bg="#A5512B" />
                 </div>
 
                 {careMgmt > 0 && (
-                    <p className="relative mt-4 flex items-start gap-2 rounded-lg bg-white/[0.12] border-l-[3px] border-l-white/40 px-3 py-2.5 text-sm text-white/90" data-testid="glance-care-management">
-                        <Info className="h-3.5 w-3.5 flex-none mt-0.5 text-white/80" />
-                        <span><span className="font-semibold tabular-nums text-white">{formatAUD2(careMgmt)}</span> care management is set aside automatically (10% of funding), separate from the amount available for care.</span>
+                    <p className="relative mt-4 flex items-start gap-2 rounded-lg bg-[#C9E0E1] border-l-[4px] border-l-primary-k px-3 py-2.5 text-sm text-[#0A3E42]" data-testid="glance-care-management">
+                        <Info className="h-3.5 w-3.5 flex-none mt-0.5 text-primary-k" />
+                        <span><span className="font-semibold tabular-nums text-[#0A3E42]">{formatAUD2(careMgmt)}</span> care management is set aside automatically (10% of funding), separate from the amount available for care.</span>
                     </p>
                 )}
                 {underspend && proj.forfeit_aud > 0 && (
-                    <p className="relative mt-3 flex items-start gap-2 rounded-lg bg-[#F3C98B]/[0.18] border-l-[3px] border-l-[#F3C98B] px-3 py-2.5 text-sm text-white" data-testid="glance-forfeit">
-                        <AlertTriangle className="h-4 w-4 flex-none mt-0.5 text-[#F3C98B]" />
+                    <p className="relative mt-3 flex items-start gap-2 rounded-lg bg-[#F4D6C5] border-l-[4px] border-l-[#A5512B] px-3 py-2.5 text-sm text-[#6A3219]" data-testid="glance-forfeit">
+                        <AlertTriangle className="h-4 w-4 flex-none mt-0.5 text-[#A5512B]" />
                         <span>At this pace, about <span className="font-bold tabular-nums">{formatAUD2(proj.forfeit_aud)}</span> looks likely to be returned{budget.quarter_end ? ` on ${new Date(budget.quarter_end).toLocaleDateString("en-AU", { day: "numeric", month: "short" })}` : ""}. It may be worth asking your provider about care you need but aren&apos;t getting.</span>
                     </p>
                 )}
                 {over && proj.shortfall_aud > 0 && (
-                    <p className="relative mt-3 flex items-start gap-2 rounded-lg bg-white/[0.10] border-l-[3px] border-l-[#F0857A] px-3 py-2 text-sm text-white" data-testid="glance-shortfall">
-                        <AlertTriangle className="h-4 w-4 flex-none mt-0.5 text-[#F0857A]" />
+                    <p className="relative mt-3 flex items-start gap-2 rounded-lg bg-[#F7D9D4] border-l-[4px] border-l-[#C0392B] px-3 py-2 text-sm text-[#8A2A1E]" data-testid="glance-shortfall">
+                        <AlertTriangle className="h-4 w-4 flex-none mt-0.5 text-[#C0392B]" />
                         <span>Booked care is about <span className="font-bold tabular-nums">{formatAUD2(proj.shortfall_aud)}</span> above what&apos;s left this quarter. Check prices or ask your provider to confirm your balance.</span>
                     </p>
                 )}
             </div>
             {/* Mini-stats: three distinct, soft colours */}
             <div className="grid grid-cols-3 gap-2.5 sm:gap-3 p-3 sm:p-4 border-t border-kindred">
-                <Link to={toReviewHref} data-testid="glance-alerts" className="rounded-xl border-l-4 border-l-gold border border-gold/30 bg-gold/[0.10] p-3.5 sm:p-4 shadow-sm hover:bg-gold/[0.18] transition-colors">
+                <Link to={toReviewHref} data-testid="glance-alerts" className="rounded-xl border-l-4 border-l-gold border border-gold/40 bg-gold/[0.20] p-3.5 sm:p-4 shadow-sm hover:bg-gold/[0.28] transition-colors">
                     <div className="flex items-center gap-1.5 text-[#6B4A0F]"><Bell className="h-4 w-4" /><span className="text-[10px] uppercase tracking-[0.12em] font-semibold">To review</span></div>
                     <div className="mt-1 font-heading text-[1.75rem] leading-none text-primary-k tabular-nums">{alertCount}</div>
                     <div className="mt-0.5 text-[10px] text-muted-k leading-tight">On your latest statement</div>
                 </Link>
-                <Link to="/app/statements" data-testid="glance-statements" className="rounded-xl border-l-4 border-l-primary-k border border-primary-k/15 bg-primary-k/[0.06] p-3.5 sm:p-4 shadow-sm hover:bg-primary-k/[0.11] transition-colors">
+                <Link to="/app/statements" data-testid="glance-statements" className="rounded-xl border-l-4 border-l-primary-k border border-primary-k/25 bg-primary-k/[0.12] p-3.5 sm:p-4 shadow-sm hover:bg-primary-k/[0.18] transition-colors">
                     <div className="flex items-center gap-1.5 text-primary-k"><FileText className="h-4 w-4" /><span className="text-[10px] uppercase tracking-[0.12em] font-semibold">Statements</span></div>
                     <div className="mt-1 font-heading text-[1.75rem] leading-none text-primary-k tabular-nums">{statements.length}</div>
                 </Link>
-                <Link to={lifetimeCapHref} data-testid="glance-cap" className="rounded-xl border-l-4 border-l-clay border border-clay/30 bg-clay/[0.09] p-3.5 sm:p-4 shadow-sm hover:bg-clay/[0.16] transition-colors">
+                <Link to={lifetimeCapHref} data-testid="glance-cap" className="rounded-xl border-l-4 border-l-clay border border-clay/40 bg-clay/[0.18] p-3.5 sm:p-4 shadow-sm hover:bg-clay/[0.26] transition-colors">
                     <div className="flex items-center gap-1.5 text-clay"><CheckCircle2 className="h-4 w-4" /><span className="text-[10px] uppercase tracking-[0.12em] font-semibold">Lifetime cap</span></div>
                     <div className="mt-1 font-heading text-[1.4rem] sm:text-[1.6rem] leading-none text-primary-k tabular-nums">{formatAUD(budget.lifetime_contributions)}</div>
                     <div className="mt-0.5 text-[10px] text-muted-k leading-tight tabular-nums">{budget.lifetime_pct.toFixed(0)}% of {formatAUD(budget.lifetime_cap)}</div>

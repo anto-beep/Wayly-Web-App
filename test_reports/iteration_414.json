@@ -1,0 +1,43 @@
+{
+  "summary": "Iter 414 — Full parity pass on web + mobile for the agentic visual-editor batch. All 8 verification items PASS. WEB (1920x1080, samburke@test.com): dashboard-at-a-glance hero bg is white (rgb(251,252,254), NOT dark teal); the three uniform metric tiles have solid coloured backgrounds — Available tile rgb(14,77,82) teal, glance-spent rgb(158,47,35) red, glance-spare rgb(165,81,43) clay — each with white text + mini white bar. glance-care-management = solid teal tint rgb(201,224,225) with teal left border; glance-forfeit = solid clay tint rgb(244,214,197) with clay left border; glance-shortfall conditional (demo account is underspend_risk so forfeit renders but shortfall is correctly hidden). Gauge row shows '% spent' and does NOT show any 'time gone' / '% of time gone' text. FundtrackAlerts renders on dashboard (1 card) with ZERO ft-alert-action-* buttons. WeeklyBudget /app/weekly-budget: weekly-used heading is Title Case 'What You Have Recorded This Quarter'; weekly-used-table renders with Service/Date/Source/Amount/Actions; sort/search/filter controls (weekly-used-sort-service/date/amount, weekly-used-search, weekly-used-filter-source) all present; search 'Per' filters rows correctly; Edit flow opens edit-entry-dialog, PATCH /api/fundtrack/charges/<id> succeeds (row amount updates to 77.77, restored to 76.5 after). WhatIfCareDialog: whatif-saved exposes 17 options (1 placeholder + 16 saved services — cap of 12 removed); whatif-price has visible '$' prefix in its wrapper. MOBILE (390x844, Expo preview): dashboard glance row shows '% used' and NO 'quarter elapsed' / '% of quarter' text. FundtrackAlerts has 0 ft-alert-action-* buttons. Ask Wayly screen: header-back-button present, ask-input present, bottom tab bar hidden on /ask (tab-dashboard not visible), aw2-empty visible before typing and disappears when text is entered (suggestions count 0 after typing), ask-send-button renders at bottom (arrow-up) with composer hugging the keyboard area. WhatIfCareSheet (source-verified at /app/mobile/src/components/fundtrack/WhatIfCareSheet.tsx:105): savedServices mapped verbatim without slice cap; Field label is literally 'Price per visit ($)'. No parity divergence between web and mobile. No critical or minor bugs found.",
+  "platforms_tested": ["web", "mobile"],
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "web": {
+      "ui_bugs": [],
+      "integration_issues": [],
+      "design_issues": []
+    },
+    "mobile": {
+      "ui_bugs": [],
+      "integration_issues": [],
+      "design_issues": [],
+      "react_native_issues": []
+    }
+  },
+  "parity_issues": [],
+  "test_report_links": [
+    "/app/test_reports/iter414_web_hero.jpg",
+    "/app/test_reports/iter414_mob_dash.jpg",
+    "/app/test_reports/iter414_mob_ask.jpg"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "CaregiverDashboard.jsx:245-247 — GlanceTile uses solid hex backgrounds (#0E4D52 teal, #9E2F23 red, #A5512B clay) with white text; contrast ratio is strong and matches the brief exactly.",
+    "CaregiverDashboard.jsx:237-238 — gauge row intentionally shows only '% spent'; the elapsed vertical tick marker is retained as a passive visual on the bar, no text label, matches the request.",
+    "FundtrackAlerts.jsx — action buttons fully removed; render loop only outputs icon + title + body. Clean implementation.",
+    "WhatIfCareDialog.jsx:81-84 — savedServices mapped verbatim (no slice cap). Mobile WhatIfCareSheet.tsx:105 mirrors this. Good parity.",
+    "WhatIfCareDialog.jsx:91 — '$' prefix uses absolute-positioned span inside relative wrapper with pl-7 on the Input; keyboard focus still targets the number input cleanly.",
+    "WeeklyBudget.jsx — table markup uses weekly-used-table + per-row data-testid weekly-used-<id>; edit/delete reuse existing PATCH/DELETE endpoints. End-to-end update round-trip (77.77) confirmed reflected in UI immediately after save.",
+    "mobile/app/(tabs)/_layout.tsx:93 — Tabs.Screen for 'ask' sets href:null + tabBarStyle display:'none' to hide the bottom bar on the ask screen. Verified visually and via is_visible() check.",
+    "mobile/app/(tabs)/ask.tsx — uses react-native-keyboard-controller KeyboardAvoidingView with translate-with-padding; Pressable with Keyboard.dismiss() wraps the FlatList area to dismiss keyboard on tap. Welcome block + suggestions hide when input has text."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "N/A (skipped per request)", "frontend": "100% (8/8 — 5 web + 3 mobile)"},
+  "test_credentials": "samburke@test.com / CarTest123$",
+  "seed_data_creation": "None. The one WeeklyBudget charge row was edited to 77.77 and immediately restored to its original 76.50 in the same test run — no residual data mutation.",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Mobile login: fill the 2 inputs positionally (page.locator('input').nth(0/1)); placeholders are 'you@example.com' and 'Your password'. The /ask screen is reachable directly via /ask on the Expo web preview. Demo account currently has utilisation ~0% so the dashboard shows forfeit risk (glance-forfeit) but NOT shortfall (glance-shortfall) — this is correct conditional behaviour, not a bug. WeeklyBudget has only 1 recorded charge in the current quarter, so sort-reorder cannot be asserted via row movement — rely on the sort testids existing + the search/filter path for proof of sortable/filterable table.",
+  "rca of the issue": ""
+}

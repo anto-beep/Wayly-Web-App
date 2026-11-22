@@ -80,14 +80,16 @@ export default function WhatIfCareDialog({ pid, savedServices = [], onClose, onS
                         <label className="block"><span className="text-xs text-muted-k">Pick from your usual care</span>
                             <select onChange={pickSaved} data-testid="whatif-saved" className="mt-1 w-full rounded-lg border border-primary-k/15 px-3 py-2 text-sm bg-white">
                                 <option value="">Choose a service…</option>
-                                {savedServices.slice(0, 12).map((s) => <option key={s.service_id} value={s.service_id}>{s.service_name} · {AUD(s.last_amount)}</option>)}
+                                {savedServices.map((s) => <option key={s.service_id} value={s.service_id}>{s.service_name} · {AUD(s.last_amount)}</option>)}
                             </select></label>
                     )}
                     <div className="grid grid-cols-2 gap-3">
                         <label className="block col-span-2"><span className="text-xs text-muted-k">Service</span>
                             <Input value={serviceName} onChange={(e) => setServiceName(e.target.value)} placeholder="e.g. Cleaning" data-testid="whatif-service" className="mt-1" /></label>
                         <label className="block"><span className="text-xs text-muted-k">Price per visit</span>
-                            <Input type="number" value={unitPrice} onChange={(e) => setUnitPrice(e.target.value)} data-testid="whatif-price" className="mt-1" /></label>
+                            <div className="relative mt-1">
+                                <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-k">$</span>
+                                <Input type="number" value={unitPrice} onChange={(e) => setUnitPrice(e.target.value)} data-testid="whatif-price" className="pl-7" /></div></label>
                         <label className="block"><span className="text-xs text-muted-k">Category</span>
                             <select value={stream} onChange={(e) => setStream(e.target.value)} data-testid="whatif-stream" className="mt-1 w-full rounded-lg border border-primary-k/15 px-3 py-2 text-sm bg-white">
                                 {STREAMS.map((s) => <option key={s} value={s}>{s}</option>)}

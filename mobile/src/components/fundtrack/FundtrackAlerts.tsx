@@ -2,7 +2,7 @@
  * FundtrackAlerts (mobile) — FUNDTRACK-1 alerts, parity with the web card.
  */
 import React from "react";
-import { Pressable, View } from "react-native";
+import { View } from "react-native";
 import { AlertTriangle, Clock, HelpCircle, Receipt } from "lucide-react-native";
 
 import { T } from "@/src/components/ui";
@@ -14,7 +14,7 @@ const ICON: Record<string, any> = {
   statement_overdue: Clock, possible_billing_difference: HelpCircle,
 };
 
-export function FundtrackAlerts({ alerts, onAction }: { alerts?: any[]; onAction?: (a: string) => void }) {
+export function FundtrackAlerts({ alerts }: { alerts?: any[]; onAction?: (a: string) => void }) {
   const { colors } = useTheme();
   if (!alerts || alerts.length === 0) return null;
   const toneFor = (sev: string) =>
@@ -32,16 +32,6 @@ export function FundtrackAlerts({ alerts, onAction }: { alerts?: any[]; onAction
             <View style={{ flex: 1 }}>
               <T style={{ fontFamily: fonts.bodySemi, fontSize: 14, color: t.accent }}>{a.title}</T>
               <T style={{ fontSize: 13, color: colors.text, marginTop: 2, lineHeight: 19 }}>{a.body}</T>
-              {(a.actions || []).length > 0 && onAction ? (
-                <View style={{ flexDirection: "row", flexWrap: "wrap", gap: spacing.sm, marginTop: spacing.sm }}>
-                  {a.actions.map((act: any, i: number) => (
-                    <Pressable key={i} testID={`ft-alert-action-${act.action}`} onPress={() => onAction(act.action)}
-                      style={{ backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border, borderRadius: 999, paddingHorizontal: 12, paddingVertical: 7 }}>
-                      <T style={{ fontFamily: fonts.bodySemi, fontSize: 12, color: colors.heading }}>{act.label}</T>
-                    </Pressable>
-                  ))}
-                </View>
-              ) : null}
             </View>
           </View>
         );

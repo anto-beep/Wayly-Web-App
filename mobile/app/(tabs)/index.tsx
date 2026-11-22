@@ -295,7 +295,6 @@ export default function Dashboard() {
                     </View>
                     <View style={{ flexDirection: "row", justifyContent: "space-between", marginTop: 6 }}>
                       <T variant="small" style={{ fontSize: 11 }}>{budgetPctUsed}% used</T>
-                      {elapsedPct != null ? <T variant="small" style={{ fontSize: 11 }}>{elapsedPct}% of quarter elapsed</T> : null}
                     </View>
                   </View>
 
