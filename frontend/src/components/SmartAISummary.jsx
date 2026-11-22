@@ -13,7 +13,7 @@ function highlightFigures(text) {
   if (!str) return str;
   return str.split(FIG_SPLIT).map((part, i) =>
     FIG_TEST.test(part)
-      ? <span key={i} className="font-bold tabular-nums text-primary-k bg-gold/20 rounded px-1">{part}</span>
+      ? <span key={i} className="font-bold tabular-nums text-primary-k bg-gold/20 rounded-[3px] px-0.5 -mx-0.5">{part}</span>
       : <React.Fragment key={i}>{part}</React.Fragment>
   );
 }

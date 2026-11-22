@@ -125,6 +125,7 @@ function BudgetDonut({ pctFill, pctLabel, tone, size = 168, stroke = 20, onDark 
     const { isDark } = useTheme();
     const bright = { "#C0392B": "#F0857A", "#C2683D": "#E89A6F", "#4E6E54": "#7FC8A0" };
     const t = (isDark || onDark) ? (bright[tone] || tone) : tone;
+    const arc = onDark ? "#5FC9C0" : t;
     const track = onDark ? "rgba(255,255,255,0.22)" : isDark ? "rgba(255,255,255,0.16)" : "rgba(14,77,82,0.10)";
     const r = (size - stroke) / 2;
     const c = 2 * Math.PI * r;
@@ -135,7 +136,7 @@ function BudgetDonut({ pctFill, pctLabel, tone, size = 168, stroke = 20, onDark 
             <svg width={size} height={size} className="-rotate-90">
                 <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke={track} strokeWidth={stroke} />
                 <circle
-                    cx={size / 2} cy={size / 2} r={r} fill="none" stroke={t} strokeWidth={stroke}
+                    cx={size / 2} cy={size / 2} r={r} fill="none" stroke={arc} strokeWidth={stroke}
                     strokeLinecap="round" strokeDasharray={c}
                     style={{ strokeDashoffset: off, transition: "stroke-dashoffset 700ms ease" }}
                 />
@@ -197,18 +198,18 @@ function AtAGlance({ budget, statements, alertCount, toReviewHref, lifetimeCapHr
         >
             {/* Headline — a premium, colour-blocked budget hero with several
                 clear graphics (ring, gauge, metric tiles) on one type scale. */}
-            <div className="relative overflow-hidden p-6 sm:p-8 text-white bg-[linear-gradient(135deg,#0E4D52_0%,#0A3B3F_55%,#10474B_100%)]">
+            <div className="relative overflow-hidden p-6 sm:p-8 text-white bg-[linear-gradient(135deg,#13616A_0%,#0F555A_55%,#1A777E_100%)]">
                 <div aria-hidden="true" className="pointer-events-none absolute -right-20 -top-24 h-56 w-56 rounded-full bg-white/[0.05]" />
                 <div aria-hidden="true" className="pointer-events-none absolute right-10 -bottom-20 h-44 w-44 rounded-full bg-white/[0.03]" />
 
                 {/* header */}
                 <div className="relative flex items-center justify-between gap-3 flex-wrap">
-                    <span className="inline-flex items-center gap-1.5 rounded-pill bg-[#F3C98B]/20 px-3 py-1 text-xs uppercase tracking-[0.18em] font-bold text-[#F3C98B] ring-1 ring-[#F3C98B]/30">This quarter&apos;s care budget</span>
+                    <span className="inline-flex items-center gap-1.5 rounded-pill bg-[#F3C98B]/20 px-3 py-1 text-xs uppercase tracking-[0.18em] font-bold text-white ring-1 ring-[#F3C98B]/30">This quarter&apos;s care budget</span>
                     {budget.quarter_label && (
                         <span data-testid="glance-quarter-months" className="inline-flex items-center gap-1.5 rounded-pill bg-white/20 px-3 py-1.5 text-xs font-bold text-white ring-1 ring-white/25">
                             <Calendar className="h-3.5 w-3.5 text-white" />
                             {String(budget.quarter_label).replace(/-/, " – ")}
-                            {elapsedPct != null && <span className="text-white/55">· {elapsedPct}% through</span>}
+                            {elapsedPct != null && <span style={{ color: elapsedPct >= 85 ? "#F0857A" : elapsedPct >= 55 ? "#F3C98B" : "#7FC8A0" }}>· {elapsedPct}% through</span>}
                         </span>
                     )}
                 </div>
@@ -226,7 +227,7 @@ function AtAGlance({ budget, statements, alertCount, toReviewHref, lifetimeCapHr
                             {over ? "Over budget" : underspend ? "Underspend risk" : "On track"}
                         </span>
                         <div className="mt-3 flex items-baseline gap-2 flex-wrap justify-center sm:justify-start">
-                            <span className="font-heading text-4xl sm:text-5xl leading-none tabular-nums text-white" data-testid="glance-left">{formatAUD2(Math.abs(left))}</span>
+                            <span className="font-heading text-3xl sm:text-4xl leading-none tabular-nums text-white" data-testid="glance-left">{formatAUD2(Math.abs(left))}</span>
                         </div>
                         <p className="mt-1.5 text-sm text-white/70">
                             {over ? "over your available budget" : "left for care"} · of <span className="font-semibold text-white tabular-nums" data-testid="glance-budget">{formatAUD2(available)}</span> available
@@ -235,7 +236,7 @@ function AtAGlance({ budget, statements, alertCount, toReviewHref, lifetimeCapHr
                         {/* budget gauge */}
                         <div className="mt-5">
                             <div className="relative h-3 w-full overflow-hidden rounded-full bg-white/15" aria-hidden="true">
-                                <div className="h-full rounded-full transition-[width] duration-700" style={{ width: `${pctUsed}%`, backgroundColor: over || pctUsed >= 90 ? "#F0857A" : pctUsed >= 75 ? "#E89A6F" : "#7FC8A0" }} />
+                                <div className="h-full rounded-full transition-[width] duration-700" style={{ width: `${pctUsed}%`, backgroundColor: over || pctUsed >= 90 ? "#F0857A" : "#F3C98B" }} />
                                 {elapsedPct != null && (
                                     <span className="absolute top-1/2 -translate-y-1/2 h-4 w-[2px] rounded bg-white/70" style={{ left: `calc(${Math.max(0, Math.min(100, elapsedPct))}% - 1px)` }} title="Time elapsed this quarter" />
                                 )}
@@ -250,9 +251,9 @@ function AtAGlance({ budget, statements, alertCount, toReviewHref, lifetimeCapHr
 
                 {/* uniform metric tiles, each with a mini bar */}
                 <div className="relative mt-6 grid grid-cols-3 gap-2.5 sm:gap-3">
-                    <GlanceTile label="Available" value={formatAUD2(available)} pct={100} barColor="#7FC8A0" tintClass="bg-[#7FC8A0]/25 ring-[#7FC8A0]/45" />
-                    <GlanceTile testid="glance-spent" label="Used" value={formatAUD2(spent)} pct={pctUsed} barColor="#F0857A" tintClass="bg-[#F0857A]/25 ring-[#F0857A]/45" />
-                    <GlanceTile testid="glance-spare" label="Spare" value={formatAUD2(spare)} pct={available > 0 ? (spare / available) * 100 : 0} barColor="#F3C98B" tintClass="bg-[#F3C98B]/22 ring-[#F3C98B]/45" />
+                    <GlanceTile label="Available" value={formatAUD2(available)} pct={100} barColor="#9FE4BE" tintClass="bg-[#2E9E74]/55 ring-[#7FC8A0]/70" />
+                    <GlanceTile testid="glance-spent" label="Used" value={formatAUD2(spent)} pct={pctUsed} barColor="#FFB0A6" tintClass="bg-[#C73B2E]/55 ring-[#F0857A]/75" />
+                    <GlanceTile testid="glance-spare" label="Spare" value={formatAUD2(spare)} pct={available > 0 ? (spare / available) * 100 : 0} barColor="#FBD9A0" tintClass="bg-[#CE912E]/55 ring-[#F3C98B]/75" />
                 </div>
 
                 {careMgmt > 0 && (
