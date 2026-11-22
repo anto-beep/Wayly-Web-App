@@ -123,7 +123,7 @@ function LastTouchedByPill({ participant }) {
 // budget has been used. Tone shifts sage → clay → red as it fills / goes over.
 function BudgetDonut({ pctFill, pctLabel, tone, size = 168, stroke = 20, onDark = false }) {
     const { isDark } = useTheme();
-    const bright = { "#C0392B": "#F0857A", "#C2683D": "#E89A6F", "#4E6E54": "#7FC8A0" };
+    const bright = { "#C0392B": "#F0857A", "#C2683D": "#E89A6F", "#4E6E54": "#F3C98B" };
     const t = (isDark || onDark) ? (bright[tone] || tone) : tone;
     const arc = onDark ? "#F3C98B" : t;
     const track = onDark ? "rgba(255,255,255,0.22)" : isDark ? "rgba(255,255,255,0.16)" : "rgba(14,77,82,0.10)";
@@ -191,6 +191,10 @@ function AtAGlance({ budget, statements, alertCount, toReviewHref, lifetimeCapHr
     const over = status === "overspend_risk" || left < 0;
     const underspend = status === "underspend_risk";
     const toneHex = (over || pctUsed >= 90) ? "#C0392B" : pctUsed >= 75 ? "#C2683D" : "#4E6E54";
+    const { isDark } = useTheme();
+    const noteCare = isDark ? { bg: "rgba(26,105,110,0.30)", fg: "#CDE7E6", border: "#2E8F94" } : { bg: "#C9E0E1", fg: "#0A3E42", border: "#0E4D52" };
+    const noteForfeit = isDark ? { bg: "rgba(194,104,61,0.32)", fg: "#F2CDB2", border: "#E89A6F" } : { bg: "#F4D6C5", fg: "#6A3219", border: "#A5512B" };
+    const noteShort = isDark ? { bg: "rgba(192,57,43,0.32)", fg: "#F4C3BB", border: "#F0857A" } : { bg: "#F7D9D4", fg: "#8A2A1E", border: "#C0392B" };
     return (
         <section
             data-testid="dashboard-at-a-glance"
@@ -204,12 +208,12 @@ function AtAGlance({ budget, statements, alertCount, toReviewHref, lifetimeCapHr
 
                 {/* header */}
                 <div className="relative flex items-center justify-between gap-3 flex-wrap">
-                    <span className="inline-flex items-center gap-1.5 rounded-pill bg-gold/15 px-3 py-1 text-xs uppercase tracking-[0.18em] font-bold text-[#6B4A0F] ring-1 ring-gold/30">This quarter&apos;s care budget</span>
+                    <span className="inline-flex items-center gap-1.5 rounded-pill bg-gold/15 px-3 py-1 text-xs uppercase tracking-[0.18em] font-bold ring-1 ring-gold/30" style={{ color: isDark ? "#F3C98B" : "#6B4A0F" }}>This quarter&apos;s care budget</span>
                     {budget.quarter_label && (
                         <span data-testid="glance-quarter-months" className="inline-flex items-center gap-1.5 rounded-pill bg-primary-k/[0.06] px-3 py-1.5 text-xs font-bold text-primary-k ring-1 ring-primary-k/15">
                             <Calendar className="h-3.5 w-3.5 text-primary-k" />
                             {String(budget.quarter_label).replace(/-/, " – ")}
-                            {elapsedPct != null && <span style={{ color: elapsedPct >= 85 ? "#C0392B" : elapsedPct >= 55 ? "#B07A14" : "#2E7D55" }}>· {elapsedPct}% through</span>}
+                            {elapsedPct != null && <span style={{ color: isDark ? "#FFFFFF" : (elapsedPct >= 85 ? "#C0392B" : elapsedPct >= 55 ? "#B07A14" : "#2E7D55") }}>· {elapsedPct}% through</span>}
                         </span>
                     )}
                 </div>
@@ -248,20 +252,20 @@ function AtAGlance({ budget, statements, alertCount, toReviewHref, lifetimeCapHr
                 </div>
 
                 {careMgmt > 0 && (
-                    <p className="relative mt-4 flex items-start gap-2 rounded-lg bg-[#C9E0E1] border-l-[4px] border-l-primary-k px-3 py-2.5 text-sm text-[#0A3E42]" data-testid="glance-care-management">
-                        <Info className="h-3.5 w-3.5 flex-none mt-0.5 text-primary-k" />
-                        <span><span className="font-semibold tabular-nums text-[#0A3E42]">{formatAUD2(careMgmt)}</span> care management is set aside automatically (10% of funding), separate from the amount available for care.</span>
+                    <p className="relative mt-4 flex items-start gap-2 rounded-lg border-l-[4px] px-3 py-2.5 text-sm" style={{ backgroundColor: noteCare.bg, color: noteCare.fg, borderLeftColor: noteCare.border }} data-testid="glance-care-management">
+                        <Info className="h-3.5 w-3.5 flex-none mt-0.5" style={{ color: noteCare.fg }} />
+                        <span><span className="font-semibold tabular-nums" style={{ color: noteCare.fg }}>{formatAUD2(careMgmt)}</span> care management is set aside automatically (10% of funding), separate from the amount available for care.</span>
                     </p>
                 )}
                 {underspend && proj.forfeit_aud > 0 && (
-                    <p className="relative mt-3 flex items-start gap-2 rounded-lg bg-[#F4D6C5] border-l-[4px] border-l-[#A5512B] px-3 py-2.5 text-sm text-[#6A3219]" data-testid="glance-forfeit">
-                        <AlertTriangle className="h-4 w-4 flex-none mt-0.5 text-[#A5512B]" />
+                    <p className="relative mt-3 flex items-start gap-2 rounded-lg border-l-[4px] px-3 py-2.5 text-sm" style={{ backgroundColor: noteForfeit.bg, color: noteForfeit.fg, borderLeftColor: noteForfeit.border }} data-testid="glance-forfeit">
+                        <AlertTriangle className="h-4 w-4 flex-none mt-0.5" style={{ color: noteForfeit.border }} />
                         <span>At this pace, about <span className="font-bold tabular-nums">{formatAUD2(proj.forfeit_aud)}</span> looks likely to be returned{budget.quarter_end ? ` on ${new Date(budget.quarter_end).toLocaleDateString("en-AU", { day: "numeric", month: "short" })}` : ""}. It may be worth asking your provider about care you need but aren&apos;t getting.</span>
                     </p>
                 )}
                 {over && proj.shortfall_aud > 0 && (
-                    <p className="relative mt-3 flex items-start gap-2 rounded-lg bg-[#F7D9D4] border-l-[4px] border-l-[#C0392B] px-3 py-2 text-sm text-[#8A2A1E]" data-testid="glance-shortfall">
-                        <AlertTriangle className="h-4 w-4 flex-none mt-0.5 text-[#C0392B]" />
+                    <p className="relative mt-3 flex items-start gap-2 rounded-lg border-l-[4px] px-3 py-2 text-sm" style={{ backgroundColor: noteShort.bg, color: noteShort.fg, borderLeftColor: noteShort.border }} data-testid="glance-shortfall">
+                        <AlertTriangle className="h-4 w-4 flex-none mt-0.5" style={{ color: noteShort.border }} />
                         <span>Booked care is about <span className="font-bold tabular-nums">{formatAUD2(proj.shortfall_aud)}</span> above what&apos;s left this quarter. Check prices or ask your provider to confirm your balance.</span>
                     </p>
                 )}

@@ -17,12 +17,16 @@ import WhatIfCareDialog from "@/components/fundtrack/WhatIfCareDialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Plus, CalendarClock, RefreshCw, X, CheckCircle2, Archive, Clock, Loader2, CalendarDays, Pencil, Trash2, Search, ArrowUpDown } from "lucide-react";
+import { useTheme } from "@/uxf/theme";
 
 const AUD = (n) => new Intl.NumberFormat("en-AU", { style: "currency", currency: "AUD" }).format(Number(n) || 0);
 const toTitle = (s) => String(s || "").replace(/\w\S*/g, (w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase());
 const SOURCE_LABEL = { entered: "You Entered", invoice: "From An Invoice", catch_up: "Catch-Up", booked: "Booked" };
 const sourceLabel = (s) => SOURCE_LABEL[s] || "You Entered";
+const STREAMS = ["Clinical", "Independence", "Everyday Living"];
+const todayISO = () => new Date().toISOString().slice(0, 10);
 const fmtDate = (iso) => { if (!iso) return ""; try { return new Date(iso).toLocaleDateString("en-AU", { weekday: "short", day: "numeric", month: "short" }); } catch { return iso; } };
+const fmtDateFull = (iso) => { if (!iso) return ""; try { return new Date(iso).toLocaleDateString("en-AU", { weekday: "long", day: "numeric", month: "long", year: "numeric" }); } catch { return iso; } };
 const weekRange = () => {
     const now = new Date();
     const day = (now.getDay() + 6) % 7;
@@ -138,7 +142,7 @@ export default function WeeklyBudget() {
 
                     {/* what you've recorded — sortable/filterable table with edit + delete */}
                     {(data.used || []).length > 0 && (
-                        <UsedEntriesTable items={data.used} onChanged={load} />
+                        <UsedEntriesTable items={data.used} onChanged={load} pid={pid} savedServices={data.saved_services || []} />
                     )}
 
                     {/* superseded by a statement */}
@@ -185,18 +189,19 @@ export default function WeeklyBudget() {
 }
 
 function ActionCard({ title, hint, Icon, onClick, tone = "teal", testid }) {
+    const { isDark } = useTheme();
     const tones = {
-        teal: { card: "border-primary-k bg-primary-k", title: "text-white", hint: "text-white/85", icon: "bg-white/20 text-white" },
-        clay: { card: "border-terracotta bg-terracotta", title: "text-white", hint: "text-white/85", icon: "bg-white/20 text-white" },
-        gold: { card: "border-[#C2683D] bg-[#C2683D]", title: "text-white", hint: "text-white/85", icon: "bg-white/20 text-white" },
+        teal: isDark ? "#1A696E" : "#0E4D52",
+        clay: isDark ? "#C85A3C" : "#B4472B",
+        gold: isDark ? "#D98A4E" : "#C2683D",
     };
-    const t = tones[tone] || tones.teal;
+    const bg = tones[tone] || tones.teal;
     return (
         <button onClick={onClick} data-testid={testid}
-            className={`text-left rounded-xl border p-3 transition-all hover:shadow-sm ${t.card}`}>
-            <span className={`inline-flex items-center justify-center w-8 h-8 rounded-lg ${t.icon}`}><Icon className="w-4 h-4" /></span>
-            <p className={`mt-2 text-sm font-semibold ${t.title}`}>{title}</p>
-            <p className={`text-xs mt-0.5 ${t.hint}`}>{hint}</p>
+            className="text-left rounded-xl border p-3 transition-all hover:shadow-sm" style={{ backgroundColor: bg, borderColor: bg }}>
+            <span className="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-white/20 text-white"><Icon className="w-4 h-4" /></span>
+            <p className="mt-2 text-sm font-semibold text-white">{title}</p>
+            <p className="text-xs mt-0.5 text-white/85">{hint}</p>
         </button>
     );
 }
@@ -267,7 +272,7 @@ function VisitChangeDialog({ pid, visit, onClose, onSaved }) {
 }
 
 /** Sortable + filterable table of recorded entries, with edit + delete. */
-function UsedEntriesTable({ items, onChanged }) {
+function UsedEntriesTable({ items, onChanged, pid, savedServices = [] }) {
     const [query, setQuery] = useState("");
     const [source, setSource] = useState("all");
     const [sortKey, setSortKey] = useState("date");
@@ -275,6 +280,7 @@ function UsedEntriesTable({ items, onChanged }) {
     const [editing, setEditing] = useState(null);
     const [confirmId, setConfirmId] = useState(null);
     const [busyId, setBusyId] = useState(null);
+    const [adding, setAdding] = useState(false);
 
     const sources = Array.from(new Set(items.map((i) => i.source))).filter(Boolean);
     const filtered = items
@@ -326,6 +332,9 @@ function UsedEntriesTable({ items, onChanged }) {
                         <option value="all">All Sources</option>
                         {sources.map((s) => <option key={s} value={s}>{sourceLabel(s)}</option>)}
                     </select>
+                    <button onClick={() => setAdding(true)} data-testid="weekly-used-add" className="inline-flex items-center gap-1.5 rounded-lg bg-primary-k px-3 py-1.5 text-sm font-semibold text-white hover:bg-primary-k/90 transition-colors">
+                        <Plus className="w-3.5 h-3.5" /> Add Entry
+                    </button>
                 </div>
             </div>
             {sorted.length === 0 ? (
@@ -346,7 +355,7 @@ function UsedEntriesTable({ items, onChanged }) {
                             {sorted.map((u) => (
                                 <tr key={u.id} className="border-b border-primary-k/5 hover:bg-primary-k/[0.03] transition-colors" data-testid={`weekly-used-${u.id}`}>
                                     <td className="px-3 py-2.5 text-primary-k font-medium">{toTitle(u.service_name)}</td>
-                                    <td className="px-3 py-2.5 text-muted-k whitespace-nowrap">{fmtDate(u.date)}</td>
+                                    <td className="px-3 py-2.5 text-muted-k whitespace-nowrap">{fmtDateFull(u.date)}</td>
                                     <td className="px-3 py-2.5"><span className="inline-block rounded-pill bg-primary-k/[0.08] px-2 py-0.5 text-xs font-medium text-primary-k whitespace-nowrap">{sourceLabel(u.source)}</span></td>
                                     <td className="px-3 py-2.5 text-right font-semibold text-primary-k tabular-nums whitespace-nowrap">{u.unpriced ? "Unpriced" : AUD(u.amount)}</td>
                                     <td className="px-3 py-2.5">
@@ -368,29 +377,39 @@ function UsedEntriesTable({ items, onChanged }) {
                     </table>
                 </div>
             )}
-            {editing && <EditEntryDialog entry={editing} onClose={() => setEditing(null)} onSaved={() => { setEditing(null); onChanged?.(); }} />}
+            {editing && <EditEntryDialog entry={editing} pid={pid} onClose={() => setEditing(null)} onSaved={() => { setEditing(null); onChanged?.(); }} />}
+            {adding && <EditEntryDialog pid={pid} savedServices={savedServices} onClose={() => setAdding(false)} onSaved={() => { setAdding(false); onChanged?.(); }} />}
         </div>
     );
 }
 
-/** Edit a recorded entry (service / date / amount) via PATCH. */
-function EditEntryDialog({ entry, onClose, onSaved }) {
-    const [serviceName, setServiceName] = useState(entry.service_name || "");
-    const [date, setDate] = useState((entry.date || "").slice(0, 10));
-    const [amount, setAmount] = useState(entry.amount != null ? String(entry.amount) : "");
+/** Add (POST) or edit (PATCH) a recorded entry. */
+function EditEntryDialog({ entry, pid, savedServices = [], onClose, onSaved }) {
+    const isCreate = !entry?.id;
+    const [serviceName, setServiceName] = useState(entry?.service_name || "");
+    const [date, setDate] = useState((entry?.date || todayISO()).slice(0, 10));
+    const [amount, setAmount] = useState(entry?.amount != null ? String(entry.amount) : "");
+    const [stream, setStream] = useState(entry?.stream || "Everyday Living");
     const [busy, setBusy] = useState(false);
 
     const save = async () => {
+        if (!serviceName.trim()) { toast.error("Add a service name."); return; }
         setBusy(true);
         try {
-            await api.patch(`/fundtrack/charges/${entry.id}`, {
-                service_name: serviceName.trim(),
-                date,
-                amount: amount === "" ? null : Number(amount),
-            });
-            toast.success("Entry Updated.");
+            if (isCreate) {
+                await api.post(`/fundtrack/participants/${pid}/charges`, {
+                    source: "entered", service_name: serviceName.trim(), stream,
+                    date: date || todayISO(), amount: amount === "" ? null : Number(amount),
+                });
+                toast.success("Entry Added.");
+            } else {
+                await api.patch(`/fundtrack/charges/${entry.id}`, {
+                    service_name: serviceName.trim(), date, amount: amount === "" ? null : Number(amount),
+                });
+                toast.success("Entry Updated.");
+            }
             onSaved?.();
-        } catch (e) { toast.error(e?.response?.data?.detail || "Could not update that entry."); }
+        } catch (e) { toast.error(e?.response?.data?.detail || "Could not save that entry."); }
         finally { setBusy(false); }
     };
 
@@ -398,12 +417,24 @@ function EditEntryDialog({ entry, onClose, onSaved }) {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40" data-testid="edit-entry-dialog" onClick={onClose}>
             <div className="bg-white rounded-2xl p-5 max-w-sm w-full shadow-xl" onClick={(e) => e.stopPropagation()}>
                 <div className="flex items-center justify-between">
-                    <h3 className="font-heading text-lg text-primary-k">Edit Entry</h3>
+                    <h3 className="font-heading text-lg text-primary-k">{isCreate ? "Add Entry" : "Edit Entry"}</h3>
                     <button onClick={onClose} className="text-muted-k hover:text-primary-k" data-testid="edit-entry-close"><X className="w-5 h-5" /></button>
                 </div>
+                {isCreate && savedServices.length > 0 && (
+                    <div className="mt-3">
+                        <span className="text-xs text-muted-k">Quick pick from your usual care</span>
+                        <div className="mt-1 flex flex-wrap gap-1.5">
+                            {savedServices.slice(0, 8).map((s) => (
+                                <button key={s.service_id} data-testid={`edit-entry-pick-${s.service_id}`}
+                                    onClick={() => { setServiceName(s.service_name); setStream(s.stream || "Everyday Living"); if (s.last_amount != null) setAmount(String(s.last_amount)); }}
+                                    className="text-xs rounded-pill border border-primary-k/20 px-2.5 py-1 text-primary-k hover:border-clay/50 transition-colors">{s.service_name}</button>
+                            ))}
+                        </div>
+                    </div>
+                )}
                 <div className="mt-3 space-y-3">
                     <label className="block"><span className="text-xs text-muted-k">Service</span>
-                        <Input value={serviceName} onChange={(e) => setServiceName(e.target.value)} data-testid="edit-entry-service" className="mt-1" /></label>
+                        <Input value={serviceName} onChange={(e) => setServiceName(e.target.value)} placeholder="e.g. Personal care" data-testid="edit-entry-service" className="mt-1" /></label>
                     <div className="grid grid-cols-2 gap-3">
                         <label className="block"><span className="text-xs text-muted-k">Date</span>
                             <Input type="date" value={date} onChange={(e) => setDate(e.target.value)} data-testid="edit-entry-date" className="mt-1" /></label>
@@ -412,10 +443,16 @@ function EditEntryDialog({ entry, onClose, onSaved }) {
                                 <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-k">$</span>
                                 <Input type="number" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="Unpriced" data-testid="edit-entry-amount" className="pl-7" /></div></label>
                     </div>
+                    {isCreate && (
+                        <label className="block"><span className="text-xs text-muted-k">Category</span>
+                            <select value={stream} onChange={(e) => setStream(e.target.value)} data-testid="edit-entry-stream" className="mt-1 w-full rounded-lg border border-primary-k/15 px-3 py-2 text-sm bg-white">
+                                {STREAMS.map((s) => <option key={s} value={s}>{s}</option>)}
+                            </select></label>
+                    )}
                 </div>
                 <div className="mt-4 flex justify-end gap-2">
                     <button onClick={onClose} className="text-sm text-primary-k px-4 py-2 rounded-md hover:bg-primary-k/5">Cancel</button>
-                    <Button onClick={save} disabled={busy || !serviceName.trim()} data-testid="edit-entry-save">{busy ? <Loader2 className="w-4 h-4 animate-spin" /> : "Save Changes"}</Button>
+                    <Button onClick={save} disabled={busy || !serviceName.trim()} data-testid="edit-entry-save">{busy ? <Loader2 className="w-4 h-4 animate-spin" /> : (isCreate ? "Add Entry" : "Save Changes")}</Button>
                 </div>
             </div>
         </div>

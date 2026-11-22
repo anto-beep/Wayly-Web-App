@@ -173,7 +173,17 @@ function CitationList({ cites }) {
     );
 }
 
-function Message({ msg, cid, onFeedback }) {
+function TypingDots() {
+    return (
+        <div className="flex items-center gap-1 py-1" data-testid="aw2-typing" aria-label="Wayly is typing">
+            {[0, 1, 2].map((i) => (
+                <span key={i} className="w-2 h-2 rounded-full bg-primary-k/40 animate-bounce" style={{ animationDelay: `${i * 150}ms` }} />
+            ))}
+        </div>
+    );
+}
+
+function Message({ msg, cid, onFeedback, streaming }) {
     const isUser = msg.role === "user";
     return (
         <div className={`flex ${isUser ? "justify-end" : "justify-start"}`}>
@@ -182,7 +192,9 @@ function Message({ msg, cid, onFeedback }) {
                 {isUser ? (
                     <p className="text-sm whitespace-pre-wrap" data-testid={`aw2-msg-content-${msg.id}`}>{msg.content}</p>
                 ) : (
-                    <div className="text-sm" data-testid={`aw2-msg-content-${msg.id}`}><MarkdownText>{msg.content}</MarkdownText></div>
+                    <div className="text-sm" data-testid={`aw2-msg-content-${msg.id}`}>
+                        {streaming && !msg.content ? <TypingDots /> : <MarkdownText>{msg.content}</MarkdownText>}
+                    </div>
                 )}
                 {!isUser && <CitationList cites={msg.cited_sources} />}
                 {!isUser && (
@@ -330,8 +342,9 @@ export default function AskWaylyV2() {
                             <p className="text-sm text-primary-k/60 mt-3">Start a conversation. Your session is retained per your policy.</p>
                         </div>
                     )}
-                    {conv?.messages?.map(m => (
-                        <Message key={m.id} msg={m} cid={conv.id} onFeedback={feedback} />
+                    {conv?.messages?.map((m, i) => (
+                        <Message key={m.id} msg={m} cid={conv.id} onFeedback={feedback}
+                                 streaming={busy && m.role === "assistant" && i === conv.messages.length - 1} />
                     ))}
                     <div ref={bottomRef} />
                 </div>
