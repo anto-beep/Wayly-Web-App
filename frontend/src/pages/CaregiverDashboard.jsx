@@ -121,10 +121,11 @@ function LastTouchedByPill({ participant }) {
 
 // Budget donut — a simple, easily-read ring showing how much of the quarter's
 // budget has been used. Tone shifts sage → clay → red as it fills / goes over.
-function BudgetDonut({ pctFill, pctLabel, tone, size = 168, stroke = 20 }) {
+function BudgetDonut({ pctFill, pctLabel, tone, size = 168, stroke = 20, onDark = false }) {
     const { isDark } = useTheme();
-    const t = isDark ? ({ "#C0392B": "#F0857A", "#C2683D": "#E89A6F", "#4E6E54": "#7FC8A0" }[tone] || tone) : tone;
-    const track = isDark ? "rgba(255,255,255,0.16)" : "rgba(14,77,82,0.10)";
+    const bright = { "#C0392B": "#F0857A", "#C2683D": "#E89A6F", "#4E6E54": "#7FC8A0" };
+    const t = (isDark || onDark) ? (bright[tone] || tone) : tone;
+    const track = onDark ? "rgba(255,255,255,0.22)" : isDark ? "rgba(255,255,255,0.16)" : "rgba(14,77,82,0.10)";
     const r = (size - stroke) / 2;
     const c = 2 * Math.PI * r;
     const clamped = Math.max(0, Math.min(100, pctFill));
@@ -140,8 +141,22 @@ function BudgetDonut({ pctFill, pctLabel, tone, size = 168, stroke = 20 }) {
                 />
             </svg>
             <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
-                <span className="font-heading text-3xl sm:text-4xl leading-none tabular-nums" style={{ color: t }} data-testid="glance-donut-pct">{pctLabel}%</span>
-                <span className="text-[10px] uppercase tracking-[0.16em] text-muted-k mt-1">used</span>
+                <span className="font-heading text-3xl sm:text-4xl leading-none tabular-nums" style={{ color: onDark ? "#fff" : t }} data-testid="glance-donut-pct">{pctLabel}%</span>
+                <span className={`text-[10px] uppercase tracking-[0.16em] mt-1 ${onDark ? "text-white/70" : "text-muted-k"}`}>used</span>
+            </div>
+        </div>
+    );
+}
+
+// A compact, uniform metric tile used inside the budget hero — label + value +
+// a mini progress bar, so each figure reads as a small graphic at a glance.
+function GlanceTile({ label, value, pct = 0, barColor = "#fff", tintClass = "bg-white/10 ring-white/15", testid }) {
+    return (
+        <div data-testid={testid} className={`rounded-xl ring-1 px-3 py-3 ${tintClass}`}>
+            <div className="text-[10px] sm:text-[11px] uppercase tracking-[0.1em] font-semibold text-white">{label}</div>
+            <div className="mt-1 font-heading text-xl sm:text-2xl leading-none tabular-nums text-white">{value}</div>
+            <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-white/15">
+                <div className="h-full rounded-full transition-[width] duration-700" style={{ width: `${Math.max(0, Math.min(100, pct))}%`, backgroundColor: barColor }} />
             </div>
         </div>
     );
@@ -180,53 +195,84 @@ function AtAGlance({ budget, statements, alertCount, toReviewHref, lifetimeCapHr
             data-testid="dashboard-at-a-glance"
             className="rounded-2xl border border-kindred bg-surface overflow-hidden shadow-sm"
         >
-            {/* Headline: an easy-to-read budget donut + the figures that matter */}
-            <div className="relative p-6 sm:p-7 bg-[linear-gradient(135deg,rgba(14,77,82,0.06),rgba(107,143,113,0.05))]">
-                <div className="flex flex-col sm:flex-row items-center gap-6 sm:gap-8">
-                    <BudgetDonut pctFill={pctUsed} pctLabel={pctUsedDisplay} tone={toneHex} />
-                    <div className="min-w-0 flex-1 w-full text-center sm:text-left">
-                        <span className={`block text-sm sm:text-[15px] uppercase tracking-[0.14em] font-bold ${over ? "text-terracotta" : "text-primary-k"}`} data-testid="glance-budget-status">
-                            {over ? "Over budget this quarter" : "Left for care this quarter"}
+            {/* Headline — a premium, colour-blocked budget hero with several
+                clear graphics (ring, gauge, metric tiles) on one type scale. */}
+            <div className="relative overflow-hidden p-6 sm:p-8 text-white bg-[linear-gradient(135deg,#0E4D52_0%,#0A3B3F_55%,#10474B_100%)]">
+                <div aria-hidden="true" className="pointer-events-none absolute -right-20 -top-24 h-56 w-56 rounded-full bg-white/[0.05]" />
+                <div aria-hidden="true" className="pointer-events-none absolute right-10 -bottom-20 h-44 w-44 rounded-full bg-white/[0.03]" />
+
+                {/* header */}
+                <div className="relative flex items-center justify-between gap-3 flex-wrap">
+                    <span className="inline-flex items-center gap-1.5 rounded-pill bg-[#F3C98B]/20 px-3 py-1 text-xs uppercase tracking-[0.18em] font-bold text-[#F3C98B] ring-1 ring-[#F3C98B]/30">This quarter&apos;s care budget</span>
+                    {budget.quarter_label && (
+                        <span data-testid="glance-quarter-months" className="inline-flex items-center gap-1.5 rounded-pill bg-white/20 px-3 py-1.5 text-xs font-bold text-white ring-1 ring-white/25">
+                            <Calendar className="h-3.5 w-3.5 text-white" />
+                            {String(budget.quarter_label).replace(/-/, " – ")}
+                            {elapsedPct != null && <span className="text-white/55">· {elapsedPct}% through</span>}
                         </span>
-                        {budget.quarter_label && (
-                            <span className="mt-1.5 inline-flex items-center gap-1.5 rounded-pill bg-primary-k/[0.07] px-2.5 py-1 text-xs font-semibold tracking-wide text-primary-k/75" data-testid="glance-quarter-months">
-                                <Calendar className="h-3.5 w-3.5" />
-                                {String(budget.quarter_label).replace(/-/, " – ")}
-                                {elapsedPct != null && <span className="text-primary-k/55">· {elapsedPct}% through</span>}
-                            </span>
-                        )}
-                        <div className="mt-1.5 flex items-baseline gap-2 flex-wrap justify-center sm:justify-start">
-                            <span className={`font-heading text-3xl tabular-nums leading-tight ${over ? "text-terracotta" : "text-primary-k"}`} data-testid="glance-left">
-                                {formatAUD2(Math.abs(left))}
-                            </span>
-                            <span className="text-sm text-primary-k/70 font-medium">of</span>
-                            <span className="font-heading text-3xl tabular-nums leading-tight text-primary-k/80" data-testid="glance-budget">
-                                {formatAUD2(available)}
-                            </span>
-                            <span className="text-sm text-primary-k/70 font-medium">available this quarter</span>
+                    )}
+                </div>
+
+                {/* main: ring + headline figure + budget gauge */}
+                <div className="relative mt-6 flex flex-col sm:flex-row items-center gap-7 sm:gap-10">
+                    <BudgetDonut pctFill={pctUsed} pctLabel={pctUsedDisplay} tone={toneHex} onDark size={152} stroke={18} />
+                    <div className="min-w-0 flex-1 w-full text-center sm:text-left">
+                        <span
+                            data-testid="glance-budget-status"
+                            className="inline-flex items-center gap-1.5 rounded-pill px-3 py-1 text-[11px] font-bold uppercase tracking-[0.1em] text-white"
+                            style={{ backgroundColor: over ? "rgba(240,133,122,0.22)" : underspend ? "rgba(243,201,139,0.22)" : "rgba(127,200,160,0.22)" }}
+                        >
+                            <span className="h-2 w-2 rounded-full" style={{ backgroundColor: over ? "#F0857A" : underspend ? "#F3C98B" : "#7FC8A0" }} />
+                            {over ? "Over budget" : underspend ? "Underspend risk" : "On track"}
+                        </span>
+                        <div className="mt-3 flex items-baseline gap-2 flex-wrap justify-center sm:justify-start">
+                            <span className="font-heading text-4xl sm:text-5xl leading-none tabular-nums text-white" data-testid="glance-left">{formatAUD2(Math.abs(left))}</span>
                         </div>
-                        <p className="mt-2 text-sm text-primary-k/75" data-testid="glance-spare">
-                            Spare for extra care: <span className="tabular-nums font-semibold">{formatAUD2(spare)}</span>
+                        <p className="mt-1.5 text-sm text-white/70">
+                            {over ? "over your available budget" : "left for care"} · of <span className="font-semibold text-white tabular-nums" data-testid="glance-budget">{formatAUD2(available)}</span> available
                         </p>
-                        <p className="mt-3.5 inline-flex items-center gap-2 text-base font-semibold text-primary-k" data-testid="glance-spent">
-                            <span className="h-3 w-3 rounded-full flex-none" style={{ backgroundColor: toneHex }} />
-                            <span className="tabular-nums font-bold">{formatAUD2(spent)}</span> used so far
-                        </p>
-                        {careMgmt > 0 && (
-                            <p className="mt-2 text-sm text-primary-k/70" data-testid="glance-care-management">{formatAUD2(careMgmt)} care management is set aside automatically (10% of your quarter's funding), and is not part of the amount available for care above.</p>
-                        )}
-                        {underspend && proj.forfeit_aud > 0 && (
-                            <p className="mt-2 text-sm font-medium text-[#6B4A0F]" data-testid="glance-forfeit">
-                                At this pace, about {formatAUD2(proj.forfeit_aud)} of this quarter's funding looks likely to be returned on {budget.quarter_end ? new Date(budget.quarter_end).toLocaleDateString("en-AU", { day: "numeric", month: "short" }) : "quarter end"}. It may be worth talking to your provider about care you need but are not getting.
-                            </p>
-                        )}
-                        {over && proj.shortfall_aud > 0 && (
-                            <p className="mt-2 text-sm font-medium text-terracotta" data-testid="glance-shortfall">
-                                Booked care is estimated to be about {formatAUD2(proj.shortfall_aud)} above what is left this quarter. Check prices or ask your provider to confirm your balance.
-                            </p>
-                        )}
+
+                        {/* budget gauge */}
+                        <div className="mt-5">
+                            <div className="relative h-3 w-full overflow-hidden rounded-full bg-white/15" aria-hidden="true">
+                                <div className="h-full rounded-full transition-[width] duration-700" style={{ width: `${pctUsed}%`, backgroundColor: over || pctUsed >= 90 ? "#F0857A" : pctUsed >= 75 ? "#E89A6F" : "#7FC8A0" }} />
+                                {elapsedPct != null && (
+                                    <span className="absolute top-1/2 -translate-y-1/2 h-4 w-[2px] rounded bg-white/70" style={{ left: `calc(${Math.max(0, Math.min(100, elapsedPct))}% - 1px)` }} title="Time elapsed this quarter" />
+                                )}
+                            </div>
+                            <div className="mt-1.5 flex items-center justify-between text-xs font-semibold text-white tabular-nums">
+                                <span>{pctUsedDisplay}% spent</span>
+                                {elapsedPct != null && <span className="text-white/80">{elapsedPct}% of time gone</span>}
+                            </div>
+                        </div>
                     </div>
                 </div>
+
+                {/* uniform metric tiles, each with a mini bar */}
+                <div className="relative mt-6 grid grid-cols-3 gap-2.5 sm:gap-3">
+                    <GlanceTile label="Available" value={formatAUD2(available)} pct={100} barColor="#7FC8A0" tintClass="bg-[#7FC8A0]/25 ring-[#7FC8A0]/45" />
+                    <GlanceTile testid="glance-spent" label="Used" value={formatAUD2(spent)} pct={pctUsed} barColor="#F0857A" tintClass="bg-[#F0857A]/25 ring-[#F0857A]/45" />
+                    <GlanceTile testid="glance-spare" label="Spare" value={formatAUD2(spare)} pct={available > 0 ? (spare / available) * 100 : 0} barColor="#F3C98B" tintClass="bg-[#F3C98B]/22 ring-[#F3C98B]/45" />
+                </div>
+
+                {careMgmt > 0 && (
+                    <p className="relative mt-4 flex items-start gap-2 rounded-lg bg-white/[0.12] border-l-[3px] border-l-white/40 px-3 py-2.5 text-xs text-white/90" data-testid="glance-care-management">
+                        <Info className="h-3.5 w-3.5 flex-none mt-0.5 text-white/80" />
+                        <span><span className="font-semibold tabular-nums text-white">{formatAUD2(careMgmt)}</span> care management is set aside automatically (10% of funding), separate from the amount available for care.</span>
+                    </p>
+                )}
+                {underspend && proj.forfeit_aud > 0 && (
+                    <p className="relative mt-3 flex items-start gap-2 rounded-lg bg-[#F3C98B]/[0.18] border-l-[3px] border-l-[#F3C98B] px-3 py-2.5 text-sm text-white" data-testid="glance-forfeit">
+                        <AlertTriangle className="h-4 w-4 flex-none mt-0.5 text-[#F3C98B]" />
+                        <span>At this pace, about <span className="font-bold tabular-nums">{formatAUD2(proj.forfeit_aud)}</span> looks likely to be returned{budget.quarter_end ? ` on ${new Date(budget.quarter_end).toLocaleDateString("en-AU", { day: "numeric", month: "short" })}` : ""}. It may be worth asking your provider about care you need but aren&apos;t getting.</span>
+                    </p>
+                )}
+                {over && proj.shortfall_aud > 0 && (
+                    <p className="relative mt-3 flex items-start gap-2 rounded-lg bg-white/[0.10] border-l-[3px] border-l-[#F0857A] px-3 py-2 text-sm text-white" data-testid="glance-shortfall">
+                        <AlertTriangle className="h-4 w-4 flex-none mt-0.5 text-[#F0857A]" />
+                        <span>Booked care is about <span className="font-bold tabular-nums">{formatAUD2(proj.shortfall_aud)}</span> above what&apos;s left this quarter. Check prices or ask your provider to confirm your balance.</span>
+                    </p>
+                )}
             </div>
             {/* Mini-stats: three distinct, soft colours */}
             <div className="grid grid-cols-3 gap-2.5 sm:gap-3 p-3 sm:p-4 border-t border-kindred">

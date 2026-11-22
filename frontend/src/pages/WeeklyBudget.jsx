@@ -20,6 +20,14 @@ import { Plus, CalendarClock, RefreshCw, X, CheckCircle2, Archive, Clock, Loader
 
 const AUD = (n) => new Intl.NumberFormat("en-AU", { style: "currency", currency: "AUD" }).format(Number(n) || 0);
 const fmtDate = (iso) => { if (!iso) return ""; try { return new Date(iso).toLocaleDateString("en-AU", { weekday: "short", day: "numeric", month: "short" }); } catch { return iso; } };
+const weekRange = () => {
+    const now = new Date();
+    const day = (now.getDay() + 6) % 7;
+    const mon = new Date(now); mon.setDate(now.getDate() - day);
+    const sun = new Date(mon); sun.setDate(mon.getDate() + 6);
+    const d = (x) => x.toLocaleDateString("en-AU", { day: "numeric", month: "short" });
+    return `${d(mon)} – ${d(sun)}`;
+};
 
 const CHANGES = [
     { key: "did_not_happen", label: "Didn't happen" },
@@ -72,7 +80,10 @@ export default function WeeklyBudget() {
         <div className="max-w-[900px] space-y-5" data-testid="weekly-page">
             <div className="flex items-center justify-between flex-wrap gap-2">
                 <div>
-                    <h1 className="font-heading text-3xl sm:text-4xl font-bold text-primary-k tracking-tight">This Week's Budget</h1>
+                    <div className="flex items-center gap-3 flex-wrap">
+                        <h1 className="font-heading text-3xl sm:text-4xl font-bold text-primary-k tracking-tight">This Week's Budget</h1>
+                        <span className="inline-flex items-center gap-1.5 rounded-pill bg-primary-k/[0.06] border border-primary-k/20 px-3 py-1 text-xs font-semibold text-primary-k" data-testid="weekly-week-range"><CalendarDays className="w-3.5 h-3.5" /> {weekRange()}</span>
+                    </div>
                     {data && <p className="text-sm text-muted-k mt-0.5" data-testid="weekly-context">{data.participant_name} · {data.quarter_label} · Classification {data.classification}</p>}
                 </div>
                 <button onClick={load} className="inline-flex items-center gap-1.5 text-xs text-muted-k hover:text-primary-k" data-testid="weekly-refresh"><RefreshCw className="w-3.5 h-3.5" /> Refresh</button>
@@ -94,7 +105,7 @@ export default function WeeklyBudget() {
 
                     {/* 2 · booked care behind G, visit by visit */}
                     <div className="rounded-2xl border border-primary-k/10 bg-white p-4" data-testid="weekly-booked">
-                        <h2 className="font-heading text-lg text-primary-k mb-2 inline-flex items-center gap-2"><CalendarDays className="w-4 h-4 text-teal" /> Care you've booked</h2>
+                        <h2 className="font-heading text-lg text-primary-k mb-2 inline-flex items-center gap-2"><CalendarDays className="w-4 h-4 text-teal" /> Care You've Booked</h2>
                         {(data.booked || []).length === 0 ? (
                             <p className="text-sm text-muted-k">Nothing booked ahead this quarter. Use "What if I add care?" to plan a visit, then book it.</p>
                         ) : (
@@ -117,9 +128,9 @@ export default function WeeklyBudget() {
 
                     {/* 3 · the three actions, in this order */}
                     <div className="grid sm:grid-cols-3 gap-3" data-testid="weekly-actions">
-                        <ActionCard testid="weekly-add-charge" Icon={Plus} title="Add a charge" hint="Record what actually happened" onClick={() => setDialog("charge")} primary />
-                        <ActionCard testid="weekly-whatif" Icon={CalendarClock} title="What if I add care?" hint="See the spare before you book" onClick={() => setDialog("whatif")} />
-                        <ActionCard testid="weekly-something-changed" Icon={RefreshCw} title="Something changed" hint="A visit was missed or different" onClick={() => setChangeVisit(data.booked?.[0] || { blank: true })} />
+                        <ActionCard testid="weekly-add-charge" Icon={Plus} title="Add a charge" hint="Record what actually happened" onClick={() => setDialog("charge")} tone="teal" />
+                        <ActionCard testid="weekly-whatif" Icon={CalendarClock} title="What if I add care?" hint="See the spare before you book" onClick={() => setDialog("whatif")} tone="clay" />
+                        <ActionCard testid="weekly-something-changed" Icon={RefreshCw} title="Something changed" hint="A visit was missed or different" onClick={() => setChangeVisit(data.booked?.[0] || { blank: true })} tone="gold" />
                     </div>
 
                     {/* what you've used */}
@@ -183,13 +194,19 @@ export default function WeeklyBudget() {
     );
 }
 
-function ActionCard({ title, hint, Icon, onClick, primary, testid }) {
+function ActionCard({ title, hint, Icon, onClick, tone = "teal", testid }) {
+    const tones = {
+        teal: { card: "border-primary-k bg-primary-k", title: "text-white", hint: "text-white/85", icon: "bg-white/20 text-white" },
+        clay: { card: "border-terracotta bg-terracotta", title: "text-white", hint: "text-white/85", icon: "bg-white/20 text-white" },
+        gold: { card: "border-[#C2683D] bg-[#C2683D]", title: "text-white", hint: "text-white/85", icon: "bg-white/20 text-white" },
+    };
+    const t = tones[tone] || tones.teal;
     return (
         <button onClick={onClick} data-testid={testid}
-            className={`text-left rounded-xl border p-3 transition-all hover:shadow-sm ${primary ? "border-primary-k bg-primary-k text-white" : "border-primary-k/10 bg-white hover:border-clay/50"}`}>
-            <span className={`inline-flex items-center justify-center w-8 h-8 rounded-lg ${primary ? "bg-white/15 text-white" : "bg-clay/10 text-clay"}`}><Icon className="w-4 h-4" /></span>
-            <p className={`mt-2 text-sm font-semibold ${primary ? "text-white" : "text-primary-k"}`}>{title}</p>
-            <p className={`text-xs mt-0.5 ${primary ? "text-white/80" : "text-muted-k"}`}>{hint}</p>
+            className={`text-left rounded-xl border p-3 transition-all hover:shadow-sm ${t.card}`}>
+            <span className={`inline-flex items-center justify-center w-8 h-8 rounded-lg ${t.icon}`}><Icon className="w-4 h-4" /></span>
+            <p className={`mt-2 text-sm font-semibold ${t.title}`}>{title}</p>
+            <p className={`text-xs mt-0.5 ${t.hint}`}>{hint}</p>
         </button>
     );
 }

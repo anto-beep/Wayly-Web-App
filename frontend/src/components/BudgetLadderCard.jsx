@@ -35,9 +35,9 @@ function UtilRing({ usedPct, elapsedPct, tone }) {
             <svg width={size} height={size} className="absolute inset-0">
                 <circle cx={mx} cy={my} r={4} fill="#0E4D52" stroke="#fff" strokeWidth={2} />
             </svg>
-            <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
+            <div className="absolute inset-0 flex flex-col items-center justify-center text-center px-3">
                 <span className="font-heading text-2xl leading-none tabular-nums" style={{ color: tone }}>{used}%</span>
-                <span className="text-[9px] uppercase tracking-[0.14em] text-muted-k mt-0.5">used of available</span>
+                <span className="text-[8px] uppercase tracking-[0.06em] text-muted-k mt-1 leading-[1.15]">used of<br />available</span>
             </div>
         </div>
     );
@@ -69,9 +69,9 @@ export default function BudgetLadderCard({ ladder }) {
 
     return (
         <div className="rounded-2xl border border-kindred bg-surface overflow-hidden shadow-sm" data-testid="budget-ladder-card">
-            <div className="flex items-center justify-between gap-3 px-5 py-3.5 bg-[rgba(14,77,82,0.05)] border-b border-kindred">
-                <p className="text-sm font-semibold text-primary-k">This quarter · {q.label}</p>
-                <p className="text-xs text-muted-k" data-testid="ladder-as-at">{q.elapsed_pct}% through · as at {fmtDate(q.as_at)}</p>
+            <div className="flex items-center justify-between gap-3 flex-wrap px-5 py-4 bg-[linear-gradient(135deg,#0E4D52,#13646A)] border-b border-kindred">
+                <p className="font-heading text-base sm:text-lg font-bold text-white">This quarter · {q.label}</p>
+                <p className="inline-flex items-center gap-1.5 rounded-pill bg-white/15 px-3 py-1 text-xs font-semibold text-white ring-1 ring-white/25" data-testid="ladder-as-at">{q.elapsed_pct}% through · as at {fmtDate(q.as_at)}</p>
             </div>
 
             <div className="p-5 flex flex-col sm:flex-row items-center gap-5">

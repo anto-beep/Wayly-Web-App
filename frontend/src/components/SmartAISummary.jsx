@@ -1,7 +1,58 @@
 import React, { useEffect, useState, useCallback, useRef } from "react";
-import { Sparkles, RefreshCw, AlertTriangle, CheckCircle2, Info, Volume2, Square } from "lucide-react";
+import { Sparkles, RefreshCw, AlertTriangle, CheckCircle2, Info, Volume2, Square, ArrowRight } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { api } from "@/lib/api";
 import { sanitizeAI } from "@/lib/sanitizeAI";
+
+// Highlight money ($1,234.56), percentages (58%) and plain numbers so the key
+// figures in every summary pop out of the prose (applied across all summaries).
+const FIG_SPLIT = /(\$\s?\d[\d,]*(?:\.\d+)?|\d+(?:\.\d+)?%|\d[\d,]*(?:\.\d+)?)/g;
+const FIG_TEST = /^(?:\$\s?\d[\d,]*(?:\.\d+)?|\d+(?:\.\d+)?%|\d[\d,]*(?:\.\d+)?)$/;
+function highlightFigures(text) {
+  const str = String(text || "");
+  if (!str) return str;
+  return str.split(FIG_SPLIT).map((part, i) =>
+    FIG_TEST.test(part)
+      ? <span key={i} className="font-bold tabular-nums text-primary-k bg-gold/20 rounded px-1">{part}</span>
+      : <React.Fragment key={i}>{part}</React.Fragment>
+  );
+}
+
+// Map an alert's wording to the most relevant screen so tapping it takes the
+// caregiver somewhere useful. Returns null when nothing clearly matches (then
+// the alert stays non-clickable rather than dead-ending).
+function inferAlertRoute(text) {
+  const t = String(text || "").toLowerCase();
+  if (/invoice/.test(t)) return "/app/invoices";
+  if (/statement/.test(t)) return "/app/statements";
+  if (/\b(cap|lifetime|contribution)\b/.test(t)) return "/app/contribution-position";
+  if (/care plan|support plan/.test(t)) return "/app/care-plans";
+  if (/\b(provider|price|compare)\b/.test(t)) return "/app/compare-providers";
+  if (/letter|complaint/.test(t)) return "/app/letters";
+  if (/budget|forfeit|shortfall|overspend|underspend|spend|quarter|funding|left for care/.test(t)) return "/app/budget-scenarios";
+  return null;
+}
+
+// Explanatory title + one-line blurb per screen, so people can see at a glance
+// what the summary is actually about (applied across every Wayly Summary).
+const SUMMARY_META = {
+  "dashboard": { title: "Your Budget Summary", blurb: "A plain-English snapshot of this quarter's funding and anything worth a look." },
+  "budget-scenarios": { title: "Your Budget Forecast Summary", blurb: "What your budget looks like now and after any changes you're weighing up." },
+  "statement-detail": { title: "Your Statement Summary", blurb: "What this statement means, explained in plain English." },
+  "statements-list": { title: "Your Statements Summary", blurb: "An overview across your recent statements." },
+  "statement-decoder-run": { title: "Your Statement Summary", blurb: "What your decoded statement means, explained in plain English." },
+  "statement-decoder-sample": { title: "Sample Statement Summary", blurb: "An example of how Wayly explains a statement." },
+  "invoices-list": { title: "Your Invoices Summary", blurb: "An overview across your recent invoices." },
+  "invoice-detail": { title: "Your Invoice Summary", blurb: "What this invoice means, explained in plain English." },
+  "audit-log": { title: "Your Activity Summary", blurb: "A plain-English overview of recent account activity." },
+  "complaints-list": { title: "Your Complaints Summary", blurb: "Where your complaints are up to, in plain English." },
+  "provider-comparison": { title: "Your Price Comparison Summary", blurb: "How these provider prices compare, in plain English." },
+  "provider-switches": { title: "Your Provider Switch Summary", blurb: "Where your provider switch is up to, in plain English." },
+  "letters-mailbox": { title: "Your Correspondence Summary", blurb: "An overview of your letters and follow-ups." },
+};
+function summaryMeta(pageKey) {
+  return SUMMARY_META[pageKey] || { title: "Wayly Summary", blurb: "A plain-English overview of what's on this page." };
+}
 
 // Pick the most natural-sounding Australian English voice the device offers so
 // the read-aloud sounds like a person, not a flat robot. Prefers en-AU, then a
@@ -56,6 +107,9 @@ export default function SmartAISummary({
   className = "",
 }) {
   const [state, setState] = useState({ status: "idle", data: null });
+  const navigate = useNavigate();
+  const meta = summaryMeta(pageKey);
+  const resolvedTitle = title && title !== "Wayly Summary" ? title : meta.title;
   const abortRef = useRef(null);
   const voiceRef = useRef(null);
   useEffect(() => {
@@ -141,7 +195,7 @@ export default function SmartAISummary({
   return (
     <section
       data-testid={`smart-ai-summary-${pageKey}`}
-      className={`smart-ai-summary relative overflow-hidden rounded-2xl border border-primary-k/15 border-l-4 border-l-primary-k bg-[linear-gradient(135deg,rgba(14,77,82,0.06),rgba(244,239,231,0.55))] p-5 sm:p-6 shadow-sm mb-6 ${className}`}
+      className={`smart-ai-summary relative overflow-hidden rounded-2xl border border-primary-k/15 border-l-4 border-l-primary-k bg-surface p-5 sm:p-6 shadow-sm mb-6 ${className}`}
       aria-live="polite"
     >
       <div className="flex items-start gap-4">
@@ -159,7 +213,8 @@ export default function SmartAISummary({
                   {eyebrow}
                 </div>
               ) : null}
-              <h2 className="font-serif text-lg text-primary-k">{title}</h2>
+              <h2 className="font-serif text-lg text-primary-k">{resolvedTitle}</h2>
+              <p className="mt-0.5 text-xs text-muted-k leading-snug">{meta.blurb}</p>
             </div>
             <div className="flex items-center gap-2">
               {state.data?.summary && state.status !== "error" && (
@@ -232,7 +287,7 @@ export default function SmartAISummary({
                 .map((para) => para.trim())
                 .filter(Boolean)
                 .map((para, i) => (
-                  <p key={i}>{para}</p>
+                  <p key={i}>{highlightFigures(para)}</p>
                 ))}
             </div>
           )}
@@ -241,11 +296,16 @@ export default function SmartAISummary({
               {alerts.map((a, i) => {
                 const tone = a.level === "warning" ? "#B7791F" : a.level === "success" ? "#425F47" : "#0E4D52";
                 const bg = a.level === "warning" ? "rgba(183,121,31,0.08)" : a.level === "success" ? "rgba(66,95,71,0.08)" : "rgba(14,77,82,0.06)";
+                const route = inferAlertRoute(a.text);
                 return (
                 <li
                   key={i}
                   data-testid={`smart-ai-summary-alert-${pageKey}-${i}`}
-                  className="flex items-start gap-2.5 rounded-lg border border-kindred px-3 py-2.5 text-sm"
+                  onClick={route ? () => navigate(route) : undefined}
+                  role={route ? "button" : undefined}
+                  tabIndex={route ? 0 : undefined}
+                  onKeyDown={route ? (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); navigate(route); } } : undefined}
+                  className={`flex items-start gap-2.5 rounded-lg border border-kindred px-3 py-2.5 text-sm ${route ? "cursor-pointer hover:brightness-[0.97] transition" : ""}`}
                   style={{ borderLeftColor: tone, borderLeftWidth: 3, backgroundColor: bg }}
                 >
                   <span className="mt-0.5 flex-none" aria-hidden="true">
@@ -257,7 +317,8 @@ export default function SmartAISummary({
                       <Info className="h-4 w-4" style={{ color: tone }} />
                     )}
                   </span>
-                  <span className="leading-snug font-medium text-primary-k">{sanitizeAI(a.text)}</span>
+                  <span className="leading-snug font-medium text-primary-k flex-1">{highlightFigures(sanitizeAI(a.text))}</span>
+                  {route && <ArrowRight className="h-4 w-4 flex-none mt-0.5" style={{ color: tone }} aria-hidden="true" />}
                 </li>
                 );
               })}

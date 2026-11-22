@@ -1,7 +1,8 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
-import { Pressable, StyleSheet, View } from "react-native";
+import { Pressable, StyleSheet, Text, View } from "react-native";
+import { router } from "expo-router";
 import { LinearGradient } from "expo-linear-gradient";
-import { Sparkles, RefreshCw, AlertTriangle, CheckCircle2, Info, Volume2, Square } from "lucide-react-native";
+import { Sparkles, RefreshCw, AlertTriangle, CheckCircle2, Info, Volume2, Square, ChevronRight } from "lucide-react-native";
 import * as Speech from "expo-speech";
 
 import { T } from "@/src/components/ui";
@@ -12,6 +13,52 @@ import { sanitizeAI } from "@/src/utils/format";
 
 type Alert = { level?: "warning" | "success" | "info"; text: string };
 type InsightResponse = { summary?: string; alerts?: Alert[] };
+
+// Highlight money ($1,234.56), percentages (58%) and plain numbers so the key
+// figures in every summary pop out of the prose (applied across all summaries).
+const FIG_SPLIT = /(\$\s?\d[\d,]*(?:\.\d+)?|\d+(?:\.\d+)?%|\d[\d,]*(?:\.\d+)?)/g;
+const FIG_TEST = /^(?:\$\s?\d[\d,]*(?:\.\d+)?|\d+(?:\.\d+)?%|\d[\d,]*(?:\.\d+)?)$/;
+function highlightFigures(text: string, boldStyle: any) {
+  const str = String(text || "");
+  if (!str) return str;
+  return str.split(FIG_SPLIT).map((part, i) =>
+    FIG_TEST.test(part) ? <Text key={i} style={boldStyle}>{part}</Text> : <Text key={i}>{part}</Text>
+  );
+}
+
+// Map an alert's wording to the most relevant mobile screen. Returns null when
+// nothing clearly matches (then the alert stays non-clickable, no dead-end).
+function inferAlertRoute(text?: string): string | null {
+  const t = String(text || "").toLowerCase();
+  if (/invoice/.test(t)) return "/invoices";
+  if (/statement/.test(t)) return "/(tabs)/statements";
+  if (/\b(cap|lifetime|contribution)\b/.test(t)) return "/contribution-position";
+  if (/care plan|support plan/.test(t)) return "/care-plans";
+  if (/\b(provider|price|compare)\b/.test(t)) return "/compare-providers";
+  if (/letter|complaint/.test(t)) return "/letters";
+  if (/budget|forfeit|shortfall|overspend|underspend|spend|quarter|funding|left for care/.test(t)) return "/budget-scenarios";
+  return null;
+}
+
+// Explanatory title + one-line blurb per screen, so people can see at a glance
+// what the summary is actually about (applied across every Wayly Summary).
+const SUMMARY_META: Record<string, { title: string; blurb: string }> = {
+  "dashboard": { title: "Your Budget Summary", blurb: "A plain-English snapshot of this quarter's funding and anything worth a look." },
+  "budget-scenarios": { title: "Your Budget Forecast Summary", blurb: "What your budget looks like now and after any changes you're weighing up." },
+  "statement-detail": { title: "Your Statement Summary", blurb: "What this statement means, explained in plain English." },
+  "statements-list": { title: "Your Statements Summary", blurb: "An overview across your recent statements." },
+  "statement-decoder-run": { title: "Your Statement Summary", blurb: "What your decoded statement means, explained in plain English." },
+  "invoices-list": { title: "Your Invoices Summary", blurb: "An overview across your recent invoices." },
+  "invoice-detail": { title: "Your Invoice Summary", blurb: "What this invoice means, explained in plain English." },
+  "audit-log": { title: "Your Activity Summary", blurb: "A plain-English overview of recent account activity." },
+  "complaints-list": { title: "Your Complaints Summary", blurb: "Where your complaints are up to, in plain English." },
+  "provider-comparison": { title: "Your Price Comparison Summary", blurb: "How these provider prices compare, in plain English." },
+  "provider-switches": { title: "Your Provider Switch Summary", blurb: "Where your provider switch is up to, in plain English." },
+  "letters-mailbox": { title: "Your Correspondence Summary", blurb: "An overview of your letters and follow-ups." },
+};
+function summaryMeta(pageKey: string) {
+  return SUMMARY_META[pageKey] || { title: "Wayly Summary", blurb: "A plain-English overview of what's on this page." };
+}
 
 /**
  * SmartAISummary — mobile mirror of web `components/SmartAISummary.jsx`.
@@ -75,6 +122,8 @@ export function SmartAISummary({
   const summary = data?.summary ? sanitizeAI(data.summary) : null;
   const alerts = data?.alerts || [];
   const isLoading = status === "loading";
+  const meta = summaryMeta(pageKey);
+  const resolvedTitle = title && title !== "Wayly Summary" ? title : meta.title;
 
   // Read-aloud: uses the device's built-in voice (no network, no cost, no key).
   const [speaking, setSpeaking] = useState(false);
@@ -133,10 +182,10 @@ export function SmartAISummary({
     return { color: colors.heading, bg: isDark ? "rgba(79,168,174,0.14)" : "rgba(14,77,82,0.06)", icon: Info };
   };
 
-  // Light: web's teal→cream 135° wash. Dark: a faint teal glow over the surface.
+  // Light: near-white (card surface shows through). Dark: a faint teal glow over the surface.
   const gradColors: [string, string] = isDark
     ? ["rgba(79,168,174,0.10)", "transparent"]
-    : ["rgba(14,77,82,0.06)", "rgba(244,239,231,0.55)"];
+    : ["rgba(255,255,255,0.0)", "rgba(255,255,255,0.0)"];
   const headText = colors.heading;
 
   return (
@@ -153,7 +202,8 @@ export function SmartAISummary({
           <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: spacing.sm, flexWrap: "wrap" }}>
             <View style={{ flexShrink: 1, minWidth: 0 }}>
               {eyebrow ? <T style={{ fontFamily: fonts.bodySemi, fontSize: 11, letterSpacing: 1, color: colors.muted }}>{eyebrow}</T> : null}
-              <T style={{ fontFamily: fonts.headingSemi, fontSize: 18, color: headText }}>{title}</T>
+              <T style={{ fontFamily: fonts.headingSemi, fontSize: 18, color: headText }}>{resolvedTitle}</T>
+              <T style={{ fontFamily: fonts.body, fontSize: 12, lineHeight: 16, color: colors.muted, marginTop: 2 }}>{meta.blurb}</T>
             </View>
             <View style={{ flexDirection: "row", alignItems: "center", gap: spacing.sm }}>
               {summary ? (
@@ -184,7 +234,9 @@ export function SmartAISummary({
             testID={`smart-ai-summary-body-${pageKey}`}
             style={{ fontFamily: fonts.body, fontSize: 14, marginTop: 8, lineHeight: 22, color: headText, opacity: isLoading ? 0.7 : 1 }}
           >
-            {summary || "Looking at your latest data. One moment while we pull the highlights together."}
+            {summary
+              ? highlightFigures(summary, { fontFamily: fonts.bodySemi, color: colors.heading })
+              : "Looking at your latest data. One moment while we pull the highlights together."}
           </T>
 
           {alerts.length > 0 ? (
@@ -192,15 +244,21 @@ export function SmartAISummary({
               {alerts.slice(0, 3).map((a, i) => {
                 const tone = toneFor(a.level);
                 const Icon = tone.icon;
+                const route = inferAlertRoute(a.text);
                 return (
-                  <View
+                  <Pressable
                     key={i}
                     testID={`smart-ai-summary-alert-${pageKey}-${i}`}
-                    style={[styles.alert, { borderColor: colors.border, borderLeftColor: tone.color, backgroundColor: tone.bg }]}
+                    onPress={route ? () => router.push(route as any) : undefined}
+                    disabled={!route}
+                    style={({ pressed }) => [styles.alert, { borderColor: colors.border, borderLeftColor: tone.color, backgroundColor: tone.bg }, pressed && route ? { opacity: 0.85 } : null]}
                   >
                     <Icon size={16} color={tone.color} style={{ marginTop: 1 }} />
-                    <T style={{ fontFamily: fonts.bodyMedium, fontSize: 13, lineHeight: 19, color: colors.text, flex: 1 }}>{sanitizeAI(a.text)}</T>
-                  </View>
+                    <T style={{ fontFamily: fonts.bodyMedium, fontSize: 13, lineHeight: 19, color: colors.text, flex: 1 }}>
+                      {highlightFigures(sanitizeAI(a.text), { fontFamily: fonts.bodyBold, color: colors.heading })}
+                    </T>
+                    {route ? <ChevronRight size={16} color={tone.color} style={{ marginTop: 1 }} /> : null}
+                  </Pressable>
                 );
               })}
             </View>

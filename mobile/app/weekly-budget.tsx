@@ -31,6 +31,15 @@ const CHANGES = [
   { key: "cancelled", label: "Cancelled late" },
 ];
 
+const weekRange = () => {
+  const now = new Date();
+  const day = (now.getDay() + 6) % 7;
+  const mon = new Date(now); mon.setDate(now.getDate() - day);
+  const sun = new Date(mon); sun.setDate(mon.getDate() + 6);
+  const d = (x: Date) => x.toLocaleDateString("en-AU", { day: "numeric", month: "short" });
+  return `${d(mon)} – ${d(sun)}`;
+};
+
 export default function WeeklyBudgetScreen() {
   const { activeId, active } = useParticipants();
   const pid = activeId || active?.id || "";
@@ -82,6 +91,12 @@ export default function WeeklyBudgetScreen() {
           contentContainerStyle={{ padding: spacing.lg, paddingBottom: spacing.xxl, gap: spacing.md }}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); load(); }} tintColor={colors.primary} />}
         >
+          {/* current week range */}
+          <View testID="weekly-week-range" style={{ flexDirection: "row", alignSelf: "flex-start", alignItems: "center", gap: 6, backgroundColor: colors.primary + "10", borderWidth: 1, borderColor: colors.primary + "33", borderRadius: radius.pill, paddingHorizontal: 12, paddingVertical: 6 }}>
+            <CalendarDays size={14} color={colors.primary} />
+            <T style={{ fontFamily: fonts.bodySemi, fontSize: 12, color: colors.heading }}>{weekRange()}</T>
+          </View>
+
           {/* 1 · the dashboard ladder card, unchanged */}
           {data.ladder ? <BudgetLadderCard ladder={data.ladder} /> : null}
 
@@ -92,7 +107,7 @@ export default function WeeklyBudgetScreen() {
           <Card testID="weekly-booked">
             <View style={{ flexDirection: "row", alignItems: "center", gap: 6, marginBottom: spacing.sm }}>
               <CalendarDays size={16} color={colors.primary} />
-              <T style={{ fontFamily: fonts.headingSemi, fontSize: 16, color: colors.heading }}>Care you've booked</T>
+              <T style={{ fontFamily: fonts.headingSemi, fontSize: 16, color: colors.heading }}>Care You've Booked</T>
             </View>
             {(data.booked || []).length === 0 ? (
               <T variant="small">Nothing booked ahead this quarter. Use "What if I add care?" to plan a visit, then book it.</T>
@@ -116,9 +131,9 @@ export default function WeeklyBudgetScreen() {
 
           {/* 3 · the three actions, in this order */}
           <View testID="weekly-actions" style={{ gap: spacing.sm }}>
-            <ActionCard testID="weekly-add-charge" Icon={Plus} title="Add a charge" hint="Record what actually happened" primary onPress={() => setSheet("charge")} />
-            <ActionCard testID="weekly-whatif" Icon={CalendarClock} title="What if I add care?" hint="See the spare before you book" onPress={() => setSheet("whatif")} />
-            <ActionCard testID="weekly-something-changed" Icon={RefreshCw} title="Something changed" hint="A visit was missed or different" onPress={() => setChangeVisit(data.booked?.[0] || { blank: true })} />
+            <ActionCard testID="weekly-add-charge" Icon={Plus} title="Add a charge" hint="Record what actually happened" tone="teal" onPress={() => setSheet("charge")} />
+            <ActionCard testID="weekly-whatif" Icon={CalendarClock} title="What if I add care?" hint="See the spare before you book" tone="clay" onPress={() => setSheet("whatif")} />
+            <ActionCard testID="weekly-something-changed" Icon={RefreshCw} title="Something changed" hint="A visit was missed or different" tone="gold" onPress={() => setChangeVisit(data.booked?.[0] || { blank: true })} />
           </View>
 
           {/* what you've used */}
@@ -189,17 +204,23 @@ export default function WeeklyBudgetScreen() {
   );
 }
 
-function ActionCard({ title, hint, Icon, onPress, primary, testID }: { title: string; hint: string; Icon: any; onPress: () => void; primary?: boolean; testID: string }) {
+function ActionCard({ title, hint, Icon, onPress, tone = "teal", testID }: { title: string; hint: string; Icon: any; onPress: () => void; tone?: "teal" | "clay" | "gold"; testID: string }) {
   const { colors } = useTheme();
+  const tones: Record<string, { card: string; border: string; iconBg: string; icon: string; title: string; hint: string }> = {
+    teal: { card: colors.cta, border: colors.cta, iconBg: "rgba(255,255,255,0.22)", icon: "#fff", title: "#fff", hint: "rgba(255,255,255,0.85)" },
+    clay: { card: colors.terracotta, border: colors.terracotta, iconBg: "rgba(255,255,255,0.22)", icon: "#fff", title: "#fff", hint: "rgba(255,255,255,0.85)" },
+    gold: { card: "#C2683D", border: "#C2683D", iconBg: "rgba(255,255,255,0.22)", icon: "#fff", title: "#fff", hint: "rgba(255,255,255,0.85)" },
+  };
+  const t = tones[tone] || tones.teal;
   return (
     <Pressable testID={testID} onPress={onPress}
-      style={({ pressed }) => [styles.actionCard, { backgroundColor: primary ? colors.cta : colors.surface, borderColor: primary ? colors.cta : colors.border }, pressed && { opacity: 0.92 }]}>
-      <View style={[styles.actionIcon, { backgroundColor: primary ? "rgba(255,255,255,0.18)" : colors.goldSoft }]}>
-        <Icon size={18} color={primary ? "#fff" : colors.gold} />
+      style={({ pressed }) => [styles.actionCard, { backgroundColor: t.card, borderColor: t.border }, pressed && { opacity: 0.92 }]}>
+      <View style={[styles.actionIcon, { backgroundColor: t.iconBg }]}>
+        <Icon size={18} color={t.icon} />
       </View>
       <View style={{ flex: 1 }}>
-        <T style={{ fontFamily: fonts.bodySemi, fontSize: 14, color: primary ? "#fff" : colors.heading }}>{title}</T>
-        <T style={{ fontFamily: fonts.body, fontSize: 12, marginTop: 1, color: primary ? "rgba(255,255,255,0.82)" : colors.muted }}>{hint}</T>
+        <T style={{ fontFamily: fonts.bodySemi, fontSize: 14, color: t.title }}>{title}</T>
+        <T style={{ fontFamily: fonts.body, fontSize: 12, marginTop: 1, color: t.hint }}>{hint}</T>
       </View>
     </Pressable>
   );

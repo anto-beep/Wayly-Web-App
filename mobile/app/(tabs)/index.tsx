@@ -4,6 +4,7 @@ import { router, useFocusEffect } from "expo-router";
 import { useScrollToTop } from "expo-router";
 import { registerDashboardScroll } from "@/src/lib/dashboardScroll";import Animated, { FadeInDown, useAnimatedScrollHandler, useSharedValue } from "react-native-reanimated";
 import Svg, { Circle } from "react-native-svg";
+import { LinearGradient } from "expo-linear-gradient";
 import {
   TrendingUp, FileText, AlertTriangle, Sparkles, ChevronRight,
   MessageCircle, Users, Activity, ArrowRight, Crown, Shield, Users2, Calendar, ChevronDown, Lightbulb, Info, Bell, CheckCircle2,
@@ -271,7 +272,7 @@ export default function Dashboard() {
                     <View style={[styles.statusPill, { backgroundColor: budgetOver ? colors.errorSoft : colors.sageSoft }]}>
                       <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: budgetOver ? colors.terracotta : colors.sage }} />
                       <T style={{ fontFamily: fonts.bodySemi, fontSize: 11, letterSpacing: 0.7, color: budgetOver ? colors.terracotta : colors.sage }} testID="glance-budget-status">
-                        {budgetOver ? "OVER BUDGET THIS QUARTER" : "LEFT FOR CARE THIS QUARTER"}
+                        {budgetOver ? "OVER BUDGET" : "LEFT FOR CARE"}
                       </T>
                     </View>
                     {budget?.quarter_label ? (
@@ -281,20 +282,59 @@ export default function Dashboard() {
                       </View>
                     ) : null}
                     <View style={{ flexDirection: "row", alignItems: "baseline", gap: 6, marginTop: 10, flexWrap: "wrap", justifyContent: "center" }}>
-                      <T style={{ fontFamily: fonts.heading, fontSize: 28, lineHeight: 32, color: budgetOver ? colors.terracotta : colors.heading }} testID="glance-left">{money(Math.abs(left))}</T>
-                      <T variant="small" style={{ color: colors.muted }} testID="glance-budget">of {moneyWhole(available)} available this quarter</T>
+                      <T style={{ fontFamily: fonts.heading, fontSize: 32, lineHeight: 36, color: budgetOver ? colors.terracotta : colors.heading }} testID="glance-left">{money(Math.abs(left))}</T>
+                      <T variant="small" style={{ color: colors.muted }} testID="glance-budget">of {moneyWhole(available)} available</T>
                     </View>
-                    <T variant="small" style={{ color: colors.text, marginTop: 8 }} testID="glance-spare">Spare for extra care: <T style={{ fontFamily: fonts.bodySemi, color: colors.text }}>{money(spare)}</T></T>
-                    <View style={{ flexDirection: "row", alignItems: "center", gap: 8, marginTop: 10 }}>
-                      <View style={{ width: 12, height: 12, borderRadius: 6, backgroundColor: budgetOver || budgetPctUsed >= 90 ? colors.terracotta : budgetPctUsed >= 75 ? colors.gold : colors.sage }} />
-                      <T variant="small" style={{ color: colors.text }} testID="glance-spent"><T style={{ fontFamily: fonts.bodySemi, color: colors.text }}>{money(spent)}</T> used so far</T>
+                  </View>
+
+                  {/* visual spend bar with a time-elapsed marker */}
+                  <View style={{ marginTop: spacing.md }}>
+                    <View style={{ height: 12, borderRadius: 999, backgroundColor: colors.primary + "1A", overflow: "hidden" }}>
+                      <View style={{ height: "100%", width: `${Math.max(0, Math.min(100, budgetPctUsed))}%`, backgroundColor: budgetOver || budgetPctUsed >= 90 ? colors.terracotta : budgetPctUsed >= 75 ? colors.gold : colors.sage, borderRadius: 999 }} />
+                      {elapsedPct != null ? <View style={{ position: "absolute", top: 0, bottom: 0, width: 2, left: `${Math.max(0, Math.min(100, elapsedPct))}%`, backgroundColor: colors.primary + "99" }} /> : null}
                     </View>
-                    {careMgmt > 0 ? <T variant="small" style={{ color: colors.muted, marginTop: 6, textAlign: "center" }} testID="glance-care-management">{money(careMgmt)} care management is set aside automatically (10% of your quarter's funding), not part of the amount available for care.</T> : null}
+                    <View style={{ flexDirection: "row", justifyContent: "space-between", marginTop: 6 }}>
+                      <T variant="small" style={{ fontSize: 11 }}>{budgetPctUsed}% used</T>
+                      {elapsedPct != null ? <T variant="small" style={{ fontSize: 11 }}>{elapsedPct}% of quarter elapsed</T> : null}
+                    </View>
+                  </View>
+
+                  {/* visual stat chips */}
+                  <View style={{ flexDirection: "row", gap: spacing.sm, marginTop: spacing.md }}>
+                    <View testID="glance-spent" style={{ flex: 1, borderWidth: 1, borderColor: colors.border, borderRadius: radius.md, padding: 12 }}>
+                      <View style={{ flexDirection: "row", alignItems: "center", gap: 5 }}>
+                        <TrendingUp size={13} color={budgetOver || budgetPctUsed >= 90 ? colors.terracotta : budgetPctUsed >= 75 ? colors.gold : colors.sage} />
+                        <T style={{ fontFamily: fonts.bodySemi, fontSize: 9, letterSpacing: 0.6, color: colors.muted }}>USED SO FAR</T>
+                      </View>
+                      <T style={{ fontFamily: fonts.heading, fontSize: 19, lineHeight: 24, marginTop: 4, color: colors.heading }}>{money(spent)}</T>
+                    </View>
+                    <View testID="glance-spare" style={{ flex: 1, borderWidth: 1, borderColor: colors.sage + "44", backgroundColor: colors.sageSoft, borderRadius: radius.md, padding: 12 }}>
+                      <View style={{ flexDirection: "row", alignItems: "center", gap: 5 }}>
+                        <Sparkles size={13} color={colors.sage} />
+                        <T style={{ fontFamily: fonts.bodySemi, fontSize: 9, letterSpacing: 0.6, color: colors.sage }}>SPARE FOR CARE</T>
+                      </View>
+                      <T style={{ fontFamily: fonts.heading, fontSize: 19, lineHeight: 24, marginTop: 4, color: colors.heading }}>{money(spare)}</T>
+                    </View>
+                  </View>
+
+                  <View style={{ marginTop: spacing.md }}>
+                    {careMgmt > 0 ? (
+                      <View testID="glance-care-management" style={{ flexDirection: "row", gap: 6, backgroundColor: colors.primary + "0D", borderRadius: radius.md, paddingHorizontal: 10, paddingVertical: 8 }}>
+                        <Info size={13} color={colors.muted} style={{ marginTop: 1 }} />
+                        <T variant="small" style={{ fontSize: 11, flex: 1 }}><T style={{ fontFamily: fonts.bodySemi, color: colors.text }}>{money(careMgmt)}</T> care management is set aside automatically (10% of funding), separate from the amount available for care.</T>
+                      </View>
+                    ) : null}
                     {budgetUnderspend && (_proj.forfeit_aud || 0) > 0 ? (
-                      <T variant="small" style={{ color: "#6B4A0F", marginTop: 8, textAlign: "center", fontFamily: fonts.bodyMedium }} testID="glance-forfeit">At this pace, about {money(_proj.forfeit_aud)} of this quarter's funding looks likely to be returned. It may be worth talking to your provider about care you need but are not getting.</T>
+                      <View testID="glance-forfeit" style={{ flexDirection: "row", gap: 6, borderLeftWidth: 3, borderLeftColor: colors.gold, backgroundColor: colors.goldSoft, borderRadius: radius.sm, paddingHorizontal: 10, paddingVertical: 8, marginTop: spacing.sm }}>
+                        <AlertTriangle size={14} color={colors.gold} style={{ marginTop: 1 }} />
+                        <T variant="small" style={{ fontSize: 12, flex: 1, color: "#6B4A0F", fontFamily: fonts.bodyMedium }}>At this pace, about <T style={{ fontFamily: fonts.bodyBold, color: "#6B4A0F" }}>{money(_proj.forfeit_aud)}</T> looks likely to be returned. It may be worth asking your provider about care you need but aren't getting.</T>
+                      </View>
                     ) : null}
                     {budgetOver && (_proj.shortfall_aud || 0) > 0 ? (
-                      <T variant="small" style={{ color: colors.terracotta, marginTop: 8, textAlign: "center", fontFamily: fonts.bodyMedium }} testID="glance-shortfall">Booked care is estimated to be about {money(_proj.shortfall_aud)} above what is left this quarter. Check prices or ask your provider to confirm your balance.</T>
+                      <View testID="glance-shortfall" style={{ flexDirection: "row", gap: 6, borderLeftWidth: 3, borderLeftColor: colors.terracotta, backgroundColor: colors.errorSoft, borderRadius: radius.sm, paddingHorizontal: 10, paddingVertical: 8, marginTop: spacing.sm }}>
+                        <AlertTriangle size={14} color={colors.terracotta} style={{ marginTop: 1 }} />
+                        <T variant="small" style={{ fontSize: 12, flex: 1, color: colors.terracotta, fontFamily: fonts.bodyMedium }}>Booked care is about <T style={{ fontFamily: fonts.bodyBold, color: colors.terracotta }}>{money(_proj.shortfall_aud)}</T> above what is left this quarter. Check prices or ask your provider to confirm your balance.</T>
+                      </View>
                     ) : null}
                   </View>
                   {/* Mini-stats — To review / Statements / Lifetime cap (parity with web AtAGlance) */}

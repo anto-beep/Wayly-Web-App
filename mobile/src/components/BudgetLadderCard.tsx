@@ -7,6 +7,7 @@
  */
 import React, { useState } from "react";
 import { Pressable, View } from "react-native";
+import { LinearGradient } from "expo-linear-gradient";
 import { ChevronDown, ChevronRight, AlertTriangle, CheckCircle2, Info } from "lucide-react-native";
 
 import { Card, T } from "@/src/components/ui";
@@ -38,10 +39,12 @@ export function BudgetLadderCard({ ladder }: { ladder: any }) {
 
   return (
     <Card testID="budget-ladder-card" style={{ padding: 0, overflow: "hidden" }}>
-      <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", padding: spacing.md, backgroundColor: colors.surface2, borderBottomWidth: 1, borderBottomColor: colors.border }}>
-        <T style={{ fontFamily: fonts.bodySemi, fontSize: 14, color: colors.heading }}>This quarter · {q.label}</T>
-        <T testID="ladder-as-at" style={{ fontSize: 11, color: colors.muted }}>{q.elapsed_pct}% through</T>
-      </View>
+      <LinearGradient colors={["#0E4D52", "#13646A"]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", gap: 8, paddingHorizontal: spacing.md, paddingVertical: 14 }}>
+        <T style={{ fontFamily: fonts.headingSemi, fontSize: 16, color: "#fff" }}>This quarter · {q.label}</T>
+        <View style={{ backgroundColor: "rgba(255,255,255,0.15)", borderWidth: 1, borderColor: "rgba(255,255,255,0.25)", borderRadius: 999, paddingHorizontal: 10, paddingVertical: 4 }}>
+          <T testID="ladder-as-at" style={{ fontFamily: fonts.bodySemi, fontSize: 11, color: "#fff" }}>{q.elapsed_pct}% through</T>
+        </View>
+      </LinearGradient>
 
       <View style={{ padding: spacing.lg }}>
         <Row k="F" label={L.F} value={money(f.F)} strong colors={colors} />
