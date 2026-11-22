@@ -27,9 +27,9 @@ function inferAlertRoute(text) {
   if (/statement/.test(t)) return "/app/statements";
   if (/\b(cap|lifetime|contribution)\b/.test(t)) return "/app/contribution-position";
   if (/care plan|support plan/.test(t)) return "/app/care-plans";
-  if (/\b(provider|price|compare)\b/.test(t)) return "/app/compare-providers";
-  if (/letter|complaint/.test(t)) return "/app/letters";
   if (/budget|forfeit|shortfall|overspend|underspend|spend|quarter|funding|left for care/.test(t)) return "/app/budget-scenarios";
+  if (/letter|complaint/.test(t)) return "/app/letters";
+  if (/\b(price|compare|comparison)\b/.test(t)) return "/ai-tools/provider-price-checker";
   return null;
 }
 

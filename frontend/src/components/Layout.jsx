@@ -296,10 +296,10 @@ export default function Layout({ children }) {
                                 <AccountHealthMenu />
                             </div>
                         )}
-                        {user && <span className="hidden lg:block h-6 w-px bg-primary-k/15 mx-1" aria-hidden="true" />}
+                        {user && <span className="hidden lg:block h-6 w-px topbar-sep mx-1" aria-hidden="true" />}
                         {/* Who you're caring for (clearly labelled, distinct from the account) */}
                         {user && <ParticipantSwitcher tone="light" />}
-                        {user && <span className="hidden lg:block h-6 w-px bg-primary-k/15 mx-1" aria-hidden="true" />}
+                        {user && <span className="hidden lg:block h-6 w-px topbar-sep mx-1" aria-hidden="true" />}
                         {/* Logged-in account (plan + sign out live inside the menu) */}
                         {user && <AccountMenu user={user} onLogout={handleLogout} />}
                         {/* Mobile drawer trigger */}

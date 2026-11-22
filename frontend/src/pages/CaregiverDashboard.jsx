@@ -125,7 +125,7 @@ function BudgetDonut({ pctFill, pctLabel, tone, size = 168, stroke = 20, onDark 
     const { isDark } = useTheme();
     const bright = { "#C0392B": "#F0857A", "#C2683D": "#E89A6F", "#4E6E54": "#7FC8A0" };
     const t = (isDark || onDark) ? (bright[tone] || tone) : tone;
-    const arc = onDark ? "#5FC9C0" : t;
+    const arc = onDark ? "#F3C98B" : t;
     const track = onDark ? "rgba(255,255,255,0.22)" : isDark ? "rgba(255,255,255,0.16)" : "rgba(14,77,82,0.10)";
     const r = (size - stroke) / 2;
     const c = 2 * Math.PI * r;
@@ -198,7 +198,7 @@ function AtAGlance({ budget, statements, alertCount, toReviewHref, lifetimeCapHr
         >
             {/* Headline — a premium, colour-blocked budget hero with several
                 clear graphics (ring, gauge, metric tiles) on one type scale. */}
-            <div className="relative overflow-hidden p-6 sm:p-8 text-white bg-[linear-gradient(135deg,#13616A_0%,#0F555A_55%,#1A777E_100%)]">
+            <div className="relative overflow-hidden p-6 sm:p-8 text-white bg-[linear-gradient(135deg,#0E4D52,#13646A)]">
                 <div aria-hidden="true" className="pointer-events-none absolute -right-20 -top-24 h-56 w-56 rounded-full bg-white/[0.05]" />
                 <div aria-hidden="true" className="pointer-events-none absolute right-10 -bottom-20 h-44 w-44 rounded-full bg-white/[0.03]" />
 
@@ -257,7 +257,7 @@ function AtAGlance({ budget, statements, alertCount, toReviewHref, lifetimeCapHr
                 </div>
 
                 {careMgmt > 0 && (
-                    <p className="relative mt-4 flex items-start gap-2 rounded-lg bg-white/[0.12] border-l-[3px] border-l-white/40 px-3 py-2.5 text-xs text-white/90" data-testid="glance-care-management">
+                    <p className="relative mt-4 flex items-start gap-2 rounded-lg bg-white/[0.12] border-l-[3px] border-l-white/40 px-3 py-2.5 text-sm text-white/90" data-testid="glance-care-management">
                         <Info className="h-3.5 w-3.5 flex-none mt-0.5 text-white/80" />
                         <span><span className="font-semibold tabular-nums text-white">{formatAUD2(careMgmt)}</span> care management is set aside automatically (10% of funding), separate from the amount available for care.</span>
                     </p>

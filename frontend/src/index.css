@@ -254,6 +254,8 @@
        a page's own max-w-* container). Inner cards/sections keep their widths. */
     .wayly-route > * { max-width: 1720px !important; margin-left: auto !important; margin-right: auto !important; }
     .bg-primary-k   { background-color: var(--kindred-primary); }
+    .topbar-sep     { background-color: rgba(14, 77, 82, 0.28); }
+    html.theme-dark .topbar-sep { background-color: rgba(255, 255, 255, 0.24); }
     .text-primary-k { color: var(--kindred-primary); }
     .text-muted-k   { color: var(--kindred-muted); }
     .text-sage      { color: var(--kindred-sage); }

@@ -143,7 +143,7 @@ export default function ChargeEntryDialog({ pid, savedServices = [], initialTab 
                             <p className="text-sm text-muted-k">No usual services saved yet. Type a charge and it'll appear here next time.</p>
                         ) : (
                             <ul className="space-y-2">
-                                {savedServices.slice(0, 10).map((s) => (
+                                {savedServices.map((s) => (
                                     <li key={s.service_id}>
                                         <button onClick={() => addFromSaved(s)} disabled={busy} data-testid={`charge-usual-${s.service_id}`}
                                             className="w-full text-left flex items-center justify-between gap-3 rounded-xl border border-primary-k/10 px-3 py-2.5 hover:border-clay/50 hover:shadow-sm transition-all disabled:opacity-50">
@@ -157,7 +157,7 @@ export default function ChargeEntryDialog({ pid, savedServices = [], initialTab 
                                 ))}
                             </ul>
                         )}
-                        <p className="mt-3 text-[11px] text-muted-k">Date defaults to today, amount to the last amount recorded. You can fix it afterwards.</p>
+                        <p className="mt-3 rounded-lg bg-gold/10 border border-gold/30 px-3 py-2 text-xs font-medium text-primary-k">Date defaults to today, amount to the last amount recorded. You can fix it afterwards.</p>
                     </div>
                 )}
 

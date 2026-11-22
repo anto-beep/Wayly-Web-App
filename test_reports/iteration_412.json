@@ -1,0 +1,27 @@
+{
+  "summary": "Re-verified three web dashboard bugs after iteration_411 fixes. All four checks PASS. (1) Topbar separators are now visible in light mode via the new .topbar-sep CSS utility, computed backgroundColor rgba(14,77,82,0.28) on both sep elements at 1440px desktop viewport. (2) All three dashboard Smart AI Summary alerts navigate to valid routes with no 404: alert[0] (funding forfeited) -> /app/budget-scenarios (as required), alert[1] (statement anomalies) -> /app/statements, alert[2] (invoice issues) -> /app/invoices. (3) ChargeEntryDialog 'From your usual care' tab now renders the full saved-services list (16 services displayed and scrollable) with no errors; the previous slice(0,10) cap has been removed. (4) Regression: dashboard still renders hero greeting, 5 fundtrack-* elements, and no new console errors. Only pre-existing console errors observed: GSI_LOGGER (Google Identity origin not allowed) and one unrelated 404 (asset), neither tied to the three fixes.",
+  "platforms_tested": ["web"],
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "web": {
+      "ui_bugs": [],
+      "integration_issues": [],
+      "design_issues": []
+    }
+  },
+  "parity_issues": [],
+  "test_report_links": ["/app/test_reports/iteration_412.json", "/app/test_reports/iter412_topbar.png", "/app/test_reports/iter412_charge.png"],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "Pre-existing: GSI_LOGGER warning that 'The given origin is not allowed for the given client ID' and a 403 on the GSI endpoint appear on /login. Not caused by these fixes but main agent may want to whitelist the preview origin in the Google OAuth console.",
+    "Pre-existing: a 404 asset request appears on dashboard navigations (not identified; harmless but noisy)."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "N/A (skipped)", "frontend": "100% (4/4 verifications PASS)"},
+  "test_credentials": "samburke@test.com / CarTest123$ (Family-plan caregiver, pre-populated dashboard)",
+  "seed_data_creation": "none",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Dashboard route is /app (not /app/dashboard). Topbar separators (.topbar-sep) only render at lg: breakpoint (viewport >= 1024px); use 1280px+ to verify. Smart AI Summary alerts for samburke are currently 3 items [funding forfeited -> budget-scenarios, statement anomalies -> statements, invoice issues -> invoices]. Account has 16 saved services (>10) so the slice(0,10) cap removal was verifiable.",
+  "rca of the issue": "Iteration_411 regression was due to using Tailwind's slash-opacity on a custom CSS utility class name (`bg-primary-k/30`): Tailwind only generates slash-opacity for colours defined in the theme, not arbitrary legacy utilities, so the class compiled to nothing and the separators had no background. Fix in iteration 412 defines a dedicated `.topbar-sep` CSS utility with explicit rgba(14,77,82,0.28) (and a dark-mode override via html.theme-dark). Verified computedStyle backgroundColor is now rgba(14, 77, 82, 0.28) on both separators."
+}
