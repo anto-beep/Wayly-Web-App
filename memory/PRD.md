@@ -8476,3 +8476,12 @@ Verified PASS by testing agent (web, samburke@test.com):
 
 ### Jun 2026 (fork) — Mobile dashboard colour parity (self-verified via screenshot)
 Mirrored the web budget-hero colour treatment onto the mobile dashboard (app/(tabs)/index.tsx): USED SO FAR tile → solid red #9E2F23, SPARE FOR CARE tile → solid clay #A5512B (both white text + white mini-bars); care-management note → solid teal block #C9E0E1 w/ #0A3E42 text + teal left accent; forfeit note → solid clay #F4D6C5 w/ #6A3219 text; shortfall note → solid red #F7D9D4 w/ #8A2A1E text; gauge track strengthened to primary+"33". All testIDs preserved (glance-spent/spare/care-management/forfeit/shortfall). Colour-only change; no logic touched.
+
+### Jun 2026 (fork) — 4 follow-up tasks + dark-mode pass + date format (testing agent VERIFIED iteration_415, all PASS)
+- **Mobile entry edit/delete** (app/weekly-budget.tsx): recorded-entries list now Title Case heading, no 12-cap, Title Case source labels, per-row Edit (opens EditEntrySheet → PATCH /fundtrack/charges/{id}) and Delete (inline confirm → DELETE). 
+- **Web Add Entry** (WeeklyBudget UsedEntriesTable): "Add Entry" button opens EditEntryDialog in create mode (service/date/amount/category + quick-pick from saved services) → POST /fundtrack/participants/{pid}/charges. Same dialog handles edit (PATCH).
+- **Dark mode** (web): CaregiverDashboard AtAGlance now theme-aware via useTheme isDark — notes use translucent accent bg + light text in dark; quarter-pill '% through' turns white; gold chip text lightens; donut normal-tone arc switched green→gold (#F3C98B) to contrast teal. FundtrackAlerts got TONE_LIGHT/TONE_DARK (title+icon+bg), body kept on theme-adaptive text-primary-k/80 (readable both modes). WeeklyBudget ActionCard backgrounds switched to explicit per-mode hex (teal/clay/gold) so the teal button no longer flips pale in dark.
+- **Chat streaming polish**: web AskWaylyV2 shows animated bouncing TypingDots (aw2-typing) in the assistant bubble while streaming; mobile ask.tsx replaced the ActivityIndicator with reanimated TypingDots; both auto-scroll to newest content.
+- **Date format**: web WeeklyBudget recorded-entries table date now DD/MM/YYYY (fmtDateFull); mobile already DD/MM/YYYY via shortDate. 
+- Mobile dashboard hero colours mirrored from web earlier (solid red/clay tiles + coloured notes) — left as readable light blocks in mobile dark mode (dark text on light block; not a readability bug).
+- Cleaned a leftover Test_wayly_edit demo charge created during automated testing.

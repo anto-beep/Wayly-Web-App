@@ -9,7 +9,7 @@ import React, { useCallback, useEffect, useState } from "react";
 import { Modal, Pressable, RefreshControl, ScrollView, StyleSheet, View } from "react-native";
 import { router, useFocusEffect } from "expo-router";
 import {
-  Archive, CalendarClock, CalendarDays, CheckCircle2, Clock, Plus, RefreshCw, X,
+  Archive, CalendarClock, CalendarDays, CheckCircle2, Clock, Pencil, Plus, RefreshCw, Trash2, X,
 } from "lucide-react-native";
 
 import { AppHeader, Button, Card, Field, Loading, StatePanel, T } from "@/src/components/ui";
@@ -31,6 +31,9 @@ const CHANGES = [
   { key: "cancelled", label: "Cancelled late" },
 ];
 
+const SRC: Record<string, string> = { entered: "You Entered", invoice: "From An Invoice", catch_up: "Catch-Up", booked: "Booked" };
+const srcLabel = (s: string) => SRC[s] || "You Entered";
+
 const weekRange = () => {
   const now = new Date();
   const day = (now.getDay() + 6) % 7;
@@ -49,6 +52,9 @@ export default function WeeklyBudgetScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [sheet, setSheet] = useState<null | "charge" | "whatif">(null);
   const [changeVisit, setChangeVisit] = useState<any>(null);
+  const [editEntry, setEditEntry] = useState<any>(null);
+  const [confirmDel, setConfirmDel] = useState<string | null>(null);
+  const [busyDel, setBusyDel] = useState(false);
 
   const load = useCallback(async () => {
     if (!pid) { setLoading(false); return; }
@@ -61,6 +67,12 @@ export default function WeeklyBudgetScreen() {
     if (action === "what_if") setSheet("whatif");
     else if (action === "upload") router.push("/upload");
     else if (action === "letter") router.push("/letters");
+  };
+
+  const delEntry = async (id: string) => {
+    setBusyDel(true);
+    try { await apiFetch(`/fundtrack/charges/${id}`, { method: "DELETE" }); setConfirmDel(null); load(); }
+    catch { /* ignore */ } finally { setBusyDel(false); }
   };
 
   return (
@@ -136,20 +148,41 @@ export default function WeeklyBudgetScreen() {
             <ActionCard testID="weekly-something-changed" Icon={RefreshCw} title="Something changed" hint="A visit was missed or different" tone="gold" onPress={() => setChangeVisit(data.booked?.[0] || { blank: true })} />
           </View>
 
-          {/* what you've used */}
+          {/* what you've recorded */}
           {(data.used || []).length > 0 ? (
             <Card testID="weekly-used">
               <View style={{ flexDirection: "row", alignItems: "center", gap: 6, marginBottom: spacing.sm }}>
                 <CheckCircle2 size={16} color={colors.sage} />
-                <T style={{ fontFamily: fonts.headingSemi, fontSize: 16, color: colors.heading }}>What you've recorded this quarter</T>
+                <T style={{ fontFamily: fonts.headingSemi, fontSize: 16, color: colors.heading }}>What You Have Recorded This Quarter</T>
               </View>
-              {data.used.slice(0, 12).map((u: any) => (
-                <View key={u.id} testID={`weekly-used-${u.id}`} style={{ flexDirection: "row", alignItems: "center", gap: spacing.sm, paddingVertical: spacing.sm, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.border }}>
-                  <View style={{ flex: 1 }}>
-                    <T style={{ fontFamily: fonts.body, fontSize: 14 }} numberOfLines={1}>{u.service_name}</T>
-                    <T variant="small" style={{ fontSize: 12 }}>{shortDate(u.date)} · {u.source === "invoice" ? "from an invoice" : u.source === "catch_up" ? "catch-up" : "you entered"}</T>
+              {data.used.map((u: any) => (
+                <View key={u.id} testID={`weekly-used-${u.id}`} style={{ paddingVertical: spacing.sm, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.border }}>
+                  <View style={{ flexDirection: "row", alignItems: "center", gap: spacing.sm }}>
+                    <View style={{ flex: 1 }}>
+                      <T style={{ fontFamily: fonts.body, fontSize: 14 }} numberOfLines={1}>{u.service_name}</T>
+                      <T variant="small" style={{ fontSize: 12 }}>{shortDate(u.date)} · {srcLabel(u.source)}</T>
+                    </View>
+                    <T style={{ fontFamily: fonts.bodySemi, fontSize: 14, color: colors.heading }}>{u.unpriced ? "Unpriced" : money(u.amount)}</T>
                   </View>
-                  <T style={{ fontFamily: fonts.bodySemi, fontSize: 14, color: colors.heading }}>{u.unpriced ? "unpriced" : money(u.amount)}</T>
+                  {confirmDel === u.id ? (
+                    <View style={{ flexDirection: "row", gap: spacing.lg, marginTop: 8, alignItems: "center" }}>
+                      <Pressable testID={`weekly-used-delete-confirm-${u.id}`} onPress={() => delEntry(u.id)} disabled={busyDel} hitSlop={6}>
+                        <T style={{ fontFamily: fonts.bodySemi, fontSize: 12, color: colors.terracotta }}>{busyDel ? "…" : "Confirm Delete"}</T>
+                      </Pressable>
+                      <Pressable onPress={() => setConfirmDel(null)} hitSlop={6}><T variant="small" style={{ fontSize: 12, color: colors.muted }}>Cancel</T></Pressable>
+                    </View>
+                  ) : (
+                    <View style={{ flexDirection: "row", gap: spacing.lg, marginTop: 8 }}>
+                      <Pressable testID={`weekly-used-edit-${u.id}`} onPress={() => setEditEntry(u)} hitSlop={6} style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
+                        <Pencil size={13} color={colors.primary} />
+                        <T style={{ fontFamily: fonts.bodySemi, fontSize: 12, color: colors.primary }}>Edit</T>
+                      </Pressable>
+                      <Pressable testID={`weekly-used-delete-${u.id}`} onPress={() => setConfirmDel(u.id)} hitSlop={6} style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
+                        <Trash2 size={13} color={colors.terracotta} />
+                        <T style={{ fontFamily: fonts.bodySemi, fontSize: 12, color: colors.terracotta }}>Delete</T>
+                      </Pressable>
+                    </View>
+                  )}
                 </View>
               ))}
             </Card>
@@ -199,6 +232,9 @@ export default function WeeklyBudgetScreen() {
       <WhatIfCareSheet pid={pid} savedServices={data?.saved_services || []} visible={sheet === "whatif"} onClose={() => setSheet(null)} onSaved={() => { setSheet(null); load(); }} />
       {changeVisit ? (
         <VisitChangeSheet pid={pid} visit={changeVisit} onClose={() => setChangeVisit(null)} onSaved={() => { setChangeVisit(null); load(); }} />
+      ) : null}
+      {editEntry ? (
+        <EditEntrySheet entry={editEntry} onClose={() => setEditEntry(null)} onSaved={() => { setEditEntry(null); load(); }} />
       ) : null}
     </View>
   );
@@ -279,6 +315,46 @@ function VisitChangeSheet({ pid, visit, onClose, onSaved }: any) {
             {isExtra ? <Field label="What was the extra visit?" value={name} onChangeText={setName} placeholder="e.g. Extra cleaning" testID="visit-change-name" /> : null}
             {(needsAmount || isExtra) ? <Field label="Amount" value={amount} onChangeText={setAmount} keyboardType="decimal-pad" placeholder="0" testID="visit-change-amount" /> : null}
             <Button label="Save" testID="visit-change-save" onPress={submit} loading={busy} />
+          </View>
+        </Pressable>
+      </Pressable>
+    </Modal>
+  );
+}
+
+/** Edit a recorded entry (service / date / amount) via PATCH. */
+function EditEntrySheet({ entry, onClose, onSaved }: any) {
+  const { colors } = useTheme();
+  const [serviceName, setServiceName] = useState(entry?.service_name || "");
+  const [date, setDate] = useState((entry?.date || "").slice(0, 10));
+  const [amount, setAmount] = useState(entry?.amount != null ? String(entry.amount) : "");
+  const [busy, setBusy] = useState(false);
+
+  const submit = async () => {
+    if (!serviceName.trim()) return;
+    setBusy(true);
+    try {
+      await apiFetch(`/fundtrack/charges/${entry.id}`, {
+        method: "PATCH",
+        body: { service_name: serviceName.trim(), date, amount: amount === "" ? null : Number(amount) },
+      });
+      onSaved?.();
+    } catch { /* ignore */ } finally { setBusy(false); }
+  };
+
+  return (
+    <Modal visible transparent animationType="slide" onRequestClose={onClose}>
+      <Pressable style={{ flex: 1, justifyContent: "flex-end", backgroundColor: colors.overlay }} onPress={onClose}>
+        <Pressable testID="edit-entry-sheet" onPress={(e) => e.stopPropagation()} style={{ backgroundColor: colors.surface, borderTopLeftRadius: radius.xl, borderTopRightRadius: radius.xl, paddingTop: spacing.md, paddingBottom: spacing.xl }}>
+          <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingHorizontal: spacing.lg, paddingBottom: spacing.xs }}>
+            <T style={{ fontFamily: fonts.headingSemi, fontSize: 18, color: colors.heading }}>Edit Entry</T>
+            <Pressable onPress={onClose} hitSlop={8} testID="edit-entry-close"><X size={22} color={colors.muted} /></Pressable>
+          </View>
+          <View style={{ paddingHorizontal: spacing.lg, paddingTop: spacing.md, gap: spacing.md }}>
+            <Field label="Service" value={serviceName} onChangeText={setServiceName} placeholder="e.g. Personal care" testID="edit-entry-service" />
+            <Field label="Date (YYYY-MM-DD)" value={date} onChangeText={setDate} placeholder="2026-11-22" testID="edit-entry-date" />
+            <Field label="Amount ($)" value={amount} onChangeText={setAmount} keyboardType="decimal-pad" placeholder="Unpriced" testID="edit-entry-amount" />
+            <Button label="Save Changes" testID="edit-entry-save" onPress={submit} loading={busy} />
           </View>
         </Pressable>
       </Pressable>

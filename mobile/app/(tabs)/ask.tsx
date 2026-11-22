@@ -1,9 +1,9 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
-  ActivityIndicator, FlatList, Keyboard, Modal, Platform, Pressable, ScrollView, StyleSheet, TextInput, View,
+  FlatList, Keyboard, Modal, Platform, Pressable, ScrollView, StyleSheet, TextInput, View,
 } from "react-native";
 import { KeyboardAvoidingView } from "react-native-keyboard-controller";
-import Animated, { FadeIn, FadeOut } from "react-native-reanimated";
+import Animated, { FadeIn, FadeOut, useSharedValue, useAnimatedStyle, withRepeat, withTiming, withDelay } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
@@ -167,7 +167,7 @@ export default function AskWayly() {
         </Pressable>
 
         {sending && !(conv && conv.messages.length > 0 && conv.messages[conv.messages.length - 1].role === "assistant" && conv.messages[conv.messages.length - 1].content.length > 0) ? (
-          <View style={styles.typing}><ActivityIndicator size="small" color={colors.heading} /><T variant="small">Wayly is thinking…</T></View>
+          <View style={styles.typing}><TypingDots color={colors.heading} /><T variant="small">Wayly is thinking…</T></View>
         ) : null}
 
         <View style={[styles.composer, { paddingBottom: insets.bottom + spacing.sm }]}>
@@ -215,6 +215,23 @@ function Bubble({ msg, colors, onFeedback }: { msg: Msg; colors: Palette; onFeed
           </View>
         ) : null}
       </View>
+    </View>
+  );
+}
+
+function TypingDot({ delay, color }: { delay: number; color: string }) {
+  const v = useSharedValue(0.3);
+  useEffect(() => {
+    v.value = withDelay(delay, withRepeat(withTiming(1, { duration: 500 }), -1, true));
+  }, [delay, v]);
+  const style = useAnimatedStyle(() => ({ opacity: v.value, transform: [{ scale: 0.7 + v.value * 0.3 }] }));
+  return <Animated.View style={[{ width: 7, height: 7, borderRadius: 999, backgroundColor: color }, style]} />;
+}
+
+function TypingDots({ color }: { color: string }) {
+  return (
+    <View style={{ flexDirection: "row", gap: 4, alignItems: "center" }} testID="aw2-typing">
+      {[0, 1, 2].map((i) => <TypingDot key={i} delay={i * 160} color={color} />)}
     </View>
   );
 }

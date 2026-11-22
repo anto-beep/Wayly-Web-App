@@ -1,0 +1,42 @@
+{
+  "summary": "Iteration 415 — regression-tested the 4 user-selected tasks across web + mobile. WEB WeeklyBudget recorded-entries CRUD (Add Entry/Edit/Delete) all work end-to-end against /api/fundtrack/participants/{pid}/charges (POST 200), /api/fundtrack/charges/{id} (PATCH 200, DELETE 200); search, sort, source filter still function; date column shows full date incl. year ('Sunday 22 November 2026'). WEB dark mode readable across dashboard hero text, three coloured tiles (teal/red/clay with white text), care-management/shortfall notes, quarter pill, gold donut arc, FundtrackAlerts, and the WeeklyBudget action buttons (weekly-add-charge teal rgb(26,105,110), weekly-whatif red rgb(200,90,60), weekly-something-changed clay rgb(217,138,78) — all with white text, none pale). Light mode has no regressions. AskWaylyV2 typing dots wiring verified in code. MOBILE weekly-budget heading 'What You Have Recorded This Quarter' is Title Case, source labels Title Case ('You Entered'), Edit opens edit-entry-sheet → PATCH 200, Delete + confirm → DELETE 200, row disappears. MOBILE Ask Wayly shows aw2-typing dots immediately after send (250ms check passed), dots hide after reply, tab bar hidden, suggestions hide on send, back button present, composer at bottom. No red screens, no critical regressions.",
+  "platforms_tested": ["web", "mobile"],
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "web": {
+      "ui_bugs": [],
+      "integration_issues": [],
+      "design_issues": [
+        {"screen": "WeeklyBudget recorded entries table", "issues": ["Date rendered as 'Sunday 22 November 2026' (no comma after weekday). Spec example used 'Sunday, 22 November 2026'. Full date incl. year IS present so acceptance condition is met; punctuation is a minor UX nit — consider adding the comma for consistency with the spec example."]}
+      ]
+    },
+    "mobile": {
+      "ui_bugs": [],
+      "integration_issues": [],
+      "design_issues": [
+        {"screen": "weekly-budget recorded entries list", "issues": ["Row date shows short format '22/11/2026'. Not a spec violation (mobile brief did not require long date), but lacks parity with web's 'Sunday 22 November 2026'. Consider a compact long form on mobile (e.g. '22 Nov 2026') for consistency."]},
+        {"screen": "weekly-budget recorded entries list", "issues": ["Service names in list render in sentence case (e.g. 'Personal care, morning'). Spec only required SOURCE labels to be Title Case (they are — 'You Entered'), so this is informational, not a defect."]}
+      ],
+      "react_native_issues": []
+    }
+  },
+  "parity_issues": [
+    {"flow": "WeeklyBudget recorded entries — date column", "platform": "mobile", "issue": "Web shows long date with weekday + year ('Sunday 22 November 2026'); mobile shows short '22/11/2026'.", "expected": "Consistent date presentation across surfaces (long format on both, per the WEB spec example)", "actual": "Different date formats web vs mobile"}
+  ],
+  "test_report_links": [],
+  "action_items": [
+    "(Optional, minor) Add comma after weekday in WEB WeeklyBudget date column to match spec example — 'Sunday, 22 November 2026'.",
+    "(Optional, minor) Align mobile weekly-budget row date format with web long date (e.g. '22 Nov 2026') for cross-surface parity."
+  ],
+  "critical_code_review_comments": [
+    "AskWaylyV2 web renders TypingDots only when `streaming && !msg.content`. Fast backends can skip the visible flicker (as in this run); wiring is correct. Consider enforcing a minimum display time (e.g. 300ms) so the dots are always perceivable even on fast replies."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "100%", "frontend": "100%"},
+  "test_credentials": "samburke@test.com / CarTest123$ (demo). Used only this account.",
+  "seed_data_creation": "Created and then deleted WEB test charges (TEST_wayly_svc_1, TEST_wayly_edit, TEST_wayly_edit_abc) and one mobile charge via existing TEST_wayly_edit row. All test charges cleaned up via the DELETE endpoint in-flow.",
+  "retest_needed": false,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "Participant id for samburke@test.com dashboard is used implicitly by the WeeklyBudget page via /api/fundtrack/participants/{pid}/charges. The mobile ask screen uses testID 'ask-input' (TextInput) and 'ask-send-button' (Pressable) — not the 'aw2-*' naming used on web — but the typing indicator shares 'aw2-typing'. Use mobile viewport 390x844; expo preview URL slug is `*.expo.preview.emergentagent.com`. All entry test IDs on both platforms follow `weekly-used-<uuid>`, `weekly-used-edit-<uuid>`, `weekly-used-delete-<uuid>`, `weekly-used-delete-confirm-<uuid>`. Dark-mode toggle via localStorage key 'wayly:app:appearance' then reload.",
+  "rca of the issue": "N/A — no regressions found."
+}

@@ -26,7 +26,7 @@ const sourceLabel = (s) => SOURCE_LABEL[s] || "You Entered";
 const STREAMS = ["Clinical", "Independence", "Everyday Living"];
 const todayISO = () => new Date().toISOString().slice(0, 10);
 const fmtDate = (iso) => { if (!iso) return ""; try { return new Date(iso).toLocaleDateString("en-AU", { weekday: "short", day: "numeric", month: "short" }); } catch { return iso; } };
-const fmtDateFull = (iso) => { if (!iso) return ""; try { return new Date(iso).toLocaleDateString("en-AU", { weekday: "long", day: "numeric", month: "long", year: "numeric" }); } catch { return iso; } };
+const fmtDateFull = (iso) => { if (!iso) return ""; try { const d = new Date(iso); const p = (n) => String(n).padStart(2, "0"); return `${p(d.getDate())}/${p(d.getMonth() + 1)}/${d.getFullYear()}`; } catch { return iso; } };
 const weekRange = () => {
     const now = new Date();
     const day = (now.getDay() + 6) % 7;
