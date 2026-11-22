@@ -289,7 +289,7 @@ export default function Dashboard() {
 
                   {/* visual spend bar with a time-elapsed marker */}
                   <View style={{ marginTop: spacing.md }}>
-                    <View style={{ height: 12, borderRadius: 999, backgroundColor: colors.primary + "1A", overflow: "hidden" }}>
+                    <View style={{ height: 12, borderRadius: 999, backgroundColor: colors.primary + "33", overflow: "hidden" }}>
                       <View style={{ height: "100%", width: `${Math.max(0, Math.min(100, budgetPctUsed))}%`, backgroundColor: budgetOver || budgetPctUsed >= 90 ? colors.terracotta : budgetPctUsed >= 75 ? colors.gold : colors.sage, borderRadius: 999 }} />
                       {elapsedPct != null ? <View style={{ position: "absolute", top: 0, bottom: 0, width: 2, left: `${Math.max(0, Math.min(100, elapsedPct))}%`, backgroundColor: colors.primary + "99" }} /> : null}
                     </View>
@@ -300,39 +300,45 @@ export default function Dashboard() {
 
                   {/* visual stat chips */}
                   <View style={{ flexDirection: "row", gap: spacing.sm, marginTop: spacing.md }}>
-                    <View testID="glance-spent" style={{ flex: 1, borderWidth: 1, borderColor: colors.terracotta + "55", backgroundColor: colors.errorSoft, borderRadius: radius.md, padding: 12 }}>
+                    <View testID="glance-spent" style={{ flex: 1, backgroundColor: "#9E2F23", borderRadius: radius.md, padding: 12 }}>
                       <View style={{ flexDirection: "row", alignItems: "center", gap: 5 }}>
-                        <TrendingUp size={13} color={colors.terracotta} />
-                        <T style={{ fontFamily: fonts.bodySemi, fontSize: 9, letterSpacing: 0.6, color: colors.terracotta }}>USED SO FAR</T>
+                        <TrendingUp size={13} color="#fff" />
+                        <T style={{ fontFamily: fonts.bodySemi, fontSize: 9, letterSpacing: 0.6, color: "rgba(255,255,255,0.85)" }}>USED SO FAR</T>
                       </View>
-                      <T style={{ fontFamily: fonts.heading, fontSize: 19, lineHeight: 24, marginTop: 4, color: colors.heading }}>{money(spent)}</T>
+                      <T style={{ fontFamily: fonts.heading, fontSize: 19, lineHeight: 24, marginTop: 4, color: "#fff" }}>{money(spent)}</T>
+                      <View style={{ height: 5, borderRadius: 999, backgroundColor: "rgba(255,255,255,0.25)", overflow: "hidden", marginTop: 8 }}>
+                        <View style={{ height: "100%", width: `${Math.max(0, Math.min(100, budgetPctUsed))}%`, backgroundColor: "rgba(255,255,255,0.9)", borderRadius: 999 }} />
+                      </View>
                     </View>
-                    <View testID="glance-spare" style={{ flex: 1, borderWidth: 1, borderColor: colors.gold + "66", backgroundColor: colors.goldSoft, borderRadius: radius.md, padding: 12 }}>
+                    <View testID="glance-spare" style={{ flex: 1, backgroundColor: "#A5512B", borderRadius: radius.md, padding: 12 }}>
                       <View style={{ flexDirection: "row", alignItems: "center", gap: 5 }}>
-                        <Sparkles size={13} color={colors.gold} />
-                        <T style={{ fontFamily: fonts.bodySemi, fontSize: 9, letterSpacing: 0.6, color: colors.gold }}>SPARE FOR CARE</T>
+                        <Sparkles size={13} color="#fff" />
+                        <T style={{ fontFamily: fonts.bodySemi, fontSize: 9, letterSpacing: 0.6, color: "rgba(255,255,255,0.85)" }}>SPARE FOR CARE</T>
                       </View>
-                      <T style={{ fontFamily: fonts.heading, fontSize: 19, lineHeight: 24, marginTop: 4, color: colors.heading }}>{money(spare)}</T>
+                      <T style={{ fontFamily: fonts.heading, fontSize: 19, lineHeight: 24, marginTop: 4, color: "#fff" }}>{money(spare)}</T>
+                      <View style={{ height: 5, borderRadius: 999, backgroundColor: "rgba(255,255,255,0.25)", overflow: "hidden", marginTop: 8 }}>
+                        <View style={{ height: "100%", width: `${available > 0 ? Math.max(0, Math.min(100, (spare / available) * 100)) : 0}%`, backgroundColor: "rgba(255,255,255,0.9)", borderRadius: 999 }} />
+                      </View>
                     </View>
                   </View>
 
                   <View style={{ marginTop: spacing.md }}>
                     {careMgmt > 0 ? (
-                      <View testID="glance-care-management" style={{ flexDirection: "row", gap: 6, backgroundColor: colors.primary + "0D", borderRadius: radius.md, paddingHorizontal: 10, paddingVertical: 8 }}>
-                        <Info size={13} color={colors.muted} style={{ marginTop: 1 }} />
-                        <T variant="small" style={{ fontSize: 11, flex: 1 }}><T style={{ fontFamily: fonts.bodySemi, color: colors.text }}>{money(careMgmt)}</T> care management is set aside automatically (10% of funding), separate from the amount available for care.</T>
+                      <View testID="glance-care-management" style={{ flexDirection: "row", gap: 6, backgroundColor: "#C9E0E1", borderLeftWidth: 4, borderLeftColor: colors.primary, borderRadius: radius.md, paddingHorizontal: 10, paddingVertical: 8 }}>
+                        <Info size={13} color={colors.primary} style={{ marginTop: 1 }} />
+                        <T variant="small" style={{ fontSize: 11, flex: 1, color: "#0A3E42" }}><T style={{ fontFamily: fonts.bodySemi, color: "#0A3E42" }}>{money(careMgmt)}</T> care management is set aside automatically (10% of funding), separate from the amount available for care.</T>
                       </View>
                     ) : null}
                     {budgetUnderspend && (_proj.forfeit_aud || 0) > 0 ? (
-                      <View testID="glance-forfeit" style={{ flexDirection: "row", gap: 6, borderLeftWidth: 3, borderLeftColor: colors.gold, backgroundColor: colors.goldSoft, borderRadius: radius.sm, paddingHorizontal: 10, paddingVertical: 8, marginTop: spacing.sm }}>
-                        <AlertTriangle size={14} color={colors.gold} style={{ marginTop: 1 }} />
-                        <T variant="small" style={{ fontSize: 12, flex: 1, color: "#6B4A0F", fontFamily: fonts.bodyMedium }}>At this pace, about <T style={{ fontFamily: fonts.bodyBold, color: "#6B4A0F" }}>{money(_proj.forfeit_aud)}</T> looks likely to be returned. It may be worth asking your provider about care you need but aren't getting.</T>
+                      <View testID="glance-forfeit" style={{ flexDirection: "row", gap: 6, borderLeftWidth: 4, borderLeftColor: "#A5512B", backgroundColor: "#F4D6C5", borderRadius: radius.sm, paddingHorizontal: 10, paddingVertical: 8, marginTop: spacing.sm }}>
+                        <AlertTriangle size={14} color="#A5512B" style={{ marginTop: 1 }} />
+                        <T variant="small" style={{ fontSize: 12, flex: 1, color: "#6A3219", fontFamily: fonts.bodyMedium }}>At this pace, about <T style={{ fontFamily: fonts.bodyBold, color: "#6A3219" }}>{money(_proj.forfeit_aud)}</T> looks likely to be returned. It may be worth asking your provider about care you need but aren't getting.</T>
                       </View>
                     ) : null}
                     {budgetOver && (_proj.shortfall_aud || 0) > 0 ? (
-                      <View testID="glance-shortfall" style={{ flexDirection: "row", gap: 6, borderLeftWidth: 3, borderLeftColor: colors.terracotta, backgroundColor: colors.errorSoft, borderRadius: radius.sm, paddingHorizontal: 10, paddingVertical: 8, marginTop: spacing.sm }}>
-                        <AlertTriangle size={14} color={colors.terracotta} style={{ marginTop: 1 }} />
-                        <T variant="small" style={{ fontSize: 12, flex: 1, color: colors.terracotta, fontFamily: fonts.bodyMedium }}>Booked care is about <T style={{ fontFamily: fonts.bodyBold, color: colors.terracotta }}>{money(_proj.shortfall_aud)}</T> above what is left this quarter. Check prices or ask your provider to confirm your balance.</T>
+                      <View testID="glance-shortfall" style={{ flexDirection: "row", gap: 6, borderLeftWidth: 4, borderLeftColor: "#C0392B", backgroundColor: "#F7D9D4", borderRadius: radius.sm, paddingHorizontal: 10, paddingVertical: 8, marginTop: spacing.sm }}>
+                        <AlertTriangle size={14} color="#C0392B" style={{ marginTop: 1 }} />
+                        <T variant="small" style={{ fontSize: 12, flex: 1, color: "#8A2A1E", fontFamily: fonts.bodyMedium }}>Booked care is about <T style={{ fontFamily: fonts.bodyBold, color: "#8A2A1E" }}>{money(_proj.shortfall_aud)}</T> above what is left this quarter. Check prices or ask your provider to confirm your balance.</T>
                       </View>
                     ) : null}
                   </View>
