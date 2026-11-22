@@ -1,0 +1,284 @@
+{
+  "screens": {
+    "invoice-detail": {
+      "320": {
+        "overflow": 0,
+        "vw": 320,
+        "badly": [],
+        "charWrap": [
+          {
+            "tag": "DIV",
+            "txt": "For your info",
+            "w": 25,
+            "h": 51
+          }
+        ],
+        "url": "/invoice/d7d81ce4-6e04-4c55-8192-03911265f768",
+        "title": "Wayly"
+      },
+      "390": {
+        "overflow": 0,
+        "vw": 390,
+        "badly": [],
+        "charWrap": [],
+        "url": "/invoice/d7d81ce4-6e04-4c55-8192-03911265f768",
+        "title": "Wayly"
+      }
+    },
+    "statement-detail": {
+      "320": {
+        "overflow": 0,
+        "vw": 320,
+        "badly": [],
+        "charWrap": [],
+        "url": "/statement/blocked-demo-b6228253",
+        "title": "Wayly"
+      },
+      "390": {
+        "overflow": 0,
+        "vw": 390,
+        "badly": [],
+        "charWrap": [],
+        "url": "/statement/blocked-demo-b6228253",
+        "title": "Wayly"
+      }
+    },
+    "participant-detail": {
+      "320": {
+        "overflow": 0,
+        "vw": 320,
+        "badly": [],
+        "charWrap": [
+          {
+            "tag": "DIV",
+            "txt": "Spent this quarter",
+            "w": 36,
+            "h": 42
+          }
+        ],
+        "url": "/participant/0c538637-b0dd-4982-8f78-b32814c6a5eb",
+        "title": "Wayly"
+      },
+      "390": {
+        "overflow": 0,
+        "vw": 390,
+        "badly": [],
+        "charWrap": [],
+        "url": "/participant/0c538637-b0dd-4982-8f78-b32814c6a5eb",
+        "title": "Wayly"
+      }
+    },
+    "tool-statement-decoder": {
+      "320": {
+        "overflow": 0,
+        "vw": 320,
+        "badly": [],
+        "charWrap": [],
+        "url": "/tool/statement-decoder",
+        "title": "Wayly"
+      },
+      "390": {
+        "overflow": 0,
+        "vw": 390,
+        "badly": [],
+        "charWrap": [],
+        "url": "/tool/statement-decoder",
+        "title": "Wayly"
+      }
+    },
+    "tool-invoice-checker": {
+      "320": {
+        "overflow": 0,
+        "vw": 320,
+        "badly": [],
+        "charWrap": [],
+        "url": "/tool/invoice-checker",
+        "title": "Wayly"
+      },
+      "390": {
+        "overflow": 0,
+        "vw": 390,
+        "badly": [],
+        "charWrap": [],
+        "url": "/tool/invoice-checker",
+        "title": "Wayly"
+      }
+    },
+    "tool-budget-calculator": {
+      "320": {
+        "overflow": 0,
+        "vw": 320,
+        "badly": [],
+        "charWrap": [
+          {
+            "tag": "DIV",
+            "txt": "$11,010/yr",
+            "w": 32,
+            "h": 48
+          },
+          {
+            "tag": "DIV",
+            "txt": "$16,451/yr",
+            "w": 32,
+            "h": 48
+          },
+          {
+            "tag": "DIV",
+            "txt": "$22,537/yr",
+            "w": 32,
+            "h": 48
+          },
+          {
+            "tag": "DIV",
+            "txt": "$30,469/yr",
+            "w": 32,
+            "h": 48
+          },
+          {
+            "tag": "DIV",
+            "txt": "$40,730/yr",
+            "w": 32,
+            "h": 48
+          },
+          {
+            "tag": "DIV",
+            "txt": "$49,365/yr",
+            "w": 32,
+            "h": 48
+          },
+          {
+            "tag": "DIV",
+            "txt": "$59,660/yr",
+            "w": 32,
+            "h": 48
+          },
+          {
+            "tag": "DIV",
+            "txt": "$80,137/yr",
+            "w": 32,
+            "h": 48
+          }
+        ],
+        "url": "/tool/budget-calculator",
+        "title": "Wayly"
+      },
+      "390": {
+        "overflow": 0,
+        "vw": 390,
+        "badly": [],
+        "charWrap": [],
+        "url": "/tool/budget-calculator",
+        "title": "Wayly"
+      }
+    },
+    "tool-price-checker": {
+      "320": {
+        "overflow": 0,
+        "vw": 320,
+        "badly": [],
+        "charWrap": [],
+        "url": "/tool/price-checker",
+        "title": "Wayly"
+      },
+      "390": {
+        "overflow": 0,
+        "vw": 390,
+        "badly": [],
+        "charWrap": [],
+        "url": "/tool/price-checker",
+        "title": "Wayly"
+      }
+    },
+    "tool-classification-check": {
+      "320": {
+        "overflow": 0,
+        "vw": 320,
+        "badly": [],
+        "charWrap": [],
+        "url": "/tool/classification-check",
+        "title": "Wayly"
+      },
+      "390": {
+        "overflow": 0,
+        "vw": 390,
+        "badly": [],
+        "charWrap": [],
+        "url": "/tool/classification-check",
+        "title": "Wayly"
+      }
+    },
+    "tool-contribution-estimator": {
+      "320": {
+        "overflow": 0,
+        "vw": 320,
+        "badly": [],
+        "charWrap": [],
+        "url": "/tool/contribution-estimator",
+        "title": "Wayly"
+      },
+      "390": {
+        "overflow": 0,
+        "vw": 390,
+        "badly": [],
+        "charWrap": [],
+        "url": "/tool/contribution-estimator",
+        "title": "Wayly"
+      }
+    },
+    "tool-care-plan-reviewer": {
+      "320": {
+        "overflow": 0,
+        "vw": 320,
+        "badly": [],
+        "charWrap": [],
+        "url": "/tool/care-plan-reviewer",
+        "title": "Wayly"
+      },
+      "390": {
+        "overflow": 0,
+        "vw": 390,
+        "badly": [],
+        "charWrap": [],
+        "url": "/tool/care-plan-reviewer",
+        "title": "Wayly"
+      }
+    },
+    "tool-letters-and-follow-ups": {
+      "320": {
+        "overflow": 0,
+        "vw": 320,
+        "badly": [],
+        "charWrap": [],
+        "url": "/tool/letters-and-follow-ups",
+        "title": "Wayly"
+      },
+      "390": {
+        "overflow": 0,
+        "vw": 390,
+        "badly": [],
+        "charWrap": [],
+        "url": "/tool/letters-and-follow-ups",
+        "title": "Wayly"
+      }
+    },
+    "tool-short-term-pathways": {
+      "320": {
+        "overflow": 0,
+        "vw": 320,
+        "badly": [],
+        "charWrap": [],
+        "url": "/tool/short-term-pathways",
+        "title": "Wayly"
+      },
+      "390": {
+        "overflow": 0,
+        "vw": 390,
+        "badly": [],
+        "charWrap": [],
+        "url": "/tool/short-term-pathways",
+        "title": "Wayly"
+      }
+    }
+  },
+  "errors": []
+}

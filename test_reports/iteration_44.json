@@ -1,0 +1,39 @@
+{
+  "summary": "Iter 44 retest of CE fixes — ALL 5 ContributionEstimator scenarios from review request now PASS. Mount-hydrate fix and onParticipantUpdated re-run fix both verified end-to-end. Regression flows (Budget Calc supplements save + trail line, Reassessment Letter pre-fill) also re-confirmed PASS.",
+  "backend_issues": { "critical": [], "minor": [] },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {
+        "screen": "ContributionEstimator / ReassessmentLetter / BudgetCalc (dev-mode only)",
+        "issues": ["Pre-existing React hydration warning '<span> cannot be a child of <option>' from CRA dev-mode source-injection wrapper — not product code, same as iter41/42/43. No effect in production build."]
+      }
+    ]
+  },
+  "test_report_links": [],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "ContributionEstimator.jsx mount-fetch + _applyParticipantToForm now correctly hydrates pension_status (full_pension→full, part_pension→part, cshc→cshc, self_funded→self), classification (from doc.classification_level), is_grandfathered, and any saved part_pension_actual_*_pct rate values. Implementation mirrors ReassessmentLetter.jsx hydration pattern — looks clean.",
+    "onParticipantUpdated calls _applyParticipantToForm(doc, {rerun:true}) which unconditionally schedules submit() after 80ms — no longer gated on prior `result` existing. Re-run network POST observed in Playwright (POST /api/public/contribution-estimator fired ~within 1s of save).",
+    "ProfileInlinePrompts.jsx trail-line render verified in BOTH NumberPct (input-style: CE) and SupplementsEditor (checkbox-style: Budget Calc) — the row footer trail is now shared. 2.5s visibility window plenty long for assertion. data-testid='profile-prompt-{field}-trail' resolves correctly on both row variants.",
+    "Note: ContributionEstimator pension-button testids use the short form (`ce-pension-full`, `ce-pension-part`, `ce-pension-cshc`, `ce-pension-self`) — NOT the `_pension`-suffixed form mentioned in the review request. The review request's reference to 'ce-pension-part_pension' / 'ce-pension-full_pension' is incorrect; the actual values come from the PENSION array at top of file. No fix needed — just calling it out so future tests use the right testid."
+  ],
+  "updated_files": [],
+  "success_rate": { "backend": "n/a (frontend-only)", "frontend": "100% (5/5 CE checks + 2/2 regression checks)" },
+  "test_credentials": "cathy@example.com / testpass123 (primary participant PID 0c538637-b0dd-4982-8f78-b32814c6a5eb)",
+  "seed_data_creation": "Before testing: PATCH participant {pension_status:'part_pension', part_pension_actual_independence_pct:null, part_pension_actual_everyday_pct:null}. After CE inline-prompt save the value became 17.5. Before Budget Calc retest: PATCH applicable_supplements:[]. After save it became ['oxygen']. Final DB state at end of run: pension_status='part_pension', part_pension_actual_independence_pct=17.5, part_pension_actual_everyday_pct=null, applicable_supplements=['oxygen'].",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Iter 44: CE mount-hydration + auto re-run flow fully green. Pension button testids are `ce-pension-{full|part|cshc|self}` (short form), not `ce-pension-{full_pension|part_pension}`. If next iter needs to re-test, PATCH participant fields back to nulls first (see seed_data_creation above). Trail line renders for ALL row variants in ProfileInlinePrompts.jsx now.",
+  "evidence": {
+    "test1_pension_hydration": "part_selected=True, full_selected=False (visually confirmed in screenshot — Part pension button has border-primary-k bg-surface-2 classes)",
+    "test2_showRateInputs": "[data-testid='ce-rate-inputs'] container present and visible (count=1, visible=True)",
+    "test3_saved_and_trail": "After save click + 0.9s wait: saved_pill present, trail_line present with text 'Saved by Cathy · just now'",
+    "test4_auto_rerun": "Within 2.5s post-save: 1 PATCH /api/participants/{pid} + 1 POST /api/public/contribution-estimator observed (auto re-run fired exactly once as expected)",
+    "test5_form_rehydration": "[data-testid='ce-independence-rate'].input_value() == '17.5' — form input auto-hydrated by onParticipantUpdated → _applyParticipantToForm",
+    "regression_budget_calc": "Oxygen checkbox click → Save to profile click → within 0.9s: Saved pill ('Saved') + trail line ('Saved by Cathy · just now') both visible — screenshot captured",
+    "regression_reassessment_letter": "On mount: Participant name input='Dorothy Smith', Current classification select='Classification 4' (value matches '4') — pre-fill OK"
+  },
+  "rca of the issue": "Iter 43 issues all root-caused to two bugs in ContributionEstimator.jsx — (a) no mount-time fetch of participant doc so pension_status stayed at default 'full', and (b) re-run gated on prior `result`. Both fixed in iter 44 by adding useEffect mount-fetch calling _applyParticipantToForm and changing onParticipantUpdated to unconditionally trigger submit() via {rerun:true}. The 'missing trail-line on input rows' issue from iter43 was a downstream symptom — once mount-hydrate exposed the rate input AND the save path actually fired (which depends on the inline-prompt input being visible), the trail line rendered correctly. The trail-line render itself was always correct in PromptRow — the user just couldn't reach the save action because the input was hidden when pension_status='full'."
+}

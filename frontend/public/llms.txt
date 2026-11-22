@@ -1,0 +1,22 @@
+# Wayly
+
+> Aged care software built for Australian families, not providers. Wayly helps families understand and check Support at Home statements, invoices, fees and contributions in plain English.
+
+## Tools
+- [Statement Decoder](https://wayly.com.au/ai-tools/statement-decoder): check a Support at Home statement line by line
+- [Invoice Checker](https://wayly.com.au/ai-tools/invoice-checker): check an aged care contribution invoice
+- [Contribution Estimator](https://wayly.com.au/ai-tools/contribution-estimator): estimate Support at Home contributions
+- [Budget Calculator](https://wayly.com.au/ai-tools/budget-calculator): plan a Support at Home quarterly budget
+- [Classification Self-Check](https://wayly.com.au/ai-tools/classification-self-check): see which classification is likely
+
+## Levels and policy
+- [Support at Home levels](https://wayly.com.au/support-at-home-levels): all 8 classification budgets (from 01/10/2026)
+- [CHSP extended to 2029](https://wayly.com.au/chsp/extension-2029): CHSP stays standalone to 30 June 2029
+
+## Templates
+- [Aged care letter templates and checklists](https://wayly.com.au/resources/templates): 20 copy-ready letters and checklists
+
+## Articles
+- [How to complain about aged care](https://wayly.com.au/resources/articles/how-to-complain-about-aged-care-commission)
+- [The AT-HM scheme](https://wayly.com.au/resources/articles/at-hm-scheme-assistive-technology-home-modifications)
+- [All articles](https://wayly.com.au/resources/articles)

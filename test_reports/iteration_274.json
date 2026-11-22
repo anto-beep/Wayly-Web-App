@@ -1,0 +1,68 @@
+{
+  "summary": "Iter 274 — Verified the Support Plan Reviewer async job fix on WEB. NO 502s observed. Submit returns instantly (<0.2s to progress UI), background job completes in ~48s producing 11 findings, single consolidated Draft-a-letter button navigates to letter editor. Backend 6/6 pytest pass.",
+  "platforms_tested": ["web"],
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "web": {
+      "ui_bugs": [],
+      "integration_issues": [],
+      "design_issues": []
+    },
+    "mobile": {"ui_bugs": [], "integration_issues": [], "design_issues": [], "react_native_issues": []}
+  },
+  "parity_issues": [],
+  "verification_details": {
+    "backend_pytest": {
+      "file": "/app/backend/tests/test_iter274_cpr_async.py",
+      "junit": "/app/test_reports/pytest/iter274_cpr_async.xml",
+      "results": "6 passed in 51.88s",
+      "cases": [
+        "test_review_async_submit_returns_instantly — POST /api/public/care-plans/review-async returned {job_id, status:'processing'} in <1s",
+        "test_review_async_poll_to_done_with_findings — status transitioned processing→done, result.findings had ≥1 finding (typical: 11)",
+        "test_review_files_async_submit_returns_job_and_polls_done — multipart submit instant + polled to done + findings ≥1",
+        "test_unknown_job_id_returns_404 — GET review-jobs/{bad-id} returns 404 (not 5xx)",
+        "test_legacy_sync_endpoints_registered — OPTIONS /public/care-plans/review and /review-files still routed (not 404/405)",
+        "test_letter_from_findings_returns_editor_path — POST /api/care-plans/letter-from-findings returns editor_path"
+      ]
+    },
+    "frontend_flow": {
+      "url": "/ai-tools/care-plan-reviewer",
+      "login": "cathy@example.com / testpass123 (family plan) — paywall passed",
+      "submit_click_to_progress_ui_ms": 100,
+      "cp_progress_testid": "PRESENT immediately (data-testid='cp-progress' visible in 0.1s)",
+      "cp_finding_0_testid": "PRESENT after 48.1s of polling; 11 findings rendered as FlagCards (Care Management Fee Above 10% Cap, Goals Not Written in Participant's Own Words, No Social Support Listed, Combined Administrative Fees Use 25% of Budget, Care Management Fee Exceeds Legislative Cap, Quarterly budget vs classification, etc.)",
+      "cp_draft_letter_all_testid": "PRESENT — single 'Draft a letter' button at the top of Findings list",
+      "cp_draft_letter_0_testid": "ABSENT (correctly not rendered per-finding)",
+      "letter_navigation": "Clicking cp-draft-letter-all navigated to /tools/letters-and-follow-ups/ebe9caf1-7e35-4453-bbd1-4bda61f2a83f (editor_path from POST /api/care-plans/letter-from-findings)",
+      "error_banners": "NONE",
+      "network_502s": "NONE (0 502 responses across the whole session)",
+      "js_page_errors": "0 runtime page errors from application code (see minor note below)"
+    }
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_iter274_cpr_async.py",
+    "/app/test_reports/pytest/iter274_cpr_async.xml",
+    "/app/test_reports/iter274_cpr_result.jpeg",
+    "/app/test_reports/iter274_letter_editor.jpeg"
+  ],
+  "action_items": [
+    "OPTIONAL cosmetic: React dev-mode hydration warning ‘<span> cannot be a child of <option>’ appears on the Care Plan Reviewer page. Root cause is the preview-env source-tagging wrapper injecting a <span> inside each <option> (the option children are wrapped by the ve-dynamic instrumentation), NOT the CarePlanReviewer.jsx source itself. It’s a harmless dev-only warning and does not affect functionality or the fix; noted for awareness only."
+  ],
+  "critical_code_review_comments": [
+    "Async job pattern is clean: submit endpoint enqueues a coroutine via _create_review_job and returns {job_id, status} instantly; GET endpoint reads from db.cpr_review_jobs; unknown id → 404 (correctly raised via HTTPException).",
+    "Upload guard fires BEFORE analysis on files-async path — good, but a text that reads more like a statement will finish with an empty findings[] and only upload_guard populated. Frontend should already handle this (renders no cards) but the shape is asymmetric. Not blocking.",
+    "Legacy /public/care-plans/review and /review-files are still registered (kept for compat) — recommend adding a deprecation note in the OpenAPI description so callers move to the async variants."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_iter274_cpr_async.py",
+    "/app/test_reports/pytest/iter274_cpr_async.xml",
+    "/app/test_reports/iteration_274.json"
+  ],
+  "success_rate": {"backend": "100% (6/6)", "frontend": "100% (all acceptance criteria verified: instant submit, progress UI, findings render, consolidated Draft-a-letter navigates to editor, no 502)"},
+  "test_credentials": "cathy@example.com / testpass123 (Family plan) — passes Support Plan Reviewer paywall",
+  "seed_data_creation": "None. Created ephemeral review jobs in db.cpr_review_jobs during tests.",
+  "retest_needed": false,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "The async CPR fix is fully verified end-to-end on web. Submit is non-blocking (<200ms UI feedback), poll transitions to 'done' with findings within ~48-60s using the sample plan text from the task. Unknown job ids return 404. Legacy sync endpoints still routed. Consolidated cp-draft-letter-all button (per-finding cp-draft-letter-0 does NOT exist) navigates to /tools/letters-and-follow-ups/{id} via POST /api/care-plans/letter-from-findings. Zero 502s recorded. Backend test file at /app/backend/tests/test_iter274_cpr_async.py can be re-run in future iterations as regression coverage.",
+  "rca of the issue": "Original 502: /public/care-plans/review was a single Claude call taking ~40-60s exceeding the Cloudflare/preview gateway read-timeout, which returned 502 and left stuck coroutines that back-pressured the whole app (login failures during spikes). Fix: split into (a) POST /public/care-plans/review-async — enqueues background task via _create_review_job, returns {job_id,status:'processing'} in <1s; (b) GET /public/care-plans/review-jobs/{job_id} — cheap Mongo lookup, returns 'processing' until worker completes, then 'done' with result.findings. Frontend polls this endpoint on a short interval and renders the FlagCards + single 'Draft a letter' CTA on completion. LLM_CALL_TIMEOUT_SEC=58 / LLM_HTTP_TIMEOUT_SEC=54 in backend/.env caps the worker so it can’t hang forever."
+}

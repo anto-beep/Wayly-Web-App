@@ -1,0 +1,53 @@
+{
+  "summary": "Verified both review items on WEB and MOBILE for cathy@example.com (Family, participant Dorothy 0c538637-b0dd-4982-8f78-b32814c6a5eb). (1) BUG FIX — Contribution Position lifetime cap now reads $140,652.80 (rendered as $140,653 rounded, with the exact $140,652.80 string visible on the CE-2 result page) on BOTH surfaces; the stale $137,917 does NOT appear anywhere. (2) CE-2 ESTIMATOR UI ADDITIONS — on both web and mobile the 'Your Money' step reveals the ce-means-test-hint helper block when 'Part Age Pension' is selected (quotes $5,876 income floor, $105,048 income limit, $333,000 assets-free area, and 'Thresholds as at 20/09/2026'), the ce-taper-example collapsible is present with correct summary text, and after submitting the wizard a ce-rates-asat badge reading 'Contribution rates as at 20/09/2026' renders. No console errors, no layout breaks. Parity between web and mobile is clean.",
+  "platforms_tested": ["web", "mobile"],
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "web": {
+      "ui_bugs": [],
+      "integration_issues": [],
+      "design_issues": [
+        {"screen": "/ai-tools/contribution-estimator - Step 2 Your Money (ce-means-test-hint)", "issues": ["Copy nit: 'For a single person who own their home' — should be 'who owns their home' (same text present on mobile hint). Grammar only; functionally correct."]}
+      ]
+    },
+    "mobile": {
+      "ui_bugs": [],
+      "integration_issues": [],
+      "design_issues": [
+        {"screen": "/tool/contribution-estimator - Step 2 Your Money (ce-means-test-hint)", "issues": ["Same copy nit as web: 'For a single person who own their home' should be 'who owns their home'."]}
+      ],
+      "react_native_issues": []
+    }
+  },
+  "parity_issues": [],
+  "test_report_links": [
+    "/app/test_reports/iter381_web_cp.png",
+    "/app/test_reports/iter381_web_ce_step2.png",
+    "/app/test_reports/iter381_web_ce_result.png",
+    "/app/test_reports/iter381_mob_cp.png",
+    "/app/test_reports/iter381_mob_ce_step2.png",
+    "/app/test_reports/iter381_mob_ce_result.png"
+  ],
+  "action_items": [
+    "OPTIONAL copy polish (not a blocker): change 'For a single person who own their home' → 'who owns their home' in both /app/frontend/src/pages/tools/ContributionEstimator.jsx (ce-means-test-hint block, ~line 728) and /app/mobile/src/components/tools/ContributionEstimator.tsx (ce-means-test-hint block, ~line 596)."
+  ],
+  "critical_code_review_comments": [
+    "routes/ce3.py now sources the lifetime cap live from the program_reference registry — matches budget.py pattern. Verified cap renders as $140,652.80 on CE-2 result page and $140,653 (rounded) on the Contribution Position card.",
+    "Web ce-means-test-hint uses the 'For a single person who own their home' phrasing — minor grammar issue mirrored on mobile. Semantic parity with the brief is met (income floor, income limit, assets-free area, and the 'as at 20/09/2026' effective date are all quoted).",
+    "ce-taper-example is a native <details> on web and a Pressable/collapsible on mobile — both expose testID='ce-taper-example' and render the 'See a worked example: how the taper works' summary consistently."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "N/A (skipped per request)", "frontend": "100% (2/2 web flows, 2/2 mobile flows)"},
+  "test_credentials": "cathy@example.com / testpass123 (Family). Participant Dorothy id = 0c538637-b0dd-4982-8f78-b32814c6a5eb.",
+  "seed_data_creation": "None.",
+  "retest_needed": false,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "Both bug fix and CE-2 UI additions verified green on web and mobile in iter 381. Evidence screenshots saved under /app/test_reports/iter381_*.png. Only outstanding nit is a grammar copy issue ('who own' → 'who owns') shared across both surfaces; main agent can patch in a single pass if desired.",
+  "evidence": {
+    "web_contribution_position": {"url": "/app/participants/0c538637-b0dd-4982-8f78-b32814c6a5eb/contribution-position", "headline": "You've paid $1,055.78 toward your $140,653 lifetime cap.", "has_140652_or_140653": true, "has_stale_137917": false},
+    "mobile_contribution_position": {"url": "/contribution-position", "headline": "You have paid $1,055.78 toward your $140,653 lifetime cap.", "has_140652_or_140653": true, "has_stale_137917": false},
+    "web_ce2": {"ce-means-test-hint": true, "contains_20_09_2026": true, "contains_assets_free_area": true, "contains_income_values": true, "ce-taper-example": true, "ce-submit": true, "ce-rates-asat": "Contribution rates as at 20/09/2026", "result_page_shows_cap_exact": "$140,652.80"},
+    "mobile_ce2": {"ce-means-test-hint": true, "contains_20_09_2026": true, "contains_assets_free_area": true, "contains_income_values": true, "ce-taper-example": true, "ce-submit": true, "ce-rates-asat": "Contribution rates as at 20/09/2026"}
+  },
+  "rca of the issue": "Prior bug: routes/ce3.py hardcoded the stale $137,917.01 standard lifetime cap. Fix (already applied by main agent before this test run): route now reads cap live from program_reference registry (same source budget.py uses). Verified end-to-end: GET /api/ce3/participants/{pid}/lifetime-cap returns total_cap=140652.8 and both the web and mobile Contribution Position pages render it correctly ($140,653 rounded on the card; full $140,652.80 on the CE-2 result page). No regression on cap_variant ('standard') or total_cap_effective_date ('2026-09-20')."
+}

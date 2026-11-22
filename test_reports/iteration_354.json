@@ -1,0 +1,64 @@
+{
+  "summary": "Dark-mode readability sweep across 18 authenticated tool + guided-journey routes as cathy@example.com with html.theme-dark + .app-shell active. Verified via DOM computed-style contrast analyzer (white/near-white text on light computed background → low-contrast; button text-vs-bg delta <25 → invisible). 15/18 routes are CLEAN. 3 routes still have unreadable text/invisible controls: /ai-tools/letters-and-follow-ups (1), /app/athm/projects (4), /support (2). Light-mode spot check on /ai-tools/statement-decoder, /app/chsp/tools, /support confirms html.theme-dark class is gone and body background is the expected light rgb(234,237,240) — light mode is untouched. Screenshots + full findings JSON in /app/test_reports/iter354_dark_mode/.",
+  "platforms_tested": ["web"],
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "web": {
+      "ui_bugs": [
+        {
+          "component": "LettersFollowUps — 'Notify Of A Change' group toggle",
+          "issue": "Button text (near-black rgb(11,20,22)) sits on dark card rgb(6,32,31) → contrast delta ~7, text is invisible. Text color not covered by the .app-shell text-token whitelist and background is dark, so global whitening did not fire. Likely a hardcoded #0B1416 / #14181A text class or inline style. Occurs on /ai-tools/letters-and-follow-ups in the collapsed 'Notify of a change' group.",
+          "selector": "button[data-testid='lf1-group-toggle-notify']",
+          "priority": "HIGH"
+        },
+        {
+          "component": "AthmProjects — project cards",
+          "issue": "Each project card button (bg #EAF3F3 or #EEF3EE) renders WHITE text on that light cream/mint tile → totally unreadable. The card background is applied via INLINE style (or a dynamic class that Tailwind isn't compiling), so the .app-shell class-based bg-white/tint override (rule 1 in the CSS layer) does NOT match, but the global text-whitening rule still forces the text white. Affects every card on /app/athm/projects (athm-project-card-*).",
+          "selector": "button[data-testid^='athm-project-card-']",
+          "priority": "HIGH"
+        },
+        {
+          "component": "MySupport — ticket status chips (Received, Closed)",
+          "issue": "Status pills paint their own SOLID light backgrounds (Received rgb(244,241,234) cream, Closed rgb(243,244,246) grey), but the chip TEXT is being forced white by the global .theme-dark whitening — result: white-on-cream / white-on-light-grey. The chip has bg-* on itself so the ':not([class*=\"bg-\"])' safety guard doesn't help because the text node inherits color from an ancestor rule OR the chip's own text-* class is one of the dark-accent tokens that gets remapped. Occurs on /support for every ticket row.",
+          "selector": "span[data-testid='ticket-status-received'], span[data-testid='ticket-status-closed']",
+          "priority": "HIGH"
+        }
+      ],
+      "integration_issues": [],
+      "design_issues": [
+        {"screen": "/app/athm/projects", "issues": ["All project cards unreadable in dark mode — cards keep light cream/mint fill from inline style; make cards theme-aware or add their inline-bg tokens to the .app-shell override list."]},
+        {"screen": "/support", "issues": ["Every ticket status pill is unreadable (white-on-light). Status chip should keep its intended dark-ink text OR the pill background should become dark in dark mode."]},
+        {"screen": "/ai-tools/letters-and-follow-ups", "issues": ["'Notify Of A Change' section header button uses near-black ink token that isn't in the dark-mode whitelist, so it stays dark on the dark card. Add the token OR replace with a theme-aware class."]}
+      ]
+    }
+  },
+  "parity_issues": [],
+  "test_report_links": [
+    "/app/test_reports/iter354_dark_mode/findings_dark.json",
+    "/app/test_reports/iter354_dark_mode/findings_light.json",
+    "/app/test_reports/iter354_dark_mode/_ai-tools_letters-and-follow-ups.jpeg",
+    "/app/test_reports/iter354_dark_mode/_app_athm_projects.jpeg",
+    "/app/test_reports/iter354_dark_mode/_support.jpeg",
+    "/app/test_reports/iter354_dark_mode/light__ai-tools_statement-decoder.jpeg",
+    "/app/test_reports/iter354_dark_mode/light__app_chsp_tools.jpeg",
+    "/app/test_reports/iter354_dark_mode/light__support.jpeg"
+  ],
+  "action_items": [
+    "Fix AthmProjects card backgrounds: convert /app/frontend/src/pages/AthmProjects.jsx card fills to a theme-aware class OR extend the CSS-layer override so the card's inline bg (#EAF3F3, #EEF3EE) becomes var(--dm-surface) in dark mode. Since these are inline styles, the accent-border-token targeting trick used elsewhere is the right pattern.",
+    "Fix MySupport ticket status chips: in /app/frontend/src/pages/MySupport.jsx (or ticket-list component) make the status pill text color explicit (e.g. text-primary-k) OR give the chips a dark-mode background variant so white text becomes legible. Alternatively, tighten the CSS layer to NOT whiten text of elements whose OWN computed background is light (already tried via ':not([class*=\"bg-\"])' but chips still hit).",
+    "Fix LettersFollowUps 'Notify Of A Change' group-toggle: replace the hardcoded near-black text token on button[data-testid='lf1-group-toggle-notify'] with the theme-aware token, OR add its exact hex (looks like #0B1416 / #14181A) to the .app-shell text-* override list in /app/frontend/src/index.css.",
+    "Once patched, re-run this iter's routes to confirm 0 findings across all 18 routes."
+  ],
+  "critical_code_review_comments": [
+    "The CSS override strategy in /app/frontend/src/index.css (System-wide dark-mode adaptation block) is class-scoped via [class~=\"...\"] whitelists. Any component that sets background via INLINE style with a hex NOT paired with one of the whitelisted accent-border tokens will slip through — which is exactly what happens on ATHM project cards. Consider a follow-up: sweep the codebase for `style={{ backgroundColor: '#E' | '#F' }}` inside pages under /app/frontend/src/pages/**/*.jsx and either replace with a themed class or ensure the sibling accent-border token is present.",
+    "Global 'whiten text under .app-shell' rule fights local pill/chip colors. The ':not([class*=\"bg-\"])' guard is on the sect-teal/clay/sage rule but not evenly applied — MySupport status chips prove that. Recommend adding chip-safe carve-outs (e.g. [data-testid^=\"ticket-status-\"]) OR having chips ship explicit text-* classes that survive dark mode."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "n/a (skipped per request)", "frontend": "83% (15/18 routes clean in dark mode; 3 routes have unreadable elements)"},
+  "test_credentials": "cathy@example.com / testpass123 (Family, Dorothy household). Enabled dark via localStorage.setItem('wayly:app:appearance','dark') + reload; theme-dark class confirmed on <html>.",
+  "seed_data_creation": "none",
+  "retest_needed": true,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Analyzer script + full route sweep lives in-memory; re-run by pointing playwright at each route with html.theme-dark set and using the detect_js from this iter (findings JSON has the exact selectors). Clean routes were: statement-decoder, invoice-checker, budget-calculator, classification-self-check, contribution-estimator, care-plan-reviewer, provider-price-checker, reassessment-letter, family-coordinator, chsp/tools, short-term-pathways, csc/stream-mix-and-iat, carer/handover-pack, carer/self-assessment, amendments — DO NOT need re-verification unless CSS layer changes. Only re-check the 3 broken routes after main-agent patches.",
+  "rca of the issue": "The .app-shell dark-mode CSS layer uses class-attribute selectors ([class~='bg-[#HEX]'] and [class~='border-[#HEX]']) to remap light surfaces. It cannot see INLINE background-color styles unless the sibling accent-border-token class is also present. AthmProjects card fills are inline-styled without such a paired token, so the fill stays light while the global text-whitening rule flips the text white → unreadable. MySupport chips carry their own bg-* and text-* classes, but the text-* token happens to be one of the accent tokens that the layer remaps to white ink, and chip bg is a solid light cream/grey that never gets darkened. LettersFollowUps group toggle uses a near-black text token that is not in the whitelisted set, so it stays dark on a dark card — the opposite problem (dark-on-dark)."
+}

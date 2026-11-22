@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="1" skipped="0" tests="14" time="23.716" timestamp="2026-08-01T06:44:02.674392+00:00" hostname="agent-env-9d7dc41f-aa05-432b-8632-1634219cad4f"><testcase classname="tests.test_qp1" name="test_qp1_requires_auth" time="10.008"><failure message="requests.exceptions.ReadTimeout: HTTPConnectionPool(host='localhost', port=8001): Read timed out. (read timeout=10)">/root/.venv/lib/python3.11/site-packages/urllib3/connectionpool.py:534: in _make_request
+    response = conn.getresponse()
+               ^^^^^^^^^^^^^^^^^^
+/root/.venv/lib/python3.11/site-packages/urllib3/connection.py:571: in getresponse
+    httplib_response = super().getresponse()
+                       ^^^^^^^^^^^^^^^^^^^^^
+/usr/local/lib/python3.11/http/client.py:1415: in getresponse
+    response.begin()
+/usr/local/lib/python3.11/http/client.py:330: in begin
+    version, status, reason = self._read_status()
+                              ^^^^^^^^^^^^^^^^^^^
+/usr/local/lib/python3.11/http/client.py:291: in _read_status
+    line = str(self.fp.readline(_MAXLINE + 1), "iso-8859-1")
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/local/lib/python3.11/socket.py:718: in readinto
+    return self._sock.recv_into(b)
+           ^^^^^^^^^^^^^^^^^^^^^^^
+E   TimeoutError: timed out
+
+The above exception was the direct cause of the following exception:
+/root/.venv/lib/python3.11/site-packages/requests/adapters.py:645: in send
+    resp = conn.urlopen(
+/root/.venv/lib/python3.11/site-packages/urllib3/connectionpool.py:842: in urlopen
+    retries = retries.increment(
+/root/.venv/lib/python3.11/site-packages/urllib3/util/retry.py:498: in increment
+    raise reraise(type(error), error, _stacktrace)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/root/.venv/lib/python3.11/site-packages/urllib3/util/util.py:39: in reraise
+    raise value
+/root/.venv/lib/python3.11/site-packages/urllib3/connectionpool.py:788: in urlopen
+    response = self._make_request(
+/root/.venv/lib/python3.11/site-packages/urllib3/connectionpool.py:536: in _make_request
+    self._raise_timeout(err=e, url=url, timeout_value=read_timeout)
+/root/.venv/lib/python3.11/site-packages/urllib3/connectionpool.py:367: in _raise_timeout
+    raise ReadTimeoutError(
+E   urllib3.exceptions.ReadTimeoutError: HTTPConnectionPool(host='localhost', port=8001): Read timed out. (read timeout=10)
+
+During handling of the above exception, another exception occurred:
+tests/test_qp1.py:64: in test_qp1_requires_auth
+    r = requests.get(f"{API}/qp1/schedules?participant_id=x", timeout=10)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/root/.venv/lib/python3.11/site-packages/requests/api.py:73: in get
+    return request("get", url, params=params, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/root/.venv/lib/python3.11/site-packages/requests/api.py:59: in request
+    return session.request(method=method, url=url, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/root/.venv/lib/python3.11/site-packages/requests/sessions.py:592: in request
+    resp = self.send(prep, **send_kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/root/.venv/lib/python3.11/site-packages/requests/sessions.py:706: in send
+    r = adapter.send(request, **kwargs)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/root/.venv/lib/python3.11/site-packages/requests/adapters.py:691: in send
+    raise ReadTimeout(e, request=request)
+E   requests.exceptions.ReadTimeout: HTTPConnectionPool(host='localhost', port=8001): Read timed out. (read timeout=10)</failure></testcase><testcase classname="tests.test_qp1" name="test_create_schedule_materialises_ledger" time="13.434" /><testcase classname="tests.test_qp1" name="test_list_schedules" time="0.004" /><testcase classname="tests.test_qp1" name="test_update_schedule_recalculates_amount" time="0.008" /><testcase classname="tests.test_qp1" name="test_ledger_lists_entries" time="0.005" /><testcase classname="tests.test_qp1" name="test_confirm_entry" time="0.011" /><testcase classname="tests.test_qp1" name="test_missed_entry" time="0.006" /><testcase classname="tests.test_qp1" name="test_changed_entry" time="0.006" /><testcase classname="tests.test_qp1" name="test_ad_hoc_entry" time="0.005" /><testcase classname="tests.test_qp1" name="test_auto_assume" time="0.004" /><testcase classname="tests.test_qp1" name="test_pacing_computes_snapshot" time="0.006" /><testcase classname="tests.test_qp1" name="test_pacing_envelope_override" time="0.004" /><testcase classname="tests.test_qp1" name="test_ownership_ledger_mutation_forbidden" time="0.007" /><testcase classname="tests.test_qp1" name="test_delete_schedule_soft_ends" time="0.009" /></testsuite></testsuites>

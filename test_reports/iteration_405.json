@@ -1,0 +1,30 @@
+{
+  "summary": "Verified Wayly editorial refresh — Batch 4 (4 rewritten articles) + Batch 3 Contribution Estimator correction + 11 legacy detail hero images. All structured-article rewrites render correctly with the new H1s, Title-Cased headings, correct pull-quotes ($17.50, $8, $5,645.23), 'Your Next Step' primary CTAs with correct hrefs, resolving Sources, and NO stepflow / key-takeaways / FAQ residue. Mid-article section photos (switch-provider arrange-the-handover, reassessment what-to-take-to-the-call) load with naturalWidth > 0. FigureStats '60 days' / '70 days' present in switch-provider. All 11 legacy CMS + static articles now open with a hero image ([data-testid=article-hero-image]) that actually loads (naturalWidth 867–1880). Regression: /resources/articles index still shows 42 cards in a 4-col grid (grid-cols-1 sm:grid-cols-2 lg:grid-cols-4, 445px×4), result count 'Newest first' sort control present, category filters present, search filters correctly ('Statement' → 12 results, clears back to 42), 0 broken card images after lazy-load, legacy redirect /home-care-package-vs-support-at-home → /what-happened-to-my-home-care-package works, Related cards on switch-provider all resolve to live articles (price-checker, sah-explained, reassessment).",
+  "platforms_tested": ["web"],
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "web": {
+      "ui_bugs": [
+        {"component": "StructuredArticle H1 title-case", "issue": "Two Batch 4 H1s render connector words lowercase instead of Title Case per spec. (a) 'Will I Pay More Under Support at Home than My Home Care Package?' — spec says 'Than'. (b) 'How to Switch Your Support at Home Provider (without Losing Your Unspent Funds)' — spec says '(Without ...'. Likely a CSS-driven text-transform or a title-case helper that treats 'than'/'without' as stop-words. Content is correct; this is cosmetic title-case only.", "selector": "h1", "priority": "LOW"}
+      ],
+      "integration_issues": [],
+      "design_issues": [
+        {"screen": "/resources/articles index (first paint)", "issues": ["Card images use native lazy-loading with no explicit width/height / aspect-ratio reservation — on first paint before scroll, some below-the-fold card <img> elements report naturalWidth=0 (expected for lazy). Once scrolled they all resolve. No functional bug, but may cause CLS. Consider adding explicit aspect-ratio or width/height attrs to card <img>."]}
+      ]
+    }
+  },
+  "parity_issues": [],
+  "test_report_links": [],
+  "action_items": [
+    "LOW: Fix title-case for connector words 'Than' and 'Without' in the two Batch 4 H1s so headings render exactly as per spec. Check the title-case helper / stop-word list applied to H1s in the StructuredArticle renderer."
+  ],
+  "critical_code_review_comments": [
+    "Index-card lazy-loading has no reserved aspect ratio — this is why the first-paint snapshot shows naturalWidth=0 for off-screen cards. Not a blocker, but if SEO/CLS matters, add width/height or aspect-ratio to the card <img>."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "N/A (not tested)", "frontend": "100% functional, 1 low-severity title-case nit"},
+  "seed_data_creation": "none",
+  "retest_needed": false,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "All Batch 4 + Batch 3 correction + 11 legacy hero asks from iteration_405 request verified pass. Only outstanding nit: 'than'/'without' render lowercase in two Batch 4 H1s. If main agent fixes the title-case helper stop-word list, re-check only those two H1s: /resources/articles/will-i-pay-more-under-support-at-home-than-home-care-package and /resources/articles/how-to-switch-support-at-home-provider."
+}

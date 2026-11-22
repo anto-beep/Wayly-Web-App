@@ -1,0 +1,54 @@
+{
+  "summary": "iter337 verification of Title Case names + Required-marker consistency + CHSP invoice Contribution Prefill + AT/HM one-quote nudge + web redesigns (Contribution Estimator, CHSP transition walkthrough moved above WS1, Provider Switch) + Letters Title Case on both surfaces. BACKEND (4/4 pytest passing in /app/backend/tests/test_iter337_names_prefill.py): (1) GET /api/participants returns first_name/last_name already Title-Cased for existing records (Dorothy Smith etc.); (2) POST /api/participants with first_name='peter', last_name='smith' stores + returns 'Peter'/'Smith' and GET /participants/{id} confirms persistence; (3) 'McDonald' preserved on create (internal caps intact) and PATCH with 'McDonald' preserved as 'McDonald' (patch with 'mcdonald' -> 'Mcdonald' per spec: only first letter forced upper, internal preserved); (4) POST /api/chsp1/fee-check/parse-invoice on a text invoice with NO per-unit rate returns rate_from_saved=true, agreed_rate filled from saved chsp_service_entries and next_steps[0] mentions 'saved provider rate of $... per unit'. WEB /app/... (cathy@example.com): participant switcher header shows 'Dorothy Smith' Title-Cased; /ai-tools/contribution-estimator renders ce-section-situation + ce-section-money + ce-section-mix; /ai-tools/letters-and-follow-ups shows Title-cased family titles ('Ask For A Change', 'Dispute Or Disagree'); /app/athm/projects New Project modal renders 2 required-badge chips (no bare '*'); /app/chsp/tools renders 4 required-badge chips, chsp-fit-self-check y=706 is ABOVE chsp-ws1-fee-check y=1462, toggling chsp-needs-change reveals chsp-transition-walkthrough with tw-step-0/1/2 + tw-next + 8 tw-reason-* option tiles (tw-submit only mounts at final step — expected); /app/provider-switch is a step-by-step wizard rendering exactly one of switch-step1..5 at a time with its own tone (teal/clay/teal/terracotta/sage) — confirmed step2 rendered with clay tone. MOBILE /... (cathy): /chsp-tools shows 4 'Required' text occurrences on inputs, chsp-ws1-fee-check + chsp-ws1-upload + chsp-ws1-submit + chsp-ws1-past all present; /athm shows 3 project cards; /tool/letters-and-follow-ups renders Title-cased family titles ('Ask For A Change', 'Dispute Or Disagree'). mod-one-quote-nudge testID exists in both /app/frontend/src/pages/AthmProjects.jsx and /app/mobile/app/athm-project/[id].tsx conditionally on quotes.length===1 (not rendered when a project has zero modifications, which is the default fixture state). All 13 review-request items PASS.",
+  "platforms_tested": ["web", "mobile"],
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "web": {
+      "ui_bugs": [],
+      "integration_issues": [],
+      "design_issues": []
+    },
+    "mobile": {
+      "ui_bugs": [],
+      "integration_issues": [],
+      "design_issues": [],
+      "react_native_issues": []
+    }
+  },
+  "parity_issues": [
+    {"flow": "Required-field marker", "platform": "both", "issue": "Web uses a small clay 'Required' chip via [data-testid=required-badge]; mobile uses plain inline 'Required' text next to labels. Both consistently use the WORD 'Required' (no bare asterisks) which satisfies the review-request rule ('web uses the shared RequiredBadge clay chip; mobile shows Required text'). Recorded as a documented intentional parity, not a defect."},
+    {"flow": "Letters route", "platform": "mobile", "issue": "Mobile /letters is the mailbox (empty state), NOT the family-cards template picker. The family cards live at /tool/letters-and-follow-ups (correct route). Web equivalent /ai-tools/letters-and-follow-ups is the same picker. Documented so the next agent does not chase a non-issue."}
+  ],
+  "test_report_links": [
+    "/app/backend/tests/test_iter337_names_prefill.py",
+    "/app/test_reports/pytest/iter337.xml",
+    "/app/test_reports/iter337_web_ce.jpeg",
+    "/app/test_reports/iter337_web_letters.jpeg",
+    "/app/test_reports/iter337_web_athm_modal.jpeg",
+    "/app/test_reports/iter337_web_chsp.jpeg",
+    "/app/test_reports/iter337_web_switch.jpeg",
+    "/app/test_reports/iter337_mob_home.jpeg",
+    "/app/test_reports/iter337_mob_chsp2.jpeg",
+    "/app/test_reports/iter337_mob_athm2.jpeg",
+    "/app/test_reports/iter337_mob_letters_ok.jpeg",
+    "/app/test_reports/iter337_mob_athm_project.jpeg"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "/app/backend/lib/text_utils.py title_case_name() correctly implements the spec edge rule — only the first letter of each whitespace/hyphen-split token is forced upper (p[:1].upper()+p[1:]) so existing internal caps in 'McDonald' are preserved. Clean and unit-testable.",
+    "/app/backend/participant_profile.py _decorate() applies title_case_name to first_name/last_name/preferred_name/name on every read (GET /participants, GET /participants/{id}) and both POST and PATCH re-title-case the incoming payload before Mongo write. Belt-and-braces — future writes from other routes also get corrected on read.",
+    "/app/backend/routes/chsp1.py /fee-check/parse-invoice contribution-prefill logic: matches saved chsp_service_entries by service_type first, falls back to any active entry when provider_name is present. Sets rate_from_saved=true + rewrites next_steps[0] to mention the saved rate. Defensive against LLM omissions.",
+    "/app/frontend/src/pages/extended/ProviderSwitch.jsx uses one <StepShell> per step (switch-step1..5) with distinct tones (teal/clay/teal/terracotta/sage) — a step-by-step wizard, ONE step at a time, not a scrolled list. Screenshots confirm distinct coloured backgrounds. This is intended UX.",
+    "mod-one-quote-nudge is a data-driven banner (renders only when a modification's quotes.length === 1). Verified in source at /app/frontend/src/pages/AthmProjects.jsx:187 (web) and /app/mobile/app/athm-project/[id].tsx:297 (mobile). Cannot exercise without a seeded modification+single-quote fixture; suggest main agent add a seed if end-to-end UI verification is required in a future iteration."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_iter337_names_prefill.py"
+  ],
+  "success_rate": {"backend": "100% (4/4 pytest — title-case list, title-case create+GET, McDonald preserve, contribution-prefill)", "frontend": "web 100% (all 8 web items verified), mobile 100% (all 3 mobile items verified; nudge validated via source since no seeded 1-quote fixture)"},
+  "test_credentials": "cathy@example.com / testpass123 (used on both web + mobile; CHSP profile + Dorothy participant pre-existed)",
+  "seed_data_creation": "Created 2 TEST_ participants during backend test (Peter Smith + Angus McDonald) and one TEST_ chsp_service_entry (Domestic Assistance @ $66/hr). Did not clean up participants — they will show as 'TEST_' in cathy's list; main agent can prune via mongo if needed.",
+  "retest_needed": false,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "1. mod-one-quote-nudge banner requires a project with a modification that has exactly 1 quote. Cathy's current AT/HM projects have 0 modifications, so UI cannot exercise the nudge without a seed. 2. Provider Switch is a wizard, only 1 of switch-step1..5 renders at a time (per selected step). Look for [data-testid=switch-stepper] to navigate — clicking switch-step-N advances. 3. Mobile Letters family-cards picker is at /tool/letters-and-follow-ups (NOT /letters — that is the mailbox). 4. CHSP invoice parse-invoice with plain text 'Domestic Assistance' still returns service_type='domestic_assistance' (snake_case) from Claude Haiku — the contribution-prefill match works because saved entries use the same snake_case service_type. 5. Backend name Title Case now happens both on write (POST/PATCH) AND on read (_decorate) — so retro-fixing existing participants happens automatically on next GET.",
+  "rca of the issue": "N/A — no bugs found. Backend + web + mobile all pass on the 13 review items. Two parity notes are documented intentional design choices (Required marker style differs by surface per spec; mobile letters route split between mailbox and template-picker)."
+}

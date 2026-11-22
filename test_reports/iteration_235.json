@@ -1,0 +1,49 @@
+{
+  "summary": "CHSP-TOOLS-1 WS-1 + WS-3 tested end-to-end. Backend: 7/7 golden fixtures + 9/9 API tests pass (config flag, FIX-1..5 preview, service_continuity & hardship letters). Web: /app/chsp/tools loads for cathy, WS-1 form runs FIX-2 (Material verdict, $10.00/$6.00), FIX-4 (degraded), FIX-5 (staleness 181 days) correctly; Access & Hardship card shows with emphasised hardship button + hardship hint on material; both letter buttons navigate to /tools/letters-and-follow-ups/{id}. Mobile: chsp-tools screen and PageIntro render on Expo web preview but mobile-side auth injection via localStorage failed (uses storage.secureSet with different key wrapping), so authenticated flows could not be automated in the preview browser. Backend contract for mobile parity is verified via the shared API tests; native mobile parity should be self-tested by main agent using bibi@test.com on device.",
+  "platforms_tested": ["web", "mobile"],
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "web": {
+      "ui_bugs": [],
+      "integration_issues": [],
+      "design_issues": [
+        {"screen": "ChspTools /app/chsp/tools", "issues": ["Dev instrumentation renders <span> inside <option> which triggers React hydration warning in console (WS-1 service-entry <select>). Cosmetic in dev only, but should be reviewed."]}
+      ]
+    },
+    "mobile": {
+      "ui_bugs": [],
+      "integration_issues": [
+        {"flow": "Authenticated /chsp-tools on Expo web preview", "issue": "Injecting kindred_token into localStorage (raw or JSON.stringified) does not authenticate the app — storage.secureSet on web likely uses a different key namespace/backing. Prevented automated WS-1/WS-3 mobile testing in preview; not a shipped-code bug.", "affected_testIDs": ["chsp-tools-root","chsp-ws1-fee-check"]}
+      ],
+      "design_issues": [],
+      "react_native_issues": []
+    }
+  },
+  "parity_issues": [],
+  "test_report_links": [
+    "/app/backend/tests/test_chsp_fee_check_golden.py",
+    "/app/backend/tests/test_chsp_tools_v1_api.py",
+    "/app/test_reports/pytest/iter235_chsp.xml",
+    "/app/test_reports/pytest/iter235_chsp_api.xml"
+  ],
+  "action_items": [
+    "(Optional) Document the mobile web-preview storage key/format so testing agents can inject a token; alternatively expose a debug hook to set tokens in tests.",
+    "Suppress the hydration warning caused by dev-instrumented <span> inside <option> on WS-1 service-entry select (dev-only cosmetic)."
+  ],
+  "critical_code_review_comments": [
+    "run_fee_check is a pure decimal function with correct half-up quantisation, correct direction guards (undercharge/underbill never escalate), and stale-rate provisional handling — matches spec exactly.",
+    "chsp1_router correctly gates /fee-check/preview behind both chsp1_enabled and chsp_tools_v1 flags and requires auth.",
+    "Frontend WS1FeeCheck cleanly separates degraded / provisional / verdict tone rendering with data-testids on every user-facing branch — great testability.",
+    "Mobile chsp-tools.tsx mirrors web logic 1:1 including DD/MM/YYYY placeholder hints; native Alert usage is fine per agent-to-agent note."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_chsp_tools_v1_api.py"
+  ],
+  "success_rate": {"backend": "100%", "frontend": "web 100% / mobile: unautomated (auth injection blocked)"},
+  "test_credentials": "cathy@example.com / testpass123 (has CHSP profile, family plan)",
+  "seed_data_creation": "None; cathy already has CHSP profile. WS-3 test created 3 lf1_correspondence draft entries (2 web hardship/service_continuity + 1 API test each). Safe test data.",
+  "retest_needed": false,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "Backend + Web fully covered. Mobile web-preview authentication requires investigating storage.secureSet key/format under /app/mobile/src/lib/storage.ts before automating login. Golden fixtures live in /app/backend/tests/test_chsp_fee_check_golden.py and pass 7/7. New /app/backend/tests/test_chsp_tools_v1_api.py covers the HTTP surface end-to-end.",
+  "rca of the issue": "No production bugs found. Mobile-preview automation blocker RCA: apiFetch reads bearer via storage.secureGet(TOKEN_KEY). On web the secure storage likely namespaces or encrypts values, so a plain localStorage.setItem('kindred_token', <jwt>) doesn't feed the reader — 401 chain follows."
+}

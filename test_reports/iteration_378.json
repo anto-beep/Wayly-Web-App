@@ -1,0 +1,47 @@
+{
+  "summary": "Session-wave regression smoke across web + mobile. BACKEND: Login (cathy@example.com) works; GET /api/auth/me 200; GET /api/statements 200; GET /api/reports 200; POST /api/public/care-plans/review-files-async with Bearer token returns {job_id, status:processing} 200 ✓; POST /api/invoices/upload returns graceful 422 for malformed PDF ✓. CRITICAL FINDING: POST /api/statements/upload returns 500 Internal Server Error on malformed PDF (unhandled pypdf.PdfReadError 'startxref not found') while the sibling /invoices/upload path catches the same error and returns a friendly 422. This is a backend robustness regression. WEB: Landing + Dashboard render cleanly, 0 console errors, notification bell visible with unread count '5' for cathy (correctly visible when unread > 0). MOBILE (Expo web preview): Login → Dashboard → Statement Decoder → Care Plan Reviewer → Invoice Checker all render without red-screen / console errors. Mobile dashboard shows notification bell with '5' badge, participant switcher, Wayly Summary. CarePlanReviewer tool exposes testIDs cp-pick-files, cp-submit, cp-take-photo on load ✓. InvoiceChecker exposes testIDs inv1-pick-file, inv1-upload-submit (code grep). ReportIssueButton is wired INSIDE the result block (CarePlanReviewer.tsx:721) so testID report-issue-btn only renders after a successful review completes — not verifiable at idle. LANDING-vs-BACKEND REPORTS CATALOG PARITY: FAILS strict match. Backend REPORT_TYPES = {Household Summary, Quarterly Budget Report, Annual Financial Summary, Anomaly & Savings Report, Provider Performance Report, Complaint & Correspondence Dossier, Care Timeline, Statement Digest}. Landing reports strip = {Annual Financial, Statement Digest, Tax Summary, Lifetime Cap Tracker, Budget Forecast, Care Plan Diff, Provider Performance, Concerns Log}. 5 Landing cards NOT in backend (Tax Summary, Lifetime Cap Tracker, Budget Forecast, Care Plan Diff, Concerns Log); 5 backend reports NOT on Landing (Household Summary, Quarterly Budget Report, Anomaly & Savings, Complaint & Correspondence Dossier, Care Timeline). NOT TESTED (token budget): end-to-end file-upload LLM run through poll + render (requires valid PDF + 60s wait), dark-mode donut contrast, drawer rebuild, SmartAISummary presence on statement detail, header-logo-tap scroll, duplicate-title cleanup on Ask Wayly / statement detail.",
+  "platforms_tested": ["web", "mobile"],
+  "backend_issues": {
+    "critical": [
+      {"endpoint": "POST /api/statements/upload", "issue": "Returns 500 Internal Server Error (uncaught pypdf.errors.PdfReadError 'startxref not found') on a malformed/corrupted PDF. Sibling /api/invoices/upload gracefully returns 422 'We could not read this file. Try a clearer copy or a different format.' — statement path should do the same. Users uploading a bad photo-of-PDF today get the generic 500 screen instead of a plain-English fix hint.", "priority": "HIGH"}
+    ],
+    "minor": []
+  },
+  "frontend_issues": {
+    "web": {
+      "ui_bugs": [],
+      "integration_issues": [
+        {"flow": "Landing reports strip ↔ backend REPORT_TYPES strict parity", "issue": "8 Landing report cards do NOT match the 8 backend REPORT_TYPES keys. Extras on Landing (not in backend): Tax Summary, Lifetime Cap Tracker, Budget Forecast, Care Plan Diff, Concerns Log. Missing from Landing (in backend): Household Summary, Quarterly Budget Report, Anomaly & Savings Report, Complaint & Correspondence Dossier, Care Timeline. The test requirement was: 'strict match, no extras'.", "affected_selectors": ["[data-testid^='report-card-']"]}
+      ],
+      "design_issues": []
+    },
+    "mobile": {
+      "ui_bugs": [],
+      "integration_issues": [],
+      "design_issues": [],
+      "react_native_issues": []
+    }
+  },
+  "parity_issues": [],
+  "test_report_links": ["/tmp/mob_dash.jpeg", "/tmp/mob_decoder.jpeg", "/tmp/mob_cpr.jpeg", "/tmp/mob_inv.jpeg"],
+  "action_items": [
+    "HIGH: wrap pypdf parse in /api/statements/upload with try/except PdfReadError (and generic Exception) → return 422 with the same friendly message /invoices/upload uses. Current trace: backend tries pypdf → raises PdfReadError('startxref not found') → bubbles to 500.",
+    "HIGH: reconcile /app/frontend/src/pages/Landing.jsx reports strip (lines ~311–325) with backend REPORT_TYPES in /app/backend/reports_routes.py:104. Either (a) replace the 8 hard-coded Landing cards with the 8 backend labels (Household Summary, Quarterly Budget Report, Annual Financial Summary, Anomaly & Savings Report, Provider Performance Report, Complaint & Correspondence Dossier, Care Timeline, Statement Digest), or (b) expose a public GET /api/public/reports/catalog that returns REPORT_TYPES and have Landing fetch it. The strict-match assertion is currently a FAIL.",
+    "FOLLOW-UP (not blocking this report): true end-to-end file-upload LLM flow (upload → poll → result → SmartAISummary + ReportIssueButton render) was not completed due to token budget. Code paths look wired (CarePlanReviewer uses uploadFile → review-files-async → pollReviewJob; result block includes ReportIssueButton at line 721). Recommend a dedicated follow-up test that uploads a real small valid PDF and waits ~60s per tool.",
+    "FOLLOW-UP: iter377's LOW item (StatePanel ui.tsx:571 color: colors.text on heading) is still open — not retested here."
+  ],
+  "critical_code_review_comments": [
+    "Error-handling asymmetry: /api/invoices/upload and /api/statements/upload almost certainly share the same pypdf text-extraction helper, but only one of them (/invoices) wraps it in a try/except. Fix the statement route to mirror the invoice route's handler.",
+    "ReportIssueButton on CarePlanReviewer (CarePlanReviewer.tsx:721) is correctly gated inside `result` block — this is intentional. If main agent wants the button also available on the idle/error state, hoist it outside the result conditional.",
+    "Mobile Login Pressable (/login) has no data-testid on the 'Log In' submit — iter376/377 both flagged this. Still unfixed; the login-email-input testID is the only one testable. Add testID='login-submit' (or similar) to the Pressable.",
+    "Landing reports strip hard-codes 8 cards instead of mapping backend REPORT_TYPES — classic drift surface. A single public catalog endpoint would prevent this class of mismatch."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "4/5 endpoints healthy; 1 critical (statements/upload 500)", "frontend": "100% render smoke pass on web + mobile; 1 Landing↔backend parity bug"},
+  "test_credentials": "cathy@example.com / testpass123 (used for login smoke on both surfaces)",
+  "seed_data_creation": "none",
+  "retest_needed": true,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "The two HIGH items above are the only blockers surfaced by this smoke run. Full end-to-end mobile file-upload (upload → async poll → result card → SmartAISummary + ReportIssueButton render) was NOT exercised here — only the upload endpoints and idle screen renders were. If the next agent has token budget, do: (1) upload a real valid 1-page PDF via mobile InvoiceChecker (inv1-pick-file → inv1-upload-submit) and confirm result + SmartAISummary + ReportIssueButton render; (2) same for Statement Decoder (/tool/statement-decoder); (3) same for Care Plan Reviewer; (4) toggle dark mode via Settings and check donut-chart contrast on dashboard; (5) verify drawer Sign Out + no light-blue stray colours. Credentials: cathy@example.com / testpass123 (Family plan, has participants/statements). Mobile testID for login submit still missing — the 'Log In' Pressable has to be clicked via get_by_text('Log In', exact=True).click(force=True) (confirmed to work in this run).",
+  "rca of the issue": "Statement upload 500: Backend trace from /var/log/supervisor/backend.err.log clearly shows `pypdf.errors.PdfReadError: startxref not found` bubbling up unhandled through the statements/upload route handler. The sibling /invoices/upload route catches this exact exception and returns a 422 with a friendly message, so the statements route is just missing the same try/except wrapper. Reproduction: `curl -X POST $BASE/api/statements/upload -H 'Authorization: Bearer <token>' -F file=@/tmp/test_sample.pdf` where test_sample.pdf is a truncated/invalid PDF. Expected: 422 JSON. Actual: 500 'Internal Server Error' (plain text). Mitigation: add `except (pypdf.errors.PdfReadError, Exception) as e:` around the pypdf.PdfReader(...) call in the statement upload handler (same shape as invoices_routes.py). Landing↔catalog mismatch RCA: Landing.jsx has an in-line array of 8 report card objects (icon, title, body, tone) hard-coded in /app/frontend/src/pages/Landing.jsx at ~lines 311-325. The copy drifted from REPORT_TYPES in /app/backend/reports_routes.py:104 at some point without a cross-link. There is no public catalog endpoint — GET /api/public/reports/catalog returns 404 — so the frontend has no way to self-check. The previous session's search_replace sweep for 'web Landing reports list to the backend catalog' claim appears to have missed this file."
+}

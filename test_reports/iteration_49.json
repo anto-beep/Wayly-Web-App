@@ -1,0 +1,32 @@
+{
+  "summary": "Frontend-only validation of the CHSP content cluster (pillar + 3 deep-dive articles). All 4 public routes render correctly with required testids, JSON-LD schemas, internal navigation, SEO meta tags, and zero console errors.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "tests_executed": {
+    "pillar_/chsp": "PASS — h1, chsp-banner, chsp-key-facts, 3 nav cards (caregiver-guide, vs-sah, transition), chsp-cta-block with 3 correct CTA hrefs (/ai-tools/aged-care-qa, /ai-tools/classification-self-check, /ai-tools/reassessment-letter). JSON-LD: Article + BreadcrumbList present (also global Organization + WebSite). Title and meta description populated via Helmet.",
+    "article1_/chsp/caregiver-guide": "PASS — h1 matches, banner + key-facts + chsp-contribution-table with exactly 8 rows, chsp-faq-1 with 6 Q&A items, chsp-cta-block. JSON-LD: Article + FAQPage + BreadcrumbList.",
+    "article2_/chsp/vs-support-at-home": "PASS — h1 matches, banner + key-facts + chsp-comparison-table, chsp-faq-2 with 6 items, chsp-cta-block. JSON-LD: Article + FAQPage + BreadcrumbList.",
+    "article3_/chsp/transition-2027": "PASS — h1 matches, banner + key-facts + chsp-faq-3 with 6 items + chsp-cta-block. JSON-LD: Article + FAQPage + BreadcrumbList.",
+    "internal_navigation": "PASS — all 3 pillar cards navigate to correct child routes (caregiver-guide, vs-support-at-home, transition-2027).",
+    "console_errors": "0 errors across all 4 pages",
+    "public_access": "All 4 routes publicly accessible (no auth required)."
+  },
+  "test_report_links": [],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "ChspContent.jsx is 486 lines and contains 4 page exports + 11 helpers. Acceptable for a single content cluster but borderline for the 700-line guideline; if more pages are added split into pillar.jsx/articles/*.jsx and a shared chsp-components.jsx.",
+    "JSON-LD uses dangerouslySetInnerHTML with raw JSON.stringify — correct choice and properly commented. No HTML-escaping bug.",
+    "All interactive cards and CTAs have data-testid attributes; pillar h1 wording matches the spec exactly (including the comma)."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "n/a (skipped per request)", "frontend": "100%"},
+  "test_credentials": "n/a — public marketing pages, no auth",
+  "seed_data_creation": "none",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "CHSP pillar cluster fully verified at iteration 49. Routes: /chsp, /chsp/caregiver-guide, /chsp/vs-support-at-home, /chsp/transition-2027. All testids use chsp- prefix. JSON-LD emitted client-side via React (visible after hydration). Backend only contributes sitemap entries (not verified in this run since testing_type was frontend-only)."
+}

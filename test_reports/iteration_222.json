@@ -1,0 +1,29 @@
+{
+  "summary": "Re-verified the two mobile PPC-3 issues from iteration 221. Both are FIXED. As cathy@example.com on the Expo web preview at 390x844, navigated directly to /provider-quality/BlueBerry%20Care AND via the price-history quality chip (ppc-quality-chip-blueberry care → /provider-quality/BlueBerry%20Care). All 17 required PPC-3 testIDs render (ppc3-provider-name, ppc3-composite-summary, ppc3-signals + 4 ppc3-signal-* rows, ppc3-survey-form + 4 ppc3-rating-* + ppc3-recommend-yes/no + ppc3-survey-submit, ppc3-opan-referral + ppc3-opan-call). Survey POST /api/ppc3/survey-responses returned 200; the ppc3-survey-done thank-you card became visible (count went 0→1) immediately after submit, and the survey form was unmounted (ppc3-survey-form count 0). Thank-you copy verified verbatim: 'Thanks — your rating helps other families. It's aggregated and never published on its own.' — no stray space before comma, em-dash present. Silent load(true) fix confirmed working: the parent's <Loading /> branch is no longer swapped in on the post-submit reload, so SurveyForm's done state survives the background refetch.",
+  "platforms_tested": ["mobile"],
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "mobile": {
+      "ui_bugs": [],
+      "integration_issues": [],
+      "design_issues": [],
+      "react_native_issues": []
+    }
+  },
+  "parity_issues": [],
+  "test_report_links": [
+    "/app/test_reports/pq_iter222_after_submit.jpeg"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "Silent-reload pattern (load(silent=true) that skips setLoading) is a clean fix and keeps the SurveyForm mounted. Consider extracting this into a shared useSilentRefresh hook if the pattern recurs on other detail screens."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "n/a (skipped)", "frontend": "100% (all PPC-3 testIDs render; survey submit 200; ppc3-survey-done now renders; copy correct; chip navigation works)"},
+  "test_credentials": "cathy@example.com / testpass123 (mobile Expo preview https://endpoint-migrate-2.expo.preview.emergentagent.com)",
+  "seed_data_creation": "None. Existing saved BlueBerry Care price check for cathy already renders the ppc-quality-chip-blueberry care chip on /price-history.",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Iteration 221's two mobile PPC-3 bugs are both resolved as of iter 222: (1) ppc3-survey-done now renders after successful POST because parent load(silent=true) no longer unmounts the SurveyForm, and (2) the thank-you copy no longer has a stray space before the comma. If future changes touch /app/mobile/app/provider-quality/[name].tsx, re-run the submit flow and re-check that count of ppc3-survey-done goes 0→1 after clicking ppc3-survey-submit and that ppc3-survey-form count goes to 0.",
+  "rca of the issue": "Original bug was that SurveyForm.submit() called setDone(true) then onSubmitted() → parent load() → setLoading(true), which replaced the ScrollView with <Loading /> and unmounted SurveyForm; on remount its useState defaulted done back to false. Fix (verified): load now accepts a silent flag; onSubmitted passes load(true) so setLoading is skipped, the ScrollView stays mounted, and SurveyForm's done state survives the refetch. Copy fix (verified): source now reads 'Thanks — your rating helps other families.' with an em-dash instead of the earlier 'Thanks , your rating…'."
+}

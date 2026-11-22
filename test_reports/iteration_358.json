@@ -1,0 +1,66 @@
+{
+  "summary": "iter358 dark-mode re-verification (web, cathy paid). CSC result view + CSC clickable band-scale + CorrespondenceDetail 'Save As Draft' button all PASS in dark AND light. Price Checker is PARTIALLY fixed: the 3 stat cards (pc-stat-charged/pc-your-share/pc-range) now render the correct distinct dark backgrounds (#0E3A3E / #33231A / #16281C) — the move-to-end-of-file fix worked for these. Two items REGRESSED / still fail: pc-save-check still renders clay rgb(165,81,43) instead of teal #1C7C83, AND dm-bar-track still renders clay rgb(165,81,43) instead of rgba(255,255,255,0.12). Root cause is the same specificity war flagged in iter357: the LATE-cascade fix only wins on EQUAL specificity; both pc-save-check and dm-bar-track carry a bg-primary-k utility whose dark override `html.theme-dark .app-shell .bg-primary-k` is 3-class specificity and STILL beats the 2-class `html.theme-dark [data-testid='pc-save-check']` / `html.theme-dark .dm-bar-track` rules regardless of source order. iter357's action-items file called out exactly this remedy ('bump to include .app-shell') but the iter358 fix only did the reorder, not the specificity bump. All light-mode regressions are CLEAN. All CSC/Correspondence checks pass. Light-mode dm-bar-track = transparent, save/pdf/email buttons teal/clay/sage — correct.",
+  "platforms_tested": ["web"],
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "web": {
+      "ui_bugs": [
+        {
+          "component": "Price Checker Save button (dark mode) — STILL BROKEN",
+          "issue": "pc-save-check computed background-color = rgb(165,81,43) (clay) in dark; expected #1C7C83 teal. The late-cascade fix at /app/frontend/src/index.css:1927 `html.theme-dark [data-testid='pc-save-check']` (2-class) still loses to the earlier `html.theme-dark .app-shell .bg-primary-k` (3-class) — moving to end of file does NOT help when the losing selector has lower specificity. Fix: change L1927 to `html.theme-dark .app-shell [data-testid='pc-save-check'] { background-color:#1C7C83 !important; }` (adds .app-shell → 3 classes, matches source-order tiebreak).",
+          "selector": "[data-testid='pc-save-check']",
+          "priority": "HIGH"
+        },
+        {
+          "component": "Price Checker comparison bar track (dark mode) — STILL BROKEN",
+          "issue": "dm-bar-track computed background-color = rgb(165,81,43) (clay) in dark; expected rgba(255,255,255,0.12). Same specificity war: `html.theme-dark .dm-bar-track` (2-class, L1922) is beaten by `html.theme-dark .app-shell .bg-primary-k` (3-class). The element carries both classes. Fix: change L1922 to `html.theme-dark .app-shell .dm-bar-track { background-color: rgba(255,255,255,0.12) !important; background-image: none !important; }` OR drop the co-located bg-primary-k utility from the DOM so the token can't be remapped.",
+          "selector": "[data-testid='pc-compare-bars'] .dm-bar-track",
+          "priority": "HIGH"
+        },
+        {
+          "component": "pc-num-hl dark colour drift (LOW)",
+          "issue": "Dark highlight computes rgb(232,149,107) = #E8956B; spec asked for #E89A6F. Visually near-identical. /app/frontend/src/index.css:657.",
+          "selector": ".pc-num-hl",
+          "priority": "LOW"
+        }
+      ],
+      "integration_issues": [],
+      "design_issues": [
+        {
+          "screen": "Price Checker — bar rows in dark mode",
+          "issues": [
+            "Because dm-bar-track is still clay, all three comparison bars sit on an orange track. The teal 'Typical median' fill (dark green in screenshot) is barely distinguishable from the clay track, and the light-grey 'Usual range' pill sits inside a clay bar — hurts the 'coloured bar as graphic on neutral rail' read requested."
+          ]
+        }
+      ]
+    },
+    "mobile": {"ui_bugs": [], "integration_issues": [], "design_issues": [], "react_native_issues": []}
+  },
+  "parity_issues": [],
+  "test_report_links": [
+    "/app/test_reports/iter358_dark/pc_findings.json",
+    "/app/test_reports/iter358_dark/findings.json",
+    "/app/test_reports/iter358_dark/dark_pc_ok.jpeg",
+    "/app/test_reports/iter358_dark/light_pc_ok.jpeg",
+    "/app/test_reports/iter358_dark/dark_csc.jpeg",
+    "/app/test_reports/iter358_dark/dark_lf.jpeg"
+  ],
+  "action_items": [
+    "PriceCheckerTool DARK: /app/frontend/src/index.css L1927 — change `html.theme-dark [data-testid='pc-save-check']` to `html.theme-dark .app-shell [data-testid='pc-save-check']` so specificity beats `.app-shell .bg-primary-k` (3 classes tie → later-source-order wins).",
+    "PriceCheckerTool DARK: /app/frontend/src/index.css L1922 — change `html.theme-dark .dm-bar-track` to `html.theme-dark .app-shell .dm-bar-track` for the same reason (loses to `.app-shell .bg-primary-k`).",
+    "(Optional) L657: bump `.pc-num-hl` dark colour from #E8956B to #E89A6F to match spec.",
+    "After fix, expected values on dark PC result: pc-save-check bg = rgb(28,124,131); dm-bar-track bg = rgba(255,255,255,0.12); other 5 items already verified correct."
+  ],
+  "critical_code_review_comments": [
+    "The 'move rules to end of file' remedy applied this iter is ONLY correct when both competing selectors have EQUAL specificity. iter357 explicitly diagnosed that the losing rules had LOWER specificity than `html.theme-dark .app-shell .bg-primary-k` and recommended prepending `.app-shell` — that remedy was only applied to the stat-card selectors (which win via order because their base rules `.sect-teal/.sect-clay/.sect-sage` are also 2-class). For pc-save-check and dm-bar-track, the losing rule is 3-class so reorder alone can never win. Please apply the `.app-shell` prefix as originally recommended.",
+    "CSC clickable band-scale is a nice UX addition; verified funding math is correct (annual/4 & annual/52 rounded)."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "n/a (skipped per request)", "frontend": "Dark: 4/6 PC items pass, CSC dark 100%, CSC scale-detail 100%, Correspondence 100%. Light-mode regression 100% clean."},
+  "test_credentials": "cathy@example.com / testpass123",
+  "seed_data_creation": "Created 1 correspondence entry for testing lf1-detail-save-draft — id Y1RQZQEOLn2O0Qm_ (situation_id=6, provider_cm) via POST /api/lf1/correspondence.",
+  "retest_needed": true,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Two dark-mode PC items still failing after the iter358 reorder: pc-save-check and dm-bar-track. Both need `.app-shell` prepended (see action_items). Reproduce with: (a) POST /api/auth/login cathy@example.com/testpass123 → stash kindred_token; localStorage.setItem('wayly:app:appearance','dark'); (b) goto /ai-tools/provider-price-checker; select data-testid=pc-service = 'Personal Care'; pc-rate=250; pc-provider='Test Provider'; click pc-submit; dismiss pc-guard-continue; (c) read computed styles of [data-testid='pc-save-check'] and [data-testid='pc-compare-bars'] .dm-bar-track. CSC + Correspondence + light-mode regressions all PASS — no need to re-test those unless the PC fix touches unrelated code. Full findings dumps: /app/test_reports/iter358_dark/pc_findings.json and findings.json.",
+  "rca of the issue": "Root cause identical to iter357: CSS specificity war. When two !important rules compete, higher class-count wins BEFORE source order. `html.theme-dark .app-shell .bg-primary-k` (3 classes, !important) still beats `html.theme-dark .dm-bar-track` and `html.theme-dark [data-testid='pc-save-check']` (both 2 classes, !important) regardless of file position. The reorder-to-end fix ONLY works for equal-specificity ties (which is why the sect-* stat cards were fixed by it). Remedy already spelled out by iter357: prepend `.app-shell` to bump the winning selectors to 3-class as well. This was applied for the stat cards implicitly (they use .sect-* base, 2-class losing rule) but was NOT applied to pc-save-check / dm-bar-track (which lose to a 3-class rule)."
+}

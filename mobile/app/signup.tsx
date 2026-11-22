@@ -1,0 +1,455 @@
+import React, { useEffect, useState } from "react";
+import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, View } from "react-native";
+import { router } from "expo-router";
+import { Ionicons } from "@expo/vector-icons";
+import { LogIn } from "lucide-react-native";
+import * as AppleAuthentication from "expo-apple-authentication";
+
+import { AppHeader, Button, Field, Screen, T } from "@/src/components/ui";
+import { WaylyMark } from "@/src/components/WaylyMark";
+import { useAuth } from "@/src/context/AuthContext";
+import { useTheme } from "@/src/theme/ThemeContext";
+import { ApiError, apiFetch } from "@/src/lib/api";
+import { fonts, radius, spacing } from "@/src/theme/tokens";
+import { BRAND_TAGLINE } from "@/src/config/brand";
+
+const RELATIONSHIPS = [
+  { v: "daughter", label: "Daughter" }, { v: "son", label: "Son" },
+  { v: "spouse_partner", label: "Spouse / partner" }, { v: "sibling", label: "Sibling" },
+  { v: "grandchild", label: "Grandchild" }, { v: "friend", label: "Friend" },
+  { v: "paid_carer", label: "Paid carer" }, { v: "power_of_attorney", label: "Power of attorney" },
+  { v: "other", label: "Other" },
+];
+
+const PW_RULES = [
+  { id: "len", label: "8+ characters", test: (p: string) => p.length >= 8 },
+  { id: "upper", label: "An uppercase letter (A-Z)", test: (p: string) => /[A-Z]/.test(p) },
+  { id: "lower", label: "A lowercase letter (a-z)", test: (p: string) => /[a-z]/.test(p) },
+  { id: "num", label: "A number (0-9)", test: (p: string) => /[0-9]/.test(p) },
+  { id: "sym", label: "A symbol (!@#$)", test: (p: string) => /[!@#$%^&*()_+\-=[\]{}|;':".<>?/]/.test(p) },
+];
+function evaluatePassword(password: string, email: string, name: string) {
+  const passed = PW_RULES.filter((r) => r.test(password));
+  const lower = password.toLowerCase();
+  const containsIdentity = Boolean(
+    (email && lower.includes(email.toLowerCase().split("@")[0])) ||
+    (name && name.trim().length > 2 && lower.includes(name.toLowerCase().split(" ")[0]))
+  );
+  return { valid: passed.length === PW_RULES.length && !containsIdentity, containsIdentity, rules: PW_RULES.map((r) => ({ id: r.id, label: r.label, ok: r.test(password) })) };
+}
+
+export default function SignupScreen() {
+  const { colors, isDark } = useTheme();
+  const { signup, loginWithGoogle, loginWithApple } = useAuth();
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [email, setEmail] = useState("");
+  const [mobile, setMobile] = useState("");
+  const [password, setPassword] = useState("");
+  const plan = "family" as const;
+  const [role, setRole] = useState<"caregiver" | "participant">("caregiver");
+  const [caregiverRelationship, setCaregiverRelationship] = useState("");
+  const [careRecipientFirstName, setCareRecipientFirstName] = useState("");
+  const [careRecipientLastName, setCareRecipientLastName] = useState("");
+  const [showPw, setShowPw] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [googleBusy, setGoogleBusy] = useState(false);
+  const [marketingConsent, setMarketingConsent] = useState(false);
+  const [appleAvailable, setAppleAvailable] = useState(false);
+
+  useEffect(() => {
+    if (Platform.OS === "ios") {
+      AppleAuthentication.isAvailableAsync().then(setAppleAvailable).catch(() => setAppleAvailable(false));
+    }
+  }, []);
+  const [error, setError] = useState("");
+  // Family plan: capture a second participant up front, exactly like web signup.
+  const [addSecond, setAddSecond] = useState(false);
+  const [secondFirstName, setSecondFirstName] = useState("");
+  const [secondRelationship, setSecondRelationship] = useState("");
+
+  const onSignup = async () => {
+    setError("");
+    if (!firstName.trim() || !email.trim() || !password) {
+      setError("Please fill in your name, email and password.");
+      return;
+    }
+    const mobileClean = mobile.replace(/\s+/g, "");
+    if (mobileClean && !/^(\+614\d{8}|04\d{8})$/.test(mobileClean)) {
+      setError("Enter an Australian mobile (04XXXXXXXX or +614XXXXXXXX), or leave blank.");
+      return;
+    }
+    const fullName = `${firstName.trim()} ${lastName.trim()}`.trim();
+    const pw = evaluatePassword(password, email, fullName);
+    if (!pw.valid) {
+      setError(pw.containsIdentity ? "Password should not include your name or email." : "Password needs 8+ characters with an uppercase, a lowercase, a number, and a symbol.");
+      return;
+    }
+    if (addSecond && plan === "family" && !secondFirstName.trim()) {
+      setError("Please add the second person's first name, or turn off \"caring for two people\".");
+      return;
+    }
+    setBusy(true);
+    try {
+      await signup({
+        email,
+        password,
+        name: fullName,
+        first_name: firstName.trim(),
+        last_name: lastName.trim() || undefined,
+        mobile: mobileClean || undefined,
+        role,
+        plan,
+        marketing_consent: marketingConsent,
+      }, { deferUser: true });
+      // PERSONA-1: persist the persona choice on signup so the account is
+      // persona-correct from day zero, mirroring web. Best-effort, non-fatal.
+      try {
+        const isParticipant = role === "participant";
+        await apiFetch("/persona", {
+          method: "PUT",
+          body: {
+            viewer_persona: role,
+            is_authorised_representative: false,
+            care_recipient: isParticipant
+              ? { is_self: true, first_name: firstName.trim() || null, last_name: lastName.trim() || null, pronouns: "unknown", relationship_to_account: null }
+              : {
+                  is_self: false,
+                  first_name: careRecipientFirstName.trim() || null,
+                  last_name: careRecipientLastName.trim() || null,
+                  pronouns: "unknown",
+                  relationship_to_account: caregiverRelationship || null,
+                },
+          },
+        });
+      } catch { /* non-fatal: user can finish this in Settings later */ }
+      // Family plan: pre-create the SECOND participant stub (is_primary:false)
+      // right after signup, mirroring web. The user's own onboarding creates
+      // the primary a step later; this stub keeps the second slot ready.
+      if (plan === "family" && addSecond && secondFirstName.trim()) {
+        try {
+          const created = await apiFetch<{ id: string }>("/v2/participants", {
+            method: "POST",
+            body: {
+              first_name: secondFirstName.trim(),
+              last_name: "",
+              statement_format: "unknown",
+              is_primary: false,
+            },
+          });
+          if (created?.id && secondRelationship) {
+            try { await apiFetch(`/participants/${created.id}`, { method: "PATCH", body: { caregiver_relationship: secondRelationship } }); }
+            catch { /* relationship is optional, non-fatal */ }
+          }
+        } catch { /* non-fatal: they can add them later from Participants */ }
+      }
+      // Account created — before the plan gate, offer email verification just
+      // like the web: the backend has already emailed a 6-digit code at signup;
+      // the user can enter it now or skip (verify later from their account).
+      // Either path lands on /plan-select to complete the Stripe trial checkout.
+      router.replace({ pathname: "/verify-email", params: { next: "/plan-select", skip: "1", email } });
+    } catch (e) {
+      setError(e instanceof ApiError ? e.message : "Could not create your account. Please try again.");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const onGoogle = async () => {
+    setError("");
+    setGoogleBusy(true);
+    try {
+      await loginWithGoogle();
+      router.replace("/(tabs)");
+    } catch (e) {
+      setError(e instanceof ApiError ? e.message : "Google sign-in was cancelled or failed.");
+    } finally {
+      setGoogleBusy(false);
+    }
+  };
+
+  const onApple = async () => {
+    // Mirrors the Google social flow exactly: sign in, then straight into the
+    // app (no separate plan/billing gate — same process as Google signup).
+    setError("");
+    try {
+      await loginWithApple();
+      router.replace("/(tabs)");
+    } catch (e: any) {
+      if (e?.code === "ERR_REQUEST_CANCELED") return;
+      setError(e instanceof ApiError ? e.message : "Apple sign-in was cancelled or failed.");
+    }
+  };
+
+  return (
+    <Screen edges={["top", "bottom"]}>
+      <AppHeader title="" onBack={() => router.back()} />
+      <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === "ios" ? "padding" : undefined}>
+        <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
+          <View style={{ alignItems: "center", marginBottom: spacing.lg }}>
+            <WaylyMark size={64} white={isDark} />
+            <T testID="brand-tagline" numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.6} style={{ fontFamily: fonts.heading, fontSize: 24, lineHeight: 30, letterSpacing: 0.5, color: colors.gold, marginTop: 12, textAlign: "center", alignSelf: "stretch" }}>
+              {BRAND_TAGLINE}
+            </T>
+          </View>
+
+          <T variant="label" style={{ marginBottom: 8 }}>WHO IS THIS ACCOUNT FOR?</T>
+          <View style={{ flexDirection: "row", gap: spacing.sm, marginBottom: spacing.lg }}>
+            {([
+              { v: "caregiver", title: "I'm a Caregiver", sub: "Managing care for someone else" },
+              { v: "participant", title: "I'm a Participant", sub: "Managing my own care" },
+            ] as const).map((r) => {
+              const active = role === r.v;
+              return (
+                <Pressable
+                  key={r.v}
+                  testID={`signup-role-${r.v}`}
+                  onPress={() => setRole(r.v)}
+                  style={{ flex: 1, borderWidth: 2, borderColor: active ? colors.primary : colors.border, backgroundColor: active ? colors.sageSoft : colors.surface, borderRadius: radius.md, padding: spacing.md }}
+                >
+                  <View style={{ width: 20, height: 20, borderRadius: 10, borderWidth: 2, borderColor: active ? colors.primary : colors.muted, alignItems: "center", justifyContent: "center", marginBottom: 8 }}>
+                    {active ? <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: colors.primary }} /> : null}
+                  </View>
+                  <T style={{ fontFamily: fonts.bodySemi, fontSize: 15, color: colors.text }}>{r.title}</T>
+                  <T variant="small" style={{ marginTop: 2 }}>{r.sub}</T>
+                </Pressable>
+              );
+            })}
+          </View>
+
+          {role === "caregiver" ? (
+            <View testID="signup-caregiver-block" style={{ marginBottom: spacing.lg, gap: spacing.sm }}>
+              <T variant="label">WHO ARE YOU CARING FOR? (OPTIONAL)</T>
+              <View style={{ flexDirection: "row", gap: spacing.md }}>
+                <Field label="Their first name" optional testID="signup-care-recipient-first-name" value={careRecipientFirstName} onChangeText={setCareRecipientFirstName} placeholder="e.g. Arthur" style={{ flex: 1 }} />
+                <Field label="Their last name" optional testID="signup-care-recipient-last-name" value={careRecipientLastName} onChangeText={setCareRecipientLastName} placeholder="Doe" style={{ flex: 1 }} />
+              </View>
+              <T variant="label" style={{ marginTop: 2 }}>YOUR RELATIONSHIP (OPTIONAL)</T>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: spacing.sm, paddingRight: spacing.md }}>
+                {RELATIONSHIPS.map((r) => {
+                  const active = caregiverRelationship === r.v;
+                  return (
+                    <Pressable key={r.v} testID={`signup-caregiver-rel-${r.v}`} onPress={() => setCaregiverRelationship(active ? "" : r.v)}
+                      style={{ flexShrink: 0, paddingHorizontal: 14, paddingVertical: 8, borderRadius: radius.pill, borderWidth: 1.5, borderColor: active ? colors.primary : colors.border, backgroundColor: active ? colors.primary : colors.surface }}>
+                      <T style={{ fontFamily: fonts.bodyMedium, fontSize: 13, color: active ? "#fff" : colors.text }}>{r.label}</T>
+                    </Pressable>
+                  );
+                })}
+              </ScrollView>
+            </View>
+          ) : null}
+
+          {plan === "family" ? (
+            <View
+              testID="signup-second-participant-block"
+              style={{ borderWidth: 2, borderColor: colors.gold, backgroundColor: colors.sageSoft, borderRadius: radius.md, padding: spacing.md, marginBottom: spacing.lg, gap: spacing.sm }}
+            >
+              <Pressable
+                testID="signup-second-participant-toggle"
+                onPress={() => setAddSecond((v) => !v)}
+                style={{ flexDirection: "row", gap: 10, alignItems: "flex-start" }}
+              >
+                <View style={{ width: 22, height: 22, borderRadius: 6, borderWidth: 2, borderColor: addSecond ? colors.primary : colors.muted, backgroundColor: addSecond ? colors.primary : colors.surface, alignItems: "center", justifyContent: "center", marginTop: 1 }}>
+                  {addSecond ? <Ionicons name="checkmark" size={14} color="#fff" /> : null}
+                </View>
+                <View style={{ flex: 1 }}>
+                  <T style={{ fontFamily: fonts.bodySemi, fontSize: 15, color: colors.text }}>I&apos;m caring for two people</T>
+                  <T variant="small" style={{ marginTop: 2 }}>Caring for two people? Add their name now and we&apos;ll pick up where you leave off.</T>
+                </View>
+              </Pressable>
+
+              {addSecond ? (
+                <View testID="signup-second-participant-fields" style={{ gap: spacing.sm }}>
+                  <Field
+                    label="Their first name"
+                    required
+                    testID="signup-second-participant-first-name"
+                    value={secondFirstName}
+                    onChangeText={setSecondFirstName}
+                    placeholder="e.g. Arthur"
+                  />
+                  <T variant="label" style={{ marginTop: 2 }}>YOUR RELATIONSHIP (OPTIONAL)</T>
+                  <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: spacing.sm, paddingRight: spacing.md }}>
+                    {RELATIONSHIPS.map((r) => {
+                      const active = secondRelationship === r.v;
+                      return (
+                        <Pressable
+                          key={r.v}
+                          testID={`signup-second-participant-rel-${r.v}`}
+                          onPress={() => setSecondRelationship(active ? "" : r.v)}
+                          style={{ flexShrink: 0, paddingHorizontal: 14, paddingVertical: 8, borderRadius: radius.pill, borderWidth: 1.5, borderColor: active ? colors.primary : colors.border, backgroundColor: active ? colors.primary : colors.surface }}
+                        >
+                          <T style={{ fontFamily: fonts.bodyMedium, fontSize: 13, color: active ? "#fff" : colors.text }}>{r.label}</T>
+                        </Pressable>
+                      );
+                    })}
+                  </ScrollView>
+                </View>
+              ) : null}
+            </View>
+          ) : null}
+
+          <View style={{ flexDirection: "row", gap: spacing.md }}>
+            <Field
+              label="First Name"
+              required
+              testID="signup-first-name-input"
+              value={firstName}
+              onChangeText={setFirstName}
+              placeholder="Jane"
+              style={{ flex: 1, marginBottom: spacing.md }}
+            />
+            <Field
+              label="Last Name"
+              required
+              testID="signup-last-name-input"
+              value={lastName}
+              onChangeText={setLastName}
+              placeholder="Doe"
+              style={{ flex: 1, marginBottom: spacing.md }}
+            />
+          </View>
+
+          <Field
+            label="Email"
+            required
+            testID="signup-email-input"
+            value={email}
+            onChangeText={setEmail}
+            autoCapitalize="none"
+            keyboardType="email-address"
+            placeholder="you@example.com"
+            style={{ marginBottom: spacing.md }}
+          />
+          <Field
+            label="Mobile Number"
+            optional
+            testID="signup-mobile-input"
+            value={mobile}
+            onChangeText={setMobile}
+            keyboardType="phone-pad"
+            placeholder="04xx xxx xxx"
+            style={{ marginBottom: spacing.md }}
+          />
+
+          <View style={{ flexDirection: "row", alignItems: "center", gap: 6, marginBottom: 6 }}>
+            <T style={{ fontFamily: fonts.bodySemi, fontSize: 14, color: colors.text }}>Password</T>
+            <T style={{ fontFamily: fonts.bodySemi, fontSize: 12, color: colors.gold }}>Required</T>
+          </View>
+          <View style={{ backgroundColor: colors.surface2, borderRadius: radius.md, padding: spacing.sm, marginBottom: spacing.sm }}>
+            <T variant="small" style={{ marginBottom: 4 }}>Your password needs:</T>
+            {["At least 8 characters", "An uppercase and a lowercase letter", "A number and a symbol", "Not your name or email"].map((r) => (
+              <View key={r} style={{ flexDirection: "row", alignItems: "center", gap: 6, marginTop: 2 }}>
+                <View style={{ width: 4, height: 4, borderRadius: 2, backgroundColor: colors.sage }} />
+                <T variant="small">{r}</T>
+              </View>
+            ))}
+          </View>
+          <View style={styles.pwWrap}>
+            <Field
+              testID="signup-password-input"
+              value={password}
+              onChangeText={setPassword}
+              secureTextEntry={!showPw}
+              placeholder="At least 8 characters"
+              style={{ flex: 1 }}
+            />
+            <Pressable onPress={() => setShowPw((s) => !s)} hitSlop={10} style={styles.pwToggle}>
+              <Ionicons name={showPw ? "eye-off" : "eye"} size={22} color={colors.muted} />
+            </Pressable>
+          </View>
+
+          {password ? (
+            <View testID="signup-password-rules" style={{ marginTop: spacing.sm, gap: 4 }}>
+              {evaluatePassword(password, email, `${firstName} ${lastName}`.trim()).rules.map((r) => (
+                <View key={r.id} style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+                  <Ionicons name={r.ok ? "checkmark-circle" : "ellipse-outline"} size={15} color={r.ok ? colors.sage : colors.muted} />
+                  <T variant="small" style={{ color: r.ok ? colors.text : colors.muted }}>{r.label}</T>
+                </View>
+              ))}
+            </View>
+          ) : null}
+
+          {error ? (
+            <View testID="signup-error" style={[styles.errorBox, { backgroundColor: colors.errorSoft }]}>
+              <Ionicons name="alert-circle" size={18} color={colors.terracotta} />
+              <T variant="small" style={{ color: colors.terracotta, flex: 1 }}>
+                {error}
+              </T>
+            </View>
+          ) : null}
+
+          <Pressable
+            testID="signup-marketing-consent"
+            onPress={() => setMarketingConsent((v) => !v)}
+            style={{ flexDirection: "row", gap: 10, alignItems: "flex-start", marginTop: spacing.lg }}
+          >
+            <View style={{ width: 22, height: 22, borderRadius: 6, borderWidth: 2, borderColor: marketingConsent ? colors.primary : colors.muted, backgroundColor: marketingConsent ? colors.primary : colors.surface, alignItems: "center", justifyContent: "center", marginTop: 1 }}>
+              {marketingConsent ? <Ionicons name="checkmark" size={14} color="#fff" /> : null}
+            </View>
+            <T variant="small" style={{ flex: 1, color: colors.muted }}>
+              Email me helpful aged-care guides, product updates and occasional news from Wayly. I can unsubscribe at any time.
+            </T>
+          </Pressable>
+
+          <Button
+            label="Create your account"
+            testID="signup-submit-button"
+            onPress={onSignup}
+            loading={busy}
+            style={{ marginTop: spacing.lg }}
+          />
+
+          <View style={styles.divider}>
+            <View style={[styles.line, { backgroundColor: colors.border }]} />
+            <T variant="small">or</T>
+            <View style={[styles.line, { backgroundColor: colors.border }]} />
+          </View>
+
+          <Button
+            label="Continue with Google"
+            testID="signup-google-button"
+            onPress={onGoogle}
+            loading={googleBusy}
+            variant="outline"
+            icon={LogIn}
+          />
+
+          {Platform.OS === "ios" && appleAvailable ? (
+            <AppleAuthentication.AppleAuthenticationButton
+              testID="signup-apple-button"
+              buttonType={AppleAuthentication.AppleAuthenticationButtonType.SIGN_UP}
+              buttonStyle={isDark ? AppleAuthentication.AppleAuthenticationButtonStyle.WHITE : AppleAuthentication.AppleAuthenticationButtonStyle.BLACK}
+              cornerRadius={radius.pill}
+              style={{ height: 50, marginTop: spacing.md }}
+              onPress={onApple}
+            />
+          ) : null}
+
+          <Pressable onPress={() => router.replace("/login")} style={{ marginTop: spacing.xl, alignItems: "center" }}>
+            <T variant="body">
+              Already have an account?{" "}
+              <T variant="body" style={{ color: colors.gold, fontFamily: fonts.bodySemi }}>Sign in</T>
+            </T>
+          </Pressable>
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </Screen>
+  );
+}
+
+const styles = StyleSheet.create({
+  scroll: { padding: spacing.lg, paddingBottom: spacing.xxl },
+  pwWrap: { flexDirection: "row", alignItems: "center" },
+  pwToggle: { position: "absolute", right: spacing.md, height: 52, justifyContent: "center" },
+  errorBox: {
+    flexDirection: "row",
+    gap: 8,
+    alignItems: "center",
+    borderRadius: radius.md,
+    padding: spacing.md,
+    marginTop: spacing.md,
+  },
+  divider: { flexDirection: "row", alignItems: "center", gap: spacing.md, marginVertical: spacing.lg },
+  line: { flex: 1, height: 1 },
+});

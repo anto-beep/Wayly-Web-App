@@ -1,0 +1,31 @@
+{
+  "summary": "iter267 mobile chat markdown fix verified. Ran the Expo web preview at mobile viewport (390x844), logged in as cathy@example.com, and exercised BOTH targeted flows. (1) Ask Wayly tab (/(tabs)/ask): granted Participant Profile consent, asked 'List the main Support at Home service categories in bold with a short description each.' Assistant reply rendered with 6 semibold headings (Clinical care, Independence support, Everyday living, Assistive technology and home modifications, Restorative care, End-of-life pathway) and paragraph descriptions — has_literal_asterisks=false, bolded_count=6. Citations chips render below and thumbs feedback still works. (2) Family Coordinator / Aged Care Q&A (/tool/family-coordinator, AgedCareQA.tsx): same prompt over POST /api/public/aged-care-chat — 7 semibold headings (Clinical Care, Everyday Living, Home Support, Social and Community Participation, Specialist Support, Respite, End-of-Life Care) with descriptions below — has_literal_asterisks=false, bolded_count=7. MarkdownText mobile renderer working on both surfaces; the raw ** leak reported in the bug is gone. User bubble stays plain text as intended.",
+  "platforms_tested": ["mobile"],
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "mobile": {
+      "ui_bugs": [],
+      "integration_issues": [],
+      "design_issues": [],
+      "react_native_issues": []
+    }
+  },
+  "parity_issues": [],
+  "test_report_links": [
+    "/app/test_reports/iter267_ask_answer.jpeg",
+    "/app/test_reports/iter267_fc_answer2.jpeg"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "MarkdownText.tsx handles **bold**, __bold__, - / * / • bullets, numbered lists, and strips leading # heading markers. Dependency-free, small, and covers the bug's scope. Note it does NOT support inline code (`), links [x](y), or italics — acceptable for now but flag if future prompts use them.",
+    "ask.tsx line 175: user Text and MarkdownText both share the same testID container aw2-msg-* — the assistant branch renders both a null Text AND a MarkdownText; the empty Text is fine but slightly noisy DOM. Consider wrapping only the branch you need.",
+    "AgedCareQA.tsx correctly drops the previous sanitizeAI() call; content is passed to MarkdownText directly."
+  ],
+  "updated_files": [],
+  "success_rate": {"frontend": "100%"},
+  "seed_data_creation": "None. Used cathy@example.com/testpass123. Granted Participant Profile consent on cathy's Ask Wayly session (per-participant) — this persists in DB.",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Bug iter267 (mobile chat markdown leak) is fixed and verified end-to-end on the Expo web preview at 390x844 with cathy@example.com. MarkdownText.tsx is used by ask.tsx (assistant bubbles) and AgedCareQA.tsx. The /api/public/aged-care-chat endpoint requires a bearer token in the preview (returns 401 for anon curl) — this is preview behavior, unrelated to this fix, and works fine once the user is logged in via apiFetch.",
+  "rca of the issue": "Original bug: mobile chat rendered raw markdown (** literal asterisks) because message bubbles used plain <Text>. Fix (verified): a new dependency-free MarkdownText component (/app/mobile/src/components/MarkdownText.tsx) that splits inline **bold**/__bold__ segments and renders them with fonts.bodySemi; per-line handling promotes '- '/'* '/'• ' and 'N. ' to bullet rows and strips leading '#' heading markers into semibold lines. Wired into ask.tsx (assistant branch) and AgedCareQA.tsx. Live probe confirms bolded_count>=6 with no literal '**' remaining in either surface."
+}

@@ -1,0 +1,40 @@
+{
+  "summary": "Web parity + downgrade-guard smoke on test+1777812589@example.com (Family/3 w/ 1 pending add-on). (1) /app/participants pending-addon banner renders correctly with data-testid='pending-addon-banner' and cancel button data-testid='cancel-pending-addon'; copy contains '$24.50 per fortnight' and 'not been charged'. (2) Clicking cancel invoked POST /api/billing/v2/cancel-pending-addon returning 200; banner disappeared on reload; the pending Extra2 participant was archived (visible under 'Removed Participants'). (3) Downgrade pre-flight guard on /settings/billing (NOTE: real route is /settings, not /app/settings) is implemented as a DISABLED 'Switch to Solo' button (data-testid='billing-switch-solo') plus explanatory copy 'Solo is a one-person plan. Remove other participants first…' plus a separate 'Manage participants' link (data-testid='billing-manage-participants'); no API call to /payments/schedule-downgrade or /payments/checkout is made. Account mutated: pending add-on cancelled; account now Family/2 active/0 pending — re-seed before re-running cancel test.",
+  "platforms_tested": ["web"],
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "web": {
+      "ui_bugs": [],
+      "integration_issues": [],
+      "design_issues": [
+        {"screen": "/settings/billing", "issues": ["The toast-copy variant of the downgrade guard specified in the review request ('Solo is a one-person plan' toast with a 'Manage participants' action button on click) is unreachable via the UI because the 'Switch to Solo' button is rendered disabled when >1 active participants. The changePlan(plan==='solo') branch in Settings.jsx:337-346 therefore only fires as defense-in-depth (e.g. direct call) and is not visible to the end user. UX is still safe: disabled state + inline explanatory copy on the Solo card + a separate 'Manage participants' link cover the requirement, but this is a different presentation from mobile parity (mobile shows an actual toast). Flagging for main agent to decide whether the disabled-button UX is intentional or the button should remain enabled to surface the toast."]}
+      ]
+    }
+  },
+  "parity_issues": [
+    {"flow": "Family→Solo downgrade guard", "platform": "web", "issue": "Web disables the Switch-to-Solo button; mobile (per review request) shows an actionable toast. Both prevent the API call and offer a Manage-participants path, but the presentation differs.", "expected": "Toast 'Solo is a one-person plan' with 'Manage participants' action button (parity with mobile)", "actual": "Button disabled + inline copy + separate 'Manage participants' link; toast branch is dead code in normal UI use"}
+  ],
+  "test_report_links": [
+    "/app/test_reports/iter248_participants_banner.jpeg",
+    "/app/test_reports/iter248_after_cancel.jpeg",
+    "/app/test_reports/iter248_settings_billing_fixed.jpeg",
+    "/app/test_reports/iter248_downgrade_toast_final.jpeg"
+  ],
+  "action_items": [
+    "RE-SEED test+1777812589@example.com before next run: pending add-on has been consumed and the extra participant archived. Account now Family/2 active/0 pending.",
+    "Fix review-request URL note: the Plan & Billing screen lives at /settings (not /app/settings). /app/settings returns the site 404 page.",
+    "Decide the intended UX for downgrade guard on web: keep the button disabled (current), or leave it enabled so the changePlan toast + 'Manage participants' action button fires on click (matches mobile parity). If keeping disabled, consider removing the now-unreachable toast branch in Settings.jsx:337-346 (dead code) or add a Playwright/unit test covering the direct-call path."
+  ],
+  "critical_code_review_comments": [
+    "Settings.jsx: the toast-based guard (line ~337-346) is unreachable when the Solo plan button is disabled at activeCount>1; either enable the button and rely on the toast for a clearer user-facing message, or drop the guard as dead code and rely on the disabled state + inline copy + Manage-participants link.",
+    "Participants.jsx: after cancel, refresh() and loadAll() are both awaited — good. Consider surfacing the cancel toast at a longer duration (or role='status' region) so automation can observe it."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "n/a (frontend-only)", "frontend": "100% (both flows behave correctly; guard passes functionally though presentation differs from mobile)"},
+  "test_credentials": "test+1777812589@example.com / SoloTest1! — CONSUMED (pending add-on cancelled during test)",
+  "seed_data_creation": "None — test consumed existing seed",
+  "retest_needed": false,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "Account test+1777812589@example.com no longer has a pending add-on (cancelled during iter248). To retest the Participants pending-addon banner, main agent must reseed a pending add-on for that account (or use a different Family account with an unconfirmed add-on). The downgrade guard side is easy to retest against uitest+1777810403@example.com (Solo/2 illegal state — after resolve-to-family it becomes Family/2) or any Family account with >1 active participants — /settings/billing must show the 'Switch to Solo' button as disabled with data-testid='billing-switch-solo' and the 'Manage participants' link with data-testid='billing-manage-participants'.",
+  "rca of the issue": ""
+}

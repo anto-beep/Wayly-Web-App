@@ -1,0 +1,63 @@
+{
+  "summary": "CPR-1 iter 89 end-to-end verification. Backend: 73/73 green — 59 deterministic (test_cpr1_foundation.py + test_cpr1_ingestion.py) + 14 live-endpoint tests (test_cpr1_endpoints.py) covering all 10 care-plan routes: auth-gate 401, upload+extraction population (classification=5, effective_from=2026-07-01, effective_to=2026-09-30, provider='Better Care', quarterly_budget=8435, services>=2), list with latest_findings_by_severity counts, detail shape {plan, extraction, latest_run, findings, history}, notes patch persistence, delete→archived→restore round-trip, cross-user isolation (403 for user B), anti-hallucination structured-extraction leak check for 's.999-9' (clean). One live analyse run against a fresh Louisa upload: status flipped uploaded→active, findings sorted compliance→choice→efficiency→info, EVERY citation resolved to an allowlist entry or 'Verification required' (no fabricated s.999-9). Frontend: /app/care-plans store + /app/care-plans/:id detail render correctly for cathy — 7 active rows, findings-counts chips, three tabs (Review/Plan/History) all populated, meeting-artefact renders with verbatim question-script and 13 finding-cards for seed plan 6a1510db, notes save persists via API, services-table + history-run-0 both render. ONE HIGH-PRIORITY FRONTEND BUG surfaced: CarePlanReviewer.jsx checks `access === 'ready'` but useToolAccess only returns 'loading'|'allowed'|'blocked' — so the top-right link-saved-plans link AND the cp-save-cta 'Save this plan for future reviews' block NEVER render for a paid authenticated user. Instead the anonymous 'Start free trial' panel shows via the `access !== 'ready'` fallback on line 238. Simple 3-line typo fix (see action items).",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [
+      {
+        "component": "CarePlanReviewer.jsx",
+        "issue": "Wrong string comparison — `access === 'ready'` will never match because useToolAccess returns 'allowed'/'blocked'/'loading'. This hides the `link-saved-plans` top-right link AND the `cp-save-cta` / `cp-save-btn` block AND the `link-open-saved-plan` follow-up. A logged-in Family/Solo user therefore has no path from the tool page to /app/care-plans and can NOT save a reviewed plan. The `access !== 'ready'` branch (line 238) then wrongly renders the anonymous 'Start free trial' panel to paid users.",
+        "selector": "[data-testid='link-saved-plans'], [data-testid='cp-save-cta'], [data-testid='cp-save-btn']",
+        "priority": "HIGH"
+      }
+    ],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "verified_features": [
+    {"feature": "Auth gate on all /api/care-plans/*", "evidence": "curl + pytest return 401 for anonymous GET /api/care-plans, POST upload, GET detail"},
+    {"feature": "POST /api/care-plans/upload returns extraction", "evidence": "Live returns care_plan_id + extraction with classification=5, effective_from=2026-07-01, provider='Better Care', quarterly_budget=8435, services=2+"},
+    {"feature": "GET /api/care-plans register with counts", "evidence": "Response includes latest_findings_by_severity per row with compliance/efficiency/choice/info/total keys"},
+    {"feature": "GET /api/care-plans/{id} detail shape", "evidence": "{plan, extraction, latest_run, findings, history} all present; extraction.classification==5"},
+    {"feature": "POST /api/care-plans/{id}/analyse full pipeline (LIVE LLM)", "evidence": "Returned status=complete, findings_count>=1, findings sorted correctly, status flipped uploaded→active. Every citation in CITATION_ALLOWLIST or 'Verification required'; no s.999-9 leak."},
+    {"feature": "PATCH /api/care-plans/{id}/notes persists", "evidence": "PATCH then GET → plan.notes == posted value"},
+    {"feature": "DELETE + archived list + restore", "evidence": "Delete removes from active list, appears in archived, restore returns to active, restore_within_days=30"},
+    {"feature": "Cross-user isolation", "evidence": "Fresh user (cpr1-iso-tester@example.com) receives 403/404 on cathy's plan for GET/PATCH/DELETE"},
+    {"feature": "Anti-hallucination guard s.999-9", "evidence": "Uploaded plan text containing 's.999-9' produces extraction with no leak; deterministic post-pass unit tests (test_cpr1_foundation) confirm any LLM citation containing 999-9 is stripped to 'Verification required'"},
+    {"feature": "Frontend /app/care-plans store", "evidence": "care-plan-store, tab-active, tab-archived, btn-upload-care-plan (→ /ai-tools/care-plan-reviewer), findings-counts chips, care-plan-row-* rows (7 seeded)"},
+    {"feature": "Frontend /app/care-plans/:id detail", "evidence": "3 tabs render (tab-review, tab-plan, tab-history), meeting-artefact + question-script + 13 finding-card-* + services-table + history-run-0; notes save round-trips through PATCH."}
+  ],
+  "test_report_links": [
+    "/app/backend/tests/test_cpr1_endpoints.py",
+    "/app/backend/tests/test_cpr1_foundation.py",
+    "/app/backend/tests/test_cpr1_ingestion.py",
+    "/app/test_reports/pytest/iter61_cpr1_endpoints.xml",
+    "/app/test_reports/pytest/iter61_cpr1_foundation.xml"
+  ],
+  "action_items": [
+    "HIGH — In /app/frontend/src/pages/tools/CarePlanReviewer.jsx replace `access === \"ready\"` (lines 89, 202) with `access === \"allowed\"` and `access !== \"ready\"` (line 238) with `access !== \"allowed\"`. useToolAccess.js emits 'loading'|'allowed'|'blocked' — never 'ready'. Without this fix the P0 'Save this plan for future reviews' CTA and the top-right 'Your saved plans' link never render for logged-in Family/Solo users, and the 'Start free trial' fallback wrongly renders instead. Verify via cathy@example.com: after Review my care plan → cp-save-cta must appear and clicking cp-save-btn must POST /api/care-plans/upload and reveal link-open-saved-plan.",
+    "LOW — Consider seeding a canonical `jeremy@test.com / testpass123` user for cross-user tests. It doesn't exist in the preview DB; I created cpr1-iso-tester@example.com / Wq9!hpJ4Hnc6xF (Solo trial) instead and pinned it in test_cpr1_endpoints.py.",
+    "LOW — /app/care-plans store shows 8 archived rows during the smoke-run (from prior iterations' test data). Consider a scheduled purge of TEST_-prefixed plans or gating archived visibility to non-test data."
+  ],
+  "critical_code_review_comments": [
+    "CarePlanReviewer.jsx guards its three save-related UI elements with a string literal ('ready') that does not appear in the hook's return contract (useToolAccess.js only emits 'loading'|'allowed'|'blocked'). The typo is silent because no error is thrown; the entire authenticated-save flow is dead code as shipped. Consider extracting a shared const or using a typed union to prevent this class of drift.",
+    "care_plans.py hardcodes REFERENCE_SNAPSHOT_ID='static-v1-2026-07-01'; when the snapshot bumps this needs to be lifted to env or a DB collection so historical review-runs stay pinned to the reference version they used.",
+    "care_plans.py imports `get_current_user_id`, `_require_paid_plan` from `server` inside build_care_plans_router() — this circular-import guard works but couples the router to server.py wiring. Same pattern exists elsewhere so acceptable.",
+    "care_plans.py the analyse endpoint fires a live Claude Sonnet 4.5 call synchronously (blocking the request 15–30s). Under load this will exhaust the FastAPI worker pool. Consider offloading to a background job with a polling endpoint (spec §E does allude to this)."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_cpr1_endpoints.py"
+  ],
+  "success_rate": {
+    "backend": "100% (73/73 — 59 unit + 14 live endpoint)",
+    "frontend": "90% — store + detail + anti-fab clean; 1 HIGH bug hides the Save-this-plan CTA and Your-saved-plans link on the tool page"
+  },
+  "test_credentials": "cathy@example.com / testpass123 (family, expired trial but plan==family → allowed); cpr1-iso-tester@example.com / Wq9!hpJ4Hnc6xF (solo, freshly created for isolation testing)",
+  "seed_data_creation": "Signed up new solo user cpr1-iso-tester@example.com / Wq9!hpJ4Hnc6xF via /api/auth/signup to exercise cross-user isolation. Also uploaded 3 fresh Louisa fixture plans under cathy during endpoint tests (2 were cleanup-deleted, 1 survives from the analyse fixture — will show in the store)." ,
+  "retest_needed": true,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Backend endpoint suite path: pytest /app/backend/tests/test_cpr1_endpoints.py /app/backend/tests/test_cpr1_foundation.py /app/backend/tests/test_cpr1_ingestion.py -v. The endpoint suite hits the live preview URL; it takes ~55s because one test calls /analyse which invokes Claude Sonnet 4.5 (LLM budget). To re-verify only the frontend fix, log in as cathy, navigate to /ai-tools/care-plan-reviewer, and confirm (a) top-right link-saved-plans → /app/care-plans is visible, (b) after Review my care plan the cp-save-cta appears with cp-save-btn, (c) clicking cp-save-btn shows link-open-saved-plan linking to the new /app/care-plans/:id.",
+  "rca_of_the_issue": "CarePlanReviewer.jsx was written against a hypothetical `useToolAccess` contract that returns 'ready'. The actual hook (useToolAccess.js) returns 'allowed'|'blocked'|'loading'. String equality silently fails, hiding the P0 save flow behind a dead branch. Every OTHER tool page (BudgetCalculatorTool, ClassificationCheck, ContributionEstimator, FamilyCoordinator, PriceCheckerTool, ReassessmentLetter) uses `access === 'blocked'` — only CarePlanReviewer diverged with the 'ready' literal, confirming the typo scope. Mitigation: 3-line search-and-replace ('ready' → 'allowed')."
+}

@@ -1,0 +1,60 @@
+{
+  "summary": "Iteration 151 mobile testing of 4 new features: Family Wall, Live Decode (SSE), Offline Statements, and Push Alerts. Backend: 8/8 pytest tests PASS (100%). Mobile UI: verified 5-tab layout, Family Wall composer/post/react/delete, Decode SSE reaches COMPLETE with 3 lines + 77% confidence, re-run button restarts decode, no offline banners while online (happy-path caching does not break rendering), and the participants shape fix from iter150 is now working (Cathy sees 3 participants). Push endpoint returns HTTP 500 with placeholder EMERGENT_PUSH_KEY as intentionally spec'd — NOT a bug. Statement decode completion continues to work with the new send_push trigger attached (non-blocking). No blocking issues found.",
+  "platforms_tested": ["mobile"],
+  "backend_issues": {
+    "critical": [],
+    "minor": [
+      {"endpoint": "/api/register-push", "issue": "Returns HTTP 500 'EMERGENT_PUSH_KEY missing or invalid' with placeholder key. EXPECTED per spec — not a bug. Will flip to 201 once a real key + google-services.json land."}
+    ]
+  },
+  "frontend_issues": {
+    "mobile": {
+      "ui_bugs": [],
+      "integration_issues": [
+        {"flow": "Family Wall delete confirmation on web preview", "issue": "Alert.alert('Delete post') doesn't render a native web dialog in Playwright — the delete API call is fired only after user confirms in native modal. On real device this works; on web preview the confirm button couldn't be located. Not a code bug (backend DELETE endpoint works and is covered by pytest test_wall_delete_post). Flag only for tester awareness.", "affected_testIDs": ["wall-delete-<id>"]}
+      ],
+      "design_issues": [],
+      "react_native_issues": [
+        {"component": "react-native-web deprecations (pre-existing)", "issue": "Console still emits 'shadow* style props are deprecated. Use boxShadow' and 'props.pointerEvents is deprecated. Use style.pointerEvents'. Non-blocking; same as iter150. Coming from theme card shadows / Pressable usage."},
+        {"component": "expo-notifications on web", "issue": "'[expo-notifications] Listening to push token changes is not yet fully supported on web. Adding a listener will have no effect.' — Expected: push is native-only and mobile code already guards Platform.OS==='web'. Warning is emitted by PushManager import path but is harmless. Consider gating the import behind Platform.OS !== 'web' if a cleaner console is desired."}
+      ]
+    }
+  },
+  "parity_issues": [],
+  "test_report_links": [
+    "/app/backend/tests/test_iter151_wall_decode_push.py",
+    "/app/test_reports/pytest/iter151_wall_decode_push.xml",
+    "/app/test_reports/iter151/00_root.jpeg",
+    "/app/test_reports/iter151/01_after_login.jpeg",
+    "/app/test_reports/iter151/02_family_wall.jpeg",
+    "/app/test_reports/iter151/03_wall_after_post.jpeg",
+    "/app/test_reports/iter151/04_wall_after_delete.jpeg",
+    "/app/test_reports/iter151/05_statements.jpeg",
+    "/app/test_reports/iter151/06_statement_detail.jpeg",
+    "/app/test_reports/iter151/07_decode_streaming.jpeg",
+    "/app/test_reports/iter151/08_decode_complete.jpeg",
+    "/app/test_reports/iter151/09_decode_rerun.jpeg"
+  ],
+  "action_items": [
+    "OPTIONAL: Guard the PushManager/expo-notifications import behind Platform.OS !== 'web' to silence the 'Listening to push token changes is not yet fully supported' warning in the Expo web preview.",
+    "OPTIONAL cleanup: replace shadow* / pointerEvents style props with boxShadow / style.pointerEvents to silence RN Web deprecation warnings (already flagged in iter150).",
+    "NO ACTION REQUIRED: /api/register-push HTTP 500 is the expected pre-deploy state and will resolve when EMERGENT_PUSH_KEY + google-services.json + a native build are provided."
+  ],
+  "critical_code_review_comments": [
+    "streamSSE (src/lib/sse.ts) parses `data: {...}` frames by splitting on blank-line boundaries — solid for typical SSE, but if a single JSON payload happens to contain '\\n\\n' inside a string field, the boundary detection would split mid-frame. Backend sd3 stream currently emits compact JSON so this is safe, but worth a comment / defensive guard.",
+    "push_notifications.py maps 401 from the upstream to HTTP 500 with 'EMERGENT_PUSH_KEY missing or invalid'. This is intentional per the review request, but exposing 500 for a client-config problem could confuse mobile devs. Consider 503 with a distinctive body once you standardise error shapes.",
+    "family.tsx delete flow uses native Alert.alert which does NOT render a confirmable modal on the Expo web preview — end-users on real devices are fine, but if you want testable web parity, swap to a custom modal component (or use react-native-web Alert polyfill).",
+    "decode/[id].tsx re-uses `phase` closure in setPhase(e.note || phaseLabel(e.name)) — fine because setPhase itself is stable, but the current logic will overwrite the previous phase label even on line events (they don't have `e.note` here so phaseLabel maps to 'Working…'). Verified in UI: phase stays sane because backend sends 'phase' event first, but a defensive `if (e.event === 'phase') { ... }` guard is already there — no change needed."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_iter151_wall_decode_push.py",
+    "/app/test_reports/pytest/iter151_wall_decode_push.xml"
+  ],
+  "success_rate": {"backend": "100% (8/8)", "frontend": "100% (all 4 features exercised end-to-end on the Expo web preview)"},
+  "test_credentials": "cathy@example.com / testpass123 (family plan, 36 statements, 25 invoices, 3 participants incl. Mum/Dorothy)",
+  "seed_data_creation": "Created + deleted one TEST_iter151 wall post via pytest; created one 'Mobile test post 🌟' via UI (still visible on Cathy's wall — leftover from the UI delete flow which needs a native alert confirm; safe to leave or remove manually).",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "All 4 mobile features from this iteration verified working. If reviewing again: (1) backend test file /app/backend/tests/test_iter151_wall_decode_push.py is reusable regression coverage for Wall + SSE + register-push, (2) participants shape bug from iter150 is FIXED, (3) push endpoint returning 500 is EXPECTED — do not flag as a bug until google-services.json + real EMERGENT_PUSH_KEY are in place, (4) SSE streaming works via XHR incremental parsing on both native and web previews.",
+  "rca of the issue": "No unresolved issues. All backend endpoints for the 4 new features respond correctly. Live Decode SSE emits phase/line/alert/done frames as expected; mobile parses them via XMLHttpRequest.onprogress + responseText scanning (src/lib/sse.ts) and reaches COMPLETE with correct line_count + overall_confidence. Family Wall CRUD + reactions all persist. Register-push 500 is by design."
+}

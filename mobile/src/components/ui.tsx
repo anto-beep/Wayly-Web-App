@@ -1,0 +1,702 @@
+import React from "react";
+import {
+  ActivityIndicator,
+  KeyboardAvoidingView,
+  Modal,
+  Platform,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TextInputProps,
+  TextStyle,
+  View,
+  ViewStyle,
+} from "react-native";
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
+import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, ChevronDown, Check, LucideIcon } from "lucide-react-native";
+import { fonts, radius, spacing, typeScale } from "@/src/theme/tokens";
+import { useTheme } from "@/src/theme/ThemeContext";
+
+export function Screen({
+  children,
+  style,
+  edges = ["top"],
+}: {
+  children: React.ReactNode;
+  style?: ViewStyle;
+  edges?: ("top" | "bottom" | "left" | "right")[];
+}) {
+  const { colors } = useTheme();
+  return (
+    <SafeAreaView style={[{ flex: 1, backgroundColor: colors.bg }, style]} edges={edges}>
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+      >
+        {children}
+      </KeyboardAvoidingView>
+    </SafeAreaView>
+  );
+}
+
+export function AppHeader({
+  title,
+  subtitle,
+  onBack,
+  right,
+}: {
+  title?: string;
+  subtitle?: string;
+  onBack?: () => void;
+  right?: React.ReactNode;
+}) {
+  const { colors } = useTheme();
+  const insets = useSafeAreaInsets();
+  return (
+    <View style={[styles.header, { backgroundColor: colors.bg, paddingTop: insets.top + 8 }]}>
+      {onBack ? (
+        <Pressable
+          testID="header-back-button"
+          onPress={onBack}
+          hitSlop={12}
+          style={[styles.backBtn, { backgroundColor: colors.surface, borderColor: colors.border }]}
+        >
+          <ChevronLeft size={24} color={colors.heading} />
+        </Pressable>
+      ) : null}
+      <View style={{ flex: 1 }}>
+        {title ? (
+          <Text style={[styles.headerTitle, { color: colors.heading }]} numberOfLines={2}>
+            {title}
+          </Text>
+        ) : null}
+        {title && subtitle ? (
+          <Text style={[styles.headerSubtitle, { color: colors.muted }]} numberOfLines={2}>
+            {subtitle}
+          </Text>
+        ) : null}
+      </View>
+      {right}
+    </View>
+  );
+}
+
+// Renders a money amount with a NORMAL single-bar "$" (body font) while keeping
+// the digits in the Fraunces heading font. Fraunces' default "$" glyph has a
+// double vertical bar which users mistake for a double dollar sign.
+export function MoneyBig({
+  value,
+  whole,
+  size = 34,
+  color,
+  testID,
+}: {
+  value: number | null | undefined;
+  whole?: boolean;
+  size?: number;
+  color?: string;
+  testID?: string;
+}) {
+  const { colors } = useTheme();
+  const c = color || colors.text;
+  const v = typeof value === "number" && !isNaN(value) ? value : 0;
+  const neg = v < 0;
+  const digits = Math.abs(v).toLocaleString("en-AU", {
+    minimumFractionDigits: whole ? 0 : 2,
+    maximumFractionDigits: whole ? 0 : 2,
+  });
+  return (
+    <Text testID={testID} style={{ fontFamily: fonts.heading, fontSize: size, color: c }}>
+      {neg ? "−" : ""}
+      <Text style={{ fontFamily: fonts.bodySemi, fontSize: size * 0.8, color: c }}>$</Text>
+      {digits}
+    </Text>
+  );
+}
+
+export function Card({
+  children,
+  style,
+  testID,
+}: {
+  children: React.ReactNode;
+  style?: ViewStyle;
+  testID?: string;
+}) {
+  const { colors, shadow } = useTheme();
+  return (
+    <View
+      testID={testID}
+      style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.border }, shadow.card, style]}
+    >
+      {children}
+    </View>
+  );
+}
+
+type BtnVariant = "primary" | "secondary" | "ghost" | "outline";
+export function Button({
+  label,
+  onPress,
+  variant = "primary",
+  loading,
+  disabled,
+  icon: Icon,
+  testID,
+  style,
+  bg,
+  fg,
+}: {
+  label: string;
+  onPress: () => void;
+  variant?: BtnVariant;
+  loading?: boolean;
+  disabled?: boolean;
+  icon?: LucideIcon;
+  testID?: string;
+  style?: ViewStyle;
+  bg?: string;
+  fg?: string;
+}) {
+  const { colors } = useTheme();
+  const isDisabled = disabled || loading;
+  const palette: Record<BtnVariant, { bg: string; fg: string; border?: string }> = {
+    primary: { bg: colors.cta, fg: "#fff" },
+    secondary: { bg: colors.gold, fg: "#fff" },
+    ghost: { bg: "transparent", fg: colors.heading },
+    outline: { bg: "transparent", fg: colors.heading, border: colors.primary },
+  };
+  const p = { ...palette[variant] };
+  if (bg) p.bg = bg;
+  if (fg) p.fg = fg;
+  return (
+    <Pressable
+      testID={testID}
+      onPress={onPress}
+      disabled={isDisabled}
+      style={({ pressed }) => [
+        styles.btn,
+        variant === "primary" || variant === "secondary"
+          ? (Platform.select({
+              web: { boxShadow: `0px 8px 14px ${p.bg}59` },
+              default: { shadowColor: p.bg, shadowOpacity: 0.35, shadowRadius: 14, shadowOffset: { width: 0, height: 8 }, elevation: 4 },
+            }) as ViewStyle)
+          : null,
+        { backgroundColor: p.bg, opacity: isDisabled ? 0.55 : 1, transform: [{ scale: pressed && !isDisabled ? 0.97 : 1 }] },
+        p.border ? { borderWidth: 1.5, borderColor: p.border } : null,
+        style,
+      ]}
+    >
+      {loading ? (
+        <ActivityIndicator color={p.fg} />
+      ) : (
+        <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+          {Icon ? <Icon size={20} color={p.fg} /> : null}
+          <Text style={[styles.btnLabel, { color: p.fg }]}>{label}</Text>
+        </View>
+      )}
+    </Pressable>
+  );
+}
+
+export function Field({
+  label,
+  required,
+  optional,
+  style,
+  ...props
+}: TextInputProps & { label?: string; required?: boolean; optional?: boolean; style?: ViewStyle }) {
+  const { colors } = useTheme();
+  return (
+    <View style={style}>
+      {label ? (
+        <View style={{ flexDirection: "row", alignItems: "center", gap: 6, marginBottom: 6 }}>
+          <Text style={[styles.fieldLabel, { color: colors.text, marginBottom: 0, flex: 1 }]}>{label}</Text>
+          {required ? <Text style={{ fontFamily: fonts.bodySemi, fontSize: 12, color: colors.gold }}>Required</Text> : null}
+          {optional ? <Text style={{ fontFamily: fonts.body, fontSize: 12, color: colors.muted }}>Optional</Text> : null}
+        </View>
+      ) : null}
+      <TextInput
+        placeholderTextColor={colors.muted}
+        style={[styles.input, { borderColor: colors.border, backgroundColor: colors.surface, color: colors.text }]}
+        {...props}
+      />
+    </View>
+  );
+}
+
+const CAL_MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+const CAL_WEEKDAYS = ["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"];
+const toISO = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+
+// A clean, roomy month calendar used on BOTH web and native (no platform
+// divergence). Tap the month or year in the header to jump quickly — essential
+// for dates of birth that are decades back. Emits a Date on selection.
+function CalendarSheet({
+  visible,
+  onClose,
+  value,
+  onSelect,
+  label,
+  minDate,
+  maxDate,
+  testID,
+}: {
+  visible: boolean;
+  onClose: () => void;
+  value: Date | null;
+  onSelect: (d: Date) => void;
+  label?: string;
+  minDate?: Date;
+  maxDate?: Date;
+  testID?: string;
+}) {
+  const { colors } = useTheme();
+  const [view, setView] = React.useState(() => {
+    const i = value || maxDate || new Date();
+    return { y: i.getFullYear(), m: i.getMonth() };
+  });
+  const [mode, setMode] = React.useState<"days" | "years" | "months">("days");
+
+  React.useEffect(() => {
+    if (visible) {
+      const i = value || maxDate || new Date();
+      setView({ y: i.getFullYear(), m: i.getMonth() });
+      setMode("days");
+    }
+  }, [visible]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const maxYear = (maxDate || new Date()).getFullYear();
+  const minYear = minDate ? minDate.getFullYear() : 1915;
+  const years: number[] = [];
+  for (let y = maxYear; y >= minYear; y--) years.push(y);
+
+  const startOffset = (new Date(view.y, view.m, 1).getDay() + 6) % 7; // Monday-first
+  const daysInMonth = new Date(view.y, view.m + 1, 0).getDate();
+  const cells: (number | null)[] = [
+    ...Array(startOffset).fill(null),
+    ...Array.from({ length: daysInMonth }, (_, i) => i + 1),
+  ];
+  while (cells.length % 7 !== 0) cells.push(null);
+
+  const isDisabled = (d: number) => {
+    const dt = new Date(view.y, view.m, d);
+    if (maxDate && dt > maxDate) return true;
+    if (minDate && dt < minDate) return true;
+    return false;
+  };
+  const isSelected = (d: number) =>
+    !!value && value.getFullYear() === view.y && value.getMonth() === view.m && value.getDate() === d;
+
+  const prevMonth = () => setView((v) => (v.m === 0 ? { y: v.y - 1, m: 11 } : { y: v.y, m: v.m - 1 }));
+  const nextMonth = () => setView((v) => (v.m === 11 ? { y: v.y + 1, m: 0 } : { y: v.y, m: v.m + 1 }));
+
+  const navBtn: ViewStyle = { width: 40, height: 40, borderRadius: radius.pill, alignItems: "center", justifyContent: "center", backgroundColor: colors.surface2 };
+
+  return (
+    <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
+      <Pressable style={{ flex: 1, justifyContent: "flex-end", backgroundColor: colors.overlay }} onPress={onClose}>
+        <Pressable
+          testID={testID ? `${testID}-sheet` : undefined}
+          style={{ backgroundColor: colors.surface, borderTopLeftRadius: radius.xl, borderTopRightRadius: radius.xl, paddingHorizontal: spacing.lg, paddingTop: spacing.lg, paddingBottom: Platform.OS === "ios" ? spacing.xxl : spacing.lg }}
+          onPress={(e) => e.stopPropagation()}
+        >
+          {label ? (
+            <Text style={{ fontFamily: fonts.headingSemi, fontSize: 18, color: colors.heading, marginBottom: spacing.md }}>{label}</Text>
+          ) : null}
+
+          <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: spacing.md }}>
+            <Pressable testID={testID ? `${testID}-prev` : undefined} onPress={prevMonth} hitSlop={8} style={navBtn}>
+              <ChevronLeft size={22} color={colors.heading} />
+            </Pressable>
+            <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
+              <Pressable testID={testID ? `${testID}-month-toggle` : undefined} onPress={() => setMode((x) => (x === "months" ? "days" : "months"))}>
+                <Text style={{ fontFamily: fonts.bodySemi, fontSize: 17, color: colors.text }}>{CAL_MONTHS[view.m]}</Text>
+              </Pressable>
+              <Pressable testID={testID ? `${testID}-year-toggle` : undefined} onPress={() => setMode((x) => (x === "years" ? "days" : "years"))}>
+                <Text style={{ fontFamily: fonts.bodySemi, fontSize: 17, color: colors.heading }}>{view.y}</Text>
+              </Pressable>
+            </View>
+            <Pressable testID={testID ? `${testID}-next` : undefined} onPress={nextMonth} hitSlop={8} style={navBtn}>
+              <ChevronRight size={22} color={colors.heading} />
+            </Pressable>
+          </View>
+
+          {mode === "years" ? (
+            <ScrollView style={{ maxHeight: 300 }} contentContainerStyle={{ flexDirection: "row", flexWrap: "wrap", gap: spacing.sm }}>
+              {years.map((y) => {
+                const on = y === view.y;
+                return (
+                  <Pressable key={y} testID={testID ? `${testID}-year-${y}` : undefined} onPress={() => { setView((v) => ({ ...v, y })); setMode("days"); }}
+                    style={{ width: "30%", paddingVertical: 12, borderRadius: radius.md, alignItems: "center", backgroundColor: on ? colors.primary : colors.surface2 }}>
+                    <Text style={{ fontFamily: on ? fonts.bodySemi : fonts.body, fontSize: 15, color: on ? "#fff" : colors.text }}>{y}</Text>
+                  </Pressable>
+                );
+              })}
+            </ScrollView>
+          ) : mode === "months" ? (
+            <View style={{ flexDirection: "row", flexWrap: "wrap", gap: spacing.sm }}>
+              {CAL_MONTHS.map((mn, i) => {
+                const on = i === view.m;
+                return (
+                  <Pressable key={mn} testID={testID ? `${testID}-month-${i}` : undefined} onPress={() => { setView((v) => ({ ...v, m: i })); setMode("days"); }}
+                    style={{ width: "30%", paddingVertical: 14, borderRadius: radius.md, alignItems: "center", backgroundColor: on ? colors.primary : colors.surface2 }}>
+                    <Text style={{ fontFamily: on ? fonts.bodySemi : fonts.body, fontSize: 14, color: on ? "#fff" : colors.text }}>{mn.slice(0, 3)}</Text>
+                  </Pressable>
+                );
+              })}
+            </View>
+          ) : (
+            <>
+              <View style={{ flexDirection: "row", marginBottom: 8 }}>
+                {CAL_WEEKDAYS.map((w) => (
+                  <View key={w} style={{ flex: 1, alignItems: "center" }}>
+                    <Text style={{ fontFamily: fonts.bodySemi, fontSize: 12, color: colors.muted }}>{w}</Text>
+                  </View>
+                ))}
+              </View>
+              <View style={{ flexDirection: "row", flexWrap: "wrap" }}>
+                {cells.map((d, idx) =>
+                  d === null ? (
+                    <View key={`e-${idx}`} style={{ width: `${100 / 7}%`, height: 44 }} />
+                  ) : (
+                    <View key={`d-${d}`} style={{ width: `${100 / 7}%`, height: 44, alignItems: "center", justifyContent: "center" }}>
+                      <Pressable
+                        testID={testID ? `${testID}-day-${d}` : undefined}
+                        disabled={isDisabled(d)}
+                        onPress={() => onSelect(new Date(view.y, view.m, d))}
+                        style={{ width: 40, height: 40, borderRadius: 20, alignItems: "center", justifyContent: "center", backgroundColor: isSelected(d) ? colors.primary : colors.surface }}
+                      >
+                        <Text style={{ fontFamily: isSelected(d) ? fonts.bodySemi : fonts.body, fontSize: 16, color: isDisabled(d) ? colors.border : isSelected(d) ? "#fff" : colors.text }}>{d}</Text>
+                      </Pressable>
+                    </View>
+                  )
+                )}
+              </View>
+            </>
+          )}
+
+          <Pressable testID={testID ? `${testID}-close` : undefined} onPress={onClose} style={{ alignSelf: "flex-end", paddingVertical: 12, paddingHorizontal: 8, marginTop: spacing.sm }}>
+            <Text style={{ fontFamily: fonts.bodySemi, fontSize: 15, color: colors.heading }}>Close</Text>
+          </Pressable>
+        </Pressable>
+      </Pressable>
+    </Modal>
+  );
+}
+
+// Date field with an explicit Australian DD/MM/YYYY display that opens a clean,
+// roomy month calendar (shared web + native). Stores/emits ISO (YYYY-MM-DD) so
+// the backend contract is unchanged.
+export function DateField({
+  label,
+  required,
+  optional,
+  value,
+  onChange,
+  testID,
+  placeholder = "DD/MM/YYYY",
+  minimumDate,
+  maximumDate,
+}: {
+  label?: string;
+  required?: boolean;
+  optional?: boolean;
+  value?: string; // ISO yyyy-mm-dd
+  onChange: (iso: string) => void;
+  testID?: string;
+  placeholder?: string;
+  minimumDate?: Date;
+  maximumDate?: Date;
+}) {
+  const { colors } = useTheme();
+  const [show, setShow] = React.useState(false);
+  const parsed = value && /^\d{4}-\d{2}-\d{2}$/.test(value) ? new Date(`${value}T00:00:00`) : null;
+  const display = parsed
+    ? `${String(parsed.getDate()).padStart(2, "0")}/${String(parsed.getMonth() + 1).padStart(2, "0")}/${parsed.getFullYear()}`
+    : "";
+  const labelRow = label ? (
+    <View style={{ flexDirection: "row", alignItems: "center", gap: 6, marginBottom: 6 }}>
+      <Text style={[styles.fieldLabel, { color: colors.text, marginBottom: 0, flex: 1 }]}>{label}</Text>
+      {required ? <Text style={{ fontFamily: fonts.bodySemi, fontSize: 12, color: colors.gold }}>Required</Text> : null}
+      {optional ? <Text style={{ fontFamily: fonts.body, fontSize: 12, color: colors.muted }}>Optional</Text> : null}
+    </View>
+  ) : null;
+  return (
+    <View>
+      {labelRow}
+      <Pressable
+        testID={testID}
+        onPress={() => setShow(true)}
+        style={[styles.input, { borderColor: colors.border, backgroundColor: colors.surface, flexDirection: "row", alignItems: "center", justifyContent: "space-between" }]}
+      >
+        <Text style={{ fontFamily: fonts.body, fontSize: 15, color: display ? colors.text : colors.muted }}>{display || placeholder}</Text>
+        <CalendarIcon size={18} color={colors.muted} />
+      </Pressable>
+      <CalendarSheet
+        visible={show}
+        onClose={() => setShow(false)}
+        value={parsed}
+        label={label || "Select a date"}
+        minDate={minimumDate}
+        maxDate={maximumDate || new Date()}
+        onSelect={(d) => { onChange(toISO(d)); setShow(false); }}
+        testID={testID}
+      />
+    </View>
+  );
+}
+
+// Dropdown select — mirrors a web <select>. Renders a tappable field that
+// opens a bottom-sheet list of options. Emits the chosen option's value.
+export function Select({
+  label,
+  required,
+  optional,
+  value,
+  onChange,
+  options,
+  placeholder = "Choose one",
+  testID,
+}: {
+  label?: string;
+  required?: boolean;
+  optional?: boolean;
+  value?: string;
+  onChange: (value: string) => void;
+  options: { value: string; label: string }[];
+  placeholder?: string;
+  testID?: string;
+}) {
+  const { colors } = useTheme();
+  const [open, setOpen] = React.useState(false);
+  const selected = options.find((o) => o.value === value);
+  return (
+    <View>
+      {label ? (
+        <View style={{ flexDirection: "row", alignItems: "center", gap: 6, marginBottom: 6 }}>
+          <Text style={[styles.fieldLabel, { color: colors.text, marginBottom: 0, flex: 1 }]}>{label}</Text>
+          {required ? <Text style={{ fontFamily: fonts.bodySemi, fontSize: 12, color: colors.gold }}>Required</Text> : null}
+          {optional ? <Text style={{ fontFamily: fonts.body, fontSize: 12, color: colors.muted }}>Optional</Text> : null}
+        </View>
+      ) : null}
+      <Pressable
+        testID={testID}
+        onPress={() => setOpen(true)}
+        style={[styles.input, { borderColor: colors.border, backgroundColor: colors.surface, flexDirection: "row", alignItems: "center", justifyContent: "space-between" }]}
+      >
+        <Text style={{ fontFamily: fonts.body, fontSize: 15, color: selected ? colors.text : colors.muted }}>{selected ? selected.label : placeholder}</Text>
+        <ChevronDown size={18} color={colors.muted} />
+      </Pressable>
+      <Modal visible={open} transparent animationType="slide" onRequestClose={() => setOpen(false)}>
+        <Pressable style={{ flex: 1, justifyContent: "flex-end", backgroundColor: colors.overlay }} onPress={() => setOpen(false)}>
+          <Pressable
+            style={{ backgroundColor: colors.surface, borderTopLeftRadius: radius.xl, borderTopRightRadius: radius.xl, paddingVertical: spacing.md, paddingBottom: Platform.OS === "ios" ? spacing.xxl : spacing.lg, maxHeight: "70%" }}
+            onPress={(e) => e.stopPropagation()}
+          >
+            {label ? (
+              <Text style={{ fontFamily: fonts.headingSemi, fontSize: 18, color: colors.heading, paddingHorizontal: spacing.lg, paddingBottom: spacing.sm }}>{label}</Text>
+            ) : null}
+            <ScrollView keyboardShouldPersistTaps="handled">
+              {options.map((o) => {
+                const active = o.value === value;
+                return (
+                  <Pressable
+                    key={o.value || "__empty"}
+                    testID={testID ? `${testID}-option-${o.value || "empty"}` : undefined}
+                    onPress={() => { onChange(o.value); setOpen(false); }}
+                    style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingHorizontal: spacing.lg, paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: colors.border }}
+                  >
+                    <Text style={{ fontFamily: active ? fonts.bodySemi : fonts.body, fontSize: 16, color: active ? colors.heading : colors.text }}>{o.label}</Text>
+                    {active ? <Check size={18} color={colors.heading} /> : null}
+                  </Pressable>
+                );
+              })}
+            </ScrollView>
+          </Pressable>
+        </Pressable>
+      </Modal>
+    </View>
+  );
+}
+
+export function Badge({
+  label,
+  tone = "neutral",
+  testID,
+}: {
+  label: string;
+  tone?: "neutral" | "success" | "alert" | "error" | "brand";
+  testID?: string;
+}) {
+  const { colors } = useTheme();
+  const tones: Record<string, { bg: string; fg: string }> = {
+    neutral: { bg: colors.surface2, fg: colors.muted },
+    success: { bg: colors.successSoft, fg: colors.success },
+    alert: { bg: colors.alertSoft, fg: colors.alert },
+    error: { bg: colors.errorSoft, fg: colors.terracotta },
+    brand: { bg: colors.sageSoft, fg: colors.sage },
+  };
+  const t = tones[tone];
+  return (
+    <View testID={testID} style={[styles.badge, { backgroundColor: t.bg }]}>
+      <Text style={[styles.badgeText, { color: t.fg }]}>{label}</Text>
+    </View>
+  );
+}
+
+export function StatePanel({
+  icon: Icon,
+  title,
+  message,
+  actionLabel,
+  onAction,
+  testID,
+}: {
+  icon: LucideIcon;
+  title: string;
+  message?: string;
+  actionLabel?: string;
+  onAction?: () => void;
+  testID?: string;
+}) {
+  const { colors } = useTheme();
+  return (
+    <View testID={testID} style={styles.statePanel}>
+      <View style={[styles.stateIconWrap, { backgroundColor: colors.sageSoft }]}>
+        <Icon size={30} color={colors.sage} />
+      </View>
+      <Text style={[styles.stateTitle, { color: colors.heading }]}>{title}</Text>
+      {message ? <Text style={[styles.stateMsg, { color: colors.muted }]}>{message}</Text> : null}
+      {actionLabel && onAction ? (
+        <View style={{ marginTop: spacing.md, alignSelf: "stretch" }}>
+          <Button label={actionLabel} onPress={onAction} variant="outline" testID={`${testID}-action`} />
+        </View>
+      ) : null}
+    </View>
+  );
+}
+
+export function Loading({ label }: { label?: string }) {
+  const { colors } = useTheme();
+  return (
+    <View style={styles.loading}>
+      <ActivityIndicator size="large" color={colors.heading} />
+      {label ? <Text style={[typeScale.bodyMuted, { color: colors.muted, marginTop: spacing.md }]}>{label}</Text> : null}
+    </View>
+  );
+}
+
+const MUTED_VARIANTS = new Set(["bodyMuted", "small", "label"]);
+
+export const T = ({
+  variant = "body",
+  children,
+  style,
+  numberOfLines,
+  onPress,
+  testID,
+}: {
+  variant?: keyof typeof typeScale;
+  children: React.ReactNode;
+  style?: TextStyle | TextStyle[];
+  numberOfLines?: number;
+  onPress?: () => void;
+  testID?: string;
+}) => {
+  const { colors } = useTheme();
+  const callerFlat = StyleSheet.flatten(style) as TextStyle | undefined;
+  const merged: TextStyle = { ...(typeScale[variant] as TextStyle), ...(callerFlat || {}) };
+  // Headings (Fraunces) default to the brand heading colour — teal in light,
+  // white in dark — matching web's `.font-heading` / `text-primary-k`. A caller
+  // colour still wins (it lands in `merged` and overrides below).
+  const effFont = merged.fontFamily;
+  const isHeadingFont = effFont === fonts.heading || effFont === fonts.headingSemi;
+  const color = MUTED_VARIANTS.has(variant as string) ? colors.muted : isHeadingFont ? colors.heading : colors.text;
+  // When a caller overrides fontSize but not lineHeight, the base variant's
+  // smaller lineHeight would clip tall/descending glyphs (Fraunces headings).
+  // Recompute a proportional lineHeight so nothing gets cut off.
+  if (callerFlat?.fontSize != null && callerFlat?.lineHeight == null) {
+    merged.lineHeight = Math.round((callerFlat.fontSize as number) * 1.3);
+  }
+  // Fraunces' "$" glyph has a double vertical bar that users read as "$$".
+  // When a money string is rendered in a heading font, render just the "$"
+  // in the body font so it reads as a normal single-bar dollar sign.
+  let content: React.ReactNode = children;
+  const ff = merged.fontFamily;
+  if ((ff === fonts.heading || ff === fonts.headingSemi) && typeof children === "string" && children.indexOf("$") !== -1) {
+    const sz = typeof merged.fontSize === "number" ? merged.fontSize : 20;
+    const dollarStyle: TextStyle = { fontFamily: fonts.bodySemi, fontSize: sz * 0.82, color: (merged.color as string) || color };
+    const segs = children.split("$");
+    const nodes: React.ReactNode[] = [];
+    segs.forEach((seg, i) => {
+      if (i > 0) nodes.push(<Text key={`d${i}`} style={dollarStyle}>$</Text>);
+      if (seg) nodes.push(<Text key={`s${i}`}>{seg}</Text>);
+    });
+    content = nodes;
+  }
+  return (
+    <Text
+      style={[{ color }, merged]}
+      numberOfLines={numberOfLines}
+      onPress={onPress}
+      testID={testID}
+    >
+      {content}
+    </Text>
+  );
+};
+
+const styles = StyleSheet.create({
+  header: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.md,
+    gap: spacing.sm,
+  },
+  backBtn: {
+    width: 40,
+    height: 40,
+    borderRadius: radius.pill,
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 1,
+  },
+  headerTitle: { fontFamily: fonts.heading, fontSize: 26, lineHeight: 34 },
+  headerSubtitle: { fontFamily: fonts.body, fontSize: 14, lineHeight: 20, marginTop: 2 },
+  card: { borderRadius: radius.lg, padding: spacing.lg, borderWidth: 1 },
+  btn: {
+    minHeight: 52,
+    borderRadius: radius.pill,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: spacing.lg,
+  },
+  btnLabel: { fontFamily: fonts.bodySemi, fontSize: 16, letterSpacing: 0.3 },
+  fieldLabel: { fontFamily: fonts.bodySemi, fontSize: 14, marginBottom: 6 },
+  input: {
+    minHeight: 52,
+    borderRadius: radius.md,
+    borderWidth: 1.5,
+    paddingHorizontal: spacing.md,
+    fontFamily: fonts.body,
+    fontSize: 16,
+  },
+  badge: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: radius.pill, alignSelf: "flex-start" },
+  badgeText: { fontFamily: fonts.bodySemi, fontSize: 12, letterSpacing: 0.3 },
+  statePanel: { alignItems: "center", paddingVertical: spacing.xl, paddingHorizontal: spacing.lg },
+  stateIconWrap: {
+    width: 64,
+    height: 64,
+    borderRadius: radius.pill,
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: spacing.md,
+  },
+  stateTitle: { fontFamily: fonts.headingSemi, fontSize: 20, textAlign: "center" },
+  stateMsg: { fontFamily: fonts.body, fontSize: 15, textAlign: "center", marginTop: 6, lineHeight: 22 },
+  loading: { flex: 1, alignItems: "center", justifyContent: "center", padding: spacing.xl },
+});

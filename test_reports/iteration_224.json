@@ -1,0 +1,37 @@
+{
+  "summary": "Iter 224 (Jun 2026) — REGRESSION-ONLY verification of Google OAuth multi-audience change (added GOOGLE_OAUTH_IOS_CLIENT_ID + iOS native flow wiring). NO regressions detected. Backend POST /api/auth/google contract UNCHANGED after allowed_client_ids set was introduced: empty body -> 422, missing credential -> 422, credential < 10 chars -> 422 (Pydantic min_length), well-formed but bogus JWT -> 401 with detail 'Could not verify Google sign-in'; endpoint not 404/500. Email/password login regression PASS on both web (/login -> /onboarding as Cathy) and mobile (/login -> / as Cathy). Signup pytest creates a fresh TEST_ user and returns 200 + token. Web /login + /signup still render the GIS 'Continue with Google' button (data-testid login-google / signup-google) with the accounts.google.com iframe injected; no console errors, not blank. Mobile /login + /signup still render the 'Continue with Google' button (testID login-google-button / signup-google-button) after the app.json CFBundleURLTypes + iosClientId change; no red screen, no console errors, page not blank. Real Google consent handshake NOT attempted (per agent note; Google blocks automation and iOS native flow only works in a Published/native build).",
+  "platforms_tested": ["web", "mobile"],
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "web": {
+      "ui_bugs": [],
+      "integration_issues": [],
+      "design_issues": []
+    },
+    "mobile": {
+      "ui_bugs": [],
+      "integration_issues": [],
+      "design_issues": [],
+      "react_native_issues": []
+    }
+  },
+  "parity_issues": [],
+  "test_report_links": [
+    "/app/backend/tests/test_iter_google_oauth_contract.py",
+    "/app/test_reports/pytest/iter224_google_oauth_regression.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "server.py:598-604 — allowed_client_ids set gracefully filters None values, so absence of GOOGLE_OAUTH_ANDROID_CLIENT_ID does NOT crash the endpoint. Web + iOS clients only are wired today.",
+    "server.py:614-616 — audience check is compared AFTER signature/issuer/expiry verification which is the correct order (avoids attackers forging aud on unverified tokens).",
+    "The 'short credential returns 422 not 401' behavior is a Pydantic Field(min_length=10) pre-validation and is documented in the test file — intentional and consistent with FastAPI conventions."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "100% (9/9 pytest)", "frontend": "100% (web /login + /signup render Google btn + GIS iframe; mobile /login + /signup render Google btn; email login PASS both surfaces)"},
+  "test_credentials": "cathy@example.com / testpass123 (Family caregiver — verified working on both web and mobile)",
+  "seed_data_creation": "test_signup_email_password_creates_user_and_returns_token created one TEST_googletest_<ts>_<hex>@example.com family caregiver user during regression run.",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Iter 224 confirmed the multi-audience Google OAuth change (added GOOGLE_OAUTH_IOS_CLIENT_ID + iOS native redirect scheme in app.json + iosClientId in mobile Google.useIdTokenAuthRequest) has NO regression on the shared backend contract, email/password auth, or the Google-button UX on either surface. Actual native iOS Google sign-in cannot be validated from an automated web preview — it only works in a Published TestFlight/App Store build (or from a real iOS dev client). Reusable regression: /app/backend/tests/test_iter_google_oauth_contract.py.",
+  "rca of the issue": ""
+}

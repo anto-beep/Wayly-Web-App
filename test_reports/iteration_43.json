@@ -1,0 +1,66 @@
+{
+  "summary": "Iter 43 testing: backend 11/11 pytest in test_participant_profile_v2.py + 9/10 in new test_iter43_field_modifications_notifications.py (1 skipped — no unread notifications). Backend field_modifications stamping, notifications module extraction, and SSE stream all verified working. Frontend: Budget Calculator audit-trail pill VERIFIED ('Saved by Cathy · just now' visible under prompt). Reassessment Letter pre-fill VERIFIED ('Dorothy Smith' / 'Classification 4' on mount). Statement Decoder smoke check PASSED (no console errors). BUT Contribution Estimator onParticipantUpdated flow has 3 confirmed issues — see frontend_issues.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [
+      {
+        "component": "ProfileInlinePrompts (input-style row in ContributionEstimator)",
+        "issue": "Audit trail line NOT rendered after Save for the part_pension_actual_independence_pct input-style prompt. Element [data-testid='profile-prompt-part_pension_actual_independence_pct-trail'] never appears in DOM after clicking 'Save to profile'. By contrast the Budget Calculator checkbox-style supplements prompt renders the trail correctly with 'Saved by Cathy · just now'.",
+        "selector": "[data-testid='profile-prompt-part_pension_actual_independence_pct-trail']",
+        "priority": "HIGH"
+      }
+    ],
+    "integration_issues": [
+      {
+        "flow": "ContributionEstimator onParticipantUpdated re-run",
+        "issue": "After saving the inline prompt value 17.5, no second POST to /api/public/contribution-estimator is fired (the auto re-run never happens). Network listener saw only the initial baseline POST and no follow-up.",
+        "affected_selectors": ["[data-testid='ce-submit']"]
+      },
+      {
+        "flow": "ContributionEstimator pension_status hydration on mount",
+        "issue": "Participant doc has pension_status='part_pension' but on mount the form shows 'Full pension' selected. The onParticipantUpdated/initial-fetch path is not mapping pension_status into form state, so the part-pension-specific rate inputs (independence_rate_pct / everyday_rate_pct) never become visible and therefore can't be auto-hydrated with the saved 17.5.",
+        "affected_selectors": ["[data-testid='ce-pension-full_pension']", "[data-testid='ce-pension-part_pension']"]
+      }
+    ],
+    "design_issues": [
+      {
+        "screen": "ContributionEstimator / ReassessmentLetter (dev console only)",
+        "issues": ["Pre-existing React hydration warning '<span> cannot be a child of <option>' from dev-mode source-injection wrapper — not product code, same as iter41/42."]
+      }
+    ]
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_participant_profile_v2.py",
+    "/app/backend/tests/test_iter43_field_modifications_notifications.py",
+    "/app/test_reports/pytest/iter43_v2.xml",
+    "/app/test_reports/pytest/iter43_api.xml"
+  ],
+  "action_items": [
+    "Fix ProfileInlinePrompts to render the savedMeta trail line for INPUT-style rows (currently only checkbox/multi-select rows render it). Confirmed working for applicable_supplements (Budget Calc) but missing for part_pension_actual_independence_pct (CE).",
+    "ContributionEstimator: ensure onParticipantUpdated re-runs submit() after the inline-prompt save fires. Currently no auto-rerun network call is observed.",
+    "ContributionEstimator: hydrate pension_status (and dependent rate inputs) into the form on mount from the participant doc. Form is stuck on 'Full pension' even when the participant is 'part_pension'.",
+    "Optional follow-up: investigate whether the inline-prompt save for input-style rows is actually firing the PATCH — network capture during the Save click showed no PATCH /api/participants/{pid} request. (Backend trail entry observed during testing came from an explicit curl reset earlier in the run.)"
+  ],
+  "critical_code_review_comments": [
+    "Backend extraction of notifications routes to backend/routes/notifications.py is clean — all 5 endpoints + SSE work without regression (verified via test_iter43_field_modifications_notifications.py). Good first step for further server.py decomposition.",
+    "field_modifications audit trail logic correctly skips SYSTEM_FIELDS (verified by test_patch_system_fields_not_stamped). actor_name correctly resolves to user's first_name ('Cathy'). ISO timestamp format with timezone offset.",
+    "ProfileInlinePrompts.jsx PromptRow appears to have divergent code paths for checkbox-style vs input-style rows — only the checkbox path renders the trail line. Recommend extracting savedMeta + trail line render into the shared row footer so both styles benefit.",
+    "ContributionEstimator initial useEffect that fetches /api/participants on mount should map pension_status + rates into form state, not just classification — matches the implementation in ReassessmentLetter.jsx which IS working."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_iter43_field_modifications_notifications.py (new)"
+  ],
+  "success_rate": {
+    "backend": "100% (11/11 participant_profile_v2 + 9/10 iter43 api — 1 skipped due to no unread notifications)",
+    "frontend": "60% — Budget Calc audit-trail pill PASS, Reassessment Letter pre-fill PASS, Statement Decoder smoke PASS, but ContributionEstimator flow has 3 issues (no trail line, no auto re-run, pension_status not hydrated)"
+  },
+  "test_credentials": "cathy@example.com / testpass123 (primary participant pid 0c538637-b0dd-4982-8f78-b32814c6a5eb)",
+  "seed_data_creation": "Reset Cathy's primary participant several times during testing — final state: applicable_supplements=['oxygen'] (from successful Budget Calc save), pension_status='part_pension', part_pension_actual_independence_pct=null, part_pension_actual_everyday_pct=null. Backend field_modifications map has entries for applicable_supplements, care_manager_name, pension_status, part_pension_actual_independence_pct, part_pension_actual_everyday_pct (timestamps from this iter and prior PATCHes).",
+  "retest_needed": true,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Backend (audit trail + notifications module extraction) fully green. The 3 frontend issues are all on ContributionEstimator: (1) input-style trail line missing in DOM after save, (2) no auto-rerun after save, (3) pension_status not hydrated on mount (form stuck on Full pension). Budget Calc checkbox-style is the working reference implementation for the trail line. Reassessment Letter pre-fill via useEffect+GET /api/participants is the working reference for hydration. To retest CE after fix, PATCH the participant back to {pension_status:'part_pension', part_pension_actual_independence_pct:null, part_pension_actual_everyday_pct:null} first.",
+  "rca of the issue": "ProfileInlinePrompts.jsx PromptRow likely has two render branches (checkbox/multi-select vs input/number). The savedMeta + relativeTime trail line was added to the checkbox branch (verified via Budget Calc) but appears missing from the input branch — that's why the part_pension_actual_independence_pct row never shows the trail testid. Additionally, ContributionEstimator's onParticipantUpdated handler maps classification but not pension_status into form state, and the post-save re-run condition (presumably 'if result exists') may not be firing because the baseline result hadn't fully propagated yet. Mitigation: unify the trail-line render in PromptRow regardless of editor style, and add pension_status to the field map in onParticipantUpdated."
+}

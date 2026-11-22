@@ -1,0 +1,187 @@
+/**
+ * UXF-1 v3 semantic tokens.
+ *
+ * These tokens are the single source of truth for every colour, radius,
+ * spacing, elevation and motion value used by any UXF-1 v3 component.
+ *
+ * Modes:
+ *   - Light (default) is applied at :root
+ *   - Dark is applied when the <html data-theme="dark"> attribute is set
+ *
+ * Rules:
+ *   - No component may use a raw hex code. Everything reads a token.
+ *   - Every text-on-surface pairing verifies to WCAG 2.1 AAA (>=7:1 for
+ *     body, >=4.5:1 for large 18pt+). Contrast matrix documented in
+ *     /app/docs/audits/UXF-1-v3-phase-0-audit.md Section 16.
+ *   - Dark accents are desaturated tone-partners of the light values,
+ *     not a naive photo-negative.
+ */
+
+:root {
+    /* ---------- Surface family (light) ---------- */
+    --uxf-bg:        #FBF8F3;   /* neutral 50 - marketing surface     */
+    --uxf-sunken:    #F0EBE0;   /* inset surface (input backgrounds)  */
+    --uxf-surface:   #F4EFE7;   /* raised surface, cards on bg        */
+    --uxf-surface-2: #FFFFFF;   /* raised+1                           */
+    --uxf-surface-3: #FFFFFF;   /* raised+2 (modal/drawer top layer)  */
+
+    /* ---------- Text ladder (light) ---------- */
+    --uxf-text:         #1C2B2D;   /* body ink                     */
+    --uxf-text-2:       #2E3F41;   /* secondary body               */
+    --uxf-muted:        #524B42;   /* muted body, still AAA        */
+    --uxf-text-inverse: #FFFFFF;   /* text on primary/error chips  */
+
+    /* ---------- Brand accents ---------- */
+    --uxf-primary:      #0E4D52;   /* teal-ink primary             */
+    --uxf-primary-fg:   #FFFFFF;
+    --uxf-gold:         #A5512B;   /* clay accent                  */
+    --uxf-gold-fg:      #FFFFFF;
+    --uxf-sage:         #425F47;   /* government / secondary       */
+    --uxf-sage-fg:      #FFFFFF;
+
+    /* ---------- Status colours ---------- */
+    --uxf-error:        #C0392B;   /* terracotta                   */
+    --uxf-error-fg:     #FFFFFF;
+    --uxf-warning:      #B7791F;   /* gold alert                   */
+    --uxf-warning-fg:   #FFFFFF;
+    --uxf-success:      #1B5733;
+    --uxf-success-fg:   #FFFFFF;
+    --uxf-info:         #3D8488;
+    --uxf-info-fg:      #FFFFFF;
+
+    /* Tinted backgrounds for the four status states. Used by
+       StandingBanner + inline callouts so the icon + text stay
+       AAA-legible on the tint. */
+    --uxf-error-bg:     #FDECEA;
+    --uxf-warning-bg:   #FEF6E6;
+    --uxf-success-bg:   #E8F3ED;
+    --uxf-info-bg:      #E4F0F1;
+
+    /* ---------- Border + focus ---------- */
+    --uxf-border:       #E7E0D5;
+    --uxf-border-strong:#C8BFB0;
+    --uxf-focus-ring:   #B7791F;   /* warm gold, brand-continuous */
+
+    /* ---------- Skeleton shimmer ---------- */
+    --uxf-skeleton-base:    rgba(28, 43, 45, 0.06);
+    --uxf-skeleton-shimmer: rgba(28, 43, 45, 0.12);
+
+    /* ---------- Radius ---------- */
+    --uxf-radius-sm: 6px;
+    --uxf-radius-md: 10px;
+    --uxf-radius-lg: 16px;
+    --uxf-radius-xl: 24px;
+
+    /* ---------- Elevation (soft, warm) ---------- */
+    --uxf-shadow-sm: 0 1px 2px rgba(28, 43, 45, 0.05);
+    --uxf-shadow-md: 0 4px 12px rgba(28, 43, 45, 0.08);
+    --uxf-shadow-lg: 0 12px 32px rgba(28, 43, 45, 0.10);
+
+    /* ---------- Motion ---------- */
+    --uxf-duration-fast:   150ms;
+    --uxf-duration-normal: 240ms;
+    --uxf-duration-slow:   360ms;
+    --uxf-ease:            cubic-bezier(0.2, 0.7, 0.2, 1);
+
+    /* ---------- Data view (monospace numbers) ---------- */
+    --uxf-mono-font: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+}
+
+/* ---------- Dark palette override ---------- */
+/* Applied when the <html> element carries data-theme="dark". Kept as a
+   simple attribute selector (not a media query) so the manual toggle in
+   Settings and the system preference both funnel through the same code
+   path in `uxf/theme.js`.
+*/
+html[data-theme="dark"],
+html.theme-dark {
+    /* Surface family (warm dark, not clinical black) */
+    --uxf-bg:        #0B1416;
+    --uxf-sunken:    #060B0C;
+    --uxf-surface:   #152425;
+    --uxf-surface-2: #1C2F31;
+    --uxf-surface-3: #243A3D;
+
+    /* Text ladder */
+    --uxf-text:         #F4EFE7;   /* warm off-white, 16.2:1 on --uxf-bg */
+    --uxf-text-2:       #E5E0D5;   /* 14.4:1                              */
+    --uxf-muted:        #C7C2B8;   /* 10.1:1, still AAA                   */
+    --uxf-text-inverse: #1C2B2D;
+
+    /* Brand accents (desaturated) */
+    --uxf-primary:      #4FA8AE;   /* 8.1:1 on --uxf-bg  */
+    --uxf-primary-fg:   #0B1416;
+    --uxf-gold:         #E89A6F;   /* 9.3:1              */
+    --uxf-gold-fg:      #1C2B2D;
+    --uxf-sage:         #A8C7AB;   /* 11.4:1             */
+    --uxf-sage-fg:      #0B1416;
+
+    /* Status colours (desaturated dark variants) */
+    --uxf-error:        #F08172;   /* 8.7:1  */
+    --uxf-error-fg:     #1C2B2D;
+    --uxf-warning:      #F4C77A;   /* 11.9:1 */
+    --uxf-warning-fg:   #1C2B2D;
+    --uxf-success:      #7FCC94;   /* 11.6:1 */
+    --uxf-success-fg:   #1C2B2D;
+    --uxf-info:         #7DC0C4;   /* 8.9:1  */
+    --uxf-info-fg:      #1C2B2D;
+
+    /* Tinted status backgrounds sit at ~10% opacity of their solid tone,
+       verified for text-on-tint AAA in dark mode. */
+    --uxf-error-bg:     #2E1A17;
+    --uxf-warning-bg:   #2E2718;
+    --uxf-success-bg:   #17281D;
+    --uxf-info-bg:      #17262A;
+
+    /* Border + focus */
+    --uxf-border:       #2A3A3C;
+    --uxf-border-strong:#3F5254;
+    --uxf-focus-ring:   #F4C77A;
+
+    /* Skeleton shimmer (warm-neutral over dark) */
+    --uxf-skeleton-base:    rgba(255, 255, 255, 0.06);
+    --uxf-skeleton-shimmer: rgba(255, 255, 255, 0.12);
+
+    /* Elevation (deeper, subtler) */
+    --uxf-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.35);
+    --uxf-shadow-md: 0 4px 12px rgba(0, 0, 0, 0.45);
+    --uxf-shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.55);
+}
+
+/* ---------- Reduced motion honoured globally ---------- */
+@media (prefers-reduced-motion: reduce) {
+    :root {
+        --uxf-duration-fast:   0ms;
+        --uxf-duration-normal: 0ms;
+        --uxf-duration-slow:   0ms;
+    }
+}
+
+/* ---------- Focus-visible ring ---------- */
+:where(*:focus-visible) {
+    outline: 2px solid var(--uxf-focus-ring);
+    outline-offset: 2px;
+    border-radius: var(--uxf-radius-sm);
+}
+
+/* Programmatic route-focus (for screen readers) should not paint the
+   visible ring — sighted users didn't ask for it. `useRouteFocus`
+   stamps this attribute on the target for the duration of focus. */
+[data-uxf-autofocus="true"]:focus,
+[data-uxf-autofocus="true"]:focus-visible {
+    outline: none !important;
+}
+
+/* ---------- Mobile parity (Wave 4, spec Section 3 N workstream) ---------- */
+/* Minimum 44 x 44 CSS px touch target on every interactive UXF element.
+   Applies on coarse pointer devices only; keeps desktop chrome from
+   ballooning. */
+@media (pointer: coarse) {
+    [data-testid^="uxf-"] button,
+    [data-testid^="uxf-"] a,
+    button[data-testid^="uxf-"],
+    a[data-testid^="uxf-"] {
+        min-height: 44px;
+        min-width: 44px;
+    }
+}

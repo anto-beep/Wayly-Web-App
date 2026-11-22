@@ -1,0 +1,47 @@
+{
+  "summary": "PARITY-1 v7 mobile-only worked-examples parity sweep. Tested Statement Detail (rich, cathy@example.com) and Invoice Detail on the Expo web preview at 390x844. Statement Detail passes all parity criteria (renders DecoderResultView via decoder-result-v2 + statement-decoder-view, NO SmartAISummary / NO ALERT-WARNING labels, has decoder-persona-hero, decoder-plain-english-summary, decoder-summary-banner with all 4 tiles, decoder-anomaly-panel with High/Medium/Low chips, ai-anomaly-disclaimer per card, decoder-stream-breakdown, decoder-full-table, decoder-download-bar with all 3 buttons Share this decode / Download CSV / Download PDF). CRITICAL parity defect on Invoice Detail: the mobile Invoice detail screen still renders the SmartAISummary 'SMART SUMMARY / Your Wayly Insight' card ABOVE InvoiceResultView, exactly the mobile-invented block PARITY-1 v7 was supposed to remove. InvoiceResultView itself is compliant (inv1-result + banner + verdict + Wayly Summary title-case card + Issue Register with per-issue Refund and What-to-do, no ISSUES TO REVIEW / TIER light list / What to check before paying / things to check / Checks run). Did not exercise the two AI Tools flows end-to-end because they consume the free-tool cooldown and this critical defect already blocks the invoice worked-example.",
+  "platforms_tested": ["mobile"],
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "mobile": {
+      "ui_bugs": [
+        {
+          "component": "InvoiceDetail (/app/mobile/app/invoice/[id].tsx)",
+          "issue": "Renders SmartAISummary 'SMART SUMMARY / Your Wayly Insight' card ABOVE the InvoiceResultView on the saved-invoice detail screen. Web StatementDetail/InvoiceCheckerTool DO NOT render a SmartAISummary here — this is a mobile-invented block that PARITY-1 v7 was supposed to delete. Observed on invoice 4e5826a1-9f5f-4df2-ae70-ac77e97016d3 (Glorious Services). Reference: /app/mobile/app/invoice/[id].tsx:7 (import) and :88-100 (render).",
+          "testID": "n/a (SmartAISummary card has its own testIDs)",
+          "priority": "HIGH"
+        }
+      ],
+      "integration_issues": [],
+      "design_issues": [],
+      "react_native_issues": []
+    }
+  },
+  "parity_issues": [
+    {
+      "flow": "Saved invoice detail",
+      "platform": "mobile",
+      "issue": "Mobile shows a SmartAISummary 'Your Wayly Insight' card that does not exist on the web equivalent (web renders only InvoiceResultView with Wayly Summary + Issue Register).",
+      "expected": "Only inv1-result (banner + verdict + Wayly Summary title-case card + Issue Register + meta card), no SmartAISummary above it.",
+      "actual": "SmartAISummary 'SMART SUMMARY / Your Wayly Insight' card renders first, then InvoiceResultView renders correctly below it."
+    }
+  ],
+  "test_report_links": ["/app/test_reports/iteration_211.json"],
+  "action_items": [
+    "Remove SmartAISummary import + <SmartAISummary pageKey=\"invoice-detail\" ...> block from /app/mobile/app/invoice/[id].tsx (lines 7, 88-100) to match web parity. Only InvoiceResultView should render below the invoice-overview card.",
+    "(Optional, out of scope per review wording) Statements list /app/mobile/app/(tabs)/statements.tsx also renders SmartAISummary 'Your Wayly Insight' at the top — web equivalent does not. Confirm with founder whether v7 sweep applies to list pages as well; if yes, remove from statements.tsx:9 and :159 too."
+  ],
+  "critical_code_review_comments": [
+    "Statement Detail (/app/mobile/app/statement/[id].tsx) is now correctly gated: rich branch renders DecoderResultView via statement-decoder-view, legacy branch renders summary-card + anomalies-card + line-items-table with 'you paid' — both branches have NO SmartAISummary and NO ALERT/WARNING labels. Good.",
+    "DecoderResultView (mobile) matches web contract: severity chips are HIGH/MEDIUM/LOW (uppercase text on colored pill, same as web), ai-anomaly-disclaimer sits inside every anomaly-card-*, download bar has all three testIDs (decoder-share-pdf-btn / decoder-download-csv-btn / decoder-download-pdf-btn).",
+    "InvoiceResultView (mobile) matches web contract: inv1-summary-banner with 4 tiles (Amount billed / Potential refund / Net payable / Issues), inv1-meta-strip, inv1-verdict-*, Wayly Summary card in title case (NOT eyebrow), inv1-meta-card 'INVOICE DETAILS', inv1-issue-register with per-issue check code, Refund $, and 'What to do:' box. Severity chip text is rendered uppercase (sev.toUpperCase()) which matches web's CSS-uppercased lowercase source strings — visually identical."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "n/a (skipped)", "frontend": "~50% (Statement detail parity: PASS; Invoice detail parity: FAIL due to SmartAISummary)"},
+  "test_credentials": "cathy@example.com / testpass123 (Family plan, 39 statements including rich audit_json/extracted_json ones, 25 invoices including Glorious Services)",
+  "seed_data_creation": "None — used existing cathy fixtures.",
+  "retest_needed": true,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "Once /app/mobile/app/invoice/[id].tsx has the SmartAISummary block removed, re-open a saved invoice (e.g. 4e5826a1-9f5f-4df2-ae70-ac77e97016d3 Glorious Services) at https://decoder-export.expo.preview.emergentagent.com/invoice/<id> after logging in as cathy, and confirm body text no longer contains 'SMART SUMMARY' or 'Your Wayly Insight'. Also worth exercising the two AI Tools flows (Statement Decoder + Invoice Checker) end-to-end — this pass I only exercised the Statement/Invoice DETAIL screens because they consume the same shared DecoderResultView/InvoiceResultView components, and the tool flows would burn the free-tool cooldown.",
+  "rca of the issue": "PARITY-1 v7 rewrote statement/[id].tsx to remove SmartAISummary but the sibling refactor of invoice/[id].tsx left the SmartAISummary 'invoice-detail' block intact (lines 7 + 88-100). Fix: delete the import on line 7 and the <SmartAISummary pageKey=\"invoice-detail\" .../> JSX block (lines 88-100). Reproduction: login as cathy@example.com on mobile preview → tap Invoices tab → tap any invoice → observe 'SMART SUMMARY / Your Wayly Insight' card above the inv1-result view."
+}

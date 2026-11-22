@@ -1,0 +1,177 @@
+# LF-1 Recipient Directory — INDEX-1 pattern.
+#
+# Central registry of every entity a Letters & Follow-ups user might address.
+# Each record carries: entity name, purpose, phone, email (if published),
+# portal URL, postal address, complaints URL, typical response window,
+# citation source, citation date, notes on when to use.
+#
+# CI drift detection: URL health check plus citation-age check.
+# Manual review cadence: quarterly.
+#
+# Per-provider records are dynamic and cached on the participant profile;
+# they are NOT stored here. Only the fixed regulator / national contact
+# records live in this file.
+version: "1.0"
+last_reviewed: "2026-02-10"
+review_cadence: "quarterly"
+
+recipients:
+  - key: "mac"
+    entity_name: "My Aged Care"
+    purpose: "The national access point for aged care assessment, reassessment, and package management."
+    phone: "1800 200 422"
+    phone_hours: "Weekdays 8am-8pm, Saturday 10am-2pm AEST"
+    email: null
+    portal_url: "https://www.myagedcare.gov.au"
+    complaints_url: "https://www.myagedcare.gov.au/contact-us"
+    postal_address: "PO Box 210, Woden ACT 2606"
+    response_window_days: 28
+    response_window_label: "28 days for reassessment requests"
+    citation_source: "myagedcare.gov.au contact page"
+    citation_date: "2026-02-10"
+    use_when: "Requesting a reassessment, RCP request, provider transfer notification, or recording a family representative."
+    tags: ["mac", "national", "regulator"]
+
+  - key: "acqsc"
+    entity_name: "Aged Care Quality and Safety Commission"
+    purpose: "Independent commission that investigates complaints about aged care providers and enforces the Aged Care Act 2024."
+    phone: "1800 951 822"
+    phone_hours: "Weekdays 9am-5pm AEST"
+    email: null
+    portal_url: "https://www.agedcarequality.gov.au"
+    complaints_url: "https://www.agedcarequality.gov.au/making-complaint"
+    postal_address: "GPO Box 9819, ACT 2601"
+    response_window_days: 90
+    response_window_label: "90-day finalisation target"
+    citation_source: "agedcarequality.gov.au contact page"
+    citation_date: "2026-02-10"
+    use_when: "Formal complaint about a provider after direct resolution failed, or serious concerns about care quality or safety."
+    tags: ["regulator", "complaints", "national"]
+
+  - key: "complaints_commissioner"
+    entity_name: "Aged Care Complaints Commissioner"
+    purpose: "Independent role established under the Aged Care Act 2024 for complaints escalation."
+    phone: "via ACQSC channels"
+    phone_hours: null
+    email: null
+    portal_url: "https://www.agedcarequality.gov.au"
+    complaints_url: "https://www.agedcarequality.gov.au"
+    postal_address: "GPO Box 9819, ACT 2601"
+    response_window_days: 90
+    response_window_label: "90-day finalisation target (aligned with ACQSC)"
+    citation_source: "Aged Care Act 2024, Part 8"
+    citation_date: "2026-02-10"
+    use_when: "Escalation from an ACQSC complaint or a matter that specifically requires the Commissioner's independent role."
+    tags: ["regulator", "escalation", "national"]
+
+  - key: "ombudsman"
+    entity_name: "Commonwealth Ombudsman"
+    purpose: "Independent review of decisions by ACQSC and other Commonwealth aged care bodies."
+    phone: "1300 362 072"
+    phone_hours: "Weekdays 9am-5pm AEST"
+    email: "ombudsman@ombudsman.gov.au"
+    portal_url: "https://www.ombudsman.gov.au"
+    complaints_url: "https://www.ombudsman.gov.au/making-a-complaint"
+    postal_address: "GPO Box 442, Canberra ACT 2601"
+    response_window_days: 42
+    response_window_label: "42-day review window"
+    citation_source: "ombudsman.gov.au contact page"
+    citation_date: "2026-02-10"
+    use_when: "Escalation after ACQSC finalisation, or dissatisfaction with the outcome of an ACQSC investigation."
+    tags: ["regulator", "escalation", "national"]
+
+  - key: "opan"
+    entity_name: "Older Persons Advocacy Network (OPAN)"
+    purpose: "National network of state and territory advocacy organisations for older Australians receiving aged care."
+    phone: "1800 700 600"
+    phone_hours: "Weekdays 8am-8pm, weekend 10am-4pm AEST"
+    email: null
+    portal_url: "https://www.opan.org.au"
+    complaints_url: null
+    postal_address: null
+    response_window_days: null
+    response_window_label: "advocacy support (not a complaint recipient)"
+    citation_source: "opan.org.au contact page"
+    citation_date: "2026-02-10"
+    use_when: "Free advocacy support before, during, or after correspondence with a provider or regulator. Include as CC on escalation and complaint letters."
+    tags: ["advocacy", "referral", "cc_default"]
+
+  - key: "opan_atsi"
+    entity_name: "OPAN Aboriginal and Torres Strait Islander advocacy"
+    purpose: "OPAN's specialist advocacy service for Aboriginal and Torres Strait Islander older Australians."
+    phone: "1800 700 600"
+    phone_hours: "Weekdays 8am-8pm, weekend 10am-4pm AEST"
+    email: null
+    portal_url: "https://www.opan.org.au"
+    complaints_url: null
+    postal_address: null
+    response_window_days: null
+    response_window_label: "advocacy support"
+    citation_source: "opan.org.au advocacy page"
+    citation_date: "2026-02-10"
+    use_when: "Reference on reassessment, complaint, escalation, ACQSC, and Ombudsman letters when the user identifies as Aboriginal or Torres Strait Islander."
+    tags: ["advocacy", "atsi", "referral"]
+
+  - key: "elder_abuse_helpline"
+    entity_name: "1800ELDERHelp (National elder abuse helpline)"
+    purpose: "24-hour phone service for older people, their families, and communities experiencing elder abuse."
+    phone: "1800 353 374"
+    phone_hours: "24/7"
+    email: null
+    portal_url: "https://www.compass.info"
+    complaints_url: null
+    postal_address: null
+    response_window_days: null
+    response_window_label: "immediate phone support"
+    citation_source: "compass.info national helpline"
+    citation_date: "2026-02-10"
+    use_when: "Phone-first pathway when elder abuse or safeguarding is suspected. NOT a correspondence recipient."
+    tags: ["safeguarding", "phone_only"]
+
+  - key: "police_emergency"
+    entity_name: "Police (imminent danger)"
+    purpose: "Emergency response for imminent danger."
+    phone: "000"
+    phone_hours: "24/7"
+    email: null
+    portal_url: null
+    complaints_url: null
+    postal_address: null
+    response_window_days: null
+    response_window_label: "immediate response"
+    citation_source: "Australian emergency services"
+    citation_date: "2026-02-10"
+    use_when: "Imminent danger only. Phone-first pathway. NOT a correspondence recipient."
+    tags: ["safeguarding", "phone_only", "emergency"]
+
+  - key: "services_australia_aged_care"
+    entity_name: "Services Australia — Aged Care line"
+    purpose: "Contribution assessment, hardship review, and income-and-assets correspondence."
+    phone: "1800 227 475"
+    phone_hours: "Weekdays 8am-5pm AEST"
+    email: null
+    portal_url: "https://www.servicesaustralia.gov.au/aged-care"
+    complaints_url: "https://www.servicesaustralia.gov.au/complaints"
+    postal_address: "Services Australia, Reply Paid 7801, Canberra BC ACT 2610"
+    response_window_days: 28
+    response_window_label: "28-day acknowledgement standard"
+    citation_source: "servicesaustralia.gov.au aged care page"
+    citation_date: "2026-02-10"
+    use_when: "Hardship notifications, contribution reviews, or income-and-assets correspondence. Verify the current number in Phase 0."
+    tags: ["contribution", "hardship"]
+
+  - key: "public_advocate_generic"
+    entity_name: "Public Advocate / Guardianship (state-specific)"
+    purpose: "State and territory bodies with statutory guardianship powers where the participant lacks decision-making capacity and no POA is in place."
+    phone: "State-specific (see notes)"
+    phone_hours: null
+    email: null
+    portal_url: null
+    complaints_url: null
+    postal_address: null
+    response_window_days: null
+    response_window_label: "state-specific"
+    citation_source: "State and territory public advocate offices"
+    citation_date: "2026-02-10"
+    use_when: "Elder abuse pathway when the participant lacks decision-making capacity and no POA is in place. State-specific — do NOT auto-address."
+    tags: ["safeguarding", "state_specific", "phone_first"]

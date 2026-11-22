@@ -1,0 +1,27 @@
+{
+  "summary": "Mobile re-test of iter180 HIGH bug (Contribution Estimator prefill) — FIX VERIFIED. Logged in as cathy@example.com (active participant 'Mum'). (1) /tool/contribution-estimator: ce-person-name now prefills to 'Mum' on load without typing; ce-classification-class_4 pill is active (bg = primary teal rgb(14,77,82)); ce-classification-class_5 is NOT selected. Tapping ce-submit renders ce-result successfully. (2) /tool/care-plan-reviewer: cp-classification-4 pill is prefilled and active (rgb(14,77,82)); hint 'prefilled from Mum' present. (3) /tool/provider-price-checker: pc-provider is prefilled with the participant's provider_name ('Test Provider 8c1af9aa') — seed has been updated so Mum now has a provider_name and the same useEffect sync works for it as well. All three useEffect syncs on active?.id are firing correctly after ParticipantContext resolves.",
+  "platforms_tested": ["mobile"],
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "mobile": {
+      "ui_bugs": [],
+      "integration_issues": [],
+      "design_issues": [],
+      "react_native_issues": []
+    }
+  },
+  "parity_issues": [],
+  "test_report_links": [],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "Fix is idiomatic: useEffect(...,[active?.id]) on all three tools (ContributionEstimator L56-63, CarePlanReviewer L30-32, ProviderPriceChecker L50-52). Guards `f.person_name || active.display_name` correctly avoid clobbering user edits. Only micro-nit: CE resync condition also treats class_5 as 'unset' — this is fine given class_5 is the hard-coded fallback, but if a user consciously selects class_5 and then the active participant changes, their selection will be replaced by the participant's level. Acceptable trade-off for now."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "N/A (skipped)", "frontend": "100% (3/3 checks pass)"},
+  "test_credentials": "cathy@example.com / testpass123 (Family caregiver, active participant = 'Mum', classification_level = 4, provider_name = 'Test Provider 8c1af9aa')",
+  "seed_data_creation": "None (used existing seed).",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "iter180 HIGH bug is fully fixed and verified. All 3 tool screens (Contribution Estimator, Care Plan Reviewer, Provider Price Checker) prefill correctly from the active participant via useEffect syncs on active?.id. Group 3 mobile parity work is complete.",
+  "rca of the issue": "N/A — bug was fixed by main agent per RCA in iter180."
+}

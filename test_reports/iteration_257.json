@@ -1,0 +1,32 @@
+{
+  "summary": "Iter257 backend-only regression for Stripe mode-aware price selection. All 4 unit tests in test_stripe_price_mode_iter257.py pass: _stripe_is_live() correctly detects sk_live_* keys, _price_for_plan() picks *_LIVE under live keys, falls back to base when _LIVE unset, and _plan_for_price() matches both live+test ids. Test-mode preview checkout still works: POST /api/payments/checkout for plan=solo AND plan=family both return 200 with a real Stripe cs_test_* Checkout Session URL — no regression from the mode switch. Unknown plan (e.g. 'enterprise') correctly returns 422 (Pydantic pattern), not 500/502. Iter256 access-state enforcement re-run: 12/13 passed; view_only writes still 402 with read_only marker, active/trial writes not blocked, and view_only can still POST /api/payments/checkout (reactivation gate preserved). The 1 unrelated failure is GET /api/documents for view_only user returning 409 no_household (fixture user has never onboarded a household — pre-existing seed-data issue, not caused by iter257 changes).",
+  "platforms_tested": ["web"],
+  "backend_issues": {
+    "critical": [],
+    "minor": [
+      {"endpoint": "GET /api/documents (view_only user cancelled.vo@example.com)", "issue": "Returns 409 {error:no_household} instead of 200 because the view_only fixture has no household seeded. iter256 test expects 200 for view_only GETs. Fix by onboarding a household for this user or updating the test to accept 409 no_household. Unrelated to iter257 Stripe change."}
+    ]
+  },
+  "frontend_issues": {"web": {"ui_bugs": [], "integration_issues": [], "design_issues": []}},
+  "parity_issues": [],
+  "test_report_links": [
+    "/app/backend/tests/test_stripe_price_mode_iter257.py",
+    "/app/backend/tests/test_stripe_checkout_iter257_live.py",
+    "/app/backend/tests/test_access_state_enforcement_iter256.py",
+    "/app/test_reports/pytest/iter257_stripe_mode.xml",
+    "/app/test_reports/pytest/iter257_full.xml"
+  ],
+  "action_items": [
+    "Optionally: seed a household for cancelled.vo@example.com (or update iter256 test) so GET /api/documents returns 200 for view_only. Not blocking iter257."
+  ],
+  "critical_code_review_comments": [
+    "routes/payments.py:_price_for_plan raises 400 for unknown plan, but the Pydantic pattern on CheckoutBody.plan intercepts first with 422 — the 400 branch is dead code for the checkout endpoint (still reachable from schedule_downgrade via DowngradeBody, which uses a narrower solo|family pattern, so also unreachable). Consider removing or noting.",
+    "routes/payments.py:294 catches stripe.error.StripeError and re-raises as 400. This is a good change — matches the review request. Note: portal, cancel, reactivate, and schedule-downgrade still return 502 on StripeError; consider harmonising to 400 too if desired."
+  ],
+  "updated_files": ["/app/backend/tests/test_stripe_checkout_iter257_live.py"],
+  "success_rate": {"backend": "94% (16/17); 100% (4/4) for iter257-scope tests"},
+  "seed_data_creation": "None — used existing fixtures cathy@example.com and cancelled.vo@example.com.",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Iter257 Stripe mode-aware price selection is verified. Preview runs test-mode Stripe (sk_test_*) so live-mode path could NOT be exercised here — only unit-tested via monkeypatched env in test_stripe_price_mode_iter257.py. Test-mode checkout URLs cs_test_* returned for solo+family. The one iter256 flake (GET /api/documents 409 for view_only) is a fixture gap, not a code bug."
+}

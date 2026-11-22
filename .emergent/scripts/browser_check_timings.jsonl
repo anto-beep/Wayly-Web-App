@@ -1,0 +1,2 @@
+{"ts": "2026-11-04T02:09:23", "name": "live-head-dupe-count", "mode": "ran-inline", "url": "https://wayly.com.au/", "passed": true, "total_ms": 22764, "pw_import_ms": 336, "launch_ms": 1850, "first_goto_ms": 1058, "body_ms": 19250, "body_gotos": []}
+{"ts": "2026-11-04T02:11:25", "name": "live-head-dupe-timing", "mode": "ran-inline", "url": "https://wayly.com.au/ai-tools/statement-decoder", "passed": true, "total_ms": 17958, "pw_import_ms": 223, "launch_ms": 82, "first_goto_ms": 1013, "body_ms": 16372, "body_gotos": [{"ms": 231, "waitUntil": "domcontentloaded"}]}

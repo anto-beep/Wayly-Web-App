@@ -1,0 +1,37 @@
+{
+  "summary": "Mobile Budget Scenarios (/app/mobile/app/budget-scenarios.tsx) fully validated on the Expo web preview at mobile viewport 390x844 for the Solo test+1777810269@example.com user. Baseline projection loads from GET /bc2/participants/{pid}/projection and renders bc2-baseline-col with Class 4, current-quarter spend vs budget ($0 / $6,682), headroom, and 3 forward quarters ($5,679 each). All 8 classification chips (bc2-class-1..8) are present. Steppers bc2-slider-spend-{inc,dec,value} and bc2-slider-indexation-{inc,dec,value} exist and update state correctly (spend goes 0% -> +10% after 2 inc clicks; indexation goes 0% -> +1% after 2 inc clicks -> step 0.5 correct). Each control change triggers a debounced POST /bc2/projection-preview and the bc2-adjusted-col updates with per-quarter delta pills (+$3,052 x 3) and a bc2-adjusted-col-net-impact banner ('Extra $9,155 over 3 quarters', single $). Save button (bc2-save-scenario) is aria-disabled=true initially and becomes enabled once dirty; POST /bc2/scenarios succeeds; the new scenario appears in bc2-scenarios-list. Ticking two bc2-scenario-check-<id> renders bc2-compare-results, and bc2-scenario-delete-<id> issues DELETE /bc2/scenarios/{id} (both cleanup deletes 200). Backend regression (5/5 passing) covers projection shape, projection-preview overrides + zero-override parity, and scenarios POST/GET/DELETE (plus 404 on unknown). Copy audit on the live rendered page: 0 '$$', 0 em-dashes, 0 en-dashes.",
+  "platforms_tested": ["mobile"],
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "web": {"ui_bugs": [], "integration_issues": [], "design_issues": []},
+    "mobile": {
+      "ui_bugs": [],
+      "integration_issues": [],
+      "design_issues": [],
+      "react_native_issues": []
+    }
+  },
+  "parity_issues": [],
+  "test_report_links": [
+    "/app/backend/tests/test_bc2_mobile_parity_iter253.py",
+    "/app/test_reports/pytest/iter253_bc2.xml",
+    "/app/test_reports/iter253_bs_after_login.png",
+    "/app/test_reports/iter253_bs_final.png"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "All required testIDs are present and match spec: bc2-baseline-col (+ -q0/-q1/-q2), bc2-adjusted-col (+ -badge, -net-impact, -q0/-q1/-q2), bc2-sliders, bc2-class-1..8, bc2-slider-spend-{inc,dec,value}, bc2-slider-indexation-{inc,dec,value}, bc2-scenario-label, bc2-save-scenario, bc2-scenarios-list, bc2-scenario-{id}, bc2-scenario-check-{id}, bc2-scenario-delete-{id}, bc2-compare-results, bc2-compare-col-{id}, budget-scenarios-no-participant, budget-scenarios-empty, bc2-upload-link.",
+  "Value clamps are correct: spend clamps to [-50, 50] step 5; indexation clamps to [0, 10] step 0.5 with rounding to 1 decimal via Math.round((v +- 0.5) * 10) / 10. Chip row correctly marks 'Level 4 (current)' from baseline.classification.",
+    "SmartAISummary context passes quarter_budget_aud from baseline.current_quarter?.quarterly_budget_aud, whereas web BudgetScenarios.jsx passes total_budget_aud (which does not exist on the payload) and spent_aud (also nonexistent — payload uses burn_total_aud). Mobile is actually correct against the backend response; the web page has a latent bug in its SmartAISummary context (feeds undefined into two of the fields). Non-blocking for this task but worth surfacing.",
+    "Debounce is 300ms on mobile vs 250ms on web — negligible difference, both single-flight-safe via the cancelled flag.",
+    "Copy is dash-clean and uses single $ / % everywhere (verified via document.body.innerText scan on the live rendered page)."
+  ],
+  "updated_files": ["/app/backend/tests/test_bc2_mobile_parity_iter253.py"],
+  "success_rate": {"backend": "100% (5/5)", "frontend": "100% (baseline load, chip select, both steppers, save enable/disable, save, list, compare, delete, copy audit)"},
+  "test_credentials": "test+1777810269@example.com / SoloTest1! (Solo, class 4, one participant with baseline).",
+  "seed_data_creation": "Created two scenarios (TEST_iter253_ui_mobile, TEST_iter253_ui_second) and cleaned both up via UI delete (DELETE /bc2/scenarios/{id} both returned 200).",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "STEP 2 (mobile Budget Scenarios) — passed. To reproduce the auth harness pattern that failed in iter252 but works here: (1) navigate to /login on the Expo web preview host (the expo.preview subdomain), (2) fill the two input elements with email + password, (3) click the 'Sign in' text (Pressable, not a data-testid'd button), (4) wait 6s — AuthContext writes kindred_token/kindred_refresh_token/wayly_active_participant_id to localStorage (AsyncStorage web shim uses localStorage on this env), (5) then navigate to the target route with wait_until='load'. Direct fetch to /api/auth/login does NOT seat the session because tokens must be written via storage.secureSet, which only runs from the AuthContext login handler. The mobile app is fully wired to the shared /bc2 backend and matches the web /budget-scenarios behaviour (baseline + adjusted + save + compare + delete).",
+  "rca of the issue": "N/A - no defects found."
+}

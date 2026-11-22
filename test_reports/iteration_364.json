@@ -1,0 +1,64 @@
+{
+  "summary": "Tested all 4 reported fixes across web and mobile. 3 of 4 PASS. CRITICAL BUG on WEB: the signup verify-before-checkout stage never renders because /signup is wrapped by PublicAuthOnly (App.js:207-217) — as soon as AuthContext.signup() calls setUser(data.user), PublicAuthOnly re-renders, sees user is set, and <Navigate to='/onboarding'> fires, UNMOUNTING Signup.jsx before setVerifyStage(true) can show the verify stage. Verified with a fresh signup (plan=solo): POST /api/auth/signup returned 200, 3× PUT /api/persona returned 200, then the browser landed on /onboarding — the signup-verify-stage element never mounted and NO request to /api/payments/checkout fired. The 'Preview code' leak is NOT reachable on web (same reason — stage never renders) but there is no leak in the EmailCodeVerify.jsx source either, so the fix for bug (4) is correct on web. MOBILE verify-email: 'Preview code' leak is REMOVED, verify-code-input/verify-submit/verify-resend testIDs render, verify-debug-code testID is gone. MOBILE AI tool pages: ToolHero banner (testID tool-hero-budget-calculator) renders correctly below the compact back-only header on /tool/budget-calculator — the 'TOOL' eyebrow, title 'Budget Calculator', one-line description all present, no duplicate title in header. All 9 tool components verified in source to use `<AppHeader onBack={...}/>` (no title prop) followed by `<ToolHero toolKey={...}/>` as first scroll child. MOBILE onboarding DOB — testID wiring verified in source (onboarding-dob, -sheet, -month-toggle, -year-toggle, -prev, -next, -year-<Y>, -month-<i>, -day-<n>, -close); couldn't drive end-to-end because cathy's onboarding draft is already past step 1 (Essentials) and the test session landed on Authorisation. Main agent's smoke screenshot (1945 → 12/10/1945) covers this. WEB onboarding calendar day cells confirmed enlarged to h-9 w-9 (calendar.jsx:45).",
+  "platforms_tested": ["web", "mobile"],
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "web": {
+      "ui_bugs": [
+        {
+          "component": "Signup / PublicAuthOnly",
+          "issue": "signup-verify-stage NEVER renders. Flow: user fills form → POST /auth/signup 200 → AuthContext.signup() sets user → PublicAuthOnly (App.js:207-217) sees user and <Navigate to='/onboarding'> → Signup.jsx unmounts before setVerifyStage(true) can show the verify UI. Observed with plan=solo: no verify-stage DOM, no /payments/checkout call, URL ends at /onboarding. The entire bug-fix (2) — 6-digit code screen before Stripe + 'Skip for now' — is unreachable on web.",
+          "selector": "[data-testid=\"signup-verify-stage\"]",
+          "priority": "CRITICAL"
+        }
+      ],
+      "integration_issues": [
+        {
+          "flow": "Signup → verify → Stripe checkout",
+          "issue": "Because verify stage never renders, neither the VERIFY path (POST /auth/verify-code → proceedToCheckout → /payments/checkout → Stripe) nor the SKIP path (signup-verify-skip → proceedToCheckout) can be exercised on web. Backend endpoints themselves were not re-tested in this iteration.",
+          "affected_selectors": ["[data-testid=\"signup-verify-stage\"]", "[data-testid=\"signup-verify-skip\"]", "[data-testid=\"email-code-verify\"]", "[data-testid=\"code-digit-0\"]"]
+        }
+      ],
+      "design_issues": []
+    },
+    "mobile": {
+      "ui_bugs": [],
+      "integration_issues": [],
+      "design_issues": [],
+      "react_native_issues": []
+    }
+  },
+  "parity_issues": [
+    {
+      "flow": "Signup email verification before payment",
+      "platform": "web",
+      "issue": "Mobile has a working /verify-email screen with the 6-digit code; web's equivalent (EmailCodeVerify inside signup-verify-stage) never mounts due to the PublicAuthOnly redirect race.",
+      "expected": "After signup, web shows signup-verify-stage with 6 code inputs + 'Skip for now' before Stripe redirect",
+      "actual": "Web redirects straight to /onboarding, skipping verify entirely"
+    }
+  ],
+  "test_report_links": [
+    "/app/test_reports/iter364_web_results.json",
+    "/app/test_reports/iter364_verify.jpeg",
+    "/app/test_reports/iter364_mobile_tool_bc.jpeg",
+    "/app/test_reports/iter364_mobile_verify_email.jpeg",
+    "/app/test_reports/iter364_mobile_onboarding.jpeg"
+  ],
+  "action_items": [
+    "FIX WEB SIGNUP VERIFY STAGE (critical): The PublicAuthOnly wrapper on /signup unmounts the Signup page the instant AuthContext.signup() calls setUser(). Three viable fixes: (a) In App.js PublicAuthOnly, special-case the /signup route to not redirect when a verifyStage flag is active (e.g. read from location.state or sessionStorage); OR (b) In AuthContext.jsx signup(), DO NOT call setUser(data.user) for paid plans — only persist the token and let Signup.jsx navigate manually after verify/skip; OR (c) In Signup.jsx handleSubmit, call api.post('/auth/signup') directly instead of the context signup(), store token locally, and defer setUser until proceedToCheckout. Option (b) is the cleanest and keeps the existing signup-verify-stage render-path intact.",
+    "After fixing, retest both VERIFY and SKIP paths end-to-end plus confirm no 'Preview code' leak on web verify UI."
+  ],
+  "critical_code_review_comments": [
+    "/app/frontend/src/App.js:207-217 — PublicAuthOnly unconditionally redirects authed users away from /signup, which races against setVerifyStage(true) in Signup.jsx and breaks the newly-added verify-before-checkout flow. This is the root cause of the current regression.",
+    "/app/frontend/src/pages/Signup.jsx:236-243 — The setVerifyStage(true) branch is dead code in the paid-plan flow given the current PublicAuthOnly behaviour.",
+    "Prior-iteration note from iteration_363 still valid: articlePillars.js references /ai-tools/reassessment-letter-generator while the sitemap route is /ai-tools/reassessment-letter — not in scope here but will 404."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "n/a (not retested)", "frontend": "75% (3/4 bug fixes verified; 1 critical regression on web signup verify stage)"},
+  "test_credentials": "Fresh signup used plan=solo, email iterxyz<ts>@example.com, password Zebra9!wombat (note: Signup form password-validator rejects passwords that contain the first-name/email substring, so names like 'Test' + 'TestPass!2026' silently block submission with NO toast — a UX gap worth noting).",
+  "seed_data_creation": "Created ~2 throwaway solo-plan accounts via /api/auth/signup during web signup regression repro; harmless. Mobile smoke used cathy@example.com (existing).",
+  "retest_needed": true,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Mobile side of this iteration is clean: all 9 tool pages render ToolHero correctly, verify-email has no debug leak, DateField testID wiring in /app/mobile/src/components/ui.tsx matches the spec (verified via grep + end-to-end on /tool/budget-calculator). The ONE remaining issue is the web signup-verify-stage not rendering — this is NOT a bug in Signup.jsx itself but in the interaction between PublicAuthOnly (App.js:207-217) and AuthContext.signup() setting user before verify. Once E1 fixes that race (recommend option b: do not setUser for paid plans until verify/skip completes), re-run plan=solo signup + verify + skip, and confirm Stripe redirect in both paths. Mobile DOB field is on onboarding step 1 (Essentials) — to test, use a fresh signup account not an existing onboarded user.",
+  "rca of the issue": "/signup is wrapped by <PublicAuthOnly> (App.js:207-217). The flow in Signup.jsx:184-239 is: await signup(payload) → setVerifyStage(true). The context signup() awaits POST /auth/signup, then synchronously calls setUser(data.user) at AuthContext.jsx:115 BEFORE returning. Setting user triggers a re-render of the whole subtree; PublicAuthOnly re-evaluates, sees user!=null and (user.plan==='solo', household===null), and returns <Navigate to='/onboarding' replace/>. React unmounts Signup.jsx. The setVerifyStage(true) call that was queued inside the awaited handleSubmit never gets to render because the component is already gone. Confirmed with network capture: POST /auth/signup 200, 3× PUT /persona 200, zero POST /payments/checkout, final URL /onboarding."
+}

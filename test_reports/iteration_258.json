@@ -1,0 +1,33 @@
+{
+  "summary": "Verified iter258 mode-aware Stripe webhook secret. All 5 iter257 unit tests pass (including new _webhook_secret() mode-aware test: test-key→base, live-key→_LIVE, live-key without _LIVE→base fallback). All 4 iter258 preview runtime regressions pass: POST /api/webhook/stripe with bogus/missing signature returns 400 'invalid signature' (NOT 503 — proves base test whsec still active, _LIVE did not hijack); POST /api/payments/checkout for solo AND family returns 200 with cs_test_* session id and checkout.stripe.com url. Iter256 access-state re-run: 12/13 pass — view_only writes → 402, active/trial not blocked, /payments/checkout not blocked for view_only. One unrelated pre-existing failure: GET /api/documents for view_only user returns 409 no_household (fixture user cancelled.vo@example.com has no household — not a regression from this change).",
+  "platforms_tested": ["web"],
+  "backend_issues": {
+    "critical": [],
+    "minor": [
+      {"endpoint": "GET /api/documents", "issue": "Returns 409 no_household for view_only user cancelled.vo@example.com (fixture has no household). Test iter256::test_view_only_gets_return_200[/api/documents] fails. Pre-existing — unrelated to iter258 webhook change. Either seed a household for the view_only fixture, or drop /api/documents from the GET-200 parametrize list."}
+    ]
+  },
+  "frontend_issues": {"web": {"ui_bugs": [], "integration_issues": [], "design_issues": []}},
+  "parity_issues": [],
+  "test_report_links": [
+    "/app/backend/tests/test_stripe_price_mode_iter257.py",
+    "/app/backend/tests/test_access_state_enforcement_iter256.py",
+    "/app/backend/tests/test_webhook_and_checkout_iter258.py",
+    "/app/test_reports/pytest/iter258_stripe_webhook_mode.xml",
+    "/app/test_reports/pytest/iter258_regression.xml"
+  ],
+  "action_items": [
+    "Optional: fix the iter256 access-state fixture so cancelled.vo@example.com has a household (or use a different GET path that doesn't require one) — this is a pre-existing fixture issue, not caused by the webhook mode change."
+  ],
+  "critical_code_review_comments": [
+    "_webhook_secret() (routes/payments.py L74–82) correctly gates on _stripe_is_live() and falls back to base STRIPE_WEBHOOK_SECRET when _LIVE is missing — matches the price-id mode-aware pattern.",
+    "The webhook handler reads _webhook_secret() at request time (L799), so a mode/env flip needs no restart of the module cache — good.",
+    "In preview (sk_test_* key), _stripe_is_live() is False so STRIPE_WEBHOOK_SECRET_LIVE is ignored — confirmed by the 400 invalid-signature response (not 503)."
+  ],
+  "updated_files": ["/app/backend/tests/test_webhook_and_checkout_iter258.py"],
+  "success_rate": {"backend": "95.5% (21/22 executed tests pass; the 1 fail is a pre-existing unrelated fixture issue)"},
+  "seed_data_creation": "None — reused existing test_credentials fixtures.",
+  "retest_needed": false,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "Live-mode _LIVE webhook secret path CANNOT be exercised in preview (sk_test_ key active). It is verified by the monkeypatched unit test test_webhook_secret_is_mode_aware only. On production go-live, once STRIPE_API_KEY flips to sk_live_*, the handler will automatically start using STRIPE_WEBHOOK_SECRET_LIVE — no code redeploy needed. The pre-existing iter256 /api/documents 409 for view_only is orthogonal and known."
+}

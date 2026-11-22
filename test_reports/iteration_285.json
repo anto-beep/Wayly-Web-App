@@ -1,0 +1,43 @@
+{
+  "summary": "Verified Support Plan Reviewer enhancements on WEB (/ai-tools/care-plan-reviewer) and MOBILE (/tool/care-plan-reviewer) as cathy@example.com (active participant classification 4). All 5 required web checks PASS: (1) prefill classification=4 and quarterly_budget=6682 pulled from active participant's classification band, cp-prefilled-hint 'Prefilled from Dorothy Smith. Change these if the plan is different.' shown; (2) wider layout — care-plan-form measured at 976px inside max-w-5xl (~1024px) shell, wider than the previous max-w-4xl page container; (3) coloured panels confirmed by class inspection — cp-preview.section-teal-soft, cp-plan-summary.panel-clay, cp-verification-panel.section-sage-soft, cp-file-findings.sect-clay; (4) block-attach-while-running WORKS — during cp-progress the cp-dropzone has pointer-events-none + opacity-50 + aria-disabled=true, cp-file-input.disabled=true, remove buttons carry disabled state; (5) cp-draft-letter-all present on findings card after review completes. Mobile parity CONFIRMED: care-plan-form loads, Class 4 pill highlighted (bg rgb(14,77,82) primary), cp-quarterly-budget prefilled 6682, cp-pick-files + cp-take-photo become aria-disabled=true while cp-progress visible; panel background theming (colors.primarySoft/goldSoft/sageSoft) maps to teal/clay/sage tints per the mobile tokens file (goldSoft is the 'clay accent' per token comment).",
+  "platforms_tested": ["web", "mobile"],
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "web": {
+      "ui_bugs": [],
+      "integration_issues": [],
+      "design_issues": [
+        {"screen": "/ai-tools/care-plan-reviewer", "issues": ["React hydration warning: <span> injected as child of <option> by the dev tool overlay wrapper (x-ve-dynamic on option element line 402). This is from the dev-time source overlay, not app code — safe to ignore in production but flagged for visibility."]}
+      ]
+    },
+    "mobile": {
+      "ui_bugs": [],
+      "integration_issues": [
+        {"flow": "Care plan review submit", "issue": "Mobile still calls SYNC endpoints /public/care-plans/review and /public/care-plans/review-files while WEB uses async job + polling (/public/care-plans/review-async + review-files-async → poll /review-jobs/{id}). Per E1's own note the LLM call is ~40-60s; a sync request risks gateway/504 timeouts on real payloads and leaves users without the graceful 'come back later' UX web enjoys.", "affected_testIDs": ["cp-submit"]}
+      ],
+      "design_issues": [],
+      "react_native_issues": []
+    }
+  },
+  "parity_issues": [
+    {"flow": "Care plan review submission", "platform": "mobile", "issue": "Mobile uses sync /public/care-plans/review(-files); web uses async job + polling.", "expected": "Both surfaces post to review-async and poll review-jobs/{id} so 40-60s LLM calls don't hit the gateway timeout.", "actual": "Mobile submits sync — long reviews may time out; no shared polling/retry logic as web has."},
+    {"flow": "Prefilled hint copy", "platform": "mobile", "issue": "Web hint uses user name ('Prefilled from Dorothy Smith') while mobile inline label says 'prefilled from Mum' (participant display name).", "expected": "Consistent phrasing across surfaces (prefer participant name or user name — pick one).", "actual": "Copy differs; both are legible but not aligned."}
+  ],
+  "test_report_links": ["/app/test_reports/iter285_web_result.jpg", "/app/test_reports/iter285_mob_busy.jpg", "/app/test_reports/iter285_mob_load.jpg"],
+  "action_items": [
+    "Migrate mobile CarePlanReviewer.tsx submit() to the async review-jobs endpoints + polling loop the same way web does, to prevent 40-60s timeouts.",
+    "Unify prefilled-hint copy across web and mobile (either 'Prefilled from <user name>' or 'Prefilled from <participant name>')."
+  ],
+  "critical_code_review_comments": [
+    "CarePlanReviewer.jsx is 772 lines and doing a lot (SEO, gating, upload, text-paste, async polling, save flows, download PDF, letter drafting, multiple result renderers, both v1 result shape AND findings shape). Consider splitting the polling/upload logic + result renderers into hooks/subcomponents.",
+    "The <option> children in the classification select are wrapped by a dev-tool overlay <span> causing a hydration warning at runtime — worth suppressing on option elements in the overlay injector."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "n/a (backend not retested this round; async CPR endpoints exercised end-to-end via web submit and returned a valid result within ~60s)", "frontend": "100% (all 5 web acceptance checks + all 3 mobile parity checks passed)"},
+  "test_credentials": "cathy@example.com / testpass123 (Family plan, active participant Dorothy Smith, classification 4).",
+  "seed_data_creation": "None; used existing cathy fixture.",
+  "retest_needed": false,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "Web CPR ships prefill + wider max-w-5xl + coloured panels + attach-locked-while-running + draft-letter — all verified. Mobile has the visual + prefill + disable-while-busy parity but still uses SYNC review endpoints (potential timeout risk). Mobile async migration is the main follow-up.",
+  "rca of the issue": "N/A — no failing case. The remaining risk (mobile sync submission) is architectural, not a live defect this iteration."
+}

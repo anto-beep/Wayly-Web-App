@@ -1,0 +1,31 @@
+{
+  "summary": "Verified Wayly web tool-sample feature end-to-end on the public preview. Logged-out: all 9 tool pages (invoice-checker, budget-calculator, contribution-estimator, classification-self-check, provider-price-checker, support-plan-reviewer, aged-care-qa, letters-and-follow-ups, reassessment-letter?primary=6) render their *-sample-output testid at the full-width 1720px (matching the Statement Decoder reference) and the ToolHero is also wide (tool-hero-* bounding box = 1720px). Real sample numbers present: budget $12,365.48/$11,128.93, contribution $62.84, price $118.00/$83.00/$109.00, Classification 4 & 8. Shared -badge, -cta, -cta-primary, -cta-signin testids are present on 8 of 9 samples; Invoice Checker uses a custom component with its own equivalent testids (invoice-sample-badge / invoice-sample-cta-panel / invoice-sample-trial-cta / invoice-sample-signin-cta) which is a naming inconsistency vs the shared convention described in the brief. Authenticated as cathy@example.com (Family active): all 9 *-sample-output testids are ABSENT (count=0) and the real tool renders (confirmed by screenshot of Reassessment Letter Drafter form) — the ToolSampleShell `if (user) return null` gate works.",
+  "platforms_tested": ["web"],
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "web": {
+      "ui_bugs": [
+        {"component": "InvoiceSampleResult.jsx", "issue": "Invoice Checker sample uses custom testids (invoice-sample-badge, invoice-sample-cta-panel, invoice-sample-trial-cta, invoice-sample-signin-cta) instead of the shared ToolSampleShell convention requested in the brief (invoice-sample-output-badge, invoice-sample-output-cta, invoice-sample-output-cta-primary, invoice-sample-output-cta-signin). Functionally equivalent (badge + teal CTA + two links all render and look right), but testid naming is inconsistent with the other 8 tool samples. Consider migrating to ToolSampleShell or renaming its sub-testids to match.", "selector": "[data-testid='invoice-sample-badge']", "priority": "LOW"}
+      ],
+      "integration_issues": [],
+      "design_issues": []
+    },
+    "mobile": {"ui_bugs": [], "integration_issues": [], "design_issues": [], "react_native_issues": []}
+  },
+  "parity_issues": [],
+  "test_report_links": [],
+  "action_items": [
+    "(Optional, low priority) Align Invoice Checker sample testids with the shared ToolSampleShell convention — either migrate InvoiceSampleResult.jsx to use ToolSampleShell or add -badge/-cta/-cta-primary/-cta-signin suffixes keyed off invoice-sample-output so future automated tests can target all 9 samples uniformly."
+  ],
+  "critical_code_review_comments": [
+    "Invoice Checker intentionally renders its sample only on access==='blocked' (line 454 of InvoiceCheckerTool.jsx), while the other 8 tools render the sample from the ToolSampleShell which gates on `useAuth().user`. Both paths correctly hide the sample from logged-in cathy, but the two gating mechanisms are different — a future change to `useToolAccess` could desync Invoice Checker from the rest.",
+    "ToolSampleShell uses `if (user) return null` which hides the sample the instant AuthContext hydrates. Confirmed working — no flash of sample on authed pages."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "n/a", "frontend": "100% (18/18 scenarios: 9 logged-out present+wide + 9 authed hidden)"},
+  "seed_data_creation": "none",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Test URLs and credentials confirmed working. Login flow: POST via /login form with cathy@example.com / testpass123 → localStorage kindred_token, redirects to /app. Cookie consent banner may appear but does not block the hero/sample measurements.",
+  "rca of the issue": "n/a — feature works as specified."
+}

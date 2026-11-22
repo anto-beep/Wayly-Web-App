@@ -1,0 +1,21 @@
+{
+  "participant_id": "0c538637-b0dd-4982-8f78-b32814c6a5eb",
+  "participant_first_name": "Dorothy",
+  "participant_classification": {
+    "band": 4,
+    "confidence": null,
+    "source": "unknown",
+    "effective_date": null,
+    "last_updated": "2026-08-06T02:33:42.737000+00:00"
+  },
+  "conversation_id": "984f73e3-7b37-4e5b-9ae0-4cd96e1a8a5a",
+  "status": "pass",
+  "context_flags_used": [
+    "budget_projection"
+  ],
+  "cited_source_types": [
+    "budget_projection"
+  ],
+  "assistant_excerpt": "I don't have your remaining balance here \u2014 the projection data I can see shows your **total quarterly budget** for Jul\u2013Sep 2026 is **$6,681.60**, with spending recorded across:\n\n- **Clinical:** $1,677.50\n- **Independence:** $1,190.00\n- **Everyday Living:** $850.00\n\nThat's **$3,717.50** spent so far, which would leave an **estimated $2,964.10 remaining** \u2014 but this may not reflect the very latest transactions. For your up-to-date balance, please check the **Budget tool in Wayly**.",
+  "fallback_text_present": false
+}

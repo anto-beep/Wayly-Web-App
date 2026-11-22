@@ -1,0 +1,53 @@
+{
+  "summary": "Iter288 visual QA (web only, cathy@example.com). All 6 target areas verified visually + via computed styles in LIGHT mode; dark-mode override was applied via className/data-theme toggle (site defaults to dark for Cathy, both were exercised). Clay token .text-clay-k is DEFINED (light #A5512B, dark #E89A6F) and renders correctly (statements list Archived button computed color = rgb(165,81,43); BC Care management line text = clay). Caregiver dashboard stream cards (teal / sage / clay) are visually distinct with soft tint + 4px coloured left accent + coloured numerals. Budget Calculator result cards are SOLID clay/teal/sage with white text (both light+dark). BC usable-bar is a clearer split graphic with 90% inside the segment, sage/clay legend tiles and an explainer sentence. Lifetime panel is SOLID sage with white text and clay progress fill. Contribution Estimator 'Who pays what' is a SOLID teal panel with white text, donut, sage govt row and clay 'You pay' row. Budget Scenarios shows baseline TEAL vs adjusted CLAY (with ring) — clearly contrasted. Statements list Export CSV=sage tint / Archived=clay tint. Removed ask-kindred-cta stays gone. Two moderate issues found and reported below (no critical blockers).",
+  "platforms_tested": ["web"],
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "web": {
+      "ui_bugs": [
+        {"component": "OnboardingProgressCard (dashboard)", "issue": "The 'Finish setting up your account' teal panel: the '11%' number and 'DONE' label render dark (teal ink) on the dark teal panel background — very low contrast (near-invisible). White text should be used here to match the new solid-panel treatment. Reference: /app/frontend/src/pages/Dashboard.jsx (Finish setup card).", "selector": "onboarding-progress-card / .11%-DONE", "priority": "MEDIUM"},
+        {"component": "BudgetScenarios cards", "issue": "Cards are visually correct (baseline TEAL, adjusted CLAY with ring) but do NOT expose stable data-testid values (scenario-baseline / scenario-whatif / baseline-card / adjusted-card were all absent). Add testIDs so automation can verify colour treatment programmatically. Reference: /app/frontend/src/pages/BudgetScenarios.jsx.", "selector": "(missing) scenario-baseline / scenario-whatif", "priority": "LOW"}
+      ],
+      "integration_issues": [
+        {"flow": "Participant Profile route", "issue": "/app/profile returns a 404 ('This page has gone for a walk') when navigating directly for Cathy. Could not verify ParticipantProfile teal banner via that URL. Visual verification of the teal header banner was captured on the app chrome (Dorothy Smith header banner rgb(14,77,82) white text OK). Main agent to confirm canonical profile route (likely /app/participants/:id or similar).", "affected_selectors": ["profile-header"]}
+      ],
+      "design_issues": [
+        {"screen": "Budget Calculator light mode", "issues": ["All three result cards (clay/teal/sage) + lifetime sage panel render with white text and clear hierarchy — passes AA visually. Usable-bar sage-tint panel with sage segment + clay 10% segment reads clearly."]},
+        {"screen": "Budget Calculator dark mode", "issues": ["Solid panels retain inline hex bg and white text (computed rgb(255,255,255) on rgb(165,81,43)/rgb(14,77,82)/rgb(66,95,71)) — legible in dark too."]},
+        {"screen": "Contribution Estimator", "issues": ["Who-pays-what teal panel white text passes; donut visible; sage/clay rows have white text — legible."]},
+        {"screen": "Statements list", "issues": ["Export CSV sage-tint (rgba(66,95,71,0.15) + sage text) and Archived clay-tint (rgba(165,81,43,0.14) + clay text) — correct pop and consistent with token."]},
+        {"screen": "Caregiver dashboard stream cards", "issues": ["Clinical (teal), Independence (sage), Everyday Living (clay) are clearly differentiated via soft tint bg + 4px coloured left border + coloured heading & numerals. Numbers legible in both themes because tone.solid is used for text on a tint-of-itself background."]}
+      ]
+    },
+    "mobile": {"ui_bugs": [], "integration_issues": [], "design_issues": [], "react_native_issues": []}
+  },
+  "parity_issues": [],
+  "test_report_links": [
+    "/app/test_reports/iter288_dash_light.jpeg",
+    "/app/test_reports/iter288_dash_dark.jpeg",
+    "/app/test_reports/iter288_bc_light.jpeg",
+    "/app/test_reports/iter288_bc_dark.jpeg",
+    "/app/test_reports/iter288_ce_light.jpeg",
+    "/app/test_reports/iter288_scenarios_light.jpeg",
+    "/app/test_reports/iter288_stmts_light.jpeg",
+    "/app/test_reports/iter288_profile_light.jpeg"
+  ],
+  "action_items": [
+    "Fix 'Finish setting up your account' dashboard card contrast: switch the '11%' ring text and 'DONE' label to white/light on the dark teal panel (currently dark-on-dark, unreadable).",
+    "Add data-testid attributes to Budget Scenarios baseline / adjusted-what-if cards (e.g. data-testid=\"scenario-baseline\" / \"scenario-whatif\") so colour treatment is verifiable in automation.",
+    "Confirm/expose canonical Participant Profile route — /app/profile currently 404s for the logged-in caregiver; if the profile is only reachable via /app/participants/:id, main agent should either add a redirect or update navigation."
+  ],
+  "critical_code_review_comments": [
+    ".text-clay-k is now correctly defined in /app/frontend/src/index.css (line 247 light, line 415 dark) — root cause of iter287 'clay renders as navy' is fixed. Verified computed color rgb(165,81,43) on statement Archived button and BC clay text.",
+    "BudgetCalculatorTool result cards use inline style backgroundColor + Tailwind text-white classes — legible and theme-agnostic. Consider extracting to .panel-solid-clay / .panel-solid-teal / .panel-solid-sage utility classes for consistency across CE, dashboard etc.",
+    "StreamProgress uses inline soft/solid tone pairs — in dark mode the tint bg is very subtle (rgba 0.12-0.15 over a dark surface), the coloured text (tone.solid) may drop a bit in contrast on the darkest surfaces; consider using slightly lighter solid variants for dark theme (mirror the clay 300 override you already added for text-clay-k)."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "N/A (frontend-only)", "frontend": "~95% (2 medium/low issues, no blockers)"},
+  "test_credentials": "cathy@example.com / testpass123 (Family)",
+  "seed_data_creation": "None",
+  "retest_needed": false,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "The clay token fix is verified working across BC, CE, StatementsList, StatementNotes, StatementRightsPanel and StatementAskWayly. If next iter changes any solid-panel treatments, spot-check BC bc-quarterly-gross/care-management/quarterly-usable/lifetime-panel + CE ce-govt-share-bar/govt/you for white-on-coloured legibility in BOTH themes. /app/profile route is currently a 404 for caregivers — participant profile screen must be verified via a specific participant id URL.",
+  "rca of the issue": "N/A — this iteration was a visual regression verification, not a bug hunt. All requested colour treatments pass visually and via computed-style probes."
+}

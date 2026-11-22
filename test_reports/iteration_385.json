@@ -1,0 +1,47 @@
+{
+  "summary": "Verified all 5 marketing-nav requirements on the web surface. Dark-mode header + app-download banner remain brand teal #0E4D52, Log In is white in dark mode, Tools mega menu is theme-aware (all items/See-All/open-active legible in both themes), the right preview column is NOT a light-blue block (uses surface-2), the Free pill shows dark navy on yellow in both themes, hovering tools swaps real /marketing/ai-tool-*.png screenshots (HTTP 200, naturalWidth=2560), and the mobile drawer has an expandable Tools accordion with all 9 tools + 'See All Tools' link and correct per-tool navigation.",
+  "platforms_tested": ["web"],
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "web": {
+      "ui_bugs": [],
+      "integration_issues": [],
+      "design_issues": []
+    }
+  },
+  "parity_issues": [],
+  "verification_results": {
+    "dark_mode_header_bg": "rgb(14, 77, 82) == #0E4D52 PASS",
+    "dark_mode_app_download_bg": "rgb(14, 77, 82) == #0E4D52 PASS",
+    "dark_mode_nav_login_color": "rgb(255, 255, 255) == #FFFFFF PASS",
+    "light_mode_header_bg": "rgb(14, 77, 82) == #0E4D52 PASS",
+    "mega_menu_light_visibility": "featured, see-all, open-active and 8 mega-tool-* items all visible PASS",
+    "mega_menu_dark_text_contrast": "tool names/descriptions render white rgb(255,255,255) on surface-2 PASS",
+    "mega_menu_dark_right_preview_bg": "rgb(20, 64, 63) (surface-2 dark teal) — NOT light blue PASS",
+    "mega_free_badge_light": "bg rgb(255,207,107)=#FFCF6B, color rgb(14,42,71)=#0E2A47 PASS",
+    "mega_free_badge_dark": "bg rgb(255,207,107)=#FFCF6B, color rgb(14,42,71)=#0E2A47 PASS",
+    "mega_screenshot_invoice_checker": "/marketing/ai-tool-invoice-checker.png loaded naturalWidth=2560 PASS",
+    "mega_screenshot_statement_decoder": "/marketing/ai-tool-statement-decoder.png loaded naturalWidth=2560 PASS",
+    "mega_screenshot_provider_price_checker": "/marketing/ai-tool-provider-price-checker.png loaded naturalWidth=2560 PASS",
+    "mobile_drawer_tools_accordion": "mobile-tools-toggle expands mobile-tools-panel listing 9 mobile-tool-* items + mobile-see-all-tools PASS",
+    "mobile_tool_navigation": "Tapping mobile-tool-invoice-checker navigated to /ai-tools/invoice-checker PASS"
+  },
+  "test_report_links": [
+    "/app/test_reports/iter385_light_mega.jpeg",
+    "/app/test_reports/iter385_dark_mega.jpeg",
+    "/app/test_reports/iter385_mobile.jpeg"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "ToolsMegaMenu.jsx featured link's inline bg uses the brand teal gradient (correct). The 'All N Wayly tools' eyebrow uses text-[#0E4D52]/60 which is readable on both surface-2 variants; verified visually in both themes.",
+    "MarketingHeader.jsx hard-codes the header background as bg-[#0E4D52] and the index.css override pins the same color in dark mode — kept consistent."
+  ],
+  "updated_files": [],
+  "success_rate": {"frontend": "100%"},
+  "test_credentials": "Not needed (signed-out marketing nav tested).",
+  "seed_data_creation": "",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "iter385 verified the 5 dark-mode / mega-menu / mobile-drawer requirements on the web marketing nav. All passed. Backend was not in scope. If regressions re-appear, re-check: header[data-testid='marketing-header'] bg, [data-testid='app-download-prompt'] bg, a[data-testid='nav-login'] color, .mega-free-badge contrast, right preview column bg (expected rgb(20,64,63) in dark), /marketing/ai-tool-*.png loads, and [data-testid='mobile-tools-toggle']/panel.",
+  "rca of the issue": ""
+}

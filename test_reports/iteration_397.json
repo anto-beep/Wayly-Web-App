@@ -1,0 +1,51 @@
+{
+  "summary": "Phase 3A.1 Unified Support Inbox + Phase 5A Marketing Spend + Founder Command Centre MVP — tested on web. Backend: 17/17 pytest cases pass (admin 2-step auth, inbox dedupe/filters/search/pagination/leak-check, marketing CRUD + void + CSV export + RBAC, command-centre shape). Frontend: all three pages load after 2-step admin login and render correctly — Unified Inbox shows 46 tickets / 31 enquiries / 0 legacy (WAY-0045 and WAY-0046 appear under source=ticket, Legacy tab is empty as expected), Marketing Spend creates expense + campaign and summary totals update in AUD, Command Centre renders 6 blocks + data-source health strip + drill-down 'View' links. One non-blocking React console warning found (duplicate `enquiry-null` key in inbox table caused by existing contact_requests rows that lack `id`).",
+  "platforms_tested": ["web"],
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "web": {
+      "ui_bugs": [
+        {
+          "component": "AdminSupportInbox table",
+          "issue": "React warning: 'Encountered two children with the same key, enquiry-null'. The row key is `${r.source}-${r.id}` (line 156 of AdminSupportInbox.jsx) but some contact_requests documents in the DB have id=null, so every such enquiry row collides. Rendering still works but React may drop/duplicate rows and it floods the console (observed ~70 warnings in one page load). Recommend falling back to a stable index-based key or including `created_at` in the key: `key={`${r.source}-${r.id || r.created_at || idx}`}`.",
+          "selector": "[data-testid^='inbox-row-']",
+          "priority": "MEDIUM"
+        }
+      ],
+      "integration_issues": [],
+      "design_issues": []
+    },
+    "mobile": {"ui_bugs": [], "integration_issues": [], "design_issues": [], "react_native_issues": []}
+  },
+  "parity_issues": [],
+  "test_report_links": [
+    "/app/backend/tests/test_phase3a_5a_iter397.py",
+    "/app/test_reports/pytest/iter397_results.xml",
+    "/app/test_reports/iter397_inbox.png",
+    "/app/test_reports/iter397_marketing.png",
+    "/app/test_reports/iter397_command_centre.png"
+  ],
+  "action_items": [
+    "AdminSupportInbox.jsx line 156: make the row key defensive against missing ids (append `r.created_at` or the array index) to stop the duplicate-key console warnings for enquiry rows that have null id. Minor only — functionality is fine."
+  ],
+  "critical_code_review_comments": [
+    "Inbox endpoint correctly strips `_id` and never selects body/internal_notes/messages — the leak-check test asserts this and passes.",
+    "Legacy dedupe works: WAY-0045 and WAY-0046 appear as source=ticket only (legacy count=0, backend confirmed via DB query via API).",
+    "Marketing endpoints enforce require_super_or_ops; unauthenticated GETs return 401/403 as verified.",
+    "Marketing amounts are strictly AUD (summary cards display A$ prefix; backend currency constant = 'AUD', no FX in code).",
+    "Command Centre blocks each carry source + last_updated + status with an 'empty' honest state; data_source_health lists the ad-platforms integration as 'not_connected' (correct)."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_phase3a_5a_iter397.py (new)"
+  ],
+  "success_rate": {"backend": "100%", "frontend": "95%"},
+  "test_credentials": "super_admin hello@wayly.com.au / Admin!2026 + TOTP M5A7R2XCCEXWYYKNJY55MVZYUHPYFA6W (pyotp). Admin token key: wayly_admin_token.",
+  "seed_data_creation": "Test fixtures created: 1 expense (TEST_UI_Expense_Iter397, voided during test) and 1 campaign (TEST_UI_Campaign_Iter397). 1 pytest campaign + expense (voided). Expenses are soft-voided per design (money is never deleted) — leftover rows are tagged with TEST_ prefix and status=cancelled/voided.",
+  "retest_needed": false,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "Three new admin pages verified: /admin/support-inbox, /admin/marketing-spend, /admin/command-centre. All API surfaces at /api/admin/{support/inbox, marketing/*, command-centre/summary} are gated behind 2-step admin auth. The inbox dedupes migrated legacy tickets via sup_tickets.migrated_from.legacy_id — current state: 46 sup_tickets, 31 contact_requests, 0 remaining legacy. The React duplicate-key warning in AdminSupportInbox is cosmetic and should be fixed by main agent in one line.",
+  "rca of the issue": "Duplicate React key cause: multiple contact_requests documents in Mongo lack an `id` field. The backend returns `id: None` for them, and the frontend renders rows with key `enquiry-null` for each one. Fix the client-side key (one-line change) rather than backfilling DB data."
+}

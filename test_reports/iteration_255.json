@@ -1,0 +1,43 @@
+{
+  "summary": "STEP 4 broken-link + forms audit across web (/app/frontend) and mobile (/app/mobile). Verified all six previously-broken web link targets now resolve to real routes in App.js. Rendered 3 of the 6 unauthenticated targets via Playwright and they returned real pages (title + long body, no NotFound copy): /services (200 'Support at Home service explainers...'), /ai-tools/provider-price-checker/how-it-works (200 'How the aged-care price fairness check works | Wayly'), /legal/ai-disclaimer (200 'AI Accuracy Disclaimer · Wayly'). The remaining three targets are behind RequireAuth (/app/documents, /app/scenarios, /app/participants/{id}/cases, /app/participants/{id}/timeline) and were verified statically against App.js route table (lines 456, 474, 476, 478). Full-nav web crawl of all static Link `to` targets (145 unique) plus all dynamic template-literal targets — every static target maps to a defined route or the /admin/* catch-all handler. Mobile router.push / router.replace crawl (60+ unique targets) — every target maps to an expo-router file under /app/mobile/app. Forms audit: web /login has native HTML5 required-field validation (captured 'Please fill out this field.' on empty submit). Mobile forms are correctly validated in code: pacing AdHocForm (service + duration + rate), pacing ScheduleForm (service + duration + rate), pacing ReconcileForm (>=1 valid CSV line), Budget Scenarios save (Save disabled when !dirty AND requires label). Copy audit: no user-visible '$$', no em-dashes and no en-dashes on the six changed files, EXCEPT three em-dashes (U+2014) in JSX COMMENTS in /app/frontend/src/pages/tools/InvoiceCheckerTool.jsx lines 666, 768, 775 (never rendered to user). SwitchSettlement.jsx line 25 shows literal '$$' in source but this is a JS template-literal ('$' + '${amt}') that renders as '$1,234.00' — safe. NOTE: interactive login via the web preview and via direct /api/auth/login POST both time out (proxy returned 502 after 60s during this run) so the three authenticated web routes could not be rendered end-to-end; treated this as a preview-env auth flake, not a routing regression, given the static route table proves the targets exist and iteration_254 already exercised /login on the same fork.",
+  "platforms_tested": ["web", "mobile"],
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "web": {
+      "ui_bugs": [],
+      "integration_issues": [],
+      "design_issues": [
+        {"screen": "/app/frontend/src/pages/tools/InvoiceCheckerTool.jsx", "issues": ["Three em-dashes (U+2014) in JSX code comments on lines 666, 768, 775. Not user-visible but violates the 'no em/en dashes' repo-wide copy rule. Suggest replacing with ASCII '-' or removing the dash phrase from the comments."]}
+      ]
+    },
+    "mobile": {
+      "ui_bugs": [],
+      "integration_issues": [],
+      "design_issues": [],
+      "react_native_issues": []
+    }
+  },
+  "parity_issues": [],
+  "test_report_links": [
+    "/app/test_reports/iter255_bc2.jpeg"
+  ],
+  "action_items": [
+    "(LOW) In /app/frontend/src/pages/tools/InvoiceCheckerTool.jsx replace the em-dashes (U+2014) inside JSX comments on lines 666, 768, 775 with ASCII '-' to satisfy the repo-wide copy rule (source-level, not user-visible).",
+    "(INFO) The public /api/auth/login POST returned 502 (Cloudflare) after ~60s during this run while the other authenticated GET endpoints continued to serve 200 in backend.out.log. If main agent sees the same, restart backend and re-verify — this did NOT affect the broken-link work under review."
+  ],
+  "critical_code_review_comments": [
+    "All six /pages fixes confirmed at source: SwitchSettlement.jsx L258 -> /app/participants/${pid}/cases (route App.js L478); CarerSelfAssessment.jsx L386 -> /services (App.js L356); ProviderQualityDetail.jsx L230 -> /ai-tools/provider-price-checker/how-it-works (App.js L391); ParticipantTimeline.jsx L296 -> /app/scenarios with testID 'timeline-add-event' (App.js L474); AskWaylyV2.jsx L369 -> /legal/ai-disclaimer (App.js L420); InvoiceCheckerTool.jsx L827 -> /app/documents with testID 'inv1-open-vault' (App.js L456).",
+    "Web full-app static crawl found zero remaining dead Link targets — every static `to=\"/...\"` resolves either directly to a `<Route path=\"...\">` or to /admin/* which delegates to <AdminApp/>.",
+    "Mobile router.push/replace crawl: every target resolves to a file under /app/mobile/app (static targets: (tabs)/ask, family, statements, /audit, /budget-alerts, /cases, /compare-providers, /contribution-position, /correspondence, /danger-zone, /family-members, /forgot-password, /key-contacts, /letters, /participants, /plan-billing, /plan-select, /profile-edit, /ratings, /reports, /security, /signup, /statements-archived, /timeline, /tool/*, /upload, /usage, /weekly-digest; dynamic: /athm-project/[id], /care-plan/[id], /case/[id], /correspondence/[id], /decode/[id], /invoice/[id], /participant/[id], /report/[id], /statement/[id], /statement-audit/[id], /statement-compare/[id], /support/[id], /provider-quality/[name]). No dead links found.",
+    "Mobile forms validated in code: pacing.tsx L393-394 (AdHocForm requires service + dur + rate), L641 (ScheduleForm requires service + dur + rate), L536 (ReconcileForm requires >=1 valid CSV line), budget-scenarios.tsx L200 (Save requires trimmed label) and L318 (Save button disabled={!dirty}). Web parity in BudgetScenarios.jsx confirmed matches.",
+    "Note (already flagged in iter254): /app/mobile/app/report/[id].tsx load() early-returns without setLoading(false) when !id — pre-existing, not a Step-4 regression."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "n/a (frontend-only requested)", "frontend": "100% for the six broken-link fixes and forms-validation code paths under review; 3 of 6 targets rendered live via Playwright, 3 verified statically due to auth-endpoint 502 in this session"},
+  "test_credentials": "test+1777810269@example.com / SoloTest1! (per request; /api/auth/login was returning 502 at time of test)",
+  "seed_data_creation": "None.",
+  "retest_needed": false,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "STEP 4 broken-link and forms audit is code-clean. If main agent wants an additional live check of /app/documents, /app/scenarios, /app/participants/{id}/cases, /app/participants/{id}/timeline once the auth endpoint is warm again, log in via /login form (email test+1777810269@example.com / SoloTest1!) and open each of those URLs — all four routes are wired to real components. Also consider removing the three em-dashes in InvoiceCheckerTool.jsx JSX comments (source lines 666/768/775) to keep the copy audit fully clean.",
+  "rca of the issue": "N/A — no regressions found in the six broken-link fixes. The only cosmetic finding is three em-dashes inside JSX comments in InvoiceCheckerTool.jsx that are never rendered to end users."
+}

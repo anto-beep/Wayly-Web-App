@@ -1,0 +1,120 @@
+<analysis>**original_problem_statement**: 
+PRODUCT REQUIREMENTS:
+1. Make all AI Tool pages the same width () as the Statement Decoder page. 
+2. Add worked examples (marketing samples) to all AI Tool pages for unauthenticated visitors so they can see exact tool outputs. Authenticated views must remain unchanged. 
+3. Use the attached Sam Burke data for the Support Plan Reviewer worked example.
+4. Visual tweaks: Make the description text under the heading wide on the sample shell, and apply distinct background colors to the Price Checker sample stat cards so they stand out.
+*(Note: Initial requirements from the handoff regarding the Invoice Checker Supporting Records upload and its tabbed marketing example were also completed during this session).*
+
+**User's preferred language**: English (INSTRUCT next agent to respond in English only)
+
+**what currently exists?** 
+The Invoice Checker tool has been updated on both Web and Mobile to support secondary Supporting Records uploads and features a tabbed marketing example (Clean vs Overcharge matching the 66.66 backend calculation). All 9 AI Tool pages (Budget Calculator, Care Plan Reviewer, Classification Check, Contribution Estimator, Price Checker, Q&A, Reassessment Letter, Letters & Follow-Ups, Invoice Checker) now have wide layouts () for unauthenticated users. High-fidelity, data-accurate worked examples (using captured backend payloads and the Sam Burke persona) have been integrated into every tool's logged-out view via a shared . All requested visual tweaks have been applied.
+
+**Last working item**: 
+    - Last item agent was working: Applying visual edits requested via Agentic Edit: removing max-width constraints on the description paragraph in  to make it full-width, and adding distinct background colors (red, teal, purple) to the 3 stat cards in .
+    - Status: COMPLETED
+    - Agent Testing Done: Y
+    - Which testing method agent to use? NA (already tested via screenshot tool)
+    - User Testing Done: N
+
+**All Pending/In progress Issue list**:  
+  *(None. All reported issues have been resolved and verified).*
+
+**In progress Task List**: 
+  *(None)*
+
+**Upcoming and Future Tasks**
+    Upcoming Tasks:
+    - Connect Analytics (Google Analytics 4 & Google Search Console) using . (P1)
+    
+    Future Tasks:
+    - Phase 4A: Connect Google Ads, Meta Ads, and Metricool APIs. (P2)
+    - Phase 4A: Automate conversion attribution matching between Stripe records and Marketing platforms. (P3)
+
+**Completed work in this session**
+- Added Supporting Records multi-file upload UI to Invoice Checker ( and mobile  via new  helper in ). (DONE)
+- Built tabbed Genuine Overcharge vs Clean Invoice marketing sample for Invoice Checker on Web and Mobile. (DONE)
+- Standardized width () across all unauthenticated AI Tool pages. (DONE)
+- Created shared  and 8 specific  worked examples for the remaining AI tools (using real backend payload structures to ensure fidelity). (DONE)
+- Applied Agentic Edit visual tweaks to make  text full-width and  stat cards distinctly colored. (DONE)
+
+**Earlier issues found/mentioned but not fixed**
+   *(None)*
+
+**Known issue recurrence from previous fork**
+  - Issue recurrence in previous fork: None
+  - Recurrence count: 0
+  - Status: NA
+
+**Code Architecture**
+- **Frontend ()**: React. Tool pages live in . Marketing sample components live in . Authenticated vs Unauthenticated branch handling is strictly managed via  or explicit component access checks.
+- **Mobile ()**: Expo / React Native. Invoice screens updated to support multipart form uploads for the secondary supporting PDF.
+- **Backend ()**: FastAPI serving the tool endpoints (, , etc.).
+
+**Key Technical Concepts**
+- **Multipart Uploads**: The mobile app now uses an  helper in  to append multiple  files (invoice + supporting_file) to the FormData for .
+- **Mocked/Sample Views**: Rendered strictly for unauthenticated users. The data for these static components was derived by capturing real authenticated backend payloads (using the Sam Burke test persona) to ensure 100% structural fidelity.
+- **Production vs Preview**: The application has now been deployed to PRODUCTION (). You are working in PREVIEW. Always clarify environments if the user reports future issues.
+
+**key DB schema**
+  - : 
+
+**changes in tech stack**
+  - None
+
+**All files of reference**
+-  (Shared shell for tool samples)
+-  (Specific sample components for 8 tools)
+-  (All 8 tool pages updated with samples and  hero)
+-  (Updated for supporting file upload + sample)
+-  (Updated with tabs)
+-  (Updated for supporting file + mobile sample render)
+-  (New mobile tabbed sample component)
+-  (Added )
+
+**Areas that need refactoring**: 
+- *Code Quality (Optional)*: Test IDs on tool samples could be aligned for future automation parity (recommendation from testing agent).
+
+**key api endpoints**
+-  (Accepts  and  as multipart/form-data)
+
+**Critical Info for New Agent**
+- **Environments**: The user has deployed the app to production. If issues are reported, clarify whether they are in PREVIEW or PRODUCTION.
+- **Unauthenticated vs Authenticated Logic**: The worked examples () are strictly marketing assets intended ONLY for unauthenticated users. Ensure any future layout changes respect this gating logic.
+- **Invoice Financials**: Rely strictly on  from the backend for the Invoice Checker; the backend natively caps refunds to avoid hallucination.
+
+**documents and test reports created in this job**
+  -  (Testing agent code review for Invoice Checker updates)
+  -  (Testing agent verification for the 8 new Tool Samples)
+
+**Last 10 User Messages and any pending HUMAN messages** 
+ - *User*: Sent Agentic Edit notifications to make  description text wider and give  stat cards distinct background colors.
+ - *Agent*: Applied visual changes, verified with screenshots, and wrapped up task.
+ - *User*: Confirmed plan to make all 8 remaining analysis/letter tools wide () and inject them with worked examples using Sam Burke data for the Support Plan Reviewer.
+ - *Agent*: Gathered payload shapes, built shared sample shell, built 8 tool samples, injected them, and tested.
+ - *User*: System Notification regarding PRODUCTION environment deployment.
+ - *User*: Requested width parity across all tool pages to match Statement Decoder, plus adding worked examples to all unauthenticated tool pages using an attached Sam Burke Support Plan.
+ - *Agent*: Verified Invoice checker upload and tabbed sample via API curl and screenshot tool, deployed testing agent, marked complete.
+ - *User*: Approved plan to add Supporting Records upload to Invoice Checker (web+mobile) and build a tabbed marketing example showing a 66.66 refund for unauthenticated users on both surfaces.
+
+**Project Health Check:**
+- Broken: None
+- Mocked: None
+
+**3rd Party Integrations** 
+- Anthropic Claude Sonnet 5.5 — uses Emergent LLM Key
+- Resend (Email) — requires User API Key
+- Stripe (Payments) — requires User API Key
+
+**Testing status**
+  - Testing agent used after significant changes: YES (, )
+  - Troubleshoot agent used after agent stuck in loop: NO
+  - Test files created: NA
+  - Known regressions: None
+
+**Credentials to test flow:**
+Check  (e.g.  or )
+
+**What agent forgot to execute**
+- The agent executed all requests successfully including the core problem statement, the requested visual tweaks via Agentic Edits, and mobile parity. No missed items.</analysis>

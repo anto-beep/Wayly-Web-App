@@ -1,0 +1,49 @@
+file,group,screen,view,path
+wayly_tool_ai_tools_index_01_top.png,tool,AI Tools index,above the fold,/ai-tools
+wayly_tool_ai_tools_index_02_full.png,tool,AI Tools index,full page,/ai-tools
+wayly_tool_statement_decoder_01_top.png,tool,Statement Decoder,above the fold,/ai-tools/statement-decoder
+wayly_tool_statement_decoder_02_full.png,tool,Statement Decoder,full page,/ai-tools/statement-decoder
+wayly_tool_invoice_checker_01_top.png,tool,Invoice Checker,above the fold,/ai-tools/invoice-checker
+wayly_tool_invoice_checker_02_full.png,tool,Invoice Checker,full page,/ai-tools/invoice-checker
+wayly_tool_contribution_estimator_01_top.png,tool,Contribution Estimator,above the fold,/ai-tools/contribution-estimator
+wayly_tool_contribution_estimator_02_full.png,tool,Contribution Estimator,full page,/ai-tools/contribution-estimator
+wayly_tool_classification_self_check_01_top.png,tool,Classification Self-Check,above the fold,/ai-tools/classification-self-check
+wayly_tool_classification_self_check_02_full.png,tool,Classification Self-Check,full page,/ai-tools/classification-self-check
+wayly_tool_provider_price_checker_01_top.png,tool,Provider Price Checker,above the fold,/ai-tools/provider-price-checker
+wayly_tool_provider_price_checker_02_full.png,tool,Provider Price Checker,full page,/ai-tools/provider-price-checker
+wayly_tool_support_plan_reviewer_01_top.png,tool,Support Plan Reviewer,above the fold,/ai-tools/support-plan-reviewer
+wayly_tool_support_plan_reviewer_02_full.png,tool,Support Plan Reviewer,full page,/ai-tools/support-plan-reviewer
+wayly_tool_letters_follow_ups_01_top.png,tool,Letters and Follow-ups,above the fold,/ai-tools/letters-and-follow-ups
+wayly_tool_letters_follow_ups_02_full.png,tool,Letters and Follow-ups,full page,/ai-tools/letters-and-follow-ups
+wayly_tool_budget_calculator_01_top.png,tool,Budget Calculator,above the fold,/ai-tools/budget-calculator
+wayly_tool_budget_calculator_02_full.png,tool,Budget Calculator,full page,/ai-tools/budget-calculator
+wayly_tool_family_coordinator_01_top.png,tool,Family Coordinator,above the fold,/ai-tools/family-coordinator
+wayly_tool_family_coordinator_02_full.png,tool,Family Coordinator,full page,/ai-tools/family-coordinator
+wayly_app_dashboard_01_top.png,app,Dashboard,above the fold,/app
+wayly_app_dashboard_02_full.png,app,Dashboard,full page,/app
+wayly_app_statements_01_top.png,app,Statements,above the fold,/app/statements
+wayly_app_statements_02_full.png,app,Statements,full page,/app/statements
+wayly_app_invoices_01_top.png,app,Invoices,above the fold,/app/invoices
+wayly_app_invoices_02_full.png,app,Invoices,full page,/app/invoices
+wayly_app_care_plans_01_top.png,app,Care Plans,above the fold,/app/care-plans
+wayly_app_care_plans_02_full.png,app,Care Plans,full page,/app/care-plans
+wayly_app_documents_01_top.png,app,Document Vault,above the fold,/app/documents
+wayly_app_documents_02_full.png,app,Document Vault,full page,/app/documents
+wayly_app_calendar_01_top.png,app,Visit Calendar,above the fold,/app/calendar
+wayly_app_calendar_02_full.png,app,Visit Calendar,full page,/app/calendar
+wayly_app_budget_alerts_01_top.png,app,Budget Alerts,above the fold,/app/budget-alerts
+wayly_app_budget_alerts_02_full.png,app,Budget Alerts,full page,/app/budget-alerts
+wayly_app_at_hm_01_top.png,app,AT-HM Tracker,above the fold,/app/at-hm
+wayly_app_at_hm_02_full.png,app,AT-HM Tracker,full page,/app/at-hm
+wayly_app_reports_01_top.png,app,Reports,above the fold,/app/reports
+wayly_app_reports_02_full.png,app,Reports,full page,/app/reports
+wayly_app_ask_wayly_01_top.png,app,Ask Wayly,above the fold,/app/ask-wayly
+wayly_app_ask_wayly_02_full.png,app,Ask Wayly,full page,/app/ask-wayly
+wayly_app_family_wall_01_top.png,app,Family Wall,above the fold,/app/wall
+wayly_app_family_wall_02_full.png,app,Family Wall,full page,/app/wall
+wayly_app_audit_log_01_top.png,app,Audit Log,above the fold,/app/audit
+wayly_app_audit_log_02_full.png,app,Audit Log,full page,/app/audit
+wayly_app_settings_01_top.png,app,Settings,above the fold,/settings
+wayly_app_settings_02_full.png,app,Settings,full page,/settings
+wayly_app_support_01_top.png,app,My Support,above the fold,/support
+wayly_app_support_02_full.png,app,My Support,full page,/support

@@ -1,0 +1,26 @@
+{
+  "summary": "P0 K8s readiness fix VERIFIED + SD-3 Pair Review page verified end-to-end. /api/health responds in <300ms on cold start (5 consecutive probes: 217/126/97/122/86 ms after `supervisorctl restart backend`). server.py refactor confirmed at lines 7674-7773: _start_batch2_migration + _start_batch3_migration_and_purge now wrap all heavy work in asyncio.create_task; batch3 sleeps 30s before running so uvicorn is fully serving. Background migrations still fire (backend.err.log shows 'Batch2 startup migration: {\"migrated\": 1}' from an earlier cold boot; PERSONA-1 backfill runs after boot). test_iteration_112.py: 4/4 PASSED x3 consecutive runs (12/12). SD-3 UI flow at /app/participants/:id/statement-pairs/:pid exercised: sd3-pair-review-page loads, candidate list renders (1 candidate, high confidence, heuristic), Uncertain → Not-duplicate → Confirm-duplicate transitions all persist via PATCH /api/sd3/candidates/{cid}, Draft-letter button appears ONLY after confirm state, click navigates to /tools/letters-and-follow-ups/{lf1_entry_id}. Idempotency (already_existed:true on 2nd draft) covered by pytest suite.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {"ui_bugs": [], "integration_issues": [], "design_issues": []},
+  "test_report_links": [
+    "/app/backend/tests/lca1/test_iteration_112.py",
+    "/app/test_reports/pytest/iter102_run1.xml",
+    "/app/test_reports/pytest/iter102_run2.xml",
+    "/app/test_reports/pytest/iter102_run3.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "server.py startup refactor is clean: both batch2 and batch3 are backgrounded; batch3 has a 30s sleep so uvicorn stabilises before Atlas-heavy migrations kick in. All 11 downstream migrations (purge, participants v2, LOOP-1 cron, LCA-1 indexes, email verification backfill, email-change/share-link/onboarding-draft/PPC milestone indexes, persona backfill) are inside the same background task and each wrapped in try/except — a failure in one won't skip subsequent ones.",
+    "StatementPairReview.jsx correctly gates the Draft letter button on user_decision === 'confirmed_duplicate'. All interactive elements carry data-testid.",
+    "Orthogonal (as noted by main agent, do NOT flag): GET /api/statements + GET /api/budget/current still 500 for cathy on dashboard load; documented in iteration_101.",
+    "Nit: the frontend passes {decision:'confirmed_duplicate'} using PATCH but there's no client-side rollback if the PATCH fails silently — savingId is cleared in finally but no error toast is surfaced for setDecision failures (only draftLetter shows setFlash on error). Minor UX polish."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "100% (12/12 across 3 runs of test_iteration_112.py)", "frontend": "100% (SD-3 pair review page end-to-end)"},
+  "test_credentials": "cathy@example.com / testpass123",
+  "seed_data_creation": "Seeded 2 statements + 1 pair for UI flow; fully cleaned up post-test (statements, duplicate_candidates, statement_pairs, associated cases/case_events, lf1_correspondence entry).",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "K8s readiness P0 is RESOLVED — /api/health under 300ms cold and background migrations still execute (see backend.err.log for Batch2/PERSONA-1 lines). If server.py startup hooks are touched again, restart backend and hit /api/health within 2s to confirm no regression. SD-3 UI flow selectors (sd3-pair-review-page, sd3-candidates-list, sd3-{confirm|dismiss|uncertain|draft-letter}-{cid}) are all stable and reusable.",
+  "rca of the issue": "K8s readiness timeout was caused by 11 sequential heavy startup migrations (batch2, batch3, purge, v2 migrations, LOOP1 cron, index creations, persona backfill) executing before uvicorn could bind. Fix: wrap all in asyncio.create_task inside on_event('startup') so control returns immediately; batch3 additionally sleeps 30s to let readiness probes complete first. Verified: cold-start /api/health = 217ms first hit."
+}

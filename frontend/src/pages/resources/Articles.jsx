@@ -1,0 +1,744 @@
+import React, { useEffect, useMemo, useState } from "react";
+import { Link, useParams } from "react-router-dom";
+import axios from "axios";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
+import MarketingHeader from "@/components/MarketingHeader";
+import Footer from "@/components/Footer";
+import { ARTICLES as STATIC_ARTICLES } from "@/data/resources";
+import { SEO_ARTICLES_2026 } from "@/data/seoArticles2026";
+import { SEO_TOOL_ARTICLES } from "@/data/seoToolArticles";
+import { ARTICLE_PILLAR_MAP } from "@/data/articlePillars";
+import { ArrowLeft, ArrowRight, ShieldAlert, BookOpen, ExternalLink, ChevronDown, Twitter, Linkedin, Mail, Link2, Sparkles, Search, X } from "lucide-react";
+
+import SeoHead, { articleLd, breadcrumbLd, canonicalFor } from "@/seo/SeoHead";
+import { SEO } from "@/seo/pageConfig";
+import { loadProgramReference, getProgramReferenceSync } from "@/lib/programReference";
+import { ArticleHero, SectionFigure, StepFlow, BarCompare, PullQuote, FigureStats, NextStep, SourcesList } from "@/components/articles/ArticleVisuals";
+import { ARTICLE_HERO, ARTICLE_SECTION_VISUALS, heroForArticle } from "@/data/articleMedia";
+import { WAYLY_OFFER } from "@/data/waylyOffer";
+import { PDF_ARTICLE_OVERRIDES } from "@/data/pdfArticles2026";
+import { titleCaseHeading } from "@/lib/titleCase";
+
+// Resolve live Support at Home figures from INDEX-1 (program_reference) so
+// article prose never hardcodes a dollar figure. Tokens:
+//   {{annual:N}}     annual budget for classification N (1-8)
+//   {{quarterly:N}}  quarterly budget (annual / 4) for classification N
+//   {{cap:standard}} / {{cap:nwo}}  lifetime contribution caps
+//   {{pct:care_management}}         care-management share
+// Unknown/unloaded tokens are left verbatim so nothing renders as $undefined.
+function resolveFigures(md) {
+    if (!md || md.indexOf("{{") === -1) return md;
+    const snap = getProgramReferenceSync();
+    const aud = (n) => (typeof n === "number" && isFinite(n))
+        ? n.toLocaleString("en-AU", { style: "currency", currency: "AUD", minimumFractionDigits: 2 })
+        : null;
+    return md.replace(/\{\{\s*(annual|quarterly|cap|pct)\s*:\s*([a-z0-9_]+)\s*\}\}/gi, (m, kind, key) => {
+        try {
+            if (kind === "annual") return aud(snap.classifications?.[key]?.annual) || m;
+            if (kind === "quarterly") {
+                const a = snap.classifications?.[key]?.annual;
+                return (typeof a === "number") ? (aud(+(a / 4).toFixed(2)) || m) : m;
+            }
+            if (kind === "cap") {
+                const v = key === "nwo" ? snap.lifetime_cap?.no_worse_off : snap.lifetime_cap?.standard;
+                return aud(v) || m;
+            }
+            if (kind === "pct" && key === "care_management") {
+                const p = snap.care_management?.cap_pct ?? 0.10;
+                return `${Math.round(p * 100)}%`;
+            }
+        } catch { /* leave token */ }
+        return m;
+    });
+}
+
+const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
+const fmtDate = (iso) => { if (!iso) return null; try { return new Date(iso).toLocaleDateString("en-AU", { day: "numeric", month: "long", year: "numeric" }); } catch { return iso; } };
+
+// Merge the structured 2026 SEO articles into the existing static catalog so
+// they appear on the index page and at /resources/articles/:slug.
+// Sort newest-first by published_at so freshly added articles head the index.
+const _byDateDesc = (a, b) => String(b.published_at || "").localeCompare(String(a.published_at || ""));
+const STRUCTURED_SEO_ARTICLES = [
+    ...SEO_TOOL_ARTICLES,
+    ...SEO_ARTICLES_2026,
+].sort(_byDateDesc);
+const ALL_STATIC_ARTICLES = [
+    ...STRUCTURED_SEO_ARTICLES,
+    ...STATIC_ARTICLES,
+];
+
+function slugify(s) {
+    return String(s || "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
+}
+
+function readingTimeMinutes(article) {
+    const all = [
+        article.intro_md || "",
+        ...(article.sections || []).map((s) => `${s.heading} ${s.body_md}`),
+        ...(article.faqs || []).map((f) => `${f.q} ${f.a}`),
+        ...(article.key_takeaways || []),
+    ].join(" ");
+    const words = (all.match(/\S+/g) || []).length;
+    return Math.max(1, Math.round(words / 220));
+}
+
+function faqLd(faqs) {
+    return {
+        "@type": "FAQPage",
+        mainEntity: (faqs || []).map((f) => ({
+            "@type": "Question",
+            name: f.q,
+            acceptedAnswer: { "@type": "Answer", text: f.a },
+        })),
+    };
+}
+
+// Derive a browse category for an article. Uses an explicit `category` field
+// when present, otherwise infers one from the slug, tags and title so the
+// filter works across structured, CMS and older static articles.
+function deriveCategory(a) {
+    if (a.category) return a.category;
+    const hay = `${a.slug || ""} ${(a.tags || []).join(" ")} ${a.title || ""}`.toLowerCase();
+    if (hay.includes("chsp")) return "CHSP";
+    if (hay.includes("complaint") || hay.includes("commission")) return "Complaints";
+    if (hay.includes("at-hm") || hay.includes("assistive") || hay.includes("home modification") || hay.includes("equipment")) return "Equipment & AT-HM";
+    if (hay.includes("invoice") || hay.includes("statement")) return "Billing & statements";
+    if (hay.includes("reassessment") || hay.includes("assessment")) return "Assessment";
+    if (hay.includes("contribution") || hay.includes("cap") || hay.includes("fee") || hay.includes("hardship") || hay.includes("cost")) return "Fees & contributions";
+    if (hay.includes("level") || hay.includes("classification") || hay.includes("budget")) return "Levels & budgets";
+    if (hay.includes("switch") || hay.includes("provider")) return "Changing provider";
+    return "Support at Home basics";
+}
+
+const _artDate = (a) => a.published_at || a.updated_at || "";
+
+export default function ArticlesIndex() {
+    const [articles, setArticles] = useState(null);
+    const [category, setCategory] = useState("All");
+    const [query, setQuery] = useState("");
+    const [sort, setSort] = useState("newest");
+
+    useEffect(() => {
+        axios.get(`${API}/public/cms/articles`)
+            .then((r) => {
+                const cms = r.data.articles || [];
+                const cmsSlugs = new Set(cms.map((a) => a.slug));
+                const structured = STRUCTURED_SEO_ARTICLES
+                    .filter((a) => !cmsSlugs.has(a.slug) && (!SLUG_REDIRECTS[a.slug] || PDF_ARTICLE_OVERRIDES[a.slug]))
+                    .map((a) => (PDF_ARTICLE_OVERRIDES[a.slug] ? { ...a, ...PDF_ARTICLE_OVERRIDES[a.slug] } : a));
+                const olderStatic = STATIC_ARTICLES.filter((a) => !cmsSlugs.has(a.slug) && !SLUG_REDIRECTS[a.slug] && !structured.find((s) => s.slug === a.slug));
+                setArticles([...structured, ...cms, ...olderStatic]);
+            })
+            .catch(() => setArticles(ALL_STATIC_ARTICLES));
+    }, []);
+
+    const baseList = articles || ALL_STATIC_ARTICLES;
+
+    const categories = useMemo(() => {
+        const counts = {};
+        baseList.forEach((a) => { const c = deriveCategory(a); counts[c] = (counts[c] || 0) + 1; });
+        return Object.keys(counts).sort((x, y) => counts[y] - counts[x]);
+    }, [baseList]);
+
+    const q = query.trim().toLowerCase();
+    const list = useMemo(() => {
+        let out = baseList.filter((a) => {
+            if (category !== "All" && deriveCategory(a) !== category) return false;
+            if (!q) return true;
+            const hay = `${a.title || ""} ${a.excerpt || ""} ${(a.tags || []).join(" ")}`.toLowerCase();
+            return hay.includes(q);
+        });
+        out = [...out].sort((a, b) => sort === "oldest"
+            ? String(_artDate(a)).localeCompare(String(_artDate(b)))
+            : String(_artDate(b)).localeCompare(String(_artDate(a))));
+        return out;
+    }, [baseList, category, q, sort]);
+
+    return (
+        <div className="min-h-screen bg-kindred">
+            <SeoHead {...SEO.articlesIndex} />
+            <MarketingHeader />
+            <section className="w-full px-6 lg:px-10 pt-12 pb-6" data-testid="articles-page">
+                <Link to="/resources" className="text-sm text-muted-k hover:text-primary-k inline-flex items-center gap-1"><ArrowLeft className="h-3.5 w-3.5" /> Resources</Link>
+                <span className="overline mt-6 block">Articles</span>
+                <h1 className="font-heading text-5xl text-primary-k tracking-tight mt-4 leading-tight">Plain-English aged care, explained.</h1>
+                <p className="mt-4 text-lg text-muted-k max-w-2xl leading-relaxed">
+                    The things Australian families ask us most often about Support at Home and Home Care Packages, written in plain English, with program citations behind every claim.
+                </p>
+            </section>
+
+            {/* Search + filters toolbar */}
+            <section className="w-full px-6 lg:px-10 pb-6" data-testid="articles-controls">
+                <div className="rounded-2xl border border-kindred bg-surface p-4 sm:p-5">
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                        <div className="relative w-full sm:max-w-md">
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-k" />
+                            <input
+                                type="text"
+                                value={query}
+                                onChange={(e) => setQuery(e.target.value)}
+                                placeholder="Search articles by topic or keyword"
+                                data-testid="articles-search"
+                                className="w-full rounded-full border border-kindred bg-surface-2 pl-10 pr-10 py-2.5 text-sm text-primary-k placeholder:text-muted-k focus:outline-none focus:ring-2 focus:ring-gold"
+                            />
+                            {query && (
+                                <button type="button" onClick={() => setQuery("")} aria-label="Clear search" data-testid="articles-search-clear" className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-k hover:text-primary-k"><X className="h-4 w-4" /></button>
+                            )}
+                        </div>
+                        <div className="flex items-center justify-between gap-3 sm:justify-end">
+                            <span className="text-sm text-muted-k whitespace-nowrap" data-testid="articles-result-count">{list.length} {list.length === 1 ? "article" : "articles"}</span>
+                            <select
+                                value={sort}
+                                onChange={(e) => setSort(e.target.value)}
+                                data-testid="articles-sort"
+                                className="rounded-full border border-kindred bg-surface-2 px-4 py-2.5 text-sm text-primary-k focus:outline-none focus:ring-2 focus:ring-gold"
+                            >
+                                <option value="newest">Newest first</option>
+                                <option value="oldest">Oldest first</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div className="mt-4 pt-4 border-t border-kindred">
+                        <span className="block text-xs uppercase tracking-wide text-muted-k mb-2.5">Browse by topic</span>
+                        <div className="flex flex-wrap gap-2" data-testid="articles-category-filters">
+                            {["All", ...categories].map((c) => {
+                                const active = category === c;
+                                return (
+                                    <button
+                                        key={c}
+                                        type="button"
+                                        onClick={() => setCategory(c)}
+                                        data-testid={`articles-category-${c.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`}
+                                        className={`rounded-full px-4 py-1.5 text-sm font-medium border transition-colors ${active ? "bg-primary-k text-white border-primary-k" : "bg-surface-2 text-primary-k border-kindred hover:bg-kindred"}`}
+                                    >
+                                        {c}
+                                    </button>
+                                );
+                            })}
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section className="w-full px-6 lg:px-10 pb-20 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5" data-testid="articles-grid">
+                {list.length === 0 && (
+                    <div className="col-span-full rounded-2xl border border-kindred bg-surface p-10 text-center" data-testid="articles-empty">
+                        <p className="text-muted-k">No articles match "{query}".</p>
+                        <button type="button" onClick={() => { setQuery(""); setCategory("All"); }} className="mt-3 text-sm text-primary-k underline">Clear filters</button>
+                    </div>
+                )}
+                {list.map((a) => {
+                    const hero = heroForArticle(a, deriveCategory(a));
+                    return (
+                    <Link key={a.slug} to={`/resources/articles/${a.slug}`} className="block bg-surface border border-kindred rounded-2xl p-6 hover:border-[#2BC4D6] transition-colors" data-testid={`articles-card-${a.slug}`}>
+                        <div className="mb-4 -mx-6 -mt-6 overflow-hidden rounded-t-2xl aspect-[16/9] bg-surface-2" data-testid="articles-card-image">
+                            <img src={hero.src} alt="" loading="lazy" className={`h-full w-full ${hero.contain ? "object-contain p-2" : "object-cover"}`} />
+                        </div>
+                        <span className="inline-flex items-center rounded-full bg-surface-2 px-2.5 py-0.5 text-xs text-muted-k" data-testid="articles-card-category">{deriveCategory(a)}</span>
+                        <h2 className="font-heading text-xl text-primary-k mt-3">{titleCaseHeading(a.title)}</h2>
+                        <p className="mt-2 text-sm text-muted-k leading-relaxed">{a.excerpt}</p>
+                        {_artDate(a) && <p className="mt-3 text-xs text-muted-k" data-testid="articles-card-date">{fmtDate(_artDate(a))}</p>}
+                        {a.is_draft_needs_review && (
+                            <span className="mt-2 inline-flex items-center gap-1 text-xs text-amber-700 bg-amber-100 border border-amber-300 rounded px-2 py-0.5">DRAFT, NEEDS REVIEW</span>
+                        )}
+                        <span className="mt-3 inline-flex items-center gap-1 text-sm text-primary-k">Read <ArrowRight className="h-3.5 w-3.5" /></span>
+                    </Link>
+                    );
+                })}
+            </section>
+            <Footer />
+        </div>
+    );
+}
+
+// Legacy → new article slug redirects. Old marketing URLs stay live but 301
+// to the canonical fresh article (SEO + no broken external links).
+const SLUG_REDIRECTS = {
+    "support-at-home-vs-hcp": "support-at-home-vs-home-care-packages-what-changed",
+    // Editorial merges (Nov 2026 plan): thin/duplicate pages fold into the canonical article.
+    "the-three-streams": "three-streams-clinical-independence-everyday-living",
+    "lifetime-cap-explained": "lifetime-contribution-cap-most-families-do-not-worry",
+    "switching-providers": "how-to-switch-support-at-home-provider",
+    "switching-support-at-home-provider-practical-playbook": "how-to-switch-support-at-home-provider",
+    "reassessment-when-and-how": "when-to-request-support-at-home-reassessment",
+    "anomaly-watch-what-to-flag": "support-at-home-statement-flags-what-to-question",
+    "complaint-acqsc": "how-to-complain-about-aged-care-commission",
+    "support-at-home-personal-care-free-october-2026": "support-at-home-personal-care-free-1-october-2026",
+    "home-care-package-vs-support-at-home": "what-happened-to-my-home-care-package",
+};
+
+export function ArticleDetail() {
+    const { slug } = useParams();
+    const [article, setArticle] = useState(undefined); // undefined=loading, null=not found
+
+    useEffect(() => {
+        // Redirect legacy slugs before hitting any lookup, UNLESS the slug now
+        // has a rewritten PDF override (a once-deduped slug that has since been
+        // given its own distinct article must render, not redirect).
+        if (SLUG_REDIRECTS[slug] && !PDF_ARTICLE_OVERRIDES[slug]) {
+            window.location.replace(`/resources/articles/${SLUG_REDIRECTS[slug]}`);
+            return;
+        }
+        setArticle(undefined);
+        // Try the structured SEO article registries first (no API call needed,
+        // we control the layout end-to-end for these).
+        const override = PDF_ARTICLE_OVERRIDES[slug];
+        const seo = STRUCTURED_SEO_ARTICLES.find((a) => a.slug === slug);
+        if (override || seo) { setArticle({ ...(seo || {}), ...(override || {}), structured: true }); return; }
+        axios.get(`${API}/public/cms/articles/${slug}`)
+            .then((r) => setArticle(r.data))
+            .catch(() => {
+                const stat = STATIC_ARTICLES.find((a) => a.slug === slug);
+                setArticle(stat ? { ...stat, body_md: stat.body ? stat.body.join("\n\n") : "" } : null);
+            });
+    }, [slug]);
+
+    if (article === undefined) {
+        return (
+            <div className="min-h-screen bg-kindred">
+                <MarketingHeader />
+                <div className="mx-auto max-w-3xl px-6 py-20 text-center text-muted-k">Loading…</div>
+                <Footer />
+            </div>
+        );
+    }
+
+    if (!article) {
+        return (
+            <div className="min-h-screen bg-kindred">
+                <MarketingHeader />
+                <div className="mx-auto max-w-3xl px-6 py-20 text-center">
+                    <h1 className="font-heading text-3xl text-primary-k">Article not found</h1>
+                    <Link to="/resources/articles" className="mt-4 inline-flex items-center gap-1 text-primary-k underline">Back to Articles</Link>
+                </div>
+                <Footer />
+            </div>
+        );
+    }
+
+    if (article.structured) {
+        return <StructuredArticle article={article} slug={slug} />;
+    }
+
+    // Legacy (non-structured) renderer below, unchanged behaviour for the
+    // older static articles and CMS-driven posts.
+    const url = canonicalFor(`/resources/articles/${slug}`);
+    const author = article.author ? {
+        name: article.author.name,
+        jobTitle: article.author.role,
+        sameAs: article.author.sameAs,
+    } : undefined;
+    const reviewer = article.reviewer ? {
+        name: article.reviewer.name,
+        jobTitle: article.reviewer.role,
+        sameAs: article.reviewer.sameAs,
+    } : undefined;
+    const citation = (article.citations || []).map((c) => ({ title: c.title, url: c.url, publisher: c.publisher }));
+
+    const jsonLd = [
+        articleLd({
+            headline: article.title,
+            description: article.excerpt,
+            url,
+            datePublished: article.published_at,
+            dateModified: article.updated_at,
+            author,
+            reviewedBy: reviewer,
+            citation,
+        }),
+        breadcrumbLd([
+            { name: "Home", url: "/" },
+            { name: "Resources", url: "/resources" },
+            { name: "Articles", url: "/resources/articles" },
+            { name: article.title, url: `/resources/articles/${slug}` },
+        ]),
+    ];
+
+    return (
+        <div className="min-h-screen bg-kindred">
+            <SeoHead
+                title={article.title}
+                description={article.excerpt}
+                path={`/resources/articles/${slug}`}
+                type="article"
+                publishedAt={article.published_at}
+                updatedAt={article.updated_at}
+                author={article.author?.name}
+                jsonLd={jsonLd}
+            />
+            <MarketingHeader />
+            <article className="mx-auto max-w-3xl px-6 pt-12 pb-12" data-testid={`article-${slug}`}>
+                <Link to="/resources/articles" className="text-sm text-muted-k hover:text-primary-k inline-flex items-center gap-1"><ArrowLeft className="h-3.5 w-3.5" /> All Articles</Link>
+                <span className="overline mt-6 block">Article</span>
+                <h1 className="font-heading text-4xl sm:text-5xl text-primary-k tracking-tight mt-4 leading-tight">{titleCaseHeading(article.title)}</h1>
+                <p className="mt-4 text-lg text-muted-k leading-relaxed">{article.excerpt}</p>
+
+                {(() => {
+                    const hero = heroForArticle(article, deriveCategory(article));
+                    return hero?.src ? <ArticleHero src={hero.src} alt={hero.alt || article.hero_alt || ""} contain={hero.contain} /> : null;
+                })()}
+
+                {article.is_draft_needs_review && (
+                    <div className="mt-6 flex items-start gap-3 rounded-2xl border border-amber-300 bg-amber-50 p-4 text-amber-900" data-testid="article-draft-banner">
+                        <ShieldAlert className="h-5 w-5 mt-0.5 flex-shrink-0" />
+                        <div className="text-sm leading-relaxed">
+                            <strong className="font-medium">DRAFT, NEEDS REVIEW.</strong> This article hasn't been reviewed by a qualified Australian aged-care professional yet. Treat it as a starting point only. Always verify against <a href="https://www.health.gov.au/our-work/support-at-home" target="_blank" rel="noopener noreferrer" className="underline">health.gov.au</a> or seek personal advice before acting.
+                        </div>
+                    </div>
+                )}
+
+                {/* Author + reviewer + published date intentionally hidden per editorial direction. */}
+
+                <div className="mt-8 prose prose-lg max-w-none text-primary-k leading-loose [&>h2]:font-heading [&>h2]:text-2xl [&>h2]:text-primary-k [&>h2]:mt-10 [&>h2]:mb-3 [&>h3]:font-heading [&>h3]:text-xl [&>h3]:mt-8 [&>h3]:mb-2 [&>p]:my-4 [&>ul]:list-disc [&>ul]:pl-6 [&>ol]:list-decimal [&>ol]:pl-6 [&>li]:my-1 [&>a]:underline [&>a]:text-primary-k [&>blockquote]:border-l-4 [&>blockquote]:border-kindred [&>blockquote]:pl-4 [&>blockquote]:italic">
+                    <ReactMarkdown remarkPlugins={[remarkGfm]}>{article.body_md || ""}</ReactMarkdown>
+                </div>
+
+                {citation && citation.length > 0 && (
+                    <div className="mt-12 pt-6 border-t border-kindred" data-testid="article-citations">
+                        <h2 className="font-heading text-xl text-primary-k inline-flex items-center gap-2"><BookOpen className="h-5 w-5" /> Sources</h2>
+                        <ul className="mt-3 space-y-2 text-sm text-muted-k">
+                            {citation.map((c, i) => (
+                                <li key={i}>
+                                    <a href={c.url} target="_blank" rel="noopener noreferrer" className="text-primary-k underline inline-flex items-center gap-1">
+                                        {c.title} {c.publisher && <span className="text-muted-k">,  {c.publisher}</span>} <ExternalLink className="h-3 w-3" />
+                                    </a>
+                                </li>
+                            ))}
+                        </ul>
+                    </div>
+                )}
+            </article>
+            <Footer />
+        </div>
+    );
+}
+
+// ---------------------------------------------------------------------------
+// Structured article renderer (2026 SEO articles)
+// ---------------------------------------------------------------------------
+
+function StructuredArticle({ article, slug }) {
+    // Load the live INDEX-1 snapshot once so figure tokens resolve to current
+    // Support at Home figures (and re-render when it arrives).
+    const [, setFiguresNonce] = useState(0);
+    useEffect(() => {
+        let alive = true;
+        loadProgramReference().then(() => { if (alive) setFiguresNonce((n) => n + 1); });
+        return () => { alive = false; };
+    }, []);
+    // Articles can opt into a custom public path (e.g. /articles/<slug>) for
+    // their canonical URL while still being reachable at /resources/articles/<slug>.
+    const publicPath = article.canonical_path || `/resources/articles/${slug}`;
+    const url = canonicalFor(publicPath);
+    const readingTime = useMemo(() => readingTimeMinutes(article), [article]);
+    const tocItems = useMemo(
+        () => (article.sections || []).map((s) => ({ id: slugify(s.heading), text: titleCaseHeading(s.heading) })),
+        [article.sections],
+    );
+    const relatedArticles = useMemo(
+        () => (article.related || [])
+            .map((s) => {
+                const base = STRUCTURED_SEO_ARTICLES.find((a) => a.slug === s) || STATIC_ARTICLES.find((a) => a.slug === s);
+                if (base) return { ...base, ...(PDF_ARTICLE_OVERRIDES[s] || {}) };
+                return PDF_ARTICLE_OVERRIDES[s] || null;
+            })
+            .filter(Boolean),
+        [article.related],
+    );
+
+    const jsonLdGraph = [
+        {
+            "@type": "Article",
+            headline: article.title,
+            description: article.excerpt,
+            url,
+            mainEntityOfPage: { "@type": "WebPage", "@id": url },
+            datePublished: article.published_at,
+            dateModified: article.updated_at || article.published_at,
+            author: { "@type": "Person", name: article.author?.name || "Wayly Editorial" },
+            publisher: {
+                "@type": "Organization",
+                name: "Wayly",
+                logo: { "@type": "ImageObject", url: canonicalFor("/branding/png/wayly-mark-512.png") },
+            },
+            image: canonicalFor(`/api/public/seo/og.png?title=${encodeURIComponent(article.title)}`),
+        },
+        faqLd(article.faqs),
+        {
+            "@type": "BreadcrumbList",
+            itemListElement: [
+                { "@type": "ListItem", position: 1, name: "Home", item: canonicalFor("/") },
+                { "@type": "ListItem", position: 2, name: "Articles", item: canonicalFor("/resources/articles") },
+                { "@type": "ListItem", position: 3, name: article.title, item: url },
+            ],
+        },
+    ];
+
+    if (article.howto?.steps?.length) {
+        jsonLdGraph.push({
+            "@type": "HowTo",
+            name: article.howto.name || article.title,
+            description: article.howto.description || article.excerpt,
+            step: article.howto.steps.map((s, i) => ({
+                "@type": "HowToStep",
+                position: i + 1,
+                name: s.name,
+                text: s.text,
+            })),
+        });
+    }
+
+    const jsonLd = {
+        "@context": "https://schema.org",
+        "@graph": jsonLdGraph,
+    };
+
+    const handleCopyLink = () => {
+        try {
+            navigator.clipboard.writeText(window.location.href);
+        } catch { /* ignore */ }
+    };
+
+    return (
+        <div className="min-h-screen bg-kindred">
+            <SeoHead
+                title={article.meta?.title || article.title}
+                description={article.meta?.description || article.excerpt}
+                path={publicPath}
+                type="article"
+                publishedAt={article.published_at}
+                updatedAt={article.updated_at}
+                author={article.author?.name}
+                jsonLd={[jsonLd]}
+            />
+            <MarketingHeader />
+            <div className="mx-auto max-w-6xl px-6 pt-12 pb-12 lg:grid lg:grid-cols-[minmax(0,1fr)_280px] lg:gap-10 xl:gap-14">
+            <article className="min-w-0 mx-auto w-full max-w-3xl lg:max-w-none lg:mx-0" data-testid={`article-${slug}`}>
+                <Link to="/resources/articles" className="text-sm text-muted-k hover:text-primary-k inline-flex items-center gap-1"><ArrowLeft className="h-3.5 w-3.5" /> All Articles</Link>
+                <span className="overline mt-6 block">Article</span>
+                <h1 className="font-heading text-4xl sm:text-5xl text-primary-k tracking-tight mt-4 leading-tight">{titleCaseHeading(article.title)}</h1>
+                <p className="mt-4 text-lg text-muted-k leading-relaxed">{article.excerpt}</p>
+
+                <div className="mt-6 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted-k" data-testid="article-meta">
+                    {article.author?.name && (
+                        <span className="text-primary-k font-medium" data-testid="article-byline">By {article.author.name}</span>
+                    )}
+                    <span data-testid="article-reviewer">Reviewed by: {article.reviewer?.name || "Wayly Editorial"}</span>
+                    {article.published_at && (
+                        <span data-testid="article-published">Published {new Date(article.published_at).toLocaleDateString("en-AU", { day: "numeric", month: "long", year: "numeric" })}</span>
+                    )}
+                    {article.updated_at && article.updated_at !== article.published_at && (
+                        <span data-testid="article-updated">Updated {new Date(article.updated_at).toLocaleDateString("en-AU", { day: "numeric", month: "long", year: "numeric" })}</span>
+                    )}
+                    <span>{readingTime} min read</span>
+                </div>
+
+                <ShareButtons title={article.title} onCopyLink={handleCopyLink} />
+
+                {ARTICLE_HERO[slug]?.src && (
+                    <ArticleHero src={ARTICLE_HERO[slug].src} alt={ARTICLE_HERO[slug].alt} contain={ARTICLE_HERO[slug].contain} />
+                )}
+
+                {/* Key takeaways callout */}
+                {article.key_takeaways?.length > 0 && (
+                    <aside className="mt-10 rounded-2xl border-l-4 border-gold bg-surface-2 p-5" data-testid="article-key-takeaways" aria-labelledby="kt-heading">
+                        <div className="flex items-center gap-2">
+                            <Sparkles className="h-4 w-4 text-gold" />
+                            <h2 id="kt-heading" className="font-heading text-lg text-primary-k m-0">Key Takeaways</h2>
+                        </div>
+                        <ul className="mt-3 list-disc pl-6 space-y-2 text-sm text-primary-k leading-relaxed">
+                            {article.key_takeaways.map((k, i) => <li key={i}>{k}</li>)}
+                        </ul>
+                    </aside>
+                )}
+
+                {/* Intro */}
+                {article.intro_md && (
+                    <ProseBlock>{article.intro_md}</ProseBlock>
+                )}
+
+                {/* Table of contents */}
+                {tocItems.length > 2 && (
+                    <nav className="mt-10 rounded-2xl border border-kindred bg-surface p-5 lg:hidden" data-testid="article-toc" aria-labelledby="toc-heading">
+                        <h2 id="toc-heading" className="font-heading text-base text-primary-k m-0">In This Article</h2>
+                        <ol className="mt-3 space-y-1.5 text-sm">
+                            {tocItems.map((it) => (
+                                <li key={it.id}><a href={`#${it.id}`} className="text-primary-k hover:underline">{it.text}</a></li>
+                            ))}
+                        </ol>
+                    </nav>
+                )}
+
+                {/* Sections */}
+                {(article.sections || []).map((s) => {
+                    const sid = slugify(s.heading);
+                    const vis = ARTICLE_SECTION_VISUALS[slug]?.[sid];
+                    return (
+                        <section key={s.heading} className="mt-10" data-testid={`section-${sid}`}>
+                            <h2 id={sid} className="font-heading text-2xl text-primary-k tracking-tight">{titleCaseHeading(s.heading)}</h2>
+                            <ProseBlock>{s.body_md}</ProseBlock>
+                            {vis?.image && <SectionFigure src={vis.image.src} alt={vis.image.alt} caption={vis.image.caption} />}
+                            {vis?.chart && <BarCompare title={vis.chart.title} note={vis.chart.note} items={vis.chart.items} />}
+                            {vis?.pullquote && <PullQuote value={vis.pullquote.value} label={vis.pullquote.label} />}
+                            {vis?.stats && <FigureStats title={vis.stats.title} items={vis.stats.items} />}
+                        </section>
+                    );
+                })}
+
+                {/* Branded step flow (articles with a how-to) */}
+                {article.howto?.steps?.length > 0 && (
+                    <StepFlow title={titleCaseHeading(article.howto.name || "Step by Step")} steps={article.howto.steps} />
+                )}
+
+                {/* Your Next Step CTA (offer-correct) */}
+                {article.next_step && (
+                    <NextStep
+                        invite={article.next_step.invite}
+                        primary={typeof article.next_step.primary === "string" ? WAYLY_OFFER[article.next_step.primary] : article.next_step.primary}
+                        secondary={article.next_step.secondary
+                            ? (typeof article.next_step.secondary === "string" ? WAYLY_OFFER[article.next_step.secondary] : article.next_step.secondary)
+                            : (article.next_step.trial ? WAYLY_OFFER.trial : null)}
+                    />
+                )}
+
+                {/* FAQ accordion */}
+                {article.faqs?.length > 0 && <FAQAccordion faqs={article.faqs} />}
+
+                {/* Sources */}
+                {article.sources?.length > 0 && <SourcesList items={article.sources} />}
+
+                {/* Related articles */}
+                {relatedArticles.length > 0 && (
+                    <section className="mt-12 pt-8 border-t border-kindred" data-testid="article-related">
+                        <h2 className="font-heading text-xl text-primary-k">Related Reading</h2>
+                        <div className="mt-4 grid sm:grid-cols-2 gap-4">
+                            {relatedArticles.map((r) => (
+                                <Link key={r.slug} to={`/resources/articles/${r.slug}`} className="block bg-surface border border-kindred rounded-2xl p-5 transition-colors" data-testid={`related-${r.slug}`}>
+                                    <h3 className="font-heading text-base text-primary-k">{titleCaseHeading(r.title)}</h3>
+                                    <p className="mt-2 text-sm text-muted-k leading-relaxed">{r.excerpt}</p>
+                                    <span className="mt-2 inline-flex items-center gap-1 text-sm text-primary-k">Read <ArrowRight className="h-3.5 w-3.5" /></span>
+                                </Link>
+                            ))}
+                        </div>
+                    </section>
+                )}
+
+                {/* Phase 5, pillar cross-links to /services/* /policy/* /guides/* and the tool itself. */}
+                {ARTICLE_PILLAR_MAP[article.slug] && (
+                    <section className="mt-10 pt-6 border-t border-kindred" data-testid="article-pillars">
+                        <h2 className="font-heading text-xl text-primary-k">Pillars on Wayly</h2>
+                        <div className="mt-4 grid sm:grid-cols-3 gap-4">
+                            {ARTICLE_PILLAR_MAP[article.slug].map((p) => (
+                                <Link key={p.href} to={p.href} className="block bg-surface border border-kindred rounded-2xl p-4 hover:border-[#2BC4D6] transition-colors" data-testid={`article-pillar-${p.href.replace(/[^a-z0-9]+/gi, "-")}`}>
+                                    <div className="font-heading text-base text-primary-k leading-snug">{p.label}</div>
+                                    <p className="mt-1 text-xs text-muted-k">{p.sub}</p>
+                                    <span className="mt-3 inline-flex items-center gap-1 text-sm text-[#1565B8]">Visit <ArrowRight className="h-3.5 w-3.5" /></span>
+                                </Link>
+                            ))}
+                        </div>
+                    </section>
+                )}
+
+                <ShareButtons title={article.title} onCopyLink={handleCopyLink} className="mt-10" />
+
+                {/* Last reviewed footer, Phase 3 E-E-A-T trust signal for YMYL content. */}
+                {(article.updated_at || article.published_at) && (
+                    <footer className="mt-12 pt-6 border-t border-kindred text-xs text-muted-k space-y-1" data-testid="article-trust-footer">
+                        <p>Last reviewed: {new Date(article.updated_at || article.published_at).toLocaleDateString("en-AU", { day: "numeric", month: "long", year: "numeric" })} · Reviewed by: {article.reviewer?.name || "Wayly Editorial"}</p>
+                        <p>Wayly content is researched against primary sources from health.gov.au, myagedcare.gov.au, servicesaustralia.gov.au and agedcarequality.gov.au. If you find an error, email <a href="mailto:support@wayly.com.au" className="underline">support@wayly.com.au</a>.</p>
+                    </footer>
+                )}
+            </article>
+            <aside className="hidden lg:block" data-testid="article-sidebar">
+                <div className="sticky top-24 space-y-6">
+                    {tocItems.length > 2 && (
+                        <nav className="rounded-2xl border border-kindred bg-surface p-5" data-testid="article-toc-sidebar" aria-labelledby="toc-sidebar-heading">
+                            <h2 id="toc-sidebar-heading" className="font-heading text-xs uppercase tracking-wide text-muted-k m-0">In This Article</h2>
+                            <ol className="mt-3 space-y-1.5 text-sm">
+                                {tocItems.map((it) => (
+                                    <li key={it.id}><a href={`#${it.id}`} className="text-primary-k hover:underline">{it.text}</a></li>
+                                ))}
+                            </ol>
+                        </nav>
+                    )}
+                </div>
+            </aside>
+            </div>
+            <Footer />
+        </div>
+    );
+}
+
+function ProseBlock({ children }) {
+    return (
+        <div className="mt-4 prose prose-lg max-w-none text-primary-k leading-loose
+            [&_p]:my-4
+            [&_a]:underline [&_a]:text-primary-k
+            [&_ul]:list-disc [&_ul]:pl-6 [&_li]:my-1
+            [&_ol]:list-decimal [&_ol]:pl-6
+            [&_blockquote]:border-l-4 [&_blockquote]:border-gold [&_blockquote]:pl-4 [&_blockquote]:italic [&_blockquote]:text-primary-k/90 [&_blockquote]:my-6
+            [&_table]:w-full [&_table]:my-6 [&_table]:border-collapse
+            [&_th]:bg-surface-2 [&_th]:text-left [&_th]:text-primary-k [&_th]:font-semibold [&_th]:p-3 [&_th]:border [&_th]:border-kindred
+            [&_td]:p-3 [&_td]:border [&_td]:border-kindred [&_td]:align-top
+            [&_code]:bg-surface-2 [&_code]:px-1.5 [&_code]:py-0.5 [&_code]:rounded">
+            <ReactMarkdown
+                remarkPlugins={[remarkGfm]}
+                components={{
+                    th: ({ node, ...p }) => <th scope="col" {...p} />,
+                }}
+            >{resolveFigures(children)}</ReactMarkdown>
+        </div>
+    );
+}
+
+function FAQAccordion({ faqs }) {
+    const [openIdx, setOpenIdx] = useState(null);
+    return (
+        <section className="mt-12" data-testid="article-faq" aria-labelledby="faq-heading">
+            <h2 id="faq-heading" className="font-heading text-2xl text-primary-k tracking-tight">Frequently Asked Questions</h2>
+            <dl className="mt-5 divide-y divide-kindred border border-kindred rounded-2xl bg-surface overflow-hidden">
+                {faqs.map((f, i) => {
+                    const open = openIdx === i;
+                    return (
+                        <div key={i}>
+                            <dt>
+                                <button
+                                    type="button"
+                                    aria-expanded={open}
+                                    aria-controls={`faq-panel-${i}`}
+                                    onClick={() => setOpenIdx(open ? null : i)}
+                                    className="w-full flex items-center justify-between text-left p-4 hover:bg-surface-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-gold"
+                                    data-testid={`faq-question-${i}`}
+                                >
+                                    <span className="font-medium text-primary-k">{f.q}</span>
+                                    <ChevronDown className={`h-4 w-4 text-muted-k flex-none transition-transform ${open ? "rotate-180" : ""}`} />
+                                </button>
+                            </dt>
+                            {open && (
+                                <dd id={`faq-panel-${i}`} className="px-4 pb-4 text-sm text-primary-k leading-relaxed" data-testid={`faq-answer-${i}`}>
+                                    {f.a}
+                                </dd>
+                            )}
+                        </div>
+                    );
+                })}
+            </dl>
+        </section>
+    );
+}
+
+function ShareButtons({ title, onCopyLink, className = "" }) {
+    const href = typeof window !== "undefined" ? window.location.href : "";
+    const enc = encodeURIComponent;
+    return (
+        <div className={`flex flex-wrap items-center gap-2 ${className}`} data-testid="article-share">
+            <span className="text-xs uppercase tracking-wider text-muted-k mr-1">Share</span>
+            <a href={`https://twitter.com/intent/tweet?url=${enc(href)}&text=${enc(title)}`} target="_blank" rel="noopener noreferrer" aria-label="Share on Twitter" className="h-8 w-8 inline-flex items-center justify-center rounded-full border border-kindred text-primary-k hover:bg-surface-2"><Twitter className="h-3.5 w-3.5" /></a>
+            <a href={`https://www.linkedin.com/sharing/share-offsite/?url=${enc(href)}`} target="_blank" rel="noopener noreferrer" aria-label="Share on LinkedIn" className="h-8 w-8 inline-flex items-center justify-center rounded-full border border-kindred text-primary-k hover:bg-surface-2"><Linkedin className="h-3.5 w-3.5" /></a>
+            <a href={`mailto:?subject=${enc(title)}&body=${enc(href)}`} aria-label="Share by email" className="h-8 w-8 inline-flex items-center justify-center rounded-full border border-kindred text-primary-k hover:bg-surface-2"><Mail className="h-3.5 w-3.5" /></a>
+            <button type="button" onClick={onCopyLink} aria-label="Copy link" className="h-8 w-8 inline-flex items-center justify-center rounded-full border border-kindred text-primary-k hover:bg-surface-2" data-testid="article-share-copy"><Link2 className="h-3.5 w-3.5" /></button>
+        </div>
+    );
+}

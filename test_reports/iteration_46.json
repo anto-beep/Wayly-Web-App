@@ -1,0 +1,40 @@
+{
+  "summary": "Iteration 54 double-header fix verified. LayoutContext + useInLayout() correctly suppresses MarketingHeader when nested inside the authenticated Layout. All 7 AI tool routes show exactly 1 header (Layout's) when logged in as cathy@example.com, and exactly 1 MarketingHeader when anonymous. Landing /, /app dashboard, and mobile (375x812) all show a single header as expected.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": ["/app/test_reports/iteration_46.json"],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "Implementation is clean and minimal: LayoutContext.js (14 lines) + Layout.jsx wraps tree in Provider (value={inLayout:true}) + MarketingHeader returns null when inLayout is true. Default context value {inLayout:false} ensures the marketing routes (which do not mount Layout) continue rendering MarketingHeader normally — verified on / for both anonymous and logged-in cathy.",
+    "Minor (non-blocking): Layout's <header> element does not have a data-testid attribute. Consider adding data-testid=\"layout-header\" to make future header-count assertions more semantic. The MarketingHeader already has data-testid=\"marketing-header\"."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "n/a (frontend-only iteration)", "frontend": "100%"},
+  "test_credentials": "cathy@example.com / testpass123 (Family plan)",
+  "seed_data_creation": "None",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "test_evidence": {
+    "logged_in_ai_tools": {
+      "/ai-tools/budget-calculator": "headers=1, marketing=false, primary-nav=true",
+      "/ai-tools/contribution-estimator": "headers=1, marketing=false, primary-nav=true",
+      "/ai-tools/reassessment-letter": "headers=1, marketing=false, primary-nav=true",
+      "/ai-tools/statement-decoder": "headers=1, marketing=false, primary-nav=true",
+      "/ai-tools/care-plan-reviewer": "headers=1, marketing=false, primary-nav=true",
+      "/ai-tools/classification-self-check": "headers=1, marketing=false, primary-nav=true",
+      "/ai-tools/provider-price-checker": "headers=1, marketing=false, primary-nav=true"
+    },
+    "anonymous_ai_tools": {
+      "/ai-tools/budget-calculator": "headers=1, marketing=true, nav-login + nav-start-trial visible",
+      "/ai-tools/statement-decoder": "headers=1, marketing=true"
+    },
+    "logged_in_landing_/": "headers=1, marketing=true (Layout not mounted on marketing routes — correct)",
+    "logged_in_/app": "headers=1, marketing=false, primary-nav=true",
+    "mobile_375x812_/ai-tools/budget-calculator_loggedIn": "headers=1, mobile-bottom-nav present, no horizontal scroll"
+  },
+  "context_for_next_testing_agent": "LayoutContext-driven header suppression is working as designed. If new pages that mount Layout are added (e.g., new /settings/* or /ai-tools/* routes), they automatically inherit the inLayout:true signal and any MarketingHeader they render will be hidden — no per-page changes needed. Pattern is robust against future expansion."
+}

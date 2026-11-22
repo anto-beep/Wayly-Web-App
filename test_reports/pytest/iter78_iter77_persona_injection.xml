@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="1" skipped="0" tests="8" time="30.566" timestamp="2026-07-21T01:57:11.625098+00:00" hostname="agent-env-9d7dc41f-aa05-432b-8632-1634219cad4f"><testcase classname="tests.test_iter77_persona_injection.TestAskWaylyPersona" name="test_caregiver_reply_uses_third_person" time="3.559" /><testcase classname="tests.test_iter77_persona_injection.TestAskWaylyPersona" name="test_participant_reply_uses_first_person" time="3.422" /><testcase classname="tests.test_iter77_persona_injection.TestHelpChatPersona" name="test_caregiver_help_reply" time="1.564" /><testcase classname="tests.test_iter77_persona_injection.TestHelpChatPersona" name="test_participant_help_reply" time="1.024" /><testcase classname="tests.test_iter77_persona_injection.TestLF1PersonaVoice" name="test_caregiver_letter_is_third_person" time="7.623" /><testcase classname="tests.test_iter77_persona_injection.TestLF1PersonaVoice" name="test_participant_letter_uses_first_person" time="4.910"><failure message="AssertionError: caregiver-context leaked into participant letter: I am writing to dispute a charge on Dorothy's May statement.&#10;  &#10;  The statement shows a $95 personal-care visit charged at the Saturday rate. The visit took place on a Thursday, so the weekday rate should apply instead.&#10;  &#10;  Please review the charge and adjust the statement to reflect the correct rate for a Thursday visit. I would appreciate a written response confirming the correction within 14 days.&#10;  &#10;  Under the Aged Care Act 2024, a registered provider must not charge a price for the delivery of a funded aged care service that is not reasonable, having regard to the cost of delivering the service (Pa&#10;assert 'dorothy' not in 'i am writin...this matter.'&#10;  &#10;  'dorothy' is contained here:&#10;    i am writing to dispute a charge on dorothy's may statement.&#10;  ?                                     +++++++&#10;    &#10;    the statement shows a $95 personal-care visit charged at the saturday rate. the visit took place on a thursday, so the weekday rate should apply instead.&#10;    ...&#10;  &#10;  ...Full output truncated (5 lines hidden), use '-vv' to show">tests/test_iter77_persona_injection.py:255: in test_participant_letter_uses_first_person
+    assert "dorothy" not in body.lower(), (
+E   AssertionError: caregiver-context leaked into participant letter: I am writing to dispute a charge on Dorothy's May statement.
+E     
+E     The statement shows a $95 personal-care visit charged at the Saturday rate. The visit took place on a Thursday, so the weekday rate should apply instead.
+E     
+E     Please review the charge and adjust the statement to reflect the correct rate for a Thursday visit. I would appreciate a written response confirming the correction within 14 days.
+E     
+E     Under the Aged Care Act 2024, a registered provider must not charge a price for the delivery of a funded aged care service that is not reasonable, having regard to the cost of delivering the service (Pa
+E   assert 'dorothy' not in 'i am writin...this matter.'
+E     
+E     'dorothy' is contained here:
+E       i am writing to dispute a charge on dorothy's may statement.
+E     ?                                     +++++++
+E       
+E       the statement shows a $95 personal-care visit charged at the saturday rate. the visit took place on a thursday, so the weekday rate should apply instead.
+E       ...
+E     
+E     ...Full output truncated (5 lines hidden), use '-vv' to show</failure></testcase><testcase classname="tests.test_iter77_persona_injection.TestReportsSummaryPersona" name="test_caregiver_summary_is_third_person" time="6.336" /><testcase classname="tests.test_iter77_persona_injection.TestReportsSummaryPersona" name="test_participant_summary_is_first_person" time="2.030" /></testsuite></testsuites>

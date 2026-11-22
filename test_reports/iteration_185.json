@@ -1,0 +1,66 @@
+{
+  "summary": "Mobile persona-voice tool testing (caregiver cathy). BLOCKER: ContributionEstimator result panel throws 'ReferenceError: voice is not defined' the moment the user submits — `voice` is used ~10 times inside the standalone `ResultScreen` function (lines 301, 304, 311, 319-320, 331-332, 367, 385, 389) but is never passed as a prop or re-derived, so the entire persona-aware result panel red-screens. All other tool routes and guided journeys load their intro/first-step cleanly with no JS errors. Full persona-string validation could not be performed because the result panel never renders.",
+  "platforms_tested": ["mobile"],
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "mobile": {
+      "ui_bugs": [
+        {
+          "component": "ContributionEstimator / ResultScreen",
+          "issue": "ReferenceError: voice is not defined — red-screen crash on submit. `voice = usePersonaVoice()` is declared inside ContributionEstimator (line 44) but ResultScreen({result, form, colors, onEdit}) at line 239 does not receive `voice` as a prop, yet references it ~10 times. Every path through the result panel (headline, govt-share bar, rate breakdown, lifetime cap, hardship copy, HCP comparison label, disclaimer) crashes. Repro: /tool/contribution-estimator → click ce-submit → red-screen. Console shows `ReferenceError: voice is not defined at ResultScreen ...ContributionEstimator.tsx:304:155`. File: /app/mobile/src/components/tools/ContributionEstimator.tsx",
+          "testID": "ce-result / ce-result-headline (never mounts)",
+          "priority": "CRITICAL"
+        },
+        {
+          "component": "ContributionEstimator (parity-copy check — could not verify because of crash)",
+          "issue": "Because the result panel never renders, the caregiver-voice strings requested for verification ('They pay', 'Their rates by service type', 'Their lifetime cap', 'total amount they'll ever pay… once they've contributed… they pay nothing', 'If paying their contribution…') could not be visually confirmed. Source review of the strings shows they should render correctly once `voice` is in scope (they interpolate `voice.subjectTitle`, `voice.possessive`, `voice.subject` from the caregiver map: They / their / they).",
+          "testID": "ce-result-*",
+          "priority": "HIGH (blocked by crash)"
+        },
+        {
+          "component": "tool/[slug] router — aged-care-qa",
+          "issue": "Navigating to /tool/aged-care-qa renders 'Unknown tool.' — the slug is not mapped in /app/mobile/app/tool/[slug].tsx. Ask Wayly may live under the Ask tab / a different route, but if the AI Tools hub links here, users hit a dead-end. Verify hub link vs. slug map. (Not a red-screen; content page reads 'Tool / Unknown tool.')",
+          "testID": "n/a",
+          "priority": "MEDIUM"
+        }
+      ],
+      "integration_issues": [
+        {
+          "flow": "Contribution Estimator → estimate result",
+          "issue": "Submit → red-screen; no result cards ever mount. The /ce2/calculate call fires but the render pipeline throws before painting any of ce-result-headline / ce-govt-share-bar / ce-rate-breakdown / ce-safety-net / ce-oct-2026 / ce-hcp-comparison / ce-also-worth-knowing.",
+          "affected_testIDs": ["ce-result", "ce-result-headline", "ce-range-headline", "ce-fee-exempt-headline", "ce-govt-share-bar", "ce-rate-breakdown", "ce-safety-net", "ce-oct-2026", "ce-hcp-comparison", "ce-also-worth-knowing"]
+        }
+      ],
+      "design_issues": [],
+      "react_native_issues": []
+    }
+  },
+  "parity_issues": [
+    {"flow": "Contribution Estimator result panel", "platform": "mobile", "issue": "Web renders the caregiver-voice result panel; mobile red-screens on submit due to missing `voice` reference in ResultScreen.", "expected": "Mobile result panel renders with 'They pay', 'Their rates by service type', 'Their lifetime cap', etc.", "actual": "ReferenceError: voice is not defined — full result panel crashes."}
+  ],
+  "test_report_links": [
+    "/app/test_reports/iter185_ce_form.jpeg",
+    "/app/test_reports/iter185_ce_result.jpeg",
+    "/app/test_reports/iter185_ce_after_submit.jpeg",
+    "/app/test_reports/iter185_ai_tools.jpeg"
+  ],
+  "action_items": [
+    "FIX (one-line): In /app/mobile/src/components/tools/ContributionEstimator.tsx pass `voice` into ResultScreen — either add `voice` to its props (change line 228 to `<ResultScreen result={result} form={form} colors={colors} voice={voice} onEdit={...} />` and destructure it in the signature at line 239: `function ResultScreen({ result, form, colors, voice, onEdit }: any)`) OR call `const voice = usePersonaVoice();` at the top of ResultScreen. Either resolves the ReferenceError and unblocks the entire persona-voice validation.",
+    "Verify caregiver strings after fix: 'They pay', 'Their rates by service type', 'Their lifetime cap', 'the total amount they'll ever pay… once they've contributed… they pay nothing', 'If paying their contribution…', hardship line, HCP fee question 'Did they pay any fees under their Home Care Package?' with 'No, they never paid fees' / 'Yes, they paid fees'.",
+    "Map /tool/aged-care-qa in [slug].tsx (or remove the link from the hub) — currently renders 'Unknown tool.'",
+    "Re-run full end-to-end tool + guided-journey walkthrough (Statement Decoder, Classification Self-Check, Care Plan Reviewer, Provider Price Checker, Invoice Checker, Letters & Follow-ups, Budget Calculator, Ask Wayly, plus classification-prep / carer-self-check / handover-pack / chsp-tools / athm / provider-switch) once the CE crash is fixed — could not run them meaningfully with the primary flow broken."
+  ],
+  "critical_code_review_comments": [
+    "ContributionEstimator.tsx: ResultScreen is a JS function *outside* the component but depends on closure-only variable `voice`. This is a straight closure/scope bug — TypeScript/eslint likely didn't catch it because ResultScreen is typed `(...args: any)`. Recommend removing `any` on inner helper components to catch this class of bug at type-check time.",
+    "Same file: the govt-share label at line 301 renders `{voice.subjectTitle} {youPct.toFixed(0)}%` — this is the first `voice.*` inside ResultScreen and is what the stack trace points to. Confirms the fix location.",
+    "The ce-result outer `<View testID=\"ce-result\">` mounts (per code) *around* ResultScreen — so once ResultScreen throws the whole `ce-result` subtree unmounts and the error-boundary shows the redbox. Adding a per-tool React error boundary would let users retry without a hard crash."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "n/a (skipped per request)", "frontend": "~40% (all tool/journey entry screens load; core Contribution Estimator result flow is 0%)"},
+  "test_credentials": "cathy@example.com / testpass123 (caregiver, active participant Mum)",
+  "seed_data_creation": "none",
+  "retest_needed": true,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "After main agent passes `voice` into ResultScreen (or calls usePersonaVoice inside it), retest ContributionEstimator with caregiver cathy on /tool/contribution-estimator. Fill defaults, click ce-submit, and verify these caregiver strings render exactly: (a) 'Their rates by service type' (ce-rate-breakdown label), (b) 'Their lifetime cap: $…' (ce-safety-net title), (c) 'the total amount they'll ever pay for the Independence and Everyday Living components. Once they've contributed this much, they pay nothing further.' (ce-safety-net body), (d) 'If paying their contribution would cause serious financial difficulty, they can apply…' (ce-also-worth-knowing hardship line), (e) HCP fee question `Did they pay any fees under their Home Care Package?` with pills `No, they never paid fees` / `Yes, they paid fees` (already working pre-submit — verified on form), (f) 'They pay <$X> / year' in the govt-share bar. Also finish walking every other tool and guided journey end-to-end (couldn't do so this run because the flagship tool crashes).",
+  "rca of the issue": "Root cause: closure scope error. `voice` is declared with `const voice = usePersonaVoice()` at line 44, inside `ContributionEstimator()`. `ResultScreen` is defined at module scope (line 239) as a separate function accepting `(result, form, colors, onEdit)` — it does NOT close over `voice` (it's a peer function, not a nested one). When the JSX at line 228 mounts ResultScreen after submit, every `voice.*` reference at lines 301/304/311/319/320/331/332/367/385/389 evaluates against undefined -> ReferenceError. Repro: login as cathy → /tool/contribution-estimator → click 'See my estimate' with default form values → red-screen. Console: `ReferenceError: voice is not defined at ResultScreen ...ContributionEstimator.tsx:304:155`. Mitigation: pass voice as a prop OR call usePersonaVoice() at the top of ResultScreen."
+}

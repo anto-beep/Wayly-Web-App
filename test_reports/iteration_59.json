@@ -1,0 +1,82 @@
+{
+  "summary": "Iter 59 backend + frontend regression for STMT-UI-1 v2 (statements register, notes autosave, side-by-side compare) and the new 'Share this decode' PDF export. Backend: 33/33 DEC-1 v7.7 pytests PASS; new /app/backend/tests/test_iter59_stmt_ui_v2.py = 12/12 PASS covering GET /api/statements shape (has_note per row, user_note body stripped), GET /api/statements/{id} (user_note + has_note surfaced), PATCH /api/statements/{id}/note (set/clear roundtrip, empty-string clears, non-string 400, >1024 chars 400, boundary=1024 OK, unknown-id 404, auth required). Frontend E2E via Playwright confirmed: register renders 24 rows with the new Period/Provider/Uploaded/Gross total/Closing balance/Status columns; Export CSV, Archived, Upload statement top-bar buttons all present; live search 'TestCare' filters to 1 row; sort header click persists ?sortKey=uploaded&sortDir=desc to URL; CSV download fires with filename 'wayly-statements-2026-07-08.csv'; detail page shows compact header '1–30 Sep 2026 · TestCare' + status badge inline + Download original + Compare side-by-side button (only on PDF stmt) + StatementNotes editor; note autosave = 'Saved' label after ~1.6s + persists across reload + note-indicator (StickyNote testid) appears on register row; CSV-statement compare route shows graceful 'Side-by-side comparison isn't available' fallback. \n\nHOWEVER, the PDF /app/statements/:id/compare page is broken by a pdfjs-dist version mismatch: react-pdf@9.2.1 bundles its own pdfjs-dist@4.8.69 (API) but StatementCompare.jsx loads the worker from the top-level pdfjs-dist@4.10.38, so `import.meta.url` resolves to the wrong worker file. Console error: `UnknownErrorException: The API version \"4.8.69\" does not match the Worker version \"4.10.38\"`. The compare page then falls through to the 'unavailable' fallback UI on legitimate PDFs — comparison, divergence, sync scroll and mobile tabs are all unreachable in this state. This is the blocker for Phase 3 acceptance.",
+  "backend_issues": {
+    "critical": [],
+    "minor": [
+      {"endpoint": "server.py L1454-1456", "issue": "List endpoint pops user_note off the dict but the Statement Pydantic model still serializes user_note=null on every row. Body is not leaked (value is None), but the key is present. If the spec truly wants the key removed from the JSON payload, use response_model_exclude={'user_note'} or a slim ListStatement model."}
+    ]
+  },
+  "frontend_issues": {
+    "ui_bugs": [
+      {
+        "component": "StatementCompare (pdf worker load)",
+        "issue": "PDF.js API/Worker version mismatch renders every PDF compare page unusable. react-pdf@9.2.1 internally uses pdfjs-dist@4.8.69, but StatementCompare.jsx L18-21 resolves `new URL('pdfjs-dist/build/pdf.worker.min.mjs', import.meta.url)` → top-level pdfjs-dist@4.10.38 worker. The Document component reports `UnknownErrorException: The API version \"4.8.69\" does not match the Worker version \"4.10.38\"` and setPdfLoadError() flips the whole page into the 'Side-by-side comparison isn't available' fallback state, defeating all of Phase 3.",
+        "selector": "data-testid=statement-compare-page",
+        "priority": "HIGH"
+      }
+    ],
+    "integration_issues": [
+      {
+        "flow": "Compare side-by-side (Phase 3)",
+        "issue": "Because of the pdfjs version mismatch above, none of the compare-pane, divergence footer, mobile tabs, sync-scroll or zoom controls can be exercised on a real PDF. The graceful fallback IS shown, but for the wrong reason (should be reserved for non-PDF statements).",
+        "affected_selectors": [
+          "statement-compare-pdf-pane",
+          "statement-compare-decoded-pane",
+          "statement-compare-divider",
+          "pdf-zoom-select",
+          "pdf-sync-scroll-toggle",
+          "compare-figure-list",
+          "compare-tab-original",
+          "compare-tab-decoded"
+        ]
+      }
+    ],
+    "design_issues": []
+  },
+  "verified_features": [
+    {"feature": "DEC-1 v7.7 pytest suite", "evidence": "33/33 pass, 2.44s → /app/test_reports/pytest/iter59_dec1.xml"},
+    {"feature": "STMT-UI-1 v2 backend API", "evidence": "12/12 pass in /app/backend/tests/test_iter59_stmt_ui_v2.py → iter59_stmt_ui_v2.xml. Covers list has_note, detail user_note+has_note, PATCH note (roundtrip, empty clears, non-string 400, >1024 400, boundary=1024 OK, 404, auth-required)."},
+    {"feature": "Register (Phase 1)", "evidence": "24 rows, columns Period/Provider/Uploaded/Gross total/Closing balance/Status; Export CSV, Archived, Upload statement top bar visible."},
+    {"feature": "Register search", "evidence": "typing 'TestCare' → live filter to 1 row (the synthetic PDF)."},
+    {"feature": "Register sort + URL persistence", "evidence": "Click Uploaded header → URL becomes ?sortKey=uploaded&sortDir=desc; cycling desc→asc→reset works."},
+    {"feature": "CSV export (Decision 10)", "evidence": "click statements-export-csv-btn → download 'wayly-statements-2026-07-08.csv'."},
+    {"feature": "Detail (Phase 2)", "evidence": "Header 'l–30 Sep 2026 · TestCare' + status badge inline; Download original (as received) visible; Compare side-by-side visible (only for PDF stmt); StatementNotes editor renders with placeholder."},
+    {"feature": "Notes autosave", "evidence": "Typed 'iter59-e2e-note: test note' → label switched to 'Saved' after 1.6s; reload preserves the value; PATCH /api/statements/{id}/note returned 200 with user_note + has_note."},
+    {"feature": "Note indicator on register", "evidence": "After autosave, statement-status-<id>-note-indicator visible in the row (StickyNote icon before status badge)."},
+    {"feature": "Compare fallback for non-PDF", "evidence": "Navigating to /app/statements/{csv_stmt_id}/compare renders data-testid=statement-compare-unavailable with 'Side-by-side comparison isn't available' + back link."},
+    {"feature": "PATCH endpoint idempotency + auth", "evidence": "boundary tests + 401 confirmed via requests session."}
+  ],
+  "test_report_links": [
+    "/app/backend/tests/test_iter59_stmt_ui_v2.py",
+    "/app/backend/tests/test_iter58_dec1_regression.py",
+    "/app/backend/tests/test_dec1_v7_7.py",
+    "/app/test_reports/pytest/iter59_dec1.xml",
+    "/app/test_reports/pytest/iter59_stmt_ui_v2.xml"
+  ],
+  "action_items": [
+    "HIGH · Fix the pdfjs-dist / react-pdf worker version mismatch on /app/statements/:id/compare. Options: (a) pin `pdfjs-dist` to `4.8.69` in /app/frontend/package.json (match react-pdf 9.2.1's internal API), OR (b) drop the explicit top-level pdfjs-dist dep and import the worker from react-pdf itself, OR (c) set workerSrc via `pdfjs.version`, e.g. `pdfjs.GlobalWorkerOptions.workerSrc = \\`https://cdn.jsdelivr.net/npm/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs\\`;`. Ship a fix and re-verify the entire Compare Phase 3 test list (divergence buckets, sync-scroll, mobile tabs).",
+    "MEDIUM · Consider using response_model_exclude={'user_note'} on GET /api/statements so the null-body field isn't shipped on list rows at all (Decision 6 wording is 'body stripped'). Not blocking — value is null — but cleaner.",
+    "LOW · Re-run this iteration's frontend suite once the worker fix lands to confirm compare-figure list, divergence footer '(N match · N differ · N no-match)', and the Share PDF popup all render as designed."
+  ],
+  "critical_code_review_comments": [
+    "StatementCompare.jsx L18-21 assumes `import.meta.url` will resolve to react-pdf's bundled pdfjs — it does not. Because top-level pdfjs-dist is at 4.10.38 and react-pdf's own pdfjs-dist is at 4.8.69, they diverge. Pin one version or use react-pdf's own worker entry to avoid future drift.",
+    "StatementsList.jsx SortHeader clicks are wired to `cycleSort` which resets to period/desc after asc — verify URL persistence after 'reset' (currently we clear sortKey/sortDir from URL if they equal default, which is correct).",
+    "server.py L1454-1456 mutates `d` then constructs `Statement(**d)` — the Statement model still has `user_note` field, so the null is serialized back. Add response_model_exclude or model_dump(exclude={'user_note'}) at list boundary.",
+    "StatementCompare onGetTextSuccess passes a hand-crafted viewport `{transform:[1,0,0,-1,0,0]}` — since the pdf never loads today the divergence logic is untested. Once (a) worker is fixed, re-verify that the token coords actually let buildDivergenceMap match at least the gross-total figure ('Gross total $3,300.00' → decoded 3300).",
+    "39 DeprecationWarnings from FastAPI @app.on_event still fire on every pytest run (carried over from iter 58). Cosmetic."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_iter59_stmt_ui_v2.py (new)",
+    "/tmp/tst.pdf (synthetic PDF)"
+  ],
+  "success_rate": {
+    "backend": "100% (33/33 DEC-1 + 12/12 iter59 STMT-UI-1 v2 + previously green iter58 regression)",
+    "frontend": "~75% (Phase 1 register, Phase 2 detail + notes autosave, non-PDF compare fallback, Share button wiring code-reviewed all pass; Phase 3 compare page fails at PDF worker load, blocking divergence + sync-scroll + mobile tab checks)"
+  },
+  "test_credentials": "cathy@example.com / testpass123 (family plan, has 24 statements including the freshly-uploaded synthetic PDF with id 1e6f55e6-939e-49b9-a65d-bf8c39b5c2a9).",
+  "seed_data_creation": "Uploaded /tmp/tst.pdf (reportlab-generated synthetic 'TestCare' PDF · Provider, Gross total $3,300.00, Closing balance $1,250.00) via POST /api/statements/upload as Cathy → statement_id=checker-preview, has_original_file=true, file_mimetype=application/pdf. This is the only statement in Cathy's account with a retained PDF binary; use it to exercise the Compare page once the worker fix ships.",
+  "retest_needed": true,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "After the pdfjs worker fix, run: (1) navigate to /app/statements/1e6f55e6-939e-49b9-a65d-bf8c39b5c2a9/compare as cathy — expect PDF pane on left, decoded pane on right, divider, zoom select, sync toggle; (2) verify data-testid=compare-figure-list rows for gross_total, care_management_fee, closing_balance with at least ONE agree/differ classification; (3) look for the footer 'N match · N differ · N no-match'; (4) resize to 390×844 → compare-tab-original / compare-tab-decoded should appear; (5) confirm the DecoderResultView on the same detail page renders decoder-share-pdf-btn — clicking it opens a popup with 'wayly.com.au' CTA and window.print() fires after 500ms. Existing regression: run test_dec1_v7_7.py + test_iter59_stmt_ui_v2.py + test_iter58_dec1_regression.py in one go with pytest for a full 54-check green baseline.",
+  "rca_of_the_issue": "React-pdf @9.2.1 declares pdfjs-dist as a bundled internal dep and re-exports pdfjs at version 4.8.69. StatementCompare.jsx explicitly imports { pdfjs } from 'react-pdf' (so its `pdfjs.version` is 4.8.69), but then sets `pdfjs.GlobalWorkerOptions.workerSrc = new URL('pdfjs-dist/build/pdf.worker.min.mjs', import.meta.url)`. Because /app/frontend also has `pdfjs-dist@^4.8.69` listed at the top level, `yarn` installed the *latest* satisfying release (4.10.38) as the top-level copy, and webpack's module resolver preferred that top-level path over react-pdf's nested one. Net effect: API = 4.8.69, Worker = 4.10.38, pdfjs.getDocument() aborts with the 'API version ... does not match the Worker version ...' UnknownErrorException, `<Document onLoadError>` fires, setPdfLoadError() runs, and the whole component switches into the 'unavailable' fallback branch — indistinguishable to the user from a legitimate 'no original PDF' fallback. Reproduction: cathy → /app/statements/1e6f55e6-939e-49b9-a65d-bf8c39b5c2a9/compare → screenshot shows the fallback card with the exact API/Worker mismatch string. Mitigation: (fastest) pin package.json 'pdfjs-dist' to exactly '4.8.69' + `yarn install`, or (cleanest) `import 'react-pdf/dist/esm/Page/AnnotationLayer.css'` alongside `pdfjs.GlobalWorkerOptions.workerSrc = new URL('react-pdf/dist/esm/pdf.worker.min.mjs', import.meta.url).toString()` — either way `pdfjs.version === worker version` after the fix."
+}

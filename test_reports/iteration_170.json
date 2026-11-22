@@ -1,0 +1,32 @@
+{
+  "summary": "Mobile parity sweep verification (Expo web preview) for cathy@example.com Family-plan user. All 9 requested surfaces render without crashes, no pageerrors, and single-$ formatting is respected across every screen (0 occurrences of '$$' anywhere). Dashboard shows greeting 'Good afternoon, Cathy', 'WELLBEING SUMMARY' + 'FAMILY PLAN · TRIAL' pill, H1 'Mum, this quarter', 'Jul-Sep 2026 · Classification 4 · $6,682 per quarter · Provider: Test Provider 8c1af9aa', 'Your Wayly Insight' smart summary with NO em-dashes/hyphenated dashes, all stat cards (THIS QUARTER/ALERTS/STATEMENTS/LIFETIME CAP), Things to know, Recent statements, Latest statement in plain English, AI chat preview, Audit Log preview and Family thread. MissingDetailsBanner: appears (Robert requires completion), all 3 testIDs present (profile-completion-banner/dismiss/cta), dismiss hides it, and 24h suppression persists across reload via AsyncStorage key 'wayly_missing_details_banner_dismissed_at'. AI Tools: heading 'Nine Tools. Built for Australian Families.', 3 info chips, 9 tool cards with 9 'Open tool' CTAs, tapping first card navigates to /tool/statement-decoder. Family Wall: 'A Digital Fridge Door for Mum' present, posts render, 5 reaction emojis visible. Statements: PageIntro + Smart Summary, chips All/Clean/Flagged/Processing/Failed, 'N shown' counter (36 shown), GROSS TOTAL / CLOSING BALANCE labels, single $, statements-export-csv-btn present and clickable without crash, statements-archived-link navigates to /statements-archived which shows empty state 'No archived statements'. Participants: 'Participants · 3 active' + 'Current plan: FAMILY · $74.00 per fortnight · 1 additional participant', PRIMARY star on Dorothy, Classification·Provider + forwarding email + Timeline/Edit details/Share view/Make primary/Remove rows for each, Removed participants section with restore info. Support: H1 'My Support', 4 stat cards (30 OPEN / 1 AWAITING YOU / 2 RESOLVED / 33 TOTAL), status filter chips, ticket cards with reference/category/status/'Raised … · Updated …', Raise a New Ticket form present. Plan & Billing: CURRENT PLAN card with 'Billed every 14 days · Includes GST', 'WHAT YOU ARE PAYING FOR' card, Solo/Family switch cards with 'Current' badge on Family. PER-PARTICIPANT ISOLATION VERIFIED: switching via participant-switcher from Mum → Robert Kowalski re-scopes every subsequent /api/* call to the new X-Participant-Id (seed-robert_kowalski-f0844844); dashboard budget goes $3,718/$6,682 → $0/$10,826 (Class 6 budget), STATEMENTS goes 36 → 0, and /statements page shows '0 shown' — no data bleed observed across /api/budget/current, /api/statements, /api/budget/eligible-pathways, /api/audit-log, /api/chat/history, /api/family-thread, /api/insights/summarise.",
+  "platforms_tested": ["mobile"],
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "mobile": {
+      "ui_bugs": [],
+      "integration_issues": [],
+      "design_issues": [],
+      "react_native_issues": []
+    }
+  },
+  "parity_issues": [],
+  "test_report_links": [
+    "/app/test_reports/iter170_dashboard.png",
+    "/app/test_reports/iter170_switcher_open.png"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "Nit (copy consistency): Participants screen says 'Family plan covers 2, additional participants are $24.50 per fortnight each' while Plan & Billing bullet says 'Up to 4 participants'. Both are reconcilable (2 included + up to 2 additional at $24.50) but the wording differs between surfaces. Consider harmonising to prevent user confusion.",
+    "Dashboard uses moneyWhole for THIS QUARTER card ($3,718 / $6,682 · $2,964 left). This matches web behaviour; no change required, just noting the format choice is intentional.",
+    "The review-request bullet 'tapping a card opens /tool/mobile-parity-sweep' appears to be a copy-paste of the app subdomain slug — the actual (and correct) behaviour is /tool/{tool-slug} e.g. /tool/statement-decoder. Verified working. No fix required."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "n/a (frontend-only per request)", "frontend": "100% — 9/9 surfaces load, 0 pageerrors, 0 '$$' occurrences, banner dismiss+24h persistence works, participant switch fully re-scopes dashboard + statements"},
+  "test_credentials": "cathy@example.com / testpass123 (Family plan; participants: Mum/Dorothy Smith · Robert Kowalski · Patricia Holloway)",
+  "seed_data_creation": "None. Existing seed data used.",
+  "retest_needed": false,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "Mobile Expo preview root: https://mobile-parity-sweep.expo.preview.emergentagent.com. Login testIDs: login-email-input / login-password-input / login-submit-button. Participant switcher on any screen: data-testid='participant-switcher' → opens bottom sheet with rows, tap participant name text to switch. Dashboard tests can key on 'Mum, this quarter' H1 and 'STATEMENTS <count>' regex to detect re-scope. Statements page has data-testids 'statements-export-csv-btn' and 'statements-archived-link'. Missing-Details banner testIDs: profile-completion-banner/dismiss/cta with localStorage/AsyncStorage key 'wayly_missing_details_banner_dismissed_at' (24h TTL). Robert Kowalski's participant_id prefix is 'seed-robert_kowalski-'.",
+  "rca of the issue": "N/A — no bugs found in this iteration. All requested screens pass."
+}

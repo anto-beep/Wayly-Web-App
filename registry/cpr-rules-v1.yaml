@@ -1,0 +1,508 @@
+# CPR-FINDINGS-UX-1 v2 · Workstream A1 — Rule Registry (single source of truth).
+#
+# Every citation-bearing finding CPR-1 can emit MUST have a rule_id here.
+# Findings without a rule_id are structurally impossible to emit (freeform
+# observations are permitted only as severity:info / confidence:low with
+# source "Verification required" and NO cited authority).
+#
+# confidence_tier is bound to source_type per locked decision L3:
+#   legislation | rules            -> high
+#   standard | regulator_guidance  -> medium
+#   clinical_best_practice         -> low
+#
+# All six categories carry solicitor_signed_off: false (see
+# cpr-categories-v1.yaml). Until a category is signed off at category level,
+# its citation-bearing findings are suppressed in production.
+#
+# EXPLICITLY BANNED (enforced by CI test test_cpr_err_a_golden.py):
+#   * Minimum RN hours per classification (does not exist in SAH).
+#   * National transport price midpoints while price caps are inactive.
+#   * Any minimum service hours by classification not published in the
+#     Schedule of Subsidies and Supplements or the Aged Care Rules 2025.
+version: 1
+rules:
+  # ----------------------------------------------------------------- financial
+  - rule_id: CPR-R-0001
+    finding_title: "Care management fee exceeds 10% of care services base"
+    category_id: financial
+    source_type: rules
+    source_citation: "Aged Care Rules 2025 (F2025L01173) s.194-3"
+    source_url: "/help/aged-care-rules-2025#s194-3"
+    confidence_tier: high
+    severity: compliance
+    triggers:
+      - condition: "care_management_fee > care_services_base * 0.10"
+    suggested_question: "The plan lists a care management fee above 10% of the care services base. Can you walk me through how it was calculated?"
+    addressee_primary: provider
+    addressee_secondary: [acqsc, opan]
+    introduces_new_source_type: false
+    introduces_new_legal_claim: false
+
+  - rule_id: CPR-R-0002
+    finding_title: "AT-HM items counted inside the care management base or quarterly budget"
+    category_id: financial
+    source_type: rules
+    source_citation: "Aged Care Rules 2025 (F2025L01173) s.212-10"
+    source_url: "/help/aged-care-rules-2025#s212-10"
+    confidence_tier: high
+    severity: compliance
+    triggers:
+      - condition: "at_hm_included_in_base == true"
+    suggested_question: "The Assistive Technology and Home Modifications amount looks like it is inside the care budget. Should it be ring-fenced separately?"
+    addressee_primary: provider
+    addressee_secondary: [acqsc]
+    introduces_new_source_type: false
+    introduces_new_legal_claim: false
+
+  - rule_id: CPR-R-0003
+    finding_title: "Rollover cap set incorrectly"
+    category_id: financial
+    source_type: rules
+    source_citation: "Aged Care Rules 2025 (F2025L01173) s.194-3"
+    source_url: "/help/aged-care-rules-2025#s194-3"
+    confidence_tier: high
+    severity: efficiency
+    triggers:
+      - condition: "rollover_cap != max(1000, quarterly_budget * 0.10)"
+    suggested_question: "Can you confirm the unspent-funds rollover cap for this quarter and how it was worked out?"
+    addressee_primary: provider
+    addressee_secondary: [my_aged_care]
+    introduces_new_source_type: false
+    introduces_new_legal_claim: false
+
+  - rule_id: CPR-R-0004
+    finding_title: "Quarterly budget does not match the classification value"
+    category_id: financial
+    source_type: rules
+    source_citation: "Aged Care Rules 2025 (F2025L01173) s.194-5(2)"
+    source_url: "/help/aged-care-rules-2025#s194-5"
+    confidence_tier: high
+    severity: compliance
+    triggers:
+      - condition: "quarterly_budget != index1_quarterly_for_classification"
+    suggested_question: "The quarterly budget shown does not match the published value for this classification. Can you check it?"
+    addressee_primary: provider
+    addressee_secondary: [my_aged_care]
+    introduces_new_source_type: false
+    introduces_new_legal_claim: false
+
+  - rule_id: CPR-R-0005
+    finding_title: "Clinical services charged a participant contribution"
+    category_id: financial
+    source_type: rules
+    source_citation: "Aged Care Rules 2025 (F2025L01173) s.194-5"
+    source_url: "/help/aged-care-rules-2025#s194-5"
+    confidence_tier: high
+    severity: compliance
+    triggers:
+      - condition: "clinical_contribution_pct > 0"
+    suggested_question: "Clinical supports should be fully government-funded. Why is there a participant contribution on a clinical service?"
+    addressee_primary: provider
+    addressee_secondary: [acqsc, services_australia]
+    introduces_new_source_type: false
+    introduces_new_legal_claim: false
+
+  - rule_id: CPR-R-0006
+    finding_title: "Everyday Living contribution outside the 17.5% to 80% band"
+    category_id: financial
+    source_type: regulator_guidance
+    source_citation: "Support at Home participant contributions schedule"
+    source_url: "/help/support-at-home#contributions"
+    confidence_tier: medium
+    severity: efficiency
+    triggers:
+      - condition: "everyday_contribution_pct < 17.5 or everyday_contribution_pct > 80"
+    suggested_question: "The Everyday Living contribution looks outside the usual range. Can you confirm the means-tested percentage?"
+    addressee_primary: provider
+    addressee_secondary: [services_australia]
+    introduces_new_source_type: false
+    introduces_new_legal_claim: false
+
+  - rule_id: CPR-R-0007
+    finding_title: "Independence contribution outside the 5% to 50% band"
+    category_id: financial
+    source_type: regulator_guidance
+    source_citation: "Support at Home participant contributions schedule"
+    source_url: "/help/support-at-home#contributions"
+    confidence_tier: medium
+    severity: efficiency
+    triggers:
+      - condition: "independence_contribution_pct < 5 or independence_contribution_pct > 50"
+    suggested_question: "The Independence contribution looks outside the usual range. Can you confirm the means-tested percentage?"
+    addressee_primary: provider
+    addressee_secondary: [services_australia]
+    introduces_new_source_type: false
+    introduces_new_legal_claim: false
+
+  - rule_id: CPR-R-0008
+    finding_title: "Grandfathered HCP lifetime cap not applied to a transitioned participant"
+    category_id: financial
+    source_type: rules
+    source_citation: "Aged Care Rules 2025 no-worse-off guarantee"
+    source_url: "/help/support-at-home#no-worse-off"
+    confidence_tier: high
+    severity: efficiency
+    triggers:
+      - condition: "hcp_transitioned == true and lifetime_cap != hcp_grandfathered_cap"
+    suggested_question: "As a transitioned Home Care Package participant, should the grandfathered lifetime cap apply here?"
+    addressee_primary: provider
+    addressee_secondary: [my_aged_care]
+    introduces_new_source_type: false
+    introduces_new_legal_claim: false
+
+  # -------------------------------------------------------- category_placement
+  - rule_id: CPR-R-0101
+    finding_title: "Personal care not placed in Clinical Care after 01/10/2026"
+    category_id: category_placement
+    source_type: rules
+    source_citation: "Aged Care Rules 2025 (F2025L01173) s.194-5"
+    source_url: "/help/aged-care-rules-2025#s194-5"
+    confidence_tier: high
+    severity: compliance
+    triggers:
+      - condition: "plan_period_on_or_after_2026_10_01 and personal_care_stream != 'Clinical Care'"
+    suggested_question: "From 01/10/2026 personal care is Clinical Care and fully government-funded. Why is it in another category here?"
+    addressee_primary: provider
+    addressee_secondary: [my_aged_care, acqsc]
+    introduces_new_source_type: false
+    introduces_new_legal_claim: false
+
+  - rule_id: CPR-R-0102
+    finding_title: "Service placed in a category that does not match its type"
+    category_id: category_placement
+    source_type: regulator_guidance
+    source_citation: "Support at Home service categories guidance"
+    source_url: "/help/support-at-home#service-categories"
+    confidence_tier: medium
+    severity: choice
+    triggers:
+      - condition: "service_stream_mismatch == true"
+    suggested_question: "This service looks like it is in the wrong category. Can you confirm the correct Clinical Care / Independence / Everyday Living placement?"
+    addressee_primary: provider
+    addressee_secondary: [my_aged_care]
+    introduces_new_source_type: false
+    introduces_new_legal_claim: false
+
+  - rule_id: CPR-R-0103
+    finding_title: "Plan spans the 01/10/2026 personal care change"
+    category_id: category_placement
+    source_type: rules
+    source_citation: "Aged Care Rules 2025 (F2025L01173) s.194-3"
+    source_url: "/help/aged-care-rules-2025#s194-3"
+    confidence_tier: high
+    severity: info
+    triggers:
+      - condition: "effective_from < 2026-10-01 and effective_to >= 2026-10-01"
+    suggested_question: "The rules change on 01/10/2026 and this plan spans that date. Will the plan need adjusting after that date?"
+    addressee_primary: provider
+    addressee_secondary: []
+    introduces_new_source_type: false
+    introduces_new_legal_claim: false
+
+  # --------------------------------------------------------------- assessment
+  - rule_id: CPR-R-0201
+    finding_title: "Care plan older than 12 months"
+    category_id: assessment
+    source_type: rules
+    source_citation: "Aged Care Rules 2025 (F2025L01173) s.194-3"
+    source_url: "/help/aged-care-rules-2025#s194-3"
+    confidence_tier: high
+    severity: efficiency
+    triggers:
+      - condition: "plan_age_months > 12"
+    suggested_question: "This plan is over 12 months old. Can we book a review to make sure the services still match the needs?"
+    addressee_primary: provider
+    addressee_secondary: [my_aged_care]
+    introduces_new_source_type: false
+    introduces_new_legal_claim: false
+
+  - rule_id: CPR-R-0202
+    finding_title: "No review cadence stated in the plan"
+    category_id: assessment
+    source_type: rules
+    source_citation: "Aged Care Rules 2025 (F2025L01173) s.194-3"
+    source_url: "/help/aged-care-rules-2025#s194-3"
+    confidence_tier: high
+    severity: compliance
+    triggers:
+      - condition: "review_cadence_stated == false"
+    suggested_question: "The plan does not state when it will be reviewed. What is the review cadence?"
+    addressee_primary: provider
+    addressee_secondary: [my_aged_care]
+    introduces_new_source_type: false
+    introduces_new_legal_claim: false
+
+  - rule_id: CPR-R-0203
+    finding_title: "Changed needs warrant an early reassessment"
+    category_id: assessment
+    source_type: regulator_guidance
+    source_citation: "My Aged Care reassessment guidance"
+    source_url: "/help/support-at-home#reassessment"
+    confidence_tier: medium
+    severity: choice
+    triggers:
+      - condition: "changed_needs_signalled == true"
+    suggested_question: "Needs seem to have changed since this plan was written. Should we request an early reassessment?"
+    addressee_primary: my_aged_care
+    addressee_secondary: [provider]
+    introduces_new_source_type: false
+    introduces_new_legal_claim: false
+
+  - rule_id: CPR-R-0204
+    finding_title: "Plan does not document participant consultation"
+    category_id: assessment
+    source_type: rules
+    source_citation: "Aged Care Rules 2025 (F2025L01173) s.194-4"
+    source_url: "/help/aged-care-rules-2025#s194-4"
+    confidence_tier: high
+    severity: compliance
+    triggers:
+      - condition: "consultation_documented == false"
+    suggested_question: "The plan should be developed in consultation with the participant. Can you show where that was documented?"
+    addressee_primary: provider
+    addressee_secondary: [acqsc, opan]
+    introduces_new_source_type: false
+    introduces_new_legal_claim: false
+
+  # ------------------------------------------------------ consumer_directed_care
+  - rule_id: CPR-R-0301
+    finding_title: "Goals not written in the participant's own words"
+    category_id: consumer_directed_care
+    source_type: legislation
+    source_citation: "Statement of Rights, Right 4 (Aged Care Act 2024)"
+    source_url: "/help/statement-of-rights#right-4"
+    confidence_tier: high
+    severity: choice
+    triggers:
+      - condition: "goals_first_person == false"
+    suggested_question: "The goals do not read as the participant's own words. Can they be rewritten with the participant?"
+    addressee_primary: provider
+    addressee_secondary: [opan]
+    introduces_new_source_type: false
+    introduces_new_legal_claim: false
+
+  - rule_id: CPR-R-0302
+    finding_title: "A goal has no service that works towards it"
+    category_id: consumer_directed_care
+    source_type: legislation
+    source_citation: "Statement of Rights, Right 1 (Aged Care Act 2024)"
+    source_url: "/help/statement-of-rights#right-1"
+    confidence_tier: high
+    severity: choice
+    triggers:
+      - condition: "goal_without_supporting_service == true"
+    suggested_question: "This goal does not seem to have a service working towards it. What support is planned to achieve it?"
+    addressee_primary: provider
+    addressee_secondary: [opan]
+    introduces_new_source_type: false
+    introduces_new_legal_claim: false
+
+  - rule_id: CPR-R-0303
+    finding_title: "Carer recognition or respite not reflected in the plan"
+    category_id: consumer_directed_care
+    source_type: legislation
+    source_citation: "Statement of Rights, Right 6 (Aged Care Act 2024)"
+    source_url: "/help/statement-of-rights#right-6"
+    confidence_tier: high
+    severity: info
+    triggers:
+      - condition: "informal_carer_present and respite_absent"
+    suggested_question: "There is an informal carer. Is respite or carer support something the plan should include?"
+    addressee_primary: provider
+    addressee_secondary: [my_aged_care]
+    introduces_new_source_type: false
+    introduces_new_legal_claim: false
+
+  - rule_id: CPR-R-0304
+    finding_title: "Participant choice of provider or worker not recorded"
+    category_id: consumer_directed_care
+    source_type: legislation
+    source_citation: "Statement of Rights, Right 3 (Aged Care Act 2024)"
+    source_url: "/help/statement-of-rights#right-3"
+    confidence_tier: high
+    severity: choice
+    triggers:
+      - condition: "provider_choice_recorded == false"
+    suggested_question: "Does the plan record the participant's preferences about who delivers their care?"
+    addressee_primary: provider
+    addressee_secondary: [opan]
+    introduces_new_source_type: false
+    introduces_new_legal_claim: false
+
+  # ------------------------------------------------------ clinical_best_practice
+  - rule_id: CPR-R-0401
+    finding_title: "Restorative or reablement framing missing"
+    category_id: clinical_best_practice
+    source_type: standard
+    source_citation: "National Aged Care Quality Standards, Standard 5"
+    source_url: "/help/quality-standards#standard-5"
+    confidence_tier: medium
+    severity: choice
+    triggers:
+      - condition: "reablement_framing_absent == true"
+    suggested_question: "Could this plan take more of a restorative or reablement approach to keep the participant independent?"
+    addressee_primary: provider
+    addressee_secondary: []
+    introduces_new_source_type: false
+    introduces_new_legal_claim: false
+
+  - rule_id: CPR-R-0402
+    finding_title: "Medication management need not matched by a clinical service"
+    category_id: clinical_best_practice
+    source_type: standard
+    source_citation: "National Aged Care Quality Standards, Standard 3"
+    source_url: "/help/quality-standards#standard-3"
+    confidence_tier: medium
+    severity: compliance
+    triggers:
+      - condition: "medication_need and no_clinical_service"
+    suggested_question: "The plan notes a medication need but no clinical service to manage it. What clinical support is in place?"
+    addressee_primary: provider
+    addressee_secondary: [acqsc]
+    introduces_new_source_type: false
+    introduces_new_legal_claim: false
+
+  - rule_id: CPR-R-0403
+    finding_title: "Assessed clinical condition without proportionate clinical hours"
+    category_id: clinical_best_practice
+    source_type: rules
+    source_citation: "Aged Care Rules 2025 (F2025L01173) s.194-5(1)(c)"
+    source_url: "/help/aged-care-rules-2025#s194-5"
+    confidence_tier: high
+    severity: compliance
+    triggers:
+      - condition: "clinical_condition_stated and clinical_hours_absent"
+    suggested_question: "There is a stated clinical condition but little clinical support in the plan. Are the clinical hours enough to manage it safely?"
+    addressee_primary: provider
+    addressee_secondary: [acqsc, my_aged_care]
+    introduces_new_source_type: false
+    introduces_new_legal_claim: false
+
+  - rule_id: CPR-R-0404
+    finding_title: "Allied health input indicated but not scheduled"
+    category_id: clinical_best_practice
+    source_type: standard
+    source_citation: "National Aged Care Quality Standards, Standard 5"
+    source_url: "/help/quality-standards#standard-5"
+    confidence_tier: medium
+    severity: choice
+    triggers:
+      - condition: "allied_health_indicated and allied_health_absent"
+    suggested_question: "Would allied health input (for example physiotherapy or occupational therapy) help meet the assessed needs?"
+    addressee_primary: provider
+    addressee_secondary: []
+    introduces_new_source_type: false
+    introduces_new_legal_claim: false
+
+  # --------------------------------------------------- cross_tool_reconciliation
+  - rule_id: CPR-R-0501
+    finding_title: "An assessed need has no matching service"
+    category_id: cross_tool_reconciliation
+    source_type: rules
+    source_citation: "Aged Care Rules 2025 (F2025L01173) s.194-3"
+    source_url: "/help/aged-care-rules-2025#s194-3"
+    confidence_tier: high
+    severity: compliance
+    triggers:
+      - condition: "assessed_need_without_service == true"
+    suggested_question: "An assessed need does not appear to have a matching service. What support is planned for it?"
+    addressee_primary: provider
+    addressee_secondary: [my_aged_care]
+    introduces_new_source_type: false
+    introduces_new_legal_claim: false
+
+  - rule_id: CPR-R-0502
+    finding_title: "A goal and its service do not line up"
+    category_id: cross_tool_reconciliation
+    source_type: legislation
+    source_citation: "Statement of Rights, Right 1 (Aged Care Act 2024)"
+    source_url: "/help/statement-of-rights#right-1"
+    confidence_tier: high
+    severity: choice
+    triggers:
+      - condition: "goal_service_mismatch == true"
+    suggested_question: "This goal mentions something specific but the service is generic. Can the service be tailored to the goal?"
+    addressee_primary: provider
+    addressee_secondary: [opan]
+    introduces_new_source_type: false
+    introduces_new_legal_claim: false
+
+  - rule_id: CPR-R-0503
+    finding_title: "Statement Decoder shows persistent underspend against this plan"
+    category_id: cross_tool_reconciliation
+    source_type: regulator_guidance
+    source_citation: "My Aged Care underspend guidance"
+    source_url: "/help/support-at-home#underspend"
+    confidence_tier: medium
+    severity: efficiency
+    triggers:
+      - condition: "statement_underspend_pct >= 30 and consecutive_statements >= 3"
+    suggested_question: "My statements show the plan is being under-delivered on. Are all the planned services being received?"
+    addressee_primary: provider
+    addressee_secondary: [my_aged_care, acqsc]
+    introduces_new_source_type: false
+    introduces_new_legal_claim: false
+
+  - rule_id: CPR-R-0504
+    finding_title: "Invoice history conflicts with the plan's stated frequency"
+    category_id: cross_tool_reconciliation
+    source_type: regulator_guidance
+    source_citation: "My Aged Care statements and invoices guidance"
+    source_url: "/help/support-at-home#statements"
+    confidence_tier: medium
+    severity: efficiency
+    triggers:
+      - condition: "invoice_frequency_conflict == true"
+    suggested_question: "My invoices show a different frequency to the plan. Can you reconcile what is actually being delivered?"
+    addressee_primary: provider
+    addressee_secondary: [my_aged_care]
+    introduces_new_source_type: false
+    introduces_new_legal_claim: false
+
+  - rule_id: CPR-R-0505
+    finding_title: "A scheduled service in the plan is not appearing in statements"
+    category_id: cross_tool_reconciliation
+    source_type: regulator_guidance
+    source_citation: "My Aged Care statements and invoices guidance"
+    source_url: "/help/support-at-home#statements"
+    confidence_tier: medium
+    severity: efficiency
+    triggers:
+      - condition: "planned_service_missing_from_statements == true"
+    suggested_question: "A service in the plan does not show up in my statements. Is it being delivered?"
+    addressee_primary: provider
+    addressee_secondary: [my_aged_care]
+    introduces_new_source_type: false
+    introduces_new_legal_claim: false
+
+  - rule_id: CPR-R-0506
+    finding_title: "Assessed laundry or domestic need is not scheduled"
+    category_id: cross_tool_reconciliation
+    source_type: rules
+    source_citation: "Aged Care Rules 2025 (F2025L01173) s.194-3"
+    source_url: "/help/aged-care-rules-2025#s194-3"
+    confidence_tier: high
+    severity: compliance
+    triggers:
+      - condition: "domestic_need_assessed and domestic_service_absent"
+    suggested_question: "The assessment mentions a laundry or domestic need but I cannot see it scheduled. Can it be added?"
+    addressee_primary: provider
+    addressee_secondary: [my_aged_care]
+    introduces_new_source_type: false
+    introduces_new_legal_claim: false
+
+  - rule_id: CPR-R-0507
+    finding_title: "Means-tested contribution applied to the wrong service category"
+    category_id: financial
+    source_type: regulator_guidance
+    source_citation: "Support at Home participant contributions schedule"
+    source_url: "/help/support-at-home#contributions"
+    confidence_tier: medium
+    severity: efficiency
+    triggers:
+      - condition: "contribution_applied_to_clinical_category == true"
+    suggested_question: "A means-tested contribution looks like it is on the wrong category of service. Can you confirm which services are contributory?"
+    addressee_primary: provider
+    addressee_secondary: [services_australia]
+    introduces_new_source_type: false
+    introduces_new_legal_claim: false

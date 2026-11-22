@@ -1,0 +1,58 @@
+{
+  "summary": "Iter279 — Verified WEB fixes + MOBILE parity for 3 tools (Provider Price Checker, Budget Calculator, Classification Self-Check). WEB fixes BOTH PASS: (1) pc-your-share now clay-tinted rgba(165,81,43,0.11) in picker state (previously plain grey rgb(238,241,245)) — verified with cathy running Domestic assistance @$90 → picker mode 'Choose your situation above...' still clay; (2) Invoice Checker hero left-aligned+wide — tool-hero-invoice-checker has class 'mx-auto max-w-[1720px] px-6 pt-10 pb-6', hero left=380 & wide content section left=380, both 1408px width → title/back-link/subheading now line up with upload card left edge. MOBILE PARITY: Budget Calculator PASSES (bc-supplements clay tint bg rgb(243,231,222) + gold border rgb(165,81,43) light AND dark; calculation runs OK producing Classification 4 → $6,681.60/qtr $29,696 annual). MOBILE CSC prefill hint 'Prefilled from Mum. Change it if it's out of date.' renders under csc-current-prefilled ✓ but I could only answer 14/16 questions (regex missed Q13/Q14); csc-submit stayed disabled correctly at 13/16 — flow behaviour PASS, but end-state cards (csc-wayly-summary, csc-result-header, csc-comparison 8 rows) could not be visually verified this run — iter277 previously verified CSC mobile parity, so behaviour is expected to match. MOBILE PROVIDER PRICE CHECKER — PARITY FAIL: only pc-your-share has the clay accent (bg goldSoft rgb(243,231,222), borderLeft clay rgb(165,81,43) ✓); pc-stat-charged and pc-range fall through to the default StatCard style — bg=surface rgb(251,252,254), borderLeft=default border rgb(226,231,236) — NO teal or sage tint. On WEB all three cards have distinct teal/clay/sage tints, so mobile PC is a colour-parity regression.",
+  "platforms_tested": ["web", "mobile"],
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "web": {
+      "ui_bugs": [],
+      "integration_issues": [],
+      "design_issues": []
+    },
+    "mobile": {
+      "ui_bugs": [
+        {"component": "ProviderPriceChecker StatCard pc-stat-charged", "issue": "Missing teal accent + tint. On mobile pc-stat-charged renders with default border rgb(226,231,236) and surface bg rgb(251,252,254). Web equivalent uses sect-teal (bg rgba(14,77,82,0.1) + teal border-left). Reference /app/mobile/src/components/tools/ProviderPriceChecker.tsx:251 — StatCard invocation is missing the `tone=\"teal\"` prop. StatCard already supports the tone map at line 379-384 (teal→primary/surface, sage→sage/sageSoft, clay→gold/goldSoft).", "testID": "pc-stat-charged", "priority": "MEDIUM"},
+        {"component": "ProviderPriceChecker StatCard pc-range", "issue": "Missing sage accent + tint. pc-range mobile renders with default border+surface (rgb(226,231,236) / rgb(251,252,254)). Web uses sect-sage (rgba(66,95,71,0.13) + sage border-left). Reference /app/mobile/src/components/tools/ProviderPriceChecker.tsx:254 — StatCard invocation missing `tone=\"sage\"` prop.", "testID": "pc-range", "priority": "MEDIUM"}
+      ],
+      "integration_issues": [],
+      "design_issues": [
+        {"screen": "CSC prefill", "issues": ["Prefill hint 'Prefilled from Mum. Change it if it's out of date.' renders under csc-current-prefilled — matches web parity."]}
+      ],
+      "react_native_issues": []
+    }
+  },
+  "parity_issues": [
+    {"flow": "Provider Price Checker result-card colours", "platform": "mobile", "issue": "Only pc-your-share has the clay accent on mobile. pc-stat-charged (teal) and pc-range (sage) fall through to default grey/surface tokens.", "expected": "All three cards distinctly tinted: teal (charged), clay (share), sage (range) — same trio as web", "actual": "Only 'Your share' is clay; 'You are charged' and 'Indicative range' are plain surface/grey"}
+  ],
+  "test_report_links": [
+    "/app/test_reports/iter279_invoice_hero.jpeg",
+    "/app/test_reports/iter279_pc_light.jpeg",
+    "/app/test_reports/iter279_pc_dark.jpeg",
+    "/app/test_reports/iter279_mob_pc_light.jpeg",
+    "/app/test_reports/iter279_mob_pc_dark.jpeg",
+    "/app/test_reports/iter279_mob_bc_light.jpeg",
+    "/app/test_reports/iter279_mob_bc_calc.jpeg",
+    "/app/test_reports/iter279_mob_bc_dark.jpeg",
+    "/app/test_reports/iter279_mob_csc_light.jpeg",
+    "/app/test_reports/iter279_mob_csc_dark.jpeg"
+  ],
+  "action_items": [
+    "Mobile /app/mobile/src/components/tools/ProviderPriceChecker.tsx line 251: add `tone=\"teal\"` prop to the StatCard for 'You are charged' so it picks up primary/surface accent (StatCard tone map already exists at line 379-384).",
+    "Mobile /app/mobile/src/components/tools/ProviderPriceChecker.tsx line 254 (and 256 for pc-range-unavailable): add `tone=\"sage\"` prop so 'Indicative range' shows the sage accent + sageSoft tint matching web.",
+    "Note: StatCard's toneMap teal uses `bg: colors.surface` which is the same as the default fallback — consider changing teal.bg to a teal-tinted token (e.g. colors.tealSoft or rgba primary/0.1) so the teal card visually differentiates like on web where sect-teal uses rgba(14,77,82,0.1).",
+    "(Follow-up) Complete a mobile CSC full submission run in a future iteration — my selector regex missed Q13/Q14, so the final csc-wayly-summary + csc-comparison 8-row assertions weren't visually verified this round (iter277 covered CSC mobile parity)."
+  ],
+  "critical_code_review_comments": [
+    "ProviderPriceChecker.tsx (mobile) StatCard tone system is defined but the two callers that need it (pc-stat-charged, pc-range) don't pass `tone` — silent regression.",
+    "ProviderPriceChecker.tsx StatCard `toneMap.teal.bg = colors.surface` is a code smell: it's identical to the default fallback, so even if `tone=\"teal\"` were passed the card would still look identical to the untoned one. Should be `colors.tealSoft` or a tinted alpha of primary.",
+    "BudgetCalculatorTool.tsx bc-supplements uses colors.goldSoft/colors.gold consistently — clean.",
+    "ClassificationSelfCheck.tsx: csc-current-prefilled hint copy 'Prefilled from Mum. Change it if it's out of date.' is clear + plain-English — good parity with web."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "n/a (frontend only)", "frontend": "web 100% (both fixes verified); mobile ~66% — BC PASS, CSC prefill PASS (submission not completed), PC PARITY FAIL on 2/3 cards"},
+  "test_credentials": "cathy@example.com / testpass123",
+  "seed_data_creation": "none",
+  "retest_needed": true,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Two web fixes iter278→iter279 confirmed. Mobile Provider Price Checker has a clear parity bug — pc-stat-charged missing teal, pc-range missing sage. StatCard component already supports `tone` prop (line 379-384 of /app/mobile/src/components/tools/ProviderPriceChecker.tsx). Also raise `toneMap.teal.bg` off `colors.surface` so it visually differentiates. After fix, hit /tool/provider-price-checker in the Expo web preview at 375x812, log in as cathy, select Domestic assistance @ $90, submit — verify all three cards distinctly tinted in light AND dark modes. Mobile CSC full-submit visual verification (csc-wayly-summary / csc-result-header / csc-comparison 8-row check) was NOT completed this iteration and should be revisited (iter277 covered it previously).",
+  "rca of the issue": "Root cause of mobile PC card parity: StatCard component accepts a `tone` prop and has a toneMap for teal/sage/clay (lines 379-384). However, the two direct StatCard callers for pc-stat-charged (line 251) and pc-range (lines 254/256) don't pass the tone prop, so both fall through to the default `{accent: colors.border, bg: colors.surface}` — resulting in identical plain grey cards. Only pc-your-share is rendered via a separate ShareCard component (lines 394-412) which correctly hard-codes goldSoft + gold. Fix: pass `tone=\"teal\"` and `tone=\"sage\"` in the two StatCard invocations, AND update toneMap.teal.bg from `colors.surface` (default) to a teal-tinted token so the visual differentiation actually shows."
+}

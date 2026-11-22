@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+{% block content %}
+{% set ov = data.overview %}
+<p class="muted">{{ data.quarter.label }} FY{{ data.quarter.fy }} · {{ data.quarter.start }} to {{ data.quarter.end }}</p>
+
+{% if data.exec_summary %}
+<div class="cream-card section"><h3>Summary</h3><p>{{ data.exec_summary }}</p></div>
+{% endif %}
+
+<h2>Budget overview</h2>
+<div class="bar"><div class="bar-fill {{ ov.traffic }}" style="width: {{ ov.pct if ov.pct <= 100 else 100 }}%;"></div></div>
+<p><strong>{{ ov.pct }}%</strong> used · {{ ov.spent|money }} spent of {{ ov.budget|money }} · {{ ov.remaining|money }} remaining</p>
+
+{% if data.rollover.above_cap > 0 %}
+<div class="{% if data.rollover.traffic == 'red' %}red-card{% else %}cream-card{% endif %} section">
+  <p><strong>Rollover alert.</strong> At the current rate, around {{ data.rollover.projected_unspent|money }} may be unspent at quarter end ({{ data.rollover.q_end|niceDate }}). Only {{ data.rollover.rollover_cap|money }} rolls over — {{ data.rollover.above_cap|money }} above the cap may be forfeited.</p>
+</div>
+{% endif %}
+
+<h2>Spending by stream</h2>
+{% for s in data.streams %}
+<div class="section" style="margin-bottom: 8px;">
+  <div style="display: flex; justify-content: space-between; margin-bottom: 2px;">
+    <strong>{{ s.name }}</strong>
+    <span>{{ s.spent|money }} of {{ s.cap|money }} ({{ s.pct }}%)</span>
+  </div>
+  <div class="bar"><div class="bar-fill {{ s.traffic }}" style="width: {{ s.pct if s.pct <= 100 else 100 }}%;"></div></div>
+  <div class="muted" style="font-size: 9px;">Your contribution {{ s.contribution|money }} · Government paid {{ s.government|money }}</div>
+</div>
+{% endfor %}
+
+<h2>Month-by-month</h2>
+<table>
+  <thead><tr><th>Stream</th>{% for m in data.months %}<th>{{ m.label }}</th>{% endfor %}</tr></thead>
+  <tbody>
+    {% set stream_names = ['Clinical', 'Independence', 'Everyday Living'] %}
+    {% for sn in stream_names %}
+    <tr><td>{{ sn }}</td>{% for m in data.months %}<td>{{ (m.by_stream.get(sn) or 0)|money }}</td>{% endfor %}</tr>
+    {% endfor %}
+    <tr class="tr-totals"><td>Total</td>{% for m in data.months %}<td>{{ m.total|money }}</td>{% endfor %}</tr>
+  </tbody>
+</table>
+
+<h2>Care management</h2>
+<p>Cap: {{ data.care_management.cap|money }} (10% of monthly budget per Support at Home rules).</p>
+<div class="bar"><div class="bar-fill {{ data.care_management.traffic }}" style="width: {{ data.care_management.pct if data.care_management.pct <= 100 else 100 }}%;"></div></div>
+<p><strong>{{ data.care_management.pct }}%</strong> used · {{ data.care_management.used|money }} of {{ data.care_management.cap|money }} <span class="badge {{ data.care_management.traffic }}">{{ data.care_management.traffic|upper }}</span></p>
+
+<h2>AT-HM commitments</h2>
+{% if data.athm %}
+<table>
+  <thead><tr><th>Item</th><th>Approved</th><th>Claimed</th><th>Remaining</th><th>Expiry</th><th>Status</th></tr></thead>
+  <tbody>
+    {% for a in data.athm %}
+    <tr><td>{{ a.item_description or '—' }}</td><td>{{ (a.amount_approved or 0)|money }}</td><td>{{ (a.amount_claimed or 0)|money }}</td><td>{{ (a.amount_remaining or 0)|money }}</td><td>{{ a.expires_at|niceDate }}</td><td><span class="badge green">ON TRACK</span></td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% else %}<p class="muted">No active AT-HM commitments.</p>{% endif %}
+
+<h2>Anomalies this quarter</h2>
+{% if data.anomalies %}
+<table>
+  <thead><tr><th>Severity</th><th>Headline</th><th>$ impact</th></tr></thead>
+  <tbody>
+    {% for a in data.anomalies %}
+    <tr>
+      <td><span class="badge {% if a.severity == 'HIGH' %}red{% elif a.severity == 'MEDIUM' %}amber{% else %}grey{% endif %}">{{ a.severity }}</span></td>
+      <td>{{ a.headline }}</td>
+      <td>{{ (a.dollar_impact or 0)|money }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% else %}<p class="muted">No anomalies flagged this quarter.</p>{% endif %}
+
+<h2>Rollover at quarter end</h2>
+<p>Estimated rollover: <strong>{{ data.rollover.projected_unspent|money }}</strong></p>
+<p>Amount above rollover cap ({{ data.rollover.rollover_cap|money }}): <strong>{{ data.rollover.above_cap|money }}</strong> <span class="badge {{ data.rollover.traffic }}">{{ data.rollover.traffic|upper }}</span></p>
+{% if data.rollover.above_cap > 0 %}<p>Consider requesting additional services before {{ data.rollover.q_end|niceDate }} to use this budget.</p>{% endif %}
+{% endblock %}

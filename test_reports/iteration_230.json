@@ -1,0 +1,59 @@
+{
+  "summary": "DOC-PARITY-1 v2 testing on web (cathy@example.com) + mobile (Expo web preview). Verified server-authoritative /api/decoder/artifact endpoint, canonical filename convention, anomaly band ordering + counts, collapsible severity groups on BOTH surfaces (default expanded), mobile Archive button with inline confirm/cancel, and download parity. Backend pytest: 12/13 PASS. The ONE failure is a critical parity blocker: PDF bytes for the SAME posted payload are NOT hash-identical across repeated calls (violates locked acceptance criterion). CSV is deterministic; PDF is not because reportlab embeds CreationDate/ModDate metadata + footer_block uses datetime.now(). All other locked criteria met: filenames match Wayly-Decoded-Statement_<slug>_<DD-MM-YYYY-to-DD-MM-YYYY>.<ext>, media types correct, band library returns H>M>L>I with dollar/date secondary sort, informational included in counts, collapse works on both platforms, mobile archive/confirm/cancel wired to DELETE /api/statements/{id}/archive, mobile Uploaded date shows DD/MM/YYYY (21/08/2026).",
+  "platforms_tested": ["web", "mobile"],
+  "backend_issues": {
+    "critical": [
+      {
+        "endpoint": "POST /api/decoder/artifact?fmt=pdf",
+        "issue": "PDF bytes are NOT hash-identical across repeated calls with the SAME payload (test recorded 3 distinct SHA-256 hashes across 3 identical POSTs; same via web download UI: e00e28cd... vs ac8afa1f...). This directly violates the locked acceptance criterion 'for the SAME posted payload the pdf bytes are identical across repeated calls (hash-identical)'. RCA: reportlab SimpleDocTemplate writes /CreationDate and /ModDate PDF metadata using current time (see /app/backend/lib/pdf_branding.py:make_doc line 145-153), and lib/pdf_branding.py:footer_block uses datetime.now() at line 204. Fix: set `doc.invariantMetadata = True` on the SimpleDocTemplate (reportlab 4.x supports this) and thread a deterministic 'as of' date (e.g. period_end) into footer_block instead of datetime.now(). CSV path is already deterministic (hashes identical).",
+        "priority": "CRITICAL"
+      }
+    ],
+    "minor": []
+  },
+  "frontend_issues": {
+    "web": {
+      "ui_bugs": [],
+      "integration_issues": [],
+      "design_issues": [
+        {"screen": "StatementsList row + StatementDetail header", "issues": ["Human-facing dates render as spelled-out '1 July 2026 to 30 September 2026' or '1 Jul,30 Sep 2026' (with a stray comma) rather than DD/MM/YYYY as the spec locks. CSV/PDF artefacts DO use DD/MM/YYYY, but the in-app UI does not. The stray comma in '1 Jul,30 Sep 2026' on the list row also reads as a formatting bug."]}
+      ]
+    },
+    "mobile": {
+      "ui_bugs": [],
+      "integration_issues": [],
+      "design_issues": [
+        {"screen": "Statement detail header", "issues": ["Header shows '1 July 2026 to 30 September 2026' (spelled out) — 'Uploaded 21/08/2026' IS in DD/MM/YYYY. If spec wants all human-facing dates DD/MM/YYYY, the period header should be DD/MM/YYYY too."]}
+      ],
+      "react_native_issues": []
+    }
+  },
+  "parity_issues": [
+    {"flow": "Findings render order", "platform": "both", "issue": "Both surfaces render 3 groups (high, medium, low) for statement 673fa982... — informational not shown because this decode has no informational finding (summary says '2 high / 3 medium / 1 low or informational'). Parity OK.", "expected": "H>M>L>I when all present; H>M>L when no I", "actual": "H>M>L on both — parity confirmed"},
+    {"flow": "Decoded artefact download", "platform": "both", "issue": "Filenames match on both surfaces (Wayly-Decoded-Statement_Louisa-Davids_01-07-2026-to-30-09-2026.pdf/csv). BUT because PDF bytes are non-deterministic, web and mobile downloads for the same statement will differ (not hash-identical). CSV is fine.", "expected": "Hash-identical PDF bytes across surfaces + repeated calls", "actual": "Different SHA-256 per call"}
+  ],
+  "test_report_links": [
+    "/app/backend/tests/test_docparity_artifact_iter230.py",
+    "/app/backend/tests/test_docparity_naming.py",
+    "/app/test_reports/pytest/iter230_docparity.xml"
+  ],
+  "action_items": [
+    "CRITICAL: Make render_decoded_pdf deterministic. In /app/backend/lib/pdf_branding.py make_doc(), set `doc = SimpleDocTemplate(...); doc.invariantMetadata = True` (reportlab 4+ suppresses /CreationDate & /ModDate). Also replace datetime.now() in footer_block (line 204) with a deterministic date from the decode payload (e.g. period_end) so the printable text is stable too. Re-run backend/tests/test_docparity_artifact_iter230.py::test_artifact_pdf_bytes_hash_identical_across_repeated_calls to verify.",
+    "MEDIUM: Align human-facing dates to DD/MM/YYYY on the in-app UI — StatementDetail header + StatementsList row period cell (web + mobile). CSV/PDF artefacts already comply.",
+    "LOW: Fix the '1 Jul,30 Sep 2026' comma glitch on the web statements list row (missing space after comma or wrong separator)."
+  ],
+  "critical_code_review_comments": [
+    "/app/backend/lib/pdf_branding.py make_doc() does not set invariantMetadata → every render embeds a fresh timestamp in the PDF trailer, breaking the 'hash-identical bytes' contract that DOC-PARITY-1 v2 explicitly locks in.",
+    "footer_block uses datetime.now() — even with invariantMetadata, the visible 'Generated <date>' text still changes if the render crosses midnight, so pass a deterministic date from the caller."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_docparity_artifact_iter230.py (new)"
+  ],
+  "success_rate": {"backend": "92% (12/13 pytest)", "frontend": "100% for locked ordering + collapse + archive; UI date formatting is a separate design gap"},
+  "test_credentials": "cathy@example.com / testpass123 (Family plan)",
+  "seed_data_creation": "None — used existing seeded statement 673fa982-367c-43ca-8ce8-4df5b8ba4f68 (Louisa Davids, 1 Jul – 30 Sep 2026, Glorious Services).",
+  "retest_needed": true,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "After the fix, re-run: `pytest backend/tests/test_docparity_artifact_iter230.py -v`. The critical assertion to watch is test_artifact_pdf_bytes_hash_identical_across_repeated_calls. If the main agent also normalises UI dates to DD/MM/YYYY, spot-check the web StatementDetail + statements list rows and the mobile /statement/[id] period header.",
+  "rca of the issue": "PDF non-determinism: reportlab's SimpleDocTemplate writes /CreationDate + /ModDate PDF metadata using time.time() on every canvas save unless doc.invariantMetadata = True is set. Additionally, /app/backend/lib/pdf_branding.py:footer_block (line 204) formats datetime.now() into the visible footer. Both make identical payloads produce differing byte streams. CSV renderer in /app/backend/lib/decoded_statement_pdf.py:render_decoded_csv is fully deterministic (pure string join over sorted line_items) and already passes the hash-identity check."
+}

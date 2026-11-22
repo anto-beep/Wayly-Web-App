@@ -1,0 +1,28 @@
+{
+  "summary": "Verified 3 web-only Settings/Billing bug fixes for Wayly (iter 388). All PASS. (1) Cancel-reason highlight: teal ring, bold text, check icon, aria-pressed, single-selection toggle. (2) TrialCountdownBanner copy: non-cancelled trial shows 'starts automatically' and cancelled trial shows 'Access ends when your trial ends — you won't be charged' (no 'starts automatically'). (3) PaywallModal shows at most once per session via wayly_paywall_shown=1 sessionStorage guard, 'Keep viewing my data' dismisses, subsequent trial_expired events DO NOT reopen it, and NO sonner toast appears on blocked writes. Clearing sessionStorage allows it to show again.",
+  "platforms_tested": ["web"],
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "web": {
+      "ui_bugs": [],
+      "integration_issues": [],
+      "design_issues": []
+    }
+  },
+  "parity_issues": [],
+  "test_report_links": [],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "TrialCountdownBanner correctly reads user.cancel_at_period_end from /auth/me (surfaced from subscriptions.cancel_at_period_end at server.py:311).",
+    "api.js interceptor dispatches wayly:trial-expired on blocked writes without any toast call; 402 handler also dispatches event only. No duplicate toasts observed.",
+    "Settings.jsx cancel-reason button correctly applies ring-2 ring-primary-k/30, border-primary-k, bg-primary-k/10, font-semibold, shadow-sm and a Check icon when selected (aria-pressed=true). Clicking again sets cancelReason='' (toggle)."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "n/a (skipped)", "frontend": "100%"},
+  "test_credentials": "cathy@example.com/testpass123, trialactive@example.com/AccessTest1! (temporarily given cathy's household_id and future trial_ends_at for banner test; restored after), viewonly@test.com/ViewOnly!2026",
+  "seed_data_creation": "Temporarily set users.trialactive@example.com.household_id to cathy's household and pushed subscriptions.trial_ends_at to +5 days + status=trialing to render the trial banner (trialactive had drifted into expired trial state in preview env). Restored household_id removal and cancel_at_period_end=False at end.",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "trialactive@example.com drifted to expired-trial in preview env; to retest trial banner, push subscriptions.trial_ends_at to future and status='trialing', and attach a household_id so Layout mounts. The TrialCountdownBanner only renders inside Layout (routes under /app). PaywallModal is routed through wayly:trial-expired custom event + sessionStorage key 'wayly_paywall_shown'.",
+  "rca of the issue": ""
+}

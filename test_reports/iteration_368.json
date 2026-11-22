@@ -1,0 +1,40 @@
+{
+  "summary": "Frontend-only parity testing for the ToolWalkthroughVideo rollout across 6 AI tools + statement-decoder regression on both web and mobile (Expo web preview). All 7 web pages and all 7 mobile screens render the walkthrough section with correct test IDs ('<slug>-how-to-video' and '<slug>-how-to-video-player', plus 'sd-how-to-video*' for Statement Decoder), 'Watch the walkthrough' label, correct title + blurb, and a 16:9 player. On web, both the logged-out/blocked branch and the authenticated/allowed branch (verified by code grep AND an in-browser login as cathy@example.com -> /app) show the video — code shows exactly 3 occurrences per web tool page (1 import + blocked branch + allowed branch). Statement Decoder regression passes on both surfaces. No new console errors introduced by this change.",
+  "platforms_tested": ["web", "mobile"],
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "web": {
+      "ui_bugs": [],
+      "integration_issues": [],
+      "design_issues": []
+    },
+    "mobile": {
+      "ui_bugs": [],
+      "integration_issues": [],
+      "design_issues": [],
+      "react_native_issues": []
+    }
+  },
+  "parity_issues": [],
+  "test_report_links": [
+    "/app/test_reports/iter368/web_classification_blocked_video.jpeg",
+    "/app/test_reports/iter368/web_budget_blocked_video.jpeg",
+    "/app/test_reports/iter368/web_care_authed_video.jpeg",
+    "/app/test_reports/iter368/mobile_budget-calculator_video.jpeg",
+    "/app/test_reports/iter368/mobile_classification-self-check_video.jpeg",
+    "/app/test_reports/iter368/mobile_statement-decoder_video.jpeg"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "Pre-existing (unrelated to this change) React hydration warning observed in dev-mode on /ai-tools/care-plan-reviewer: '<span> cannot be a child of <option>' at CarePlanReviewer.jsx:582. Appears to be caused by the x-source-file inspector injecting <span> inside <option> elements of a <select>. Not a regression from this iteration but worth cleaning up — only visible under the editor's dev overlay.",
+    "ToolWalkthroughVideo.jsx uses preload='metadata' + controls — good. No autoplay. 16:9 letterboxing via aspect-video + contain is correctly applied. Mobile uses expo-video useVideoPlayer with contentFit='contain' — matches the chosen player style and avoids expo-av (deprecated).",
+    "Mobile component (ToolWalkthroughVideo.tsx) calls useVideoPlayer(v ? v.url : null, ...) UNCONDITIONALLY before the 'if (!v) return null' early return — this is actually correct for rules-of-hooks (hook order is stable since v either exists or not for the lifetime of that slug), but passing null source to useVideoPlayer may trigger a warning depending on expo-video version. Consider: const player = useVideoPlayer(v?.url || '', ...). Non-blocking."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "n/a (skipped per request)", "frontend": "100% (14/14 tool-slug checks across web+mobile)"},
+  "seed_data_creation": "none",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "ToolWalkthroughVideo is now wired on web for all 6 gated tools (both blocked and allowed branches) + statement-decoder, and on mobile for all 6 tool components + statement-decoder. Test IDs: '<slug>-how-to-video' + '<slug>-how-to-video-player' (and 'sd-how-to-video*' for Statement Decoder). Web base: /ai-tools/<slug>; Mobile route: /tool/<slug>. Login path on web is /login with data-testid='login-email-input', 'login-password-input', 'login-submit-button'. Cathy's account: cathy@example.com / testpass123 (plan=family => useToolAccess 'allowed').",
+  "rca of the issue": "n/a — feature-add verification, no bug found."
+}

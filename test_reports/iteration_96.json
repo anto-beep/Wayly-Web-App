@@ -1,0 +1,34 @@
+{
+  "summary": "LOOP-1 v1 case framework + LCA-1 October scanner + CORE-1 open_cases wiring fully verified. Backend pytest 23/23 green (11 LOOP-1 + 12 CORE-1 regression). End-to-end UI flow verified: Profile → Open follow-ups card (badge=10, 5 rows visible + View all link) → Cases list page (40 rows, status filter + rescan present) → Case detail page (title, status select, activity events, add note, mark resolved, dismiss, back, open source tool). Status transitions open→in_progress→resolved persist and appear in activity feed with 2 status_changed events. Notes append correctly. All specified data-testids render.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {"screen": "ParticipantProfile OpenCasesCard", "issues": ["Badge shows '10' but there are 40 open cases for Dorothy — appears to reflect the profile aggregate cap (up to 10) rather than the true total. Consider showing total count instead of returned-array length for the badge; card list can still be capped."]}
+    ]
+  },
+  "test_report_links": [
+    "/app/backend/tests/loop1/test_loop1_v1.py",
+    "/app/backend/tests/core1/test_core1_v1.py",
+    "/app/test_reports/pytest/loop1_iter96.xml",
+    "/app/test_reports/pytest/core1_iter96.xml"
+  ],
+  "action_items": [
+    "(Minor/optional) Make OpenCasesCard badge reflect the true count of open cases for the participant rather than the length of the up-to-10 preview array."
+  ],
+  "critical_code_review_comments": [
+    "loop1.py (~740 LOC) is approaching the 700 LOC guideline — consider extracting the auto-opener (scan_participant_for_cases) and LCA-1 scanner into separate modules once more scanners are added.",
+    "In _open_case_check, dedupe_key is composed even when source_artefact_id is empty (''); if a scanner ever produces a case without an artefact id, all such cases would collide under one dedupe key. Current callers all pass an artefact id so no live bug, but worth an assertion.",
+    "run_lca1_scan_for_participant reads participant classification from either 'classification' or 'classification_level' but the participants collection uses classification_level in most seed data — verify both spellings are always populated to avoid silent no_signal misses.",
+    "Feature flag LOOP1_CASES_ENABLED is not covered by an automated test (setting it to 0 would require a backend restart and would disrupt live testing). Consider dependency-injecting the flag to enable unit-level toggling."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "100%", "frontend": "100%"},
+  "test_credentials": "cathy@example.com / testpass123; participant Dorothy id 0c538637-b0dd-4982-8f78-b32814c6a5eb",
+  "seed_data_creation": "Added one manual note ('UI test note iter96') and one manual case ('Timeline verification case') on Dorothy's timeline via the pytest suite; a case was also resolved during UI testing. No structural seed changes.",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "All 23 acceptance tests pass. End-to-end UI journey verified. Only optional cosmetic feedback: open-cases badge shows preview length (10) rather than true total (40). Do NOT flip LOOP1_CASES_ENABLED=0 in .env during shared testing — it disables the feature globally.",
+  "rca of the issue": "N/A — no functional bugs found."
+}

@@ -1,0 +1,55 @@
+{
+  "summary": "Iteration 390 – Validated the Adviser-plan full-removal, decoder-tense fix, and provider-switch prefill across web+mobile+backend. ALL user-facing surfaces are clean of 'Adviser' as a plan. Backend _VALID_PLANS/PLAN_PRICES correctly reject plan='adviser'. Sitemap is correct (HCP pillar + 4 articles present, /for-advisors absent). Web /pricing, /signup, / (landing), persona cards, Unlimited label, /for-advisors→/ redirect, /adviser/*→/login redirect, web switch-modal prefill, and mobile plan-billing/participants/provider-switch all PASS. Decoder tense: live /api/insights/summarise Nov-2026 call returned 200 with no future-tense wording; Sep-2026 call returned 200. CRITICAL FINDING: several /api/adviser/* and /api/public/adviser/* routes defined in /app/backend/batch2_routes.py and /app/backend/adviser_routes.py are STILL mounted — /api/adviser/brand and /api/adviser/scenarios return 401 (not 404). The adviser portal is effectively unreachable (no user can get plan='adviser' so require_plan('adviser') always fails), but the routes exist and should be fully removed to match the review ask. Residual dead code still present in server.py: PAID_PLANS/ADVISER_PLANS/ADVISER_MAX_CLIENTS, require_plan('adviser'), init_adviser_routes(), adviser-auto-link imports inside /signup, /auth/google, /auth/apple flows, and a 'Multi-client portal' HTML snippet in the trial email (only runs when body.plan=='adviser', dead branch).",
+  "platforms_tested": ["web", "mobile"],
+  "backend_issues": {
+    "critical": [
+      {"endpoint": "/api/adviser/brand (GET/PUT)", "issue": "Still mounted via batch2_router (batch2_routes.py:744/766) — returns 401 instead of 404. Review said Adviser plan is FULLY removed; routes must 404.", "priority": "HIGH"},
+      {"endpoint": "/api/adviser/scenarios (GET/POST/DELETE) & /api/adviser/scenarios/calc", "issue": "Still mounted via batch2_router (batch2_routes.py:913-948). Returns 401.", "priority": "HIGH"},
+      {"endpoint": "/api/adviser/alerts/global & /api/adviser/means-test/settings", "issue": "Still mounted via batch2_router (batch2_routes.py:957-989). Dead code.", "priority": "MEDIUM"}
+    ],
+    "minor": [
+      {"endpoint": "/api/payments/checkout", "issue": "body.plan=='adviser' path still renders '<li>Multi-client portal, manage up to 25 clients, review-pack export, priority support</li>' in trial email body (server.py:7165). Dead branch — plan is validated before reaching this line, but should be removed."},
+      {"endpoint": "signup / google / apple auth", "issue": "server.py:382/626/720/816 still imports and calls adviser_routes.link_client_by_email on every signup. Wrapped in try/except so harmless but this is dead work per call."}
+    ]
+  },
+  "frontend_issues": {
+    "web": {
+      "ui_bugs": [],
+      "integration_issues": [],
+      "design_issues": []
+    },
+    "mobile": {
+      "ui_bugs": [],
+      "integration_issues": [],
+      "design_issues": [],
+      "react_native_issues": []
+    }
+  },
+  "parity_issues": [],
+  "test_report_links": [
+    "/app/backend/tests/test_adviser_removal.py",
+    "/app/test_reports/pytest/iter390_adviser_removal.xml"
+  ],
+  "action_items": [
+    "Remove the remaining /adviser/* routes from /app/backend/batch2_routes.py (lines 744,766,913,922,938,948,957,970,989) so GET /api/adviser/brand and /api/adviser/scenarios return 404.",
+    "Delete dead constants PAID_PLANS adviser entries + ADVISER_PLANS + ADVISER_MAX_CLIENTS (server.py:3508-3510), the require_plan('adviser',...) calls (server.py:7663/7665/7714), init_adviser_routes(), and the adviser_routes module imports at server.py:382/626/720/816/877.",
+    "Delete the dead 'Multi-client portal...' email <li> snippet at server.py:7165.",
+    "Optional: delete /app/backend/adviser_routes.py entirely once no more imports reference it."
+  ],
+  "critical_code_review_comments": [
+    "The web Adviser-plan removal is thorough in the UI layer (pricing, signup, landing, persona, StatementDecoderEmbed 'Unlimited', sitemap).",
+    "Mobile plan-billing/participants/provider-switch confirmed clean of 'Adviser plan' copy; plans.ts only lists Solo+Family with 'GP & specialist role-based sharing links'.",
+    "Allowed human-adviser references (disclaimers, '...an adviser', letter recipient role mapping, dashboard search keywords) are correctly preserved.",
+    "Backend router still exposes /api/adviser/* paths via batch2_router. Even though auth-gated and unreachable without an 'adviser' plan, they should be stripped to match the 'fully removed' requirement."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_adviser_removal.py (new)"
+  ],
+  "success_rate": {"backend": "90%", "frontend": "100%"},
+  "test_credentials": "cathy@example.com / testpass123 (used for web login and switch-modal prefill verification)",
+  "seed_data_creation": "None.",
+  "retest_needed": true,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "After main agent removes the remaining adviser routes from batch2_routes.py and cleans up ADVISER_* constants + init_adviser_routes in server.py, re-run /app/backend/tests/test_adviser_removal.py — in particular TestAdviserRoutesRemoved. Two tests (test_adviser_summary_404, test_public_adviser_invite_404) hit the preview URL with a 15s timeout and intermittently time out on network; actual curl shows them returning 404 already. The main failing case is test_adviser_portal_variants_404 against /api/adviser/brand and /api/adviser/scenarios (401 today, should be 404).",
+  "rca of the issue": "Main agent unmounted `adviser_router` and `adviser_public_router` (commented at server.py:7817-7818) — confirming `/api/adviser/summary` and `/api/public/adviser/invite/x` now return 404. However a second batch of adviser endpoints lives inside `batch2_routes.py` (prefix /adviser/brand, /adviser/scenarios, /adviser/alerts/global, /adviser/means-test/settings) and this router IS still included at server.py:7855. Those endpoints still check require_plan('adviser') and therefore return 401 instead of 404, which is inconsistent with the 'FULLY REMOVE' scope."
+}

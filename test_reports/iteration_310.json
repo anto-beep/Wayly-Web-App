@@ -1,0 +1,49 @@
+{
+  "summary": "Iter310: Verified Support Plan Reviewer checks 6-8 (AT-HM tier cap, Restorative Care budget, End-of-Life budget) end-to-end on WEB, plus Contribution Estimator BudgetBreakdown panel on WEB + MOBILE with monthly/quarterly toggle. All backend regressions clean (test_cpr_err_a_golden 8/8, ce2 engine/http 34 passed 11 skipped). New pytest test_iter310_cpr_ce2_checks.py: 3/3 PASS. Web CPR UI panel shows the three new checks flagged with correct rationale ($18,500 AT-HM > $15,000 cap; $13,000 Restorative > $12,000; $30,000 End-of-Life > $25,000). Web + Mobile CE breakdown: Q totals $10,182.38 / you $674.58 / govt $9,507.80 with clinical=$0, indep=$229.10 (5%), everyday=$445.48 (17.5%); Monthly toggle divides to $3,394.13 and shows 'a month' copy. Sum of per-row you == quarterly headline ($674.58). Full CE regression (weekly $51.75, yearly $2,698.33, 93% govt share, rates by service type, lifetime cap $137,917.01, 1 Oct 2026 comparison $44.72/wk) all present.",
+  "platforms_tested": ["web", "mobile"],
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "web": {
+      "ui_bugs": [],
+      "integration_issues": [],
+      "design_issues": [
+        {"screen": "CarePlanReviewer (dev-only)", "issues": ["React hydration warning: <span> cannot be a child of <option> — caused by dev instrumentation wrapping <option> children in <span x-dynamic>. Console-only warning in preview; not visible to end users. Consider filtering the emergent dev wrapper for <option> children."]}
+      ]
+    },
+    "mobile": {
+      "ui_bugs": [],
+      "integration_issues": [],
+      "design_issues": [],
+      "react_native_issues": []
+    }
+  },
+  "parity_issues": [
+    {"flow": "CE budget breakdown", "platform": "web+mobile", "issue": "Copy divergence (minor): web row uses 'in your budget a month/quarter', mobile row uses 'in budget a month/quarter' (drops 'your'). Numbers and totals match exactly.", "expected": "Consistent copy", "actual": "Web=in your budget, Mobile=in budget"}
+  ],
+  "test_report_links": [
+    "/app/backend/tests/test_iter310_cpr_ce2_checks.py",
+    "/app/test_reports/pytest/iter310.xml",
+    "/app/test_reports/iter310/web_ce_panel.jpeg",
+    "/app/test_reports/iter310/mob_ce_panel.jpeg",
+    "/app/test_reports/iter310/cpr_result.jpeg"
+  ],
+  "action_items": [
+    "Optional: align 'in budget' copy between mobile and web ('in your budget' vs 'in budget') for full parity.",
+    "Optional: address the React hydration warning on CarePlanReviewer classification <select> — dev-instrumentation places <span x-dynamic> inside <option>."
+  ],
+  "critical_code_review_comments": [
+    "cpr_rules.build_facts uses keyword-only params (extraction/plan_text/classification/quarterly_budget) — good, tests updated accordingly.",
+    "CE2 category_breakdown returned as list of {key,label,rate_pct,budget_quarterly,budget_annual,you_*,govt_*} — clean, matches BudgetBreakdown component contract.",
+    "Row internal consistency budget = you + govt holds within $0.50 for all three categories."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_iter310_cpr_ce2_checks.py (new)"
+  ],
+  "success_rate": {"backend": "100%", "frontend": "100%"},
+  "test_credentials": "cathy@example.com / testpass123 (family plan)",
+  "seed_data_creation": "none",
+  "retest_needed": false,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "Iter310 verified CPR verification-panel checks 6-8 render in the CarePlanReviewer UI end-to-end (labels: AT-HM budget vs tier cap, Restorative Care budget, End-of-Life budget) with WORTH A LOOK badges when over-cap. CE budget breakdown works identically on web and mobile with cathy@example.com. Mobile CPR text-paste flow was not exercised in browser (mobile Expo web preview requires drop-in auth flow) — main agent confirmed visually. Backend goldens (test_cpr_err_a_golden 8/8) and ce2 suite still green.",
+  "rca of the issue": "n/a"
+}

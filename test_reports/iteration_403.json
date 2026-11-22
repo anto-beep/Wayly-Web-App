@@ -1,0 +1,35 @@
+{
+  "summary": "Verified WEB iteration 403: app-download banner removed everywhere, Resources articles index widened to max-w-7xl with lg:grid-cols-4, result count reads '44 articles', all 44 card images load (naturalWidth > 0, zero broken). All 7 legacy->canonical slug redirects work and merged slugs no longer appear as cards. All 5 rewritten flagship articles render NEW structure: Your Next Step CTA (data-testid article-next-step), Sources, hero image, NO Key Takeaways, NO FAQ. CTA wording and hrefs are correct (estimator on how-much, free_decode on the other four; secondary trial -> /pricing). Disclosures 'One free statement decode every 120 days...' and 'Card required. After 7 days, Solo is A$24.50...' render as specified. Visuals present: PullQuote ($14) + BarChart on how-much; FigureStats with $140,652.80 and $88,934.57 on lifetime-cap; BarChart on three-streams; SectionFigure on what-happened and support-at-home-explained. Index HCP card title uses correct lowercase 'and'/'the'. Regression: how-to-switch article still renders with sidebar TOC. Minor divergence: on how-much the H2s 'Work From Your Fee Advice' and 'What If I Cannot Afford the Contribution?' render as 'Work from Your Fee Advice' and 'What if I Cannot Afford the Contribution?' because titleCaseHeading downcases 'from'/'if'; that conflicts with the sections listed verbatim in the review request (but is consistent with the general 'small words lowercase' rule). 23 generic 'Failed to load resource: 404' console errors (not blocking; same pattern as previous iterations - likely analytics/pixel endpoints).",
+  "platforms_tested": ["web"],
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "web": {
+      "ui_bugs": [],
+      "integration_issues": [],
+      "design_issues": [
+        {
+          "screen": "/resources/articles/how-much-will-i-pay-for-support-at-home",
+          "issues": [
+            "H2 section headings render as 'Work from Your Fee Advice' and 'What if I Cannot Afford the Contribution?' (lowercase 'from'/'if') because titleCaseHeading treats them as small words. The review request listed these sections with capital F/I ('Work From...', 'What If...'). Decide whether to (a) extend the small-words whitelist in /app/frontend/src/lib/titleCase.js to exclude 'from' and 'if', or (b) accept this as correct Title Case (it matches the stated rule 'small words like and/the/to/for/a are lowercase mid-title')."
+          ]
+        }
+      ]
+    }
+  },
+  "parity_issues": [],
+  "test_report_links": [],
+  "action_items": [
+    "Decide: should 'from' and 'if' be capitalized mid-title in titleCaseHeading? If yes, remove them from the small-words list in /app/frontend/src/lib/titleCase.js so the how-much article's H2s match the spec verbatim.",
+    "Audit the 23 generic 404 console errors on article pages (likely analytics beacons / og.png / preload) - cosmetic but adds noise."
+  ],
+  "critical_code_review_comments": [
+    "titleCaseHeading downcases 'from' and 'if'. The editorial spec explicitly listed sections with capital F/I - confirm with product whether the function's small-words list should be tightened."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "N/A (skipped per request)", "frontend": "~98% (one Title-Case edge case on 2 section headings)"},
+  "seed_data_creation": "none",
+  "retest_needed": false,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "Batch 1 of the 49-article editorial plan is live. Only 5 flagship slugs are rewritten via PDF_ARTICLE_OVERRIDES: how-much-will-i-pay-for-support-at-home, what-happened-to-my-home-care-package, support-at-home-explained, three-streams-clinical-independence-everyday-living, lifetime-contribution-cap-most-families-do-not-worry. Confirmed working end-to-end: 7 slug redirects, 4-col grid, 44 card images all non-broken, next-step CTA with correct offer wording, Sources section, hero + section visuals (ArticleVisuals.jsx). Future batches should follow the same override pattern. No console pageerrors; only 404s for non-critical sub-resources.",
+  "rca of the issue": "N/A - feature additions verified. The only flag is a Title-Case rule interpretation on two section headings; root cause is titleCaseHeading's SMALL_WORDS set including 'from' and 'if'."
+}

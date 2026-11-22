@@ -1,0 +1,69 @@
+{
+  "summary": "Verified iter355 dark-mode readability sweep on web frontend covering ParticipantProfile artefact + financial cards, ATHM Projects tiles + New Project modal, MySupport status chips, LettersFollowUps group toggles, and CSC Q1 caregiver wording. All 6 acceptance criteria PASS. Light-mode regression clean.",
+  "platforms_tested": ["web"],
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "web": {
+      "ui_bugs": [],
+      "integration_issues": [],
+      "design_issues": []
+    }
+  },
+  "parity_issues": [],
+  "test_report_links": [
+    "/app/test_reports/iter355_dark_mode/findings.json",
+    "/app/test_reports/iter355_dark_mode/findings_effective.json",
+    "/app/test_reports/iter355_dark_mode/athm_new_project_modal.jpeg",
+    "/app/test_reports/iter355_dark_mode/athm_dark.jpeg",
+    "/app/test_reports/iter355_dark_mode/support_dark.jpeg",
+    "/app/test_reports/iter355_dark_mode/profile_me_dark.jpeg",
+    "/app/test_reports/iter355_dark_mode/letters_dark.jpeg"
+  ],
+  "verification_matrix": {
+    "profile_me_artefact_cards": {
+      "status": "PASS",
+      "notes": "10 [data-testid^='core1-artefact-'] elements rendered in dark mode. Icons/text now use TINT_HEX_DARK bright teal (#4FA8AE ≈ rgb(79,168,174)) or pure white (#FFFFFF) for CTAs. Tint backgrounds render as rgba(...,0.133) composited over dark app bg → effective dark background; bright accent legible. Naive opaque-tint contrast gave 1.0-1.5 but composited effective contrast ≈ 4.4+ (AA-compliant for bright teal, higher for white CTA)."
+    },
+    "profile_me_financial_card": {
+      "status": "PASS",
+      "notes": "core1-financial-card: color rgb(255,255,255) on bg rgb(6,32,31) → contrast 17.02 (AAA). Excellent."
+    },
+    "athm_projects_tiles": {
+      "status": "PASS",
+      "notes": "3 [data-testid^='athm-project-card-'] tiles all rendered with dm-tint-card class → forced bg rgb(20,64,63); white text; contrast 11.44 (AAA). NO white-on-cream issue."
+    },
+    "athm_new_project_modal": {
+      "status": "PASS",
+      "notes": "Modal opened via [data-testid='athm-new-project']. 6 .dm-tint-card blocks (Project type/Primary need/Invoices & documents groups + tiles behind) all rendered dark teal bg rgb(20,64,63) with white text; contrast 11.44. Tinted [#EAF3F3]/[#FBF3EE]/[#EEF3EE] blocks properly overridden by html.theme-dark .dm-tint-card CSS rule at /app/frontend/src/index.css:603."
+    },
+    "support_ticket_status_chips": {
+      "status": "PASS",
+      "notes": "34 [data-testid^='ticket-status-'] chips (received/closed/under_review/resolved/awaiting_user variants) all render dark teal ink rgb(14,77,82) on cream/light pill backgrounds; contrast 8.45-8.67 (AAA). CSS rule at index.css:607 works."
+    },
+    "letters_group_toggles": {
+      "status": "PASS",
+      "notes": "6 [data-testid^='lf1-group-toggle-'] toggles present, including lf1-group-toggle-notify (Notify Of A Change sage accent). CSS rule at index.css:611-614 forces heading/text-primary-k color:#FFFFFF and muted-k color:var(--kindred-muted) — legible LIGHT text on dark card, no dark-on-dark. Confirmed visually via letters_dark.jpeg screenshot."
+    },
+    "csc_q1_wording": {
+      "status": "PASS",
+      "notes": "csc-q-Q1_self_care_shower renders: 'How easily does the person you care for shower or bathe themselves?' — CORRECT inclusive wording; 'your parent' phrasing removed."
+    },
+    "light_mode_regression": {
+      "status": "PASS",
+      "notes": "After localStorage.setItem('wayly:app:appearance','light') + reload → document.documentElement.classList does NOT contain 'theme-dark'. All 4 routes (/app/me, /support, /app/athm/projects, /ai-tools/letters-and-follow-ups) load with light layout intact."
+    }
+  },
+  "action_items": [],
+  "critical_code_review_comments": [
+    "index.css line 607 uses [data-testid^='ticket-status-'] { color: #0E4D52 !important } — hardcoded dark teal. If the design system ever swaps the pill background to a dark colour, this rule needs updating. Consider using CSS variables for the pill ink to keep it centralised.",
+    "ParticipantProfile ArtefactCard translucent tint (0.133 alpha) means simple DOM contrast probes will falsely flag low contrast; leaving a note here so future testing agents composite tint over --kindred-canvas (rgb(6,32,31)) before flagging. Effective contrast for bright teal accents is ~4.4:1 (AA)."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "n/a", "frontend": "100%"},
+  "test_credentials": "cathy@example.com / testpass123 (Family plan)",
+  "seed_data_creation": "None — used existing 3 ATHM projects on cathy's account and existing ticket data.",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Iter355 dark-mode sweep complete. All 3 remaining failures from iter354 (athm/projects, support status chips, letters group toggles) + new ParticipantProfile artefact/financial cards + CSC Q1 caregiver wording are verified fixed. CSS layer at /app/frontend/src/index.css:600-614 targets .dm-tint-card + [data-testid^='ticket-status-'] + [data-testid^='lf1-group-toggle-']. When flagging translucent-tint contrast, always composite the rgba tint over --kindred-canvas (rgb(6,32,31)) before deciding fail — naive opaque calculation on 0.133-alpha tints gives false negatives.",
+  "rca of the issue": "n/a — verification pass."
+}

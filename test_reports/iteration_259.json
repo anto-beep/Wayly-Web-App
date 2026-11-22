@@ -1,0 +1,38 @@
+{
+  "summary": "Regression-only verification of the SEO-1.1.1 build-pipeline hotfix on the preview (dev) web server. Confirmed all 5 target public routes load and render without runtime regression: / (home), /about, /pricing, /chsp, /ai-tools/invoice-checker. Each returned HTTP 200, rendered body content, produced ZERO console errors and ZERO page errors, and post-hydration DOM contained exactly ONE of each of the 8 SEO head tags (title, meta description, canonical, og:title, og:description, og:url, twitter:title, twitter:description) — confirming react-helmet-async still emits per-page head tags at runtime and the SeoHead/helmet integration has not regressed. This matches the expectation for the dev preview (which does not run the prerender step); the build-pipeline fix cannot be reproduced/verified in preview and requires the deployed prerendered build to observe the actual duplicate-head fix. No files edited, no yarn build attempted (per request).",
+  "platforms_tested": ["web"],
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "web": {
+      "ui_bugs": [],
+      "integration_issues": [],
+      "design_issues": []
+    },
+    "mobile": {
+      "ui_bugs": [],
+      "integration_issues": [],
+      "design_issues": [],
+      "react_native_issues": []
+    }
+  },
+  "parity_issues": [],
+  "runtime_head_tag_audit_dev_preview": {
+    "/": {"title": 1, "description": 1, "canonical": 1, "og:title": 1, "og:description": 1, "og:url": 1, "twitter:title": 1, "twitter:description": 1},
+    "/about": {"title": 1, "description": 1, "canonical": 1, "og:title": 1, "og:description": 1, "og:url": 1, "twitter:title": 1, "twitter:description": 1},
+    "/pricing": {"title": 1, "description": 1, "canonical": 1, "og:title": 1, "og:description": 1, "og:url": 1, "twitter:title": 1, "twitter:description": 1},
+    "/chsp": {"title": 1, "description": 1, "canonical": 1, "og:title": 1, "og:description": 1, "og:url": 1, "twitter:title": 1, "twitter:description": 1},
+    "/ai-tools/invoice-checker": {"title": 1, "description": 1, "canonical": 1, "og:title": 1, "og:description": 1, "og:url": 1, "twitter:title": 1, "twitter:description": 1}
+  },
+  "console_errors": 0,
+  "page_errors": 0,
+  "test_report_links": ["/app/test_reports/iter259_home.jpeg"],
+  "action_items": [],
+  "critical_code_review_comments": [],
+  "updated_files": [],
+  "success_rate": {"backend": "N/A (skipped per request)", "frontend": "100% (5/5 public routes)"},
+  "seed_data_creation": "none",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "This iteration was a REGRESSION-ONLY smoke test for a build-pipeline SEO hotfix. The changed scripts (prerender-lib.mjs, seo-verify.mjs) only run during yarn build/deploy — they do NOT execute in the dev preview server, so the duplicate-head bug cannot be reproduced in preview. Runtime validation confirmed helmet still emits exactly one of each of the 8 SEO tags on all 5 target routes. To fully validate the fix, a build-time smoke test (running yarn build and inspecting the emitted /build/**/index.html) is required, but was explicitly out-of-scope for this run.",
+  "rca of the issue": "N/A — no runtime issues observed. Build-time RCA already documented by main agent E1 in the review request."
+}

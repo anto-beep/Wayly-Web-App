@@ -1,0 +1,68 @@
+{
+  "summary": "CPR-FINDINGS-UX-1 v2 Workstream B7/B9/C1/B6 verified end-to-end on WEB with cathy@example.com and the Robert Henderson golden fixture. B7 cp-plan-summary card renders correctly with a plain-English sentence ('This is a Support at Home care plan for Robert, Classification 5. It covers 01/01/2027 to 31/03/2027. The plan provides 2 services across Clinical, Independence, with a quarterly budget of $9924.25. Overall, the plan appears to meet the flagship checks. See the findings below.'). B9 cp-download-summary click triggers a real PDF download (23,155 bytes, %PDF- magic verified, filename wayly-care-plan-review-2026-08-21.pdf, no error toast). B6 filter bar at /app/care-plans renders all four widgets (cp-filters, cp-search, cp-filter-classification, cp-filter-flagged); garbage search 'zzz_no_match_xxx' correctly triggers empty-state with EXACT copy 'No plans match your filters.'; 'Compliance flags only' toggle reduces 40→24 rows; Classification=8 filter reduces to 14 rows; clearing filters returns to 40 rows. Verification panel (cp-verification-panel from prior iter238 scope) and findings (cp-finding-0..8, 9 findings) still render alongside the new B7 card. MOBILE: not automated (source-review parity per handoff — Expo web-preview SecureStore auth injection remains blocked from iter235-238). Source verified: /app/mobile/src/components/tools/CarePlanReviewer.tsx line 318 renders <Card testID='cp-plan-summary'>, line 382 renders per-finding testID='cp-draft-letter-${i}' that router.push()es to /correspondence/${entry_id}; /app/mobile/app/care-plans.tsx line 99 renders testID='cp-filters' with cp-search and equivalent controls — 1:1 parity with web.\n\n=== ONE ISSUE FOUND ===\nC1 'Draft letter about this' buttons DID NOT render for ANY of the 9 findings in this fixture. Root cause is the render gate in /app/frontend/src/pages/tools/CarePlanReviewer.jsx:508 — `{access === 'allowed' && (f.addressee_primary || f.rule_id) && (...)}` — meaning the button only appears when the LLM populates `addressee_primary` OR `rule_id` on the finding. On the Robert Henderson golden fixture (paste-text path, Classification 5, $9,924.25) the returned findings include compliance-flavoured items (e.g. 'Domestic Assistance Not Included Despite Assessed Need', 'No After-Hours Coverage Listed for Participant Living Alone', 'Nursing Hours May Be Insufficient for Wound Management') but NONE of them arrive with an addressee_primary/rule_id, so zero cp-draft-letter buttons are rendered. Because the buttons never render, the navigation-to-LF-1-editor flow could not be exercised on the FE. Backend already curl-verified per handoff (POST /api/care-plans/letter-from-finding returns {entry_id, editor_path:/tools/letters-and-follow-ups/<id>}), so this is a data-population / UX gate issue, not an integration/backend bug.",
+  "platforms_tested": ["web", "mobile"],
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "web": {
+      "ui_bugs": [
+        {
+          "component": "CarePlanReviewer findings list",
+          "issue": "C1 'Draft letter about this' button never rendered for any of the 9 findings on the Robert Henderson golden fixture because the LLM output does not populate addressee_primary or rule_id on findings, and the render gate at CarePlanReviewer.jsx:508 requires (f.addressee_primary || f.rule_id). Result: cp-draft-letter-<i> data-testid count = 0 on a real review. LF-1 handoff flow cannot be exercised through the UI on this fixture.",
+          "selector": "[data-testid^='cp-draft-letter-']",
+          "priority": "HIGH"
+        }
+      ],
+      "integration_issues": [],
+      "design_issues": []
+    },
+    "mobile": {
+      "ui_bugs": [],
+      "integration_issues": [
+        {
+          "flow": "Authenticated /ai-tools/care-plan-reviewer + /care-plans on Expo web preview",
+          "issue": "Carry-over from iter235-238: cannot inject kindred_token into SecureStore on Expo web preview, so UI automation cannot reach the authenticated surfaces. Not a shipped-code bug. Source parity confirmed 1:1 with web for cp-plan-summary card, cp-draft-letter-<i> handler, and cp-filters / cp-search on the register.",
+          "affected_testIDs": ["cp-plan-summary", "cp-download-summary", "cp-draft-letter-0", "cp-filters", "cp-search", "cp-filter-classification", "cp-filter-flagged"]
+        }
+      ],
+      "design_issues": [],
+      "react_native_issues": []
+    }
+  },
+  "parity_issues": [
+    {
+      "flow": "Draft-letter navigation target",
+      "platform": "mobile",
+      "issue": "Web pushes to /tools/letters-and-follow-ups/${entry_id} (matches backend `editor_path`); mobile pushes to /correspondence/${entry_id} (CarePlanReviewer.tsx line ~380). Not a bug — mobile has its own correspondence route — but the request specifies '/tools/letters-and-follow-ups/<entry_id>' as the navigation target, so flag the divergence for main-agent sign-off.",
+      "expected": "/tools/letters-and-follow-ups/<entry_id> on both",
+      "actual": "web=/tools/letters-and-follow-ups/<id>, mobile=/correspondence/<id>"
+    }
+  ],
+  "test_report_links": [
+    "/app/test_reports/iter239_cpr_web.py",
+    "/app/test_reports/iter239_result.jpeg",
+    "/app/test_reports/iter239_store_initial.jpeg",
+    "/app/test_reports/iter239_store_empty.jpeg",
+    "/app/test_reports/iter239_summary.pdf"
+  ],
+  "action_items": [
+    "Investigate why the LLM output on the Robert Henderson golden fixture does NOT populate addressee_primary or rule_id on findings — either update the LLM prompt/schema so at least compliance/choice findings arrive with a default addressee_primary (e.g. 'provider') + rule_id, OR relax the FE gate in CarePlanReviewer.jsx:508 to show the button on every finding (with 'provider' as the default addressee). Without one of these, the C1 handoff flow is unreachable through the UI for real reviews.",
+    "Once the button renders on real findings, re-verify the click → POST /api/care-plans/letter-from-finding → navigation to /tools/letters-and-follow-ups/<entry_id> flow end-to-end.",
+    "(Parity) Decide whether mobile should navigate to /correspondence/<entry_id> (current) or to /tools/letters-and-follow-ups/<entry_id> (web/spec) after cp-draft-letter — if intentional, document the mobile-only route difference.",
+    "(Optional, out-of-scope) Suppress the dev-only React hydration warning on <select><option> in CarePlanReviewer.jsx — same carry-over class from iter236-238."
+  ],
+  "critical_code_review_comments": [
+    "B7 cp-plan-summary card is correctly wrapped in `(fileResult.plan_summary || fileResult.findings?.length > 0)` guard (CarePlanReviewer.jsx:424) so it renders even when plan_summary is missing but findings exist — good defensive UX. The plain-English summary from the backend is rendered verbatim via <p> — safe from injection.",
+    "B9 downloadSummary handler uses fetch → blob → object-URL anchor click → revokeObjectURL — canonical browser download pattern, sets 'Preparing…' loader state, and disables the button while busy. Verified: a real 23,155-byte PDF is delivered on the paste-text path.",
+    "B6 filter logic in CarePlanStore.jsx correctly combines search / classification / flaggedOnly and swaps the empty-state copy to 'No plans match your filters.' via `(query || classFilter || flaggedOnly)` guard (line 333). Empty-state suggestion CTA ('Upload your first plan') is correctly hidden when filters are active — good UX.",
+    "C1 render gate at CarePlanReviewer.jsx:508 is TOO STRICT for the current LLM output — a compliance-severity finding with no addressee_primary/rule_id currently shows NO way to draft a letter. Recommend either (a) relaxing to `access === 'allowed' && f.severity !== 'info'` with a 'provider' default addressee, or (b) updating the LLM contract to always populate addressee_primary on non-info findings.",
+    "Mobile /app/mobile/src/components/tools/CarePlanReviewer.tsx pushes to /correspondence/${entry_id} instead of /tools/letters-and-follow-ups/${entry_id} — inconsistent with backend `editor_path` and the web target. Should be reconciled."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "N/A (skipped per request; backend curl 8/8 per handoff)", "frontend": "web: B7 100%, B9 100%, B6 100% (search+empty-state copy, flagged toggle, classification filter all pass), C1 0% (button never renders on real fixture — LLM output gap). Mobile: source-parity 100%, UI automation blocked."},
+  "test_credentials": "cathy@example.com / testpass123 (Family plan)",
+  "seed_data_creation": "None. Cathy's household already has 20 active + 26 archived plans on the register — sufficient to exercise B6 filters and empty-state copy without seeding.",
+  "retest_needed": true,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "B7/B9/B6 are UI-verified on the paste-text golden path. The unresolved issue is the C1 render gate: findings on the Robert Henderson golden fixture do NOT contain addressee_primary/rule_id, so cp-draft-letter-<i> never renders and the LF-1 handoff cannot be exercised through the UI. When the main agent fixes either the LLM output or the FE gate, re-run /app/test_reports/iter239_cpr_web.py — the script already contains the click + navigation assertion for /tools/letters-and-follow-ups/. Also check the mobile /correspondence/<id> vs web /tools/letters-and-follow-ups/<id> parity. Mobile Expo web-preview SecureStore auth-injection issue is still open (same as iter235-238).",
+  "rca of the issue": "B7 plan summary + B9 PDF download + B6 register filters all pass. The only miss is C1: /app/frontend/src/pages/tools/CarePlanReviewer.jsx line 508 gates the cp-draft-letter-<i> button on `f.addressee_primary || f.rule_id`. The current LLM output for the Robert Henderson golden fixture returns 9 findings but none carry addressee_primary/rule_id, so the button is never rendered — even for compliance-flavoured findings like 'Domestic Assistance Not Included Despite Assessed Need' or 'No After-Hours Coverage Listed for Participant Living Alone'. Fix at either layer (LLM contract or FE gate) will restore the C1 handoff. Backend endpoint itself is confirmed working per handoff."
+}

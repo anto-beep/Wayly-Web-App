@@ -1,0 +1,49 @@
+{
+  "summary": "Mobile (Expo web preview) parity sweep for iter155. Verified header-truncation regression fix, 3 new journeys (Carer Self-Check, Handover Pack, Switch Provider), Settings parity with 5 notification toggles, and light/dark theme legibility. All new journeys are wired to the correct FastAPI endpoints and POSTs succeed. Dashboard greeting 'Cathy, this quarter' renders at 30px/39px lineHeight with overflow:visible (no clipping); tab headers 'AI Tools', 'Statements', 'Settings' all present in both themes. AI Tools text on CSC result had no dashes/em-dashes/en-dashes detected (sanitizeAI verified for the assessment message).",
+  "platforms_tested": ["mobile"],
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "mobile": {
+      "ui_bugs": [],
+      "integration_issues": [
+        {
+          "flow": "Provider Switch stage badge tone",
+          "issue": "Backend returns switch_stage values 'deciding' and 'decision_confirmed', but the mobile STAGE_TONE map only handles considering/notice_given/transitioning/settled/completed. Unknown stages fall back to neutral tone. Cards render (title, reason, date, uppercased badge label like 'DECIDING' / 'DECISION CONFIRMED'), but the coloured tone is missing so the visual signal is dulled. Reference: /app/mobile/app/provider-switch.tsx:36-38",
+          "affected_testIDs": ["switch-<id>"]
+        }
+      ],
+      "design_issues": [
+        {
+          "screen": "provider-switch header",
+          "issues": [
+            "Subtitle 'Plan and track a move to a new provider' truncates to 'Plan and track a move to a ne...' at 390px viewport because AppHeader subtitle uses numberOfLines={1}. Consider allowing 2 lines for the subtitle, or shortening the copy."
+          ]
+        }
+      ],
+      "react_native_issues": [
+        {"component": "shadow* deprecation warning", "issue": "Console warns 'shadow* style props are deprecated. Use boxShadow.' Emitted repeatedly on load. Likely inside Card/theme shadow tokens. Non-blocking but should be migrated. Reference: /app/mobile/src/theme/ThemeContext or shadow tokens."}
+      ]
+    }
+  },
+  "parity_issues": [],
+  "test_report_links": [],
+  "action_items": [
+    "Extend STAGE_TONE in /app/mobile/app/provider-switch.tsx to include 'deciding' and 'decision_confirmed' (and any other backend-emitted stages) so the badge tone conveys progress correctly.",
+    "Consider allowing 2 lines for AppHeader subtitle (or shortening subtitle copy on Switch Provider) so it isn't ellipsised.",
+    "Migrate shadow* React Native style props to boxShadow to remove the repeated web console deprecation warning."
+  ],
+  "critical_code_review_comments": [
+    "T component's lineHeight recompute (fontSize * 1.3) correctly prevents descender clipping on the dashboard greeting and card titles. Verified via computed style: 30px font, 39px lineHeight, overflow visible.",
+    "carer-self-check.tsx wraps AI message text in sanitizeAI() — result payload observed with no em/en/hyphen dashes.",
+    "handover-pack.tsx: exportPdf uses downloadAndShare helper; on web preview no error toast was raised on click, so the fetch+blob path is functioning (assumed successful).",
+    "provider-switch.tsx: save() silently swallows errors in the catch block (empty). If a POST fails the user gets no feedback because the form is kept intact but no error is shown. Consider surfacing an error state."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "n/a", "frontend": "95%"},
+  "test_credentials": "cathy@example.com / testpass123 (family plan, seeded participant Dorothy).",
+  "seed_data_creation": "Created 1 handover pack and 1 provider switch (BlueBerry Care / Financial reasons) during test. Pre-existing TEST_iter116 switch cards still present from earlier iterations.",
+  "retest_needed": false,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "Iter155 focused on the three NEW screens plus header-truncation regression. New screens ALL functional end-to-end from mobile via Expo web preview: chips render, forms save, lists refresh, PDF export triggers without error. Notification toggles exist (5) and click without errors; because Switch controls on web don't expose aria-checked, persistence via PUT was assumed based on E1's curl verification (no visible error). Deep-links inside the (tabs) group work via /statements, /settings; /tools alone shows 'Unmatched Route' when navigated directly — tab-bar in-app navigation must be used. This is normal Expo Router behavior for pathname-only external navigation and not a bug. Recent stmt/care/journey screens verified in iters 152–154 remain green (spot-checked light+dark).",
+  "rca of the issue": "N/A — no blocker bugs; only two minor polish items (stage tone map incomplete + subtitle truncation on Switch Provider header)."
+}

@@ -1,0 +1,226 @@
+[
+  {
+    "url": "https://wayly.com.au/",
+    "form": "mobile",
+    "performance": 53,
+    "accessibility": 92,
+    "best-practices": 82,
+    "seo": 100,
+    "metrics": {
+      "LCP": 5959.148999999999,
+      "CLS": 0,
+      "TBT": 754.625,
+      "FCP": 3096.0150000000003
+    }
+  },
+  {
+    "url": "https://wayly.com.au/",
+    "form": "desktop",
+    "performance": 32,
+    "accessibility": 92,
+    "best-practices": 81,
+    "seo": 100,
+    "metrics": {
+      "LCP": 6239.743,
+      "CLS": 0.006009,
+      "TBT": 765,
+      "FCP": 3225.7654999999995
+    }
+  },
+  {
+    "url": "https://wayly.com.au/features",
+    "form": "mobile",
+    "performance": 56,
+    "accessibility": 99,
+    "best-practices": 82,
+    "seo": 100,
+    "metrics": {
+      "LCP": 6076.102999999999,
+      "CLS": 0,
+      "TBT": 636,
+      "FCP": 3098.5339999999997
+    }
+  },
+  {
+    "url": "https://wayly.com.au/features",
+    "form": "desktop",
+    "performance": 34,
+    "accessibility": 96,
+    "best-practices": 81,
+    "seo": 100,
+    "metrics": {
+      "LCP": 6095.371999999999,
+      "CLS": 0.000344,
+      "TBT": 671.0000000000005,
+      "FCP": 3077.6264999999994
+    }
+  },
+  {
+    "url": "https://wayly.com.au/pricing",
+    "form": "mobile",
+    "performance": 56,
+    "accessibility": 99,
+    "best-practices": 82,
+    "seo": 100,
+    "metrics": {
+      "LCP": 6561.976500000001,
+      "CLS": 0,
+      "TBT": 563.5,
+      "FCP": 3091.429
+    }
+  },
+  {
+    "url": "https://wayly.com.au/pricing",
+    "form": "desktop",
+    "performance": 35,
+    "accessibility": 99,
+    "best-practices": 81,
+    "seo": 100,
+    "metrics": {
+      "LCP": 6072.112999999999,
+      "CLS": 0.003116,
+      "TBT": 586,
+      "FCP": 3093.3814999999995
+    }
+  },
+  {
+    "url": "https://wayly.com.au/ai-tools/statement-decoder",
+    "form": "mobile",
+    "performance": 56,
+    "accessibility": 91,
+    "best-practices": 82,
+    "seo": 100,
+    "metrics": {
+      "LCP": 6221.681500000001,
+      "CLS": 0.015435,
+      "TBT": 617.2164999999995,
+      "FCP": 3073.558
+    }
+  },
+  {
+    "url": "https://wayly.com.au/ai-tools/statement-decoder",
+    "form": "desktop",
+    "performance": 39,
+    "accessibility": 91,
+    "best-practices": 81,
+    "seo": 100,
+    "metrics": {
+      "LCP": 6420.813,
+      "CLS": 0.015616999999999999,
+      "TBT": 460,
+      "FCP": 3081.1385
+    }
+  },
+  {
+    "url": "https://wayly.com.au/ai-tools/budget-calculator",
+    "form": "mobile",
+    "performance": 60,
+    "accessibility": 96,
+    "best-practices": 82,
+    "seo": 92,
+    "metrics": {
+      "LCP": 6497.9105,
+      "CLS": 0,
+      "TBT": 437,
+      "FCP": 3069.0969999999998
+    }
+  },
+  {
+    "url": "https://wayly.com.au/ai-tools/budget-calculator",
+    "form": "desktop",
+    "performance": 37,
+    "accessibility": 96,
+    "best-practices": 81,
+    "seo": 92,
+    "metrics": {
+      "LCP": 6588.5915,
+      "CLS": 0.001277,
+      "TBT": 495.51550000000043,
+      "FCP": 3061.6314999999995
+    }
+  },
+  {
+    "url": "https://wayly.com.au/resources/articles",
+    "form": "mobile",
+    "performance": 60,
+    "accessibility": 99,
+    "best-practices": 82,
+    "seo": 100,
+    "metrics": {
+      "LCP": 5719.714,
+      "CLS": 0,
+      "TBT": 553.5915,
+      "FCP": 2912.686
+    }
+  },
+  {
+    "url": "https://wayly.com.au/resources/articles",
+    "form": "desktop",
+    "performance": 38,
+    "accessibility": 99,
+    "best-practices": 81,
+    "seo": 100,
+    "metrics": {
+      "LCP": 6853.797500000001,
+      "CLS": 0.0002,
+      "TBT": 396,
+      "FCP": 4871.67
+    }
+  },
+  {
+    "url": "https://wayly.com.au/resources/articles/support-at-home-statement",
+    "form": "mobile",
+    "performance": 55,
+    "accessibility": 99,
+    "best-practices": 82,
+    "seo": 100,
+    "metrics": {
+      "LCP": 6013.1939999999995,
+      "CLS": 0,
+      "TBT": 686.5,
+      "FCP": 3065.653
+    }
+  },
+  {
+    "url": "https://wayly.com.au/resources/articles/support-at-home-statement",
+    "form": "desktop",
+    "performance": 33,
+    "accessibility": 99,
+    "best-practices": 81,
+    "seo": 100,
+    "metrics": {
+      "LCP": 6501.358499999999,
+      "CLS": 0.0002,
+      "TBT": 709,
+      "FCP": 3077.6459999999997
+    }
+  },
+  {
+    "url": "https://wayly.com.au/resources/articles/wayly-statement-decoder-support-at-home-statement-explained",
+    "form": "mobile",
+    "performance": 56,
+    "accessibility": 99,
+    "best-practices": 82,
+    "seo": 100,
+    "metrics": {
+      "LCP": 6255.555,
+      "CLS": 0,
+      "TBT": 632,
+      "FCP": 3067.533
+    }
+  },
+  {
+    "url": "https://wayly.com.au/resources/articles/wayly-statement-decoder-support-at-home-statement-explained",
+    "form": "desktop",
+    "performance": 33,
+    "accessibility": 99,
+    "best-practices": 81,
+    "seo": 100,
+    "metrics": {
+      "LCP": 6649.920499999999,
+      "CLS": 0.0002,
+      "TBT": 656.1057499999997,
+      "FCP": 3101.059
+    }
+  }
+]

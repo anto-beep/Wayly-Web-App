@@ -1,0 +1,54 @@
+{
+  "summary": "Web-only verification of (a) P0 Contribution Estimator recap classification-chip fix and (b) ToolHero illustrations rollout across 9 AI tool pages + preserved affordances + invoice heading capitalisation. P0 fix VERIFIED end-to-end (5 chips including 'Class 5' render on ce-recap after full 3-step wizard). 8/9 ToolHero banners render correctly with data-testid, back-link, and H1. Invoice heading correctly reads 'Upload Your Invoice'. Preserved affordances (pc-history-link, pc-how-it-works-link, lf1-log-link, link-saved-plans) all present. Back-link 'All AI Tools' navigates correctly. TWO bugs found on Reassessment Letter page: (1) cold-navigation race redirect, (2) wrong TOOL_CONTENT.name.",
+  "platforms_tested": ["web"],
+  "backend_issues": { "critical": [], "minor": [] },
+  "frontend_issues": {
+    "web": {
+      "ui_bugs": [
+        {
+          "component": "ReassessmentLetterRedirectOrPage (App.js:338-349)",
+          "issue": "HIGH: Cold navigation to /ai-tools/reassessment-letter as a logged-in user redirects to /ai-tools/letters-and-follow-ups. Root cause: the route component reads `user` from useAuth() without waiting on `loading`; on the initial render `user` is still null so the `<Navigate to='/ai-tools/letters-and-follow-ups' replace />` fires immediately. Fix: gate on loading (return null / <Loading/> while loading), OR let AIToolsRoute handle it and remove the redirect wrapper. Reproduces reliably on fresh navigation; workaround: appending ?primary=5 (CSC context) bypasses the race. Reference: /app/frontend/src/App.js:338-349.",
+          "selector": "route /ai-tools/reassessment-letter",
+          "priority": "HIGH"
+        },
+        {
+          "component": "TOOL_CONTENT['reassessment-letter']",
+          "issue": "HIGH (content bug): The tool's `name` field is 'Letters & Follow-ups' (identical to the letters tool). Once the redirect race is fixed the ToolHero on the reassessment page will still show the wrong H1. Rename to something like 'Reassessment Letter' / 'Reassessment Letter Drafter'. Reference: /app/frontend/src/data/toolContent.js:148-151.",
+          "selector": "[data-testid='tool-hero-reassessment-letter'] h1",
+          "priority": "HIGH"
+        },
+        {
+          "component": "<option> child",
+          "issue": "Console hydration warning: 'In HTML, <span> cannot be a child of <option>'. Triggered on ContributionEstimator (and elsewhere). Non-blocking but a React hydration warning. Likely in a classification / entry-path <select> where an option renders an inline <span>. Reference: /app/frontend/src/pages/tools/ContributionEstimator.jsx (classification/entry_path select around L451).",
+          "selector": "select > option",
+          "priority": "LOW"
+        }
+      ],
+      "integration_issues": [],
+      "design_issues": []
+    },
+    "mobile": { "ui_bugs": [], "integration_issues": [], "design_issues": [], "react_native_issues": [] }
+  },
+  "parity_issues": [],
+  "test_report_links": [
+    "/app/test_reports/iter343_ce_recap.jpeg",
+    "/app/test_reports/iter343_rl.jpeg",
+    "/app/test_reports/iter343_rl2.jpeg"
+  ],
+  "action_items": [
+    "Fix ReassessmentLetterRedirectOrPage race by waiting on `loading` from useAuth before evaluating the `user` branch (App.js:338).",
+    "Rename TOOL_CONTENT['reassessment-letter'].name to 'Reassessment Letter' (toolContent.js:149) — currently duplicates the Letters & Follow-ups name.",
+    "(Optional) Fix hydration warning: replace <span> children inside <option> with plain text on the classification/entry_path select in ContributionEstimator.jsx."
+  ],
+  "critical_code_review_comments": [
+    "ReassessmentLetterRedirectOrPage should ALSO consider `loading` (or delegate the auth-gated decision to AIToolsRoute) to avoid the flash-redirect on cold navigation.",
+    "TOOL_CONTENT keys should be unique per tool; two tools sharing the same `name` is confusing and breaks the visual system the ToolHero rollout is trying to unify."
+  ],
+  "updated_files": [],
+  "success_rate": { "backend": "n/a (skipped)", "frontend": "P0 recap chip fix: PASS. ToolHero rollout: 8/9 tools verified; 1 tool (reassessment-letter) has 2 bugs. Preserved affordances + back-link + invoice heading capitalisation: PASS." },
+  "seed_data_creation": "None",
+  "retest_needed": true,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Login flow: use cathy@example.com / testpass123, then wait for URL match on **/app** (not /dashboard — the app redirects to /app after login). Sign-in button label is 'Sign in' (not 'Log in'). To test the P0 CE fix reproducibly: navigate to /ai-tools/contribution-estimator (cathy's Dorothy participant defaults to have_classification + class_4), then click entry path 'I started (or will start) Support at Home from 1 November 2025', pick the classification via the <select> (option value='class_5'), advance through Steps 2 and 3 with defaults, click 'See my estimate' — the ce-recap block renders 5 chips including the classification 'Class 5' chip. For the reassessment-letter route: direct navigation redirects to letters-and-follow-ups for logged-in users due to a race; adding ?primary=5 bypasses it and exposes the second bug (name='Letters & Follow-ups' in TOOL_CONTENT).",
+  "rca of the issue": "ReassessmentLetterRedirectOrPage (App.js:338-349) evaluates `user` from useAuth on the first render, before /auth/me resolves. On cold navigation `user` is null, so the guard `if (hasCscContext || user)` fails and <Navigate to='/ai-tools/letters-and-follow-ups' replace /> fires immediately — the redirect happens before AuthProvider has finished loading. Once redirected, the URL is replaced and the user lands on Letters & Follow-ups. Adding a `loading` gate (or moving the redirect logic inside AIToolsRoute where `loading` already gates on <Loading/>) fixes it. The second reassessment-letter bug is a straight content mistake: TOOL_CONTENT['reassessment-letter'].name is copy-pasted from the Letters entry."
+}

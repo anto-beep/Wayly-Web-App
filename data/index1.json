@@ -1,0 +1,99 @@
+{
+  "$schema": "https://wayly.com.au/schemas/index1.json",
+  "version": "2026.02.001",
+  "effective_from": "2026-01-01",
+  "next_review_at": "2026-07-01",
+  "source_note": "Support at Home program figures indexed to the Aged Care Rules 2025 as at February 2026. Figures marked 'preview' will re-verify against the July 2026 indexation event.",
+  "sources": [
+    "https://www.legislation.gov.au/C2024A00050 (Aged Care Act 2024)",
+    "https://www.legislation.gov.au/F2025L00xxx (Aged Care Rules 2025)",
+    "https://www.myagedcare.gov.au/support-at-home"
+  ],
+  "classifications": {
+    "level_1": { "annual_budget_aud": 11500, "quarterly_budget_aud": 2875, "label": "Classification 1" },
+    "level_2": { "annual_budget_aud": 15750, "quarterly_budget_aud": 3937.50, "label": "Classification 2" },
+    "level_3": { "annual_budget_aud": 19768, "quarterly_budget_aud": 4942, "label": "Classification 3" },
+    "level_4": { "annual_budget_aud": 29696, "quarterly_budget_aud": 7424, "label": "Classification 4" },
+    "level_5": { "annual_budget_aud": 41500, "quarterly_budget_aud": 10375, "label": "Classification 5" },
+    "level_6": { "annual_budget_aud": 55250, "quarterly_budget_aud": 13812.50, "label": "Classification 6" },
+    "level_7": { "annual_budget_aud": 69000, "quarterly_budget_aud": 17250, "label": "Classification 7" },
+    "level_8": { "annual_budget_aud": 82500, "quarterly_budget_aud": 20625, "label": "Classification 8" }
+  },
+  "streams": {
+    "clinical": {
+      "label": "Clinical care",
+      "participant_contribution_pct": 0,
+      "notes": "Fully government-funded from 1 October 2026 for all classifications. Includes registered nursing, allied health, physiotherapy, occupational therapy, dietetics, podiatry."
+    },
+    "independence": {
+      "label": "Independence",
+      "notes": "Contribution rates vary by pension status and grandfathered/no-worse-off status. See `contribution_rates.independence` below.",
+      "examples": ["Personal care", "Social support", "Respite in home"]
+    },
+    "everyday_living": {
+      "label": "Everyday living",
+      "notes": "Highest participant contribution stream. See `contribution_rates.everyday_living` below.",
+      "examples": ["Domestic assistance", "Meals", "Gardening", "Home maintenance", "Transport"]
+    }
+  },
+  "contribution_rates": {
+    "independence": {
+      "full_pensioner_pct": 5,
+      "part_pensioner_min_pct": 5,
+      "part_pensioner_max_pct": 50,
+      "self_funded_pct": 50,
+      "notes": "Sliding scale between 5% and 50% for part pensioners based on income and assets, indexed from Services Australia."
+    },
+    "everyday_living": {
+      "full_pensioner_pct": 17.5,
+      "part_pensioner_min_pct": 17.5,
+      "part_pensioner_max_pct": 80,
+      "self_funded_pct": 80,
+      "notes": "Sliding scale between 17.5% and 80% for part pensioners."
+    }
+  },
+  "care_management_cap_pct": 10,
+  "care_management_note": "Care management (any category) is capped at 10% of the quarterly budget. Any charge above this cap is worth raising with the provider.",
+  "carryover_rule": {
+    "min_dollar_amount_aud": 1000,
+    "min_pct_of_quarterly": 10,
+    "notes": "The greater of $1,000 or 10% of the current quarterly budget rolls into the next quarter. Balances above the greater-of are forfeited at quarter end."
+  },
+  "lifetime_cap_aud": 137917,
+  "lifetime_cap_note": "Cumulative lifetime cap on the participant's own contribution across the Independence and Everyday Living streams combined. Once reached, further participant contribution is $0 for the rest of the participant's life. Clinical care never counts towards the cap.",
+  "exit_fees": {
+    "prohibited": true,
+    "note": "Exit fees are prohibited under the Aged Care Act 2024. Any exit-fee line on an invoice is a Tier-4 escalation to the ACQSC on 1800 951 822."
+  },
+  "at_hm": {
+    "label": "Assistive Technology and Home Modifications scheme",
+    "notes": "Ring-fenced funding outside the quarterly budget. Access via care partner referral. Provider must be able to produce the supplier invoice for AT-HM items on request."
+  },
+  "no_worse_off_principle": {
+    "cutoff_date": "2024-09-12",
+    "notes": "Participants receiving Home Care Package care as at 12 September 2024 are protected: their Support at Home participant contribution cannot exceed what they would have paid under HCP rules. Applies for the rest of the participant's life on the program."
+  },
+  "statement_delivery_deadline_days": 30,
+  "statement_delivery_note": "Providers must issue the monthly statement within 30 days of the end of the calendar month. Statements for July, for example, must reach participants by 31 August.",
+  "reassessment": {
+    "trigger_events": [
+      "New diagnosis (dementia, Parkinson's, stroke, cancer, mental health)",
+      "Hospital discharge with new functional needs",
+      "Fall causing loss of mobility",
+      "Carer availability change",
+      "Home environment change (moved into or out of shared living)"
+    ],
+    "note": "Reassessment can move a participant up or down a classification. If unsure, ask a My Aged Care assessor before requesting."
+  },
+  "acqsc": {
+    "name": "Aged Care Quality and Safety Commission",
+    "phone": "1800 951 822",
+    "refund_powers_effective_from": "2026-05-01",
+    "note": "From 01/05/2026 the ACQSC has the power to order providers to refund money where overcharging is confirmed."
+  },
+  "plans": {
+    "solo": { "price_aud": 19, "billing": "MONTH", "label": "Solo", "trial_days": 7 },
+    "family": { "price_aud": 39, "billing": "MONTH", "label": "Family", "trial_days": 7 },
+    "adviser": { "price_aud": 299, "billing": "MONTH", "label": "Adviser", "trial_days": 0 }
+  }
+}

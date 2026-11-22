@@ -1,0 +1,41 @@
+{
+  "summary": "OTP email-verification (6-digit code) + mobile polish verified across shared backend, web, and mobile Expo web preview. Backend contract works: signup creates unverified user, GET /auth/verification-status returns debug_code (non-prod), verify-code returns 400 with 'N attempts left' on wrong, 200 {ok,email_verified} on right. Web /verify-email renders EmailCodeVerify with all requested testids and successfully verifies a fresh user; the 6-digit code from GET /auth/verification-status was pasted and email_verified flipped to true. Mobile /verify-email screen renders and verify-code succeeds end-to-end (backend confirms email_verified=true after submit). Mobile polish items all pass: header shows logo only (no 'Wayly' wordmark), header compacts on scroll, header-health-ring visible for cathy (<100%), Budget + Things-To-Know cards have whole-card tap targets, and 'Things to know' title is single-line at both 390px (w=134 h=21) and 320px (w=186 h=21). ONE ISSUE FOUND: mobile /verify-email does NOT render the 'verify-debug-code' preview hint on fresh mount because the useEffect gates the verification-status fetch behind authed=!!user, but on first mount user is still null (AsyncStorage hasn't hydrated). The code still works end-to-end for a real user with the emailed code — this only impacts the automation-friendly debug hint in the preview env.",
+  "platforms_tested": ["web", "mobile"],
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "web": {
+      "ui_bugs": [],
+      "integration_issues": [],
+      "design_issues": []
+    },
+    "mobile": {
+      "ui_bugs": [
+        {"component": "VerifyEmailScreen (app/verify-email.tsx)", "issue": "'verify-debug-code' testid + on-screen 'Preview code: NNNNNN' hint does not render when navigating directly to /verify-email while signed in. Root cause: useEffect at line 54-67 checks `if (authed)` where `authed = !!user`, but on first mount `user` from useAuth() is still null because AsyncStorage hydration is async. The effect has [] deps so the /auth/verification-status fetch (which returns debug_code in non-prod) never re-runs after user hydrates. Fix: either add [user] to the deps + a hydration guard, or fetch verification-status unconditionally when we have an email. Non-blocking for real users (they receive the code by email), but affects the 'surface the code in preview for testing' requirement.", "testID": "verify-debug-code", "priority": "MEDIUM"}
+      ],
+      "integration_issues": [],
+      "design_issues": [],
+      "react_native_issues": []
+    }
+  },
+  "parity_issues": [
+    {"flow": "OTP verify preview hint", "platform": "mobile", "issue": "Web EmailCodeVerify renders the 'Preview code: NNNNNN' hint reliably on /verify-email; mobile VerifyEmailScreen does not because of the authed-gated useEffect described above.", "expected": "Both surfaces display verify-debug-code / code-debug testid in non-prod when the user is authed and unverified.", "actual": "Web ✓ (code-debug rendered 'Preview code: 236593'). Mobile ✗ (verify-debug-code not in DOM after 6s wait)."}
+  ],
+  "test_report_links": [],
+  "action_items": [
+    "Mobile /verify-email: re-fetch /auth/verification-status once the user hydrates from storage so verify-debug-code renders in non-prod. Suggested fix in /app/mobile/app/verify-email.tsx: change the mount effect deps from [] to [authed, user?.email] (with the sendGuard to keep send() one-shot), so the status fetch fires again once useAuth hydrates."
+  ],
+  "critical_code_review_comments": [
+    "email_verification.py: `_send_for_user` also sets `_last_send_at[u['id']]` even though `send_verification_email_for` already sets it — harmless double-write but noise.",
+    "email_verification.py: `_debug_codes` is a module-level dict; single-pod OK, but if the preview ever scales to >1 worker the debug hint will only appear on whichever pod issued the code. Not a prod concern (guarded by WAYLY_ENV).",
+    "verify-email.tsx: on POST /auth/verify-code the client sets `auth: false` — correct (public route), but the client should still refreshUser() after success to update in-memory email_verified. It does refreshUser() when authed=true (line 81) — good.",
+    "EmailCodeVerify.jsx auto-verifies on 6th digit typed; the mobile CodeInput similarly uses onComplete. Both handle 400 by clearing the input and showing the server message ('N attempts left') — consistent UX."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "100% (signup issues code; wrong→400 with attempts-left copy; right→ok,email_verified=true; verification-status returns debug_code in preview)", "frontend": "web 100%, mobile 95% (code entry + submit works; only the verify-debug-code preview hint is missing on fresh mount)"},
+  "test_credentials": "Fresh unverified users created via /api/auth/signup with @example.com + Str0ngPass!2026; cathy@example.com/testpass123 (verified) used for mobile polish. Codes retrieved from GET /api/auth/verification-status (debug_code field).",
+  "seed_data_creation": "3 disposable OTP test users on backend (otp_1790331652@example.com, otp_web_1790331710@example.com, otp_mob_1790331759@example.com, otp_mob2_1790331901@example.com) — all verified during testing; safe to leave.",
+  "retest_needed": false,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "Backend OTP endpoints all pass via curl and via UI-driven flows. Web /verify-email code entry is fully wired (verify-email-code-page, email-code-verify, code-digit-0..5, code-debug, code-verify-submit, code-resend all present; auto-submit on 6th digit; verification-status flips to email_verified:true). Mobile /verify-email is wired (verify-back, verify-code-input, verify-code-input-field, verify-submit, verify-resend) and successfully verifies real codes end-to-end, but verify-debug-code fails to render on direct navigation because useAuth hasn't hydrated when the mount effect fires. Mobile polish (logo-only header, scroll-compact header, header-health-ring visible on <100%, dashboard-more-detail-toggle + dashboard-things-to-know-toggle whole-card, single-line Things-to-know at 390px & 320px) all verified with cathy@example.com. Cathy is verified so the verify-email-banner correctly does NOT show on her dashboard — banner-tap behaviour on an unverified fully-onboarded account was not exercised (fresh signup lands on onboarding, so the dashboard banner and onboarding-verify-email card need a user with completed onboarding but unverified email — main agent can retest by mongo-flipping cathy's email_verified=false temporarily, or by a fully-onboarded fixture, e.g. bibi@test.com if unverified).",
+  "rca of the issue": "verify-debug-code missing on mobile: /app/mobile/app/verify-email.tsx L54-67 — useEffect(() => { ... if (authed) { const st = await apiFetch('/auth/verification-status'); if (st?.debug_code) setDebugCode(st.debug_code); } ... }, []) — the empty deps array means the effect only fires once at mount, at which point `authed = !!user` is false because useAuth's AsyncStorage-backed user hasn't hydrated yet. Fix: change deps to [authed] (or track a `hydrated` flag from useAuth) so the status fetch fires after user is available. Alternatively fetch unconditionally (the endpoint requires auth but by that point apiFetch will attach the Bearer token from storage even without React state)."
+}

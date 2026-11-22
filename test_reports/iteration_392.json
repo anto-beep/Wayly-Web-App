@@ -1,0 +1,39 @@
+{
+  "summary": "GA4 (G-1E3HYT8R91) dry-run integration verified end-to-end on preview host. page_view, sign_up, trial_started and decoder_completed ALL fire correctly as [GA4:dry-run] console logs with zero network calls to google-analytics.com / /g/collect. No PII in any payload (only environment / plan_type / signup_method). Regression: window.gtag, fbq, plausible, posthog, uetq and cookie banner all intact; Google Ads AW-18544177324 still in dataLayer. ONE DEDUPE BUG CONFIRMED: trial_started fires a SECOND time on /welcome reload because Welcome.jsx consumes sessionStorage wayly_welcome_trial_id on first read and falls back to the string 'welcome' as the dedupe success id, which has a different localStorage dedupe key than the real trial id. Everything else passes.",
+  "platforms_tested": ["web"],
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "web": {
+      "ui_bugs": [],
+      "integration_issues": [
+        {
+          "flow": "trial_started dedupe on /welcome reload",
+          "issue": "Welcome.jsx (lines 50-51) calls sessionStorage.removeItem('wayly_welcome_trial_id') and sessionStorage.removeItem('wayly_welcome_plan') immediately after reading them. On a subsequent reload — even if the caller re-primes 'wayly_welcome_entry' — the trial_id is gone, so ga4Track.trialStarted falls back to the hardcoded string 'welcome'. The localStorage dedupe key is therefore 'wayly_ga4_sent_v1:trial_started:welcome' instead of 'wayly_ga4_sent_v1:trial_started:cs_test_...', so the dedupe check misses and the event fires a second time. Repro: prime sessionStorage with wayly_welcome_entry=1, wayly_welcome_trial_id=cs_test_dedupe_xyz, wayly_welcome_plan=family → visit /welcome (fires trial_started {plan_type:family}) → re-prime only wayly_welcome_entry=1 → reload /welcome → SECOND trial_started {environment: production} fires (no plan_type this time). Observed localStorage keys after both runs: ['wayly_ga4_sent_v1:trial_started:welcome', 'wayly_ga4_sent_v1:trial_started:cs_test_dedupe_xyz']. Fix: either (a) do NOT fall back to the literal 'welcome' — pass null/undefined so sendBusinessEvent short-circuits, or (b) persist trial_id in localStorage (not sessionStorage) under a dedicated key and clear it only after successful dedupe, or (c) look up the primary dedupe key by iterating any wayly_ga4_sent_v1:trial_started:* entry and skip if any already set for this session.",
+          "affected_selectors": ["Welcome.jsx:50-51", "lib/ga4.js:81-91"]
+        }
+      ],
+      "design_issues": []
+    }
+  },
+  "parity_issues": [],
+  "test_report_links": ["/app/test_reports/iteration_392.json"],
+  "action_items": [
+    "Fix trial_started dedupe: in /app/frontend/src/pages/Welcome.jsx, stop falling back to the literal string 'welcome' when wayly_welcome_trial_id has already been consumed — pass null so sendBusinessEvent returns early, OR keep trial_id in localStorage until the dedupe key is set, OR add a separate 'any-trial-started-this-session' guard. Current behaviour: reload with re-primed entry token fires a second trial_started dry-run; on production this would double-count conversions."
+  ],
+  "critical_code_review_comments": [
+    "lib/ga4.js dedupe is correctly implemented (localStorage wayly_ga4_sent_v1:<event>:<id>) — the bug is in the CALL SITE in Welcome.jsx that passes a non-stable fallback id.",
+    "page_view fires 2x per route in preview — acceptable because of React StrictMode dev-only double invoke; page_view is not deduped and not a conversion event (matches spec note).",
+    "dataLayer_has_ga4=false on preview is correct — initialiseGa4 is gated to prod hosts and never pushes 'config G-...' on preview.",
+    "No PII leakage — only environment / plan_type / signup_method tokens present in any payload across all events captured.",
+    "decoder_completed on the homepage StatementDecoderEmbed uses persisted_statement_id as the success id (falls back to `dec_${Date.now()}` for anon). The timestamp fallback means repeated anon decodes each get a unique dedupe key, which is correct behaviour (each decode IS a separate conversion).",
+    "sign_up correctly fires AFTER backend returns 200 (not on click, not on validation error) — verified via network intercept."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "N/A (skipped)", "frontend": "90% (6/7 spec items pass; trial_started dedupe fails)"},
+  "test_credentials": "Signup test used fresh TEST_ga4d+<ts>@example.com / StrongPwd#2026x — real backend account created (POST /api/auth/signup → 200), redirected to live Stripe test-mode checkout. No PII sent to GA.",
+  "seed_data_creation": "Created a single TEST_ga4d+<timestamp>@example.com user via /api/auth/signup (needed for the sign_up conversion dry-run). No other state changed. Not cleaned up — fresh account per run.",
+  "retest_needed": true,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "GA4 dry-run instrumentation is live on preview (statement-renderer.preview.emergentagent.com) and emits console.debug('[GA4:dry-run]', command, ...args). Capture console messages INCLUDING the 'debug' level. Zero /g/collect network traffic on preview is the baseline. React StrictMode makes page_view double-fire in dev — acceptable. The three conversion events sign_up / trial_started / decoder_completed are deduped via localStorage key wayly_ga4_sent_v1:<event>:<id>. One dedupe gap remains on trial_started when the user reloads /welcome (see integration_issues). To test signup on this form: Role is pre-selected (Caregiver) and plan defaults to Family — required fields are signup-first-name-input, signup-last-name-input, signup-email-input, signup-password-input; signup-mobile-input can be filled too. Always dismiss the cookie banner FIRST ([data-testid=cookie-accept-all]) — otherwise it intercepts the submit button click and the form silently no-ops. Successful signup REDIRECTS to Stripe checkout for paid plans, which is where the sign_up dry-run fires right before redirect.",
+  "rca of the issue": "trial_started dedupe gap — in /app/frontend/src/pages/Welcome.jsx, the useEffect reads sessionStorage.getItem('wayly_welcome_trial_id') and 'wayly_welcome_plan', then immediately calls sessionStorage.removeItem on both (lines 50-51). It then calls ga4Track.trialStarted(trialId || 'welcome', { plan_type: plan || undefined }). On a user-initiated reload (test spec requires re-priming only wayly_welcome_entry to re-authorise entry), trial_id is already gone, so the call becomes ga4Track.trialStarted('welcome', { plan_type: undefined }). sendBusinessEvent in ga4.js looks up localStorage key 'wayly_ga4_sent_v1:trial_started:welcome' — different from the first-run key 'wayly_ga4_sent_v1:trial_started:cs_test_dedupe_xyz' — so dedupe misses and the dry-run fires a second time. Recommended fix: `ga4Track.trialStarted(trialId, { plan_type: plan || undefined })` without the 'welcome' fallback, and `sendBusinessEvent` already returns false when successId is falsy. Alternative: keep trial_id in localStorage (not sessionStorage) with its own TTL."
+}

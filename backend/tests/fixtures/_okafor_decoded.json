@@ -1,0 +1,657 @@
+{
+  "extracted": {
+    "participant_name": "Robert James Okafor",
+    "mac_id": "MAC-5523-8841",
+    "statement_period": "1 March 2026 \u2013 31 March 2026",
+    "period_start": "2026-03-01",
+    "period_end": "2026-03-31",
+    "provider_name": "Hillview Wellness Care Pty Ltd",
+    "provider_abn": "71 408 223 557",
+    "classification": "Support at Home \u2014 Level 3 (Ongoing)",
+    "pension_status": "part_age_pension",
+    "quarterly_budget_total": 4825.0,
+    "care_management_deducted": 160.83,
+    "care_management_rate_pct": 3.33,
+    "service_budget_available": 4342.5,
+    "rollover_from_prior_quarter": 0.0,
+    "budget_remaining_at_quarter_end": 640.7,
+    "reported_total_gross": 2077.33,
+    "reported_total_participant_contribution": 530.71,
+    "reported_total_government_paid": 1546.62,
+    "lifetime_cap_total": 135318.69,
+    "lifetime_contributions_to_date": 3490.26,
+    "direct_debit_amount": 530.71,
+    "direct_debit_date": "2026-04-20",
+    "stream_used_this_month": {
+      "Clinical": 390.0,
+      "Independence": 686.5,
+      "EverydayLiving": 310.9
+    },
+    "line_items": [
+      {
+        "date": "05-Mar",
+        "service_description": "Allied Health Assistant \u2014 Exercise Programme (falls prevention, supervised exercises per physiotherapist care plan)",
+        "service_code": "AHA-003",
+        "stream": "Clinical",
+        "hours": 1.5,
+        "unit_rate": 89.0,
+        "gross": 133.5,
+        "participant_contribution": 0.0,
+        "government_paid": 133.5,
+        "is_cancellation": false,
+        "worker_name": "D. Mensah AHA",
+        "is_brokered": true,
+        "provider_notes": "Western Sydney Allied Health",
+        "flags_in_original": ""
+      },
+      {
+        "date": "12-Mar",
+        "service_description": "Allied Health Assistant \u2014 Exercise Programme",
+        "service_code": "AHA-003",
+        "stream": "Clinical",
+        "hours": 1.5,
+        "unit_rate": 89.0,
+        "gross": 133.5,
+        "participant_contribution": 0.0,
+        "government_paid": 133.5,
+        "is_cancellation": false,
+        "worker_name": "D. Mensah AHA",
+        "is_brokered": true,
+        "provider_notes": "",
+        "flags_in_original": ""
+      },
+      {
+        "date": "19-Mar",
+        "service_description": "Allied Health Assistant \u2014 Exercise Programme",
+        "service_code": "AHA-003",
+        "stream": "Clinical",
+        "hours": 1.5,
+        "unit_rate": 89.0,
+        "gross": 133.5,
+        "participant_contribution": 0.0,
+        "government_paid": 133.5,
+        "is_cancellation": false,
+        "worker_name": "D. Mensah AHA",
+        "is_brokered": true,
+        "provider_notes": "",
+        "flags_in_original": ""
+      },
+      {
+        "date": "26-Mar",
+        "service_description": "CANCELLED \u2014 Allied Health Assistant Exercise Programme",
+        "service_code": "AHA-003",
+        "stream": "Clinical",
+        "hours": 1.5,
+        "unit_rate": 89.0,
+        "gross": 0.0,
+        "participant_contribution": 0.0,
+        "government_paid": 0.0,
+        "is_cancellation": true,
+        "worker_name": "",
+        "is_brokered": true,
+        "provider_notes": "worker unavailable \u2014 no replacement offered, no prior notice to participant",
+        "flags_in_original": ""
+      },
+      {
+        "date": "02-Mar",
+        "service_description": "Personal Care \u2014 Showering, Dressing, Grooming",
+        "service_code": "PC-001",
+        "stream": "Independence",
+        "hours": 1.0,
+        "unit_rate": 95.0,
+        "gross": 95.0,
+        "participant_contribution": 16.63,
+        "government_paid": 78.38,
+        "is_cancellation": false,
+        "worker_name": "Amara S.",
+        "is_brokered": false,
+        "provider_notes": "Hillview direct",
+        "flags_in_original": ""
+      },
+      {
+        "date": "05-Mar",
+        "service_description": "Personal Care \u2014 Showering, Dressing, Grooming",
+        "service_code": "PC-001",
+        "stream": "Independence",
+        "hours": 1.0,
+        "unit_rate": 95.0,
+        "gross": 95.0,
+        "participant_contribution": 16.63,
+        "government_paid": 78.38,
+        "is_cancellation": false,
+        "worker_name": "Amara S.",
+        "is_brokered": false,
+        "provider_notes": "",
+        "flags_in_original": ""
+      },
+      {
+        "date": "09-Mar",
+        "service_description": "Personal Care \u2014 Showering, Dressing, Grooming",
+        "service_code": "PC-001",
+        "stream": "Independence",
+        "hours": 1.0,
+        "unit_rate": 95.0,
+        "gross": 95.0,
+        "participant_contribution": 16.63,
+        "government_paid": 78.38,
+        "is_cancellation": false,
+        "worker_name": "Amara S.",
+        "is_brokered": false,
+        "provider_notes": "",
+        "flags_in_original": ""
+      },
+      {
+        "date": "12-Mar",
+        "service_description": "Personal Care \u2014 Showering, Dressing, Grooming",
+        "service_code": "PC-001",
+        "stream": "Independence",
+        "hours": 1.0,
+        "unit_rate": 95.0,
+        "gross": 95.0,
+        "participant_contribution": 16.63,
+        "government_paid": 78.38,
+        "is_cancellation": false,
+        "worker_name": "Amara S.",
+        "is_brokered": false,
+        "provider_notes": "",
+        "flags_in_original": ""
+      },
+      {
+        "date": "14-Mar",
+        "service_description": "Personal Care \u2014 Showering, Dressing, Grooming",
+        "service_code": "PC-001",
+        "stream": "Independence",
+        "hours": 1.0,
+        "unit_rate": 95.0,
+        "gross": 95.0,
+        "participant_contribution": 16.63,
+        "government_paid": 78.38,
+        "is_cancellation": false,
+        "worker_name": "James O.",
+        "is_brokered": false,
+        "provider_notes": "Amara on leave \u2014 replacement, no prior notice",
+        "flags_in_original": ""
+      },
+      {
+        "date": "16-Mar",
+        "service_description": "Personal Care \u2014 Showering, Dressing, Grooming",
+        "service_code": "PC-001",
+        "stream": "Independence",
+        "hours": 1.0,
+        "unit_rate": 95.0,
+        "gross": 95.0,
+        "participant_contribution": 16.63,
+        "government_paid": 78.38,
+        "is_cancellation": false,
+        "worker_name": "Amara S.",
+        "is_brokered": false,
+        "provider_notes": "",
+        "flags_in_original": ""
+      },
+      {
+        "date": "19-Mar",
+        "service_description": "CANCELLED \u2014 Personal Care",
+        "service_code": "PC-001",
+        "stream": "Independence",
+        "hours": 0.0,
+        "unit_rate": 0.0,
+        "gross": 0.0,
+        "participant_contribution": 0.0,
+        "government_paid": 0.0,
+        "is_cancellation": true,
+        "worker_name": "",
+        "is_brokered": false,
+        "provider_notes": "participant interstate 19-23 Mar",
+        "flags_in_original": ""
+      },
+      {
+        "date": "23-Mar",
+        "service_description": "CANCELLED \u2014 Personal Care",
+        "service_code": "PC-001",
+        "stream": "Independence",
+        "hours": 0.0,
+        "unit_rate": 0.0,
+        "gross": 0.0,
+        "participant_contribution": 0.0,
+        "government_paid": 0.0,
+        "is_cancellation": true,
+        "worker_name": "",
+        "is_brokered": false,
+        "provider_notes": "participant interstate 19-23 Mar",
+        "flags_in_original": ""
+      },
+      {
+        "date": "26-Mar",
+        "service_description": "Personal Care \u2014 Showering, Dressing, Grooming",
+        "service_code": "PC-001",
+        "stream": "Independence",
+        "hours": 1.0,
+        "unit_rate": 95.0,
+        "gross": 95.0,
+        "participant_contribution": 16.63,
+        "government_paid": 78.38,
+        "is_cancellation": false,
+        "worker_name": "Amara S.",
+        "is_brokered": false,
+        "provider_notes": "",
+        "flags_in_original": ""
+      },
+      {
+        "date": "30-Mar",
+        "service_description": "Personal Care \u2014 Showering, Dressing, Grooming",
+        "service_code": "PC-001",
+        "stream": "Independence",
+        "hours": 1.0,
+        "unit_rate": 95.0,
+        "gross": 95.0,
+        "participant_contribution": 16.63,
+        "government_paid": 78.38,
+        "is_cancellation": false,
+        "worker_name": "Amara S.",
+        "is_brokered": false,
+        "provider_notes": "",
+        "flags_in_original": ""
+      },
+      {
+        "date": "20-Mar",
+        "service_description": "Community Transport \u2014 Medical appointment (Penrith to Nepean Hospital and return, oncology review)",
+        "service_code": "TR-003",
+        "stream": "Independence",
+        "hours": 0.0,
+        "unit_rate": 74.0,
+        "gross": 74.0,
+        "participant_contribution": 12.95,
+        "government_paid": 61.05,
+        "is_cancellation": false,
+        "worker_name": "",
+        "is_brokered": false,
+        "provider_notes": "Transport charged 20 March. Participant was noted as interstate 19-23 March per provider records. Verify whether this transport occurred or is a billing error.",
+        "flags_in_original": ""
+      },
+      {
+        "date": "06-Mar",
+        "service_description": "Domestic Assistance \u2014 General cleaning, kitchen, bathroom, floors",
+        "service_code": "DA-001",
+        "stream": "EverydayLiving",
+        "hours": 2.0,
+        "unit_rate": 71.5,
+        "gross": 143.0,
+        "participant_contribution": 71.5,
+        "government_paid": 71.5,
+        "is_cancellation": false,
+        "worker_name": "Hillview Cleaning Team",
+        "is_brokered": false,
+        "provider_notes": "",
+        "flags_in_original": ""
+      },
+      {
+        "date": "07-Mar",
+        "service_description": "Social Support \u2014 Individual (accompanied walk, coffee, community engagement)",
+        "service_code": "SS-002",
+        "stream": "EverydayLiving",
+        "hours": 2.0,
+        "unit_rate": 76.0,
+        "gross": 152.0,
+        "participant_contribution": 76.0,
+        "government_paid": 76.0,
+        "is_cancellation": false,
+        "worker_name": "Rita F.",
+        "is_brokered": false,
+        "provider_notes": "",
+        "flags_in_original": ""
+      },
+      {
+        "date": "07-Mar",
+        "service_description": "Meal Preparation \u2014 In-home (weekly batch cook assist)",
+        "service_code": "MP-004",
+        "stream": "EverydayLiving",
+        "hours": 0.5,
+        "unit_rate": 71.5,
+        "gross": 35.75,
+        "participant_contribution": 17.88,
+        "government_paid": 17.88,
+        "is_cancellation": false,
+        "worker_name": "Amara S.",
+        "is_brokered": false,
+        "provider_notes": "",
+        "flags_in_original": ""
+      },
+      {
+        "date": "20-Mar",
+        "service_description": "Domestic Assistance \u2014 General cleaning, kitchen, bathroom, floors",
+        "service_code": "DA-001",
+        "stream": "EverydayLiving",
+        "hours": 2.0,
+        "unit_rate": 71.5,
+        "gross": 143.0,
+        "participant_contribution": 71.5,
+        "government_paid": 71.5,
+        "is_cancellation": false,
+        "worker_name": "Hillview Cleaning Team",
+        "is_brokered": false,
+        "provider_notes": "Domestic assistance charged 20 March. Participant was interstate 19-23 March. Confirm service occurred.",
+        "flags_in_original": ""
+      },
+      {
+        "date": "21-Mar",
+        "service_description": "Social Support \u2014 Individual (accompanied walk, coffee, community engagement)",
+        "service_code": "SS-002",
+        "stream": "EverydayLiving",
+        "hours": 2.0,
+        "unit_rate": 76.0,
+        "gross": 152.0,
+        "participant_contribution": 76.0,
+        "government_paid": 76.0,
+        "is_cancellation": false,
+        "worker_name": "Rita F.",
+        "is_brokered": false,
+        "provider_notes": "Social Support charged 21 March. Participant was interstate 19-23 March. Confirm service occurred.",
+        "flags_in_original": ""
+      },
+      {
+        "date": "21-Mar",
+        "service_description": "Meal Preparation \u2014 In-home (weekly batch cook assist)",
+        "service_code": "MP-004",
+        "stream": "EverydayLiving",
+        "hours": 0.5,
+        "unit_rate": 71.5,
+        "gross": 35.75,
+        "participant_contribution": 17.88,
+        "government_paid": 17.88,
+        "is_cancellation": false,
+        "worker_name": "Amara S.",
+        "is_brokered": false,
+        "provider_notes": "",
+        "flags_in_original": ""
+      },
+      {
+        "date": "28-Mar",
+        "service_description": "Gardening \u2014 Lawn maintenance and path clearing",
+        "service_code": "GM-006",
+        "stream": "EverydayLiving",
+        "hours": 2.0,
+        "unit_rate": 71.5,
+        "gross": 143.0,
+        "participant_contribution": 71.5,
+        "government_paid": 71.5,
+        "is_cancellation": false,
+        "worker_name": "Hillview Garden Team",
+        "is_brokered": false,
+        "provider_notes": "IMPORTANT: This service is not listed in Robert's current care plan (reviewed January 2026). Care manager Patricia Dunne verbally approved this service on 25 March. Written care plan amendment has not yet been issued. This charge should not appear on a statement for a service not in the written care plan.",
+        "flags_in_original": ""
+      },
+      {
+        "date": "2026-03-31",
+        "service_description": "Care management fee (March)",
+        "service_code": "CM-01",
+        "stream": "CareMgmt",
+        "hours": 0.0,
+        "unit_rate": 0.0,
+        "gross": 160.83,
+        "participant_contribution": 0.0,
+        "government_paid": 160.83,
+        "is_cancellation": false,
+        "worker_name": "",
+        "is_brokered": false,
+        "provider_notes": "March portion (this statement) of Q1 2026 quarterly care management fee",
+        "flags_in_original": ""
+      }
+    ],
+    "previous_period_adjustments": [
+      {
+        "ref": "ADJ-2026-02-04",
+        "description": "February 2026 \u2014 Social Support (SS-002, 21-Feb) overbilling credit: 2.0hrs \u00d7 $6.00 (brokered rate $82.00/hr vs Hillview published rate $76.00/hr)",
+        "credit_amount": 12.0
+      }
+    ],
+    "at_hm_commitments": [
+      {
+        "ref": "ATHM-2026-0044",
+        "item_description": "Shower chair (supply and delivery)",
+        "approval_date": "2026-01-15",
+        "expiry_date": "2027-01-14",
+        "amount_approved": 350.0,
+        "amount_claimed": 298.5,
+        "amount_remaining": 51.5,
+        "amount_claimed_this_period": 0.0,
+        "status": "active"
+      },
+      {
+        "ref": "ATHM-2026-0071",
+        "item_description": "Non-slip bathroom mat (supply)",
+        "approval_date": "2026-02-28",
+        "expiry_date": "2027-02-27",
+        "amount_approved": 85.0,
+        "amount_claimed": 0.0,
+        "amount_remaining": 85.0,
+        "amount_claimed_this_period": 0.0,
+        "status": "active"
+      }
+    ],
+    "provider_notes_raw": [
+      "Robert's Q1 2026 budget has $640.70 remaining. This will roll over fully to Q2 2026 as it is below the $1,000 cap. Robert's Q2 budget (from 1 April) will be $4,825.00 plus $640.70 rollover.",
+      "Care plan review is due. The current plan was last reviewed January 2026. A review is recommended given the verbal approval of gardening services in March and the upcoming Q2 period. Patricia Dunne will contact Robert to schedule.",
+      "The Allied Health Assistant programme is brokered through Western Sydney Allied Health. Their rate of $89.00/hr is consistent with Hillview's contracted brokered rate. However, Hillview's own published rate for equivalent services is $84.50/hr. The brokered rate premium is $4.50/hr.",
+      "Robert's oncology review at Nepean Hospital is ongoing. The care team should be advised of any changes to his treatment plan that may affect his care needs and classification."
+    ]
+  },
+  "audit": {
+    "statement_summary": {
+      "participant_name": "Robert James Okafor",
+      "period": "1 March 2026 \u2013 31 March 2026",
+      "provider": "Hillview Wellness Care Pty Ltd",
+      "classification": "Support at Home \u2014 Level 3 (Ongoing)",
+      "total_line_items": 21,
+      "total_gross": 2077.33,
+      "total_participant_contribution": 530.71,
+      "total_government_paid": 1546.62,
+      "care_management_fee": 160.83,
+      "net_budget_impact": 2077.33,
+      "budget_remaining": 640.7,
+      "rollover_applied": 0.0,
+      "adjusted_budget_remaining": 640.7,
+      "lifetime_contributions_to_date": 3490.26,
+      "lifetime_cap_remaining": null
+    },
+    "stream_breakdown": [
+      {
+        "stream": "Clinical",
+        "line_item_count": 3,
+        "gross_total": 400.5,
+        "participant_contribution": 0.0,
+        "government_paid": 400.5
+      },
+      {
+        "stream": "Independence",
+        "line_item_count": 9,
+        "gross_total": 834.0,
+        "participant_contribution": 145.99,
+        "government_paid": 688.09
+      },
+      {
+        "stream": "EverydayLiving",
+        "line_item_count": 7,
+        "gross_total": 804.5,
+        "participant_contribution": 402.26,
+        "government_paid": 402.26
+      },
+      {
+        "stream": "CareMgmt",
+        "line_item_count": 1,
+        "gross_total": 160.83,
+        "participant_contribution": 0.0,
+        "government_paid": 160.83
+      }
+    ],
+    "anomalies": [
+      {
+        "severity": "high",
+        "rule": "RULE_3_DUPLICATE_SERVICES",
+        "headline": "Duplicate AHA-003 services within 7 days at identical rates.",
+        "detail": "Three identical AHA-003 (Allied Health Assistant Exercise Programme) services on 05-Mar, 12-Mar, and 19-Mar, all at 1.5 hours and $89.00/hr unit rate with the same worker (D. Mensah AHA). These appear to be legitimate weekly scheduled services rather than duplicates; however, the 26-Mar cancellation with note 'worker unavailable \u2014 no replacement offered' suggests a potential service gap.",
+        "dollar_impact": 0.0,
+        "evidence": [
+          "05-Mar AHA-003 1.5hrs @ $89.00",
+          "12-Mar AHA-003 1.5hrs @ $89.00",
+          "19-Mar AHA-003 1.5hrs @ $89.00",
+          "26-Mar AHA-003 cancelled \u2014 worker unavailable"
+        ],
+        "suggested_action": "Verify whether these three services represent a legitimate weekly programme or if duplication has occurred. Confirm whether the 26-Mar cancellation was handled appropriately and whether a replacement worker should have been offered."
+      },
+      {
+        "severity": "medium",
+        "rule": "RULE_5_STREAM_MISCLASSIFICATION_RISK",
+        "headline": "Gardening service charged without written care plan amendment.",
+        "detail": "The gardening service (GM-006, 28-Mar, $143.00) was verbally approved by care manager Patricia Dunne on 25-Mar but the written care plan amendment has not yet been issued. The provider notes explicitly flag: 'This charge should not appear on a statement for a service not in the written care plan.' This suggests the service may not meet the formal care plan requirement and stream classification may be incorrect.",
+        "dollar_impact": 143.0,
+        "evidence": [
+          "28-Mar GM-006 Gardening $143.00",
+          "Provider note: 'This service is not listed in Robert's current care plan (reviewed January 2026). Care manager Patricia Dunne verbally approved this service on 25 March. Written care plan amendment has not yet been issued.'"
+        ],
+        "suggested_action": "Obtain written care plan amendment from Hillview. If the gardening service is not formally approved in writing, request that this charge be reversed. Confirm whether the service should appear on this month's statement pending written approval."
+      },
+      {
+        "severity": "medium",
+        "rule": "RULE_5_STREAM_MISCLASSIFICATION_RISK",
+        "headline": "Transport, domestic, and social support services charged during documented participant absence.",
+        "detail": "Four services are charged on dates when provider notes explicitly record the participant was interstate: TR-003 (20-Mar, $74.00), DA-001 (20-Mar, $143.00), SS-002 (21-Mar, $152.00), and two cancellations (19-Mar and 23-Mar PC-001 due to 'participant interstate 19-23 Mar'). Provider notes on three items explicitly request verification: 'Participant was noted as interstate 19-23 March per provider records. Verify whether this transport occurred or is a billing error' and similar language for DA-001 and SS-002.",
+        "dollar_impact": 369.0,
+        "evidence": [
+          "20-Mar TR-003 $74.00 \u2014 provider note: 'Participant was noted as interstate 19-23 March per provider records. Verify whether this transport occurred.'",
+          "20-Mar DA-001 $143.00 \u2014 provider note: 'Participant was interstate 19-23 March. Confirm service occurred.'",
+          "21-Mar SS-002 $152.00 \u2014 provider note: 'Participant was interstate 19-23 March. Confirm service occurred.'",
+          "19-Mar PC-001 cancelled \u2014 'participant interstate 19-23 Mar'",
+          "23-Mar PC-001 cancelled \u2014 'participant interstate 19-23 Mar'"
+        ],
+        "suggested_action": "Contact Hillview to verify whether the transport and domestic/social support services on 20\u201321 March actually occurred or whether they should be reversed as billing errors. Request evidence (worker timesheets, confirmation of service delivery) for each of these three items."
+      },
+      {
+        "severity": "medium",
+        "rule": "RULE_11_BROKERED_PREMIUM",
+        "headline": "Brokered rate premium on AHA-003 services exceeds published rate.",
+        "detail": "The Allied Health Assistant programme (AHA-003) is supplied by Western Sydney Allied Health at a brokered rate of $89.00/hr. Hillview's own published rate for equivalent services is $84.50/hr, a premium of $4.50/hr. Three non-cancelled services (05-Mar, 12-Mar, 19-Mar) total 4.5 hours at the brokered rate, resulting in a total premium impact of $20.25 this month.",
+        "dollar_impact": 20.25,
+        "evidence": [
+          "Provider note: 'The Allied Health Assistant programme is brokered through Western Sydney Allied Health. Their rate of $89.00/hr is consistent with Hillview's contracted brokered rate. However, Hillview's own published rate for equivalent services is $84.50/hr. The brokered rate premium is $4.50/hr.'",
+          "05-Mar AHA-003 1.5hrs @ $89.00/hr (brokered)",
+          "12-Mar AHA-003 1.5hrs @ $89.00/hr (brokered)",
+          "19-Mar AHA-003 1.5hrs @ $89.00/hr (brokered)",
+          "Total hours: 4.5; Premium: $4.50/hr \u00d7 4.5 = $20.25"
+        ],
+        "suggested_action": "Ask your provider whether the brokered rate premium can be absorbed by the provider rather than your budget. Providers are not required to pass brokered rate premiums to participants."
+      },
+      {
+        "severity": "low",
+        "rule": "RULE_8_TRANSPORT_STREAM_QUERY",
+        "headline": "Transport service charged during documented participant absence.",
+        "detail": "Transport service TR-003 (20-Mar, oncology review to Nepean Hospital) is charged during a period when the participant was documented as interstate (19-23 March per multiple provider notes). This creates ambiguity as to whether the transport occurred.",
+        "dollar_impact": 74.0,
+        "evidence": [
+          "20-Mar TR-003 $74.00 \u2014 'Penrith to Nepean Hospital and return, oncology review'",
+          "Provider note: 'Transport charged 20 March. Participant was noted as interstate 19-23 March per provider records. Verify whether this transport occurred or is a billing error.'"
+        ],
+        "suggested_action": "Verify with Hillview whether the oncology transport actually occurred on 20 March or whether the participant's interstate dates have been recorded incorrectly. Request confirmation of service delivery."
+      },
+      {
+        "severity": "low",
+        "rule": "RULE_13_QUARTERLY_UNDERSPEND",
+        "headline": "Robert James Okafor ended the quarter with $640.70 unspent \u2014 about 13% of the quarterly budget.",
+        "detail": "Quarterly budget was $4,825.00; $640.70 (13.3%) remains at quarter end. The full $640.70 will roll over to next quarter (within the $1,000.00 rollover cap). A care plan review might help ensure the full budget is being used for services Robert James Okafor needs.",
+        "dollar_impact": 0.0,
+        "evidence": [
+          "quarterly_budget_total: $4,825.00",
+          "budget_remaining_at_quarter_end: $640.70",
+          "remaining_pct: 13.28%",
+          "rollover_cap: $1,000.00",
+          "period_end_month: 3"
+        ],
+        "suggested_action": "Schedule a care-plan review with the provider before quarter end. Identify services the participant qualifies for but isn't currently using."
+      },
+      {
+        "severity": "low",
+        "rule": "RULE_15_GROSS_TOTAL_PARSE_WARNING",
+        "headline": "Decoded total doesn't match the statement's reported total.",
+        "detail": "Extracted total ($2,187.83) differs from the statement's reported total ($2,077.33). Some line items may not have been extracted. Review the full statement manually.",
+        "dollar_impact": 110.5,
+        "evidence": [
+          "sum of non-cancelled line item gross: $2,199.83",
+          "previous-period adjustment credits: $12.00",
+          "net extracted: $2,187.83",
+          "statement reported total: $2,077.33"
+        ],
+        "suggested_action": "Open the original statement and check whether any line items are missing from the decoded view above."
+      },
+      {
+        "severity": "medium",
+        "rule": "RULE_16_STREAM_DISCREPANCY",
+        "headline": "Everyday Living total doesn't add up \u2014 reconciliation needed",
+        "detail": "The Everyday Living line items on this statement total $804.50, but the budget summary shows $310.90 used for Everyday Living this month. The $493.60 difference has no explanation on the statement. Note: this discrepancy is based on AI extraction which may not have captured every line item. Review your original statement to confirm.",
+        "dollar_impact": 493.6,
+        "evidence": [
+          "stream: EverydayLiving",
+          "sum of Everyday Living line items: $804.50",
+          "header 'Used This Month' for Everyday Living: $310.90",
+          "extraction_confidence: -0.588"
+        ],
+        "suggested_action": "Ask your provider to reconcile the Everyday Living total before your next statement."
+      },
+      {
+        "severity": "low",
+        "rule": "RULE_17_CARE_PLAN_REVIEW_DUE",
+        "headline": "Care plan review is due or upcoming",
+        "detail": "Care plan review is due. The current plan was last reviewed January 2026. A review is recommended given the verbal approval of gardening services in March and the upcoming Q2 period. Patricia Dunne will contact Robert to schedule. A care plan review is an opportunity to ensure services match current needs \u2014 particularly important if there have been recent health changes.",
+        "dollar_impact": 0.0,
+        "evidence": [
+          "provider note: Care plan review is due. The current plan was last reviewed January 2026. A review is recommended given the verbal approval of gardening services in March and the upcoming Q2 period. Patricia Dunne will contact Robert to schedule."
+        ],
+        "suggested_action": "Confirm the review date with your care manager. Bring notes on any changes since the last review \u2014 new diagnoses, medication changes, falls, or changes in daily ability."
+      },
+      {
+        "severity": "medium",
+        "rule": "RULE_6_WORKER_SUBSTITUTION",
+        "headline": "Worker substitution on 14-Mar \u2014 PC-001 \u2014 short notice",
+        "detail": "Independence (personal care / mobility): a worker substitution occurred on 14-Mar for PC-001. The provider gave less than 24 hours notice. The Statement of Rights guarantees continuity of care and reasonable notice of changes to your care team.",
+        "dollar_impact": 0.0,
+        "evidence": [
+          "date: 14-Mar",
+          "service_code: PC-001",
+          "stream: Independence",
+          "note: Amara on leave \u2014 replacement, no prior notice "
+        ],
+        "suggested_action": "Ask your provider how they will minimise short-notice substitutions and ensure your preferred workers are scheduled. You can request that a substitution policy be added to your service agreement."
+      }
+    ],
+    "anomaly_count": {
+      "high": 1,
+      "medium": 5,
+      "low": 4
+    },
+    "_parsing_warnings": [
+      "Independence extraction confidence low (0.79) \u2014 stream discrepancy check suppressed."
+    ],
+    "informational_notes": [
+      {
+        "kind": "at_hm_active_commitment",
+        "summary": "AT-HM Shower chair (supply and delivery) \u2014 $51.50 remaining \u2014 expires 2027-01-14 (ref ATHM-2026-0044).",
+        "ref": "ATHM-2026-0044",
+        "amount_remaining": 51.5,
+        "amount_approved": 350.0,
+        "expiry_date": "2027-01-14"
+      },
+      {
+        "kind": "at_hm_active_commitment",
+        "summary": "AT-HM Non-slip bathroom mat (supply) \u2014 $85.00 remaining \u2014 expires 2027-02-27 (ref ATHM-2026-0071).",
+        "ref": "ATHM-2026-0071",
+        "amount_remaining": 85.0,
+        "amount_approved": 85.0,
+        "expiry_date": "2027-02-27"
+      },
+      {
+        "kind": "previous_period_adjustment",
+        "summary": "1 previous-period adjustment applied \u2014 total credit $12.00. Arithmetic verified. Items: ADJ-2026-02-04: February 2026 \u2014 Social Support (SS-002, 21-Feb) overbilling credit: 2.0hrs \u00d7 $6.00 (brokered rate $82.00/hr vs Hillview published rate $76.00/hr)",
+        "total_credit": 12.0,
+        "count": 1
+      }
+    ]
+  }
+}

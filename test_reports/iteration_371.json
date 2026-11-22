@@ -1,0 +1,28 @@
+{
+  "summary": "Verified hero video bug fix (black bars / dashboard poster) on homepage DualFlagshipHero -> HeroVideo. STRUCTURAL verification at 375/768/1280/1920 px: frame aspect-ratio exactly 1.778 (16:9) with aspectRatio CSS = '16 / 9', frame background computed rgb(251,248,243) = #FBF8F3 (warm cream, NOT black/dark), <video> computed object-fit = 'contain', background = #FBF8F3. NO black bars at any of the 4 widths — screenshot at 1280 confirms warm cream frame with branded overlay. Branded poster overlay (testid 'hero-video-overlay') shows 'Wayly' wordmark, 'Aged Care, Made Clear' tagline, centred play button (testid 'hero-video-play'), and '58 SECONDS' label — NO dashboard UI, NO dollar figures. The old 'hero-screenshot-img' is GONE. Video attributes: autoplay=true (false when reduced motion), muted=true, playsInline=true, preload='auto', loop=false, controls bound to playing phase. Sources: first = /branding/hero-720p.mp4, second = full CDN mp4 fallback; <track kind='captions' srclang='en' default src='/branding/hero-captions.en.vtt'> wired. Assets all return 200: hero-poster.webp (20826 B, image/webp), hero-720p.mp4 (5140074 B ≈ 5 MB, video/mp4), hero-captions.en.vtt (text/vtt). Sound button becomes visible once playing phase begins (after clicking the overlay play), has aria-label='Turn sound on', min-height 44px, keyboard focusable. Reduced-motion emulation (prefers-reduced-motion: reduce): video.autoplay=false, video.paused=true, overlay stays visible with play button — exactly as spec. PostHog events wired in HeroVideo.jsx via track.event(): video_autoplay_started (fireStart in onPlaying), video_paused (onPause), video_completed (onEnded), video_unmuted (toggleSound). No layout shift — aspectRatio CSS reserves space before video decodes. Scope confirmed: only HeroVideo frame changed; nothing else on homepage touched.",
+  "platforms_tested": ["web"],
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "web": {
+      "ui_bugs": [],
+      "integration_issues": [],
+      "design_issues": []
+    },
+    "mobile": {"ui_bugs": [], "integration_issues": [], "design_issues": [], "react_native_issues": []}
+  },
+  "parity_issues": [],
+  "test_report_links": ["/app/test_reports/iter371_hero_1280.jpeg"],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "Captions .vtt is only 303 bytes — verify it contains real caption text for the full 58s clip; if it is a placeholder, add transcript before shipping (not a blocker for the black-bars fix).",
+    "HeroVideo mounts even when prefers-reduced-motion is reduce; this is intentional (user can press play), but note that <video preload='auto'> will still start fetching ~5 MB on reduced-motion sessions. Consider preload='metadata' when reduceMotion is true to be respectful of data.",
+    "`track?.event?.(...)` is wrapped in try/catch — good. Confirmed PostHog event names match spec exactly."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "N/A (skipped per request)", "frontend": "100%"},
+  "seed_data_creation": "None",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Headless Chromium lacks H.264 so the video does not decode frames in automation — this is expected and documented by the main agent. Verification was done STRUCTURALLY (computed styles, DOM attributes, source wiring, overlay content, asset HEAD 200s, reduced-motion behaviour). All 7 required checks pass. If re-verifying real playback events (video_autoplay_started, _unmuted, _paused, _completed), do it manually in a real Chrome / Safari window.",
+  "rca of the issue": "The original black-bar bug was caused by the hero frame using a fixed height (likely 16:10 or similar container) with a dashboard screenshot poster whose intrinsic ratio did not match, forcing the browser to letterbox against a dark container background. The fix (HeroVideo.jsx) sets aspectRatio: '16/9' exactly matching the source 1920x1080 file, forces background: #FBF8F3 on BOTH the frame container AND the <video> element so even during poster load / autoplay-blocked fallback no dark pixels show, and uses object-fit: contain so the actual decoded frames fill the box edge-to-edge. All 4 widths now show the warm cream frame with no letterboxing."
+}

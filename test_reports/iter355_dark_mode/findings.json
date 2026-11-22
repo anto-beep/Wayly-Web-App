@@ -1,0 +1,324 @@
+{
+  "profile_me": {
+    "route": "/app/me",
+    "entries": [
+      {
+        "sel": "[data-testid^=\"core1-artefact-\"]",
+        "idx": 0,
+        "text": "Statement Decoder\n\nApril 2026, 0 anomalies\n\nNo issues",
+        "color": "rgb(79, 168, 174)",
+        "bg": "rgba(168, 199, 171, 0.133)",
+        "contrast": 1.51,
+        "visible": true
+      },
+      {
+        "sel": "[data-testid^=\"core1-artefact-\"]",
+        "idx": 1,
+        "text": "Invoice Checker\n\nInvoice from provider\n\nAll clear",
+        "color": "rgb(79, 168, 174)",
+        "bg": "rgba(232, 154, 111, 0.133)",
+        "contrast": 1.23,
+        "visible": true
+      },
+      {
+        "sel": "[data-testid^=\"core1-artefact-\"]",
+        "idx": 2,
+        "text": "Support Plan Reviewer\n\nNot yet run.\n\nReview a care plan",
+        "color": "rgb(255, 255, 255)",
+        "bg": "rgba(79, 168, 174, 0.133)",
+        "contrast": 2.78,
+        "visible": true
+      },
+      {
+        "sel": "[data-testid^=\"core1-artefact-\"]",
+        "idx": 3,
+        "text": "Review a care plan",
+        "color": "rgb(79, 168, 174)",
+        "bg": "rgba(79, 168, 174, 0.133)",
+        "contrast": 1.0,
+        "visible": true
+      },
+      {
+        "sel": "[data-testid^=\"core1-artefact-\"]",
+        "idx": 4,
+        "text": "Classification Check\n\nClassification self-check, Level ?",
+        "color": "rgb(79, 168, 174)",
+        "bg": "rgba(107, 196, 202, 0.133)",
+        "contrast": 1.38,
+        "visible": true
+      },
+      {
+        "sel": "[data-testid^=\"core1-artefact-\"]",
+        "idx": 5,
+        "text": "Contribution Estimator\n\nContribution estimate (Class 4)",
+        "color": "rgb(79, 168, 174)",
+        "bg": "rgba(107, 196, 202, 0.133)",
+        "contrast": 1.38,
+        "visible": true
+      },
+      {
+        "sel": "[data-testid=\"core1-financial-card\"]",
+        "idx": 0,
+        "text": "Financial Position\nSee Contribution Position\n62%\nOF BUDGET USED\nQuarterly budget",
+        "color": "rgb(255, 255, 255)",
+        "bg": "rgb(6, 32, 31)",
+        "contrast": 17.02,
+        "visible": true
+      }
+    ]
+  },
+  "athm_projects": {
+    "route": "/app/athm/projects",
+    "entries": [
+      {
+        "sel": "[data-testid^=\"athm-project-card-\"]",
+        "idx": 0,
+        "text": "TEST project 448e76\n\nASSISTIVE TECHNOLOGY\nINITIATING",
+        "color": "rgb(255, 255, 255)",
+        "bg": "rgb(20, 64, 63)",
+        "contrast": 11.44,
+        "visible": true
+      },
+      {
+        "sel": "[data-testid^=\"athm-project-card-\"]",
+        "idx": 1,
+        "text": "TEST Bathroom safety upgrade\n\nCOMBINED AT & HM\nOT REFERRAL NEEDED",
+        "color": "rgb(255, 255, 255)",
+        "bg": "rgb(20, 64, 63)",
+        "contrast": 11.44,
+        "visible": true
+      },
+      {
+        "sel": "[data-testid^=\"athm-project-card-\"]",
+        "idx": 2,
+        "text": "Dash QA OT Referral 1786022346\n\nCOMBINED AT & HM\nINITIATING",
+        "color": "rgb(255, 255, 255)",
+        "bg": "rgb(20, 64, 63)",
+        "contrast": 11.44,
+        "visible": true
+      },
+      {
+        "sel": ".dm-tint-card",
+        "idx": 0,
+        "text": "TEST project 448e76\n\nASSISTIVE TECHNOLOGY\nINITIATING",
+        "color": "rgb(255, 255, 255)",
+        "bg": "rgb(20, 64, 63)",
+        "contrast": 11.44,
+        "visible": true
+      },
+      {
+        "sel": ".dm-tint-card",
+        "idx": 1,
+        "text": "TEST Bathroom safety upgrade\n\nCOMBINED AT & HM\nOT REFERRAL NEEDED",
+        "color": "rgb(255, 255, 255)",
+        "bg": "rgb(20, 64, 63)",
+        "contrast": 11.44,
+        "visible": true
+      },
+      {
+        "sel": ".dm-tint-card",
+        "idx": 2,
+        "text": "Dash QA OT Referral 1786022346\n\nCOMBINED AT & HM\nINITIATING",
+        "color": "rgb(255, 255, 255)",
+        "bg": "rgb(20, 64, 63)",
+        "contrast": 11.44,
+        "visible": true
+      }
+    ]
+  },
+  "athm_new_project_modal": {
+    "route": "/app/athm/projects",
+    "entries": [
+      {
+        "idx": 0,
+        "text": "Project type REQUIRED\nAssistive Technology\nHome Modification",
+        "color": "rgb(255, 255, 255)",
+        "bg": "rgb(20, 64, 63)",
+        "contrast": 11.44
+      },
+      {
+        "idx": 1,
+        "text": "Primary need\nChoose a need to pre-fill (optional)\nReduce fal",
+        "color": "rgb(255, 255, 255)",
+        "bg": "rgb(20, 64, 63)",
+        "contrast": 11.44
+      },
+      {
+        "idx": 2,
+        "text": "Invoices & documents\n\nAttach quotes, invoices, or an OT refe",
+        "color": "rgb(255, 255, 255)",
+        "bg": "rgb(20, 64, 63)",
+        "contrast": 11.44
+      },
+      {
+        "idx": 3,
+        "text": "TEST project 448e76\n\nASSISTIVE TECHNOLOGY\nINITIATING",
+        "color": "rgb(255, 255, 255)",
+        "bg": "rgb(20, 64, 63)",
+        "contrast": 11.44
+      },
+      {
+        "idx": 4,
+        "text": "TEST Bathroom safety upgrade\n\nCOMBINED AT & HM\nOT REFERRAL N",
+        "color": "rgb(255, 255, 255)",
+        "bg": "rgb(20, 64, 63)",
+        "contrast": 11.44
+      },
+      {
+        "idx": 5,
+        "text": "Dash QA OT Referral 1786022346\n\nCOMBINED AT & HM\nINITIATING",
+        "color": "rgb(255, 255, 255)",
+        "bg": "rgb(20, 64, 63)",
+        "contrast": 11.44
+      }
+    ]
+  },
+  "support": {
+    "route": "/support",
+    "entries": [
+      {
+        "sel": "[data-testid^=\"ticket-status-\"]",
+        "idx": 0,
+        "text": "Received",
+        "color": "rgb(14, 77, 82)",
+        "bg": "rgb(244, 241, 234)",
+        "contrast": 8.45,
+        "visible": true
+      },
+      {
+        "sel": "[data-testid^=\"ticket-status-\"]",
+        "idx": 1,
+        "text": "Closed",
+        "color": "rgb(14, 77, 82)",
+        "bg": "rgb(243, 244, 246)",
+        "contrast": 8.67,
+        "visible": true
+      },
+      {
+        "sel": "[data-testid^=\"ticket-status-\"]",
+        "idx": 2,
+        "text": "Under Review",
+        "color": "rgb(14, 77, 82)",
+        "bg": "rgb(14, 48, 51)",
+        "contrast": 1.48,
+        "visible": true
+      },
+      {
+        "sel": "[data-testid^=\"ticket-status-\"]",
+        "idx": 3,
+        "text": "Received",
+        "color": "rgb(14, 77, 82)",
+        "bg": "rgb(244, 241, 234)",
+        "contrast": 8.45,
+        "visible": true
+      },
+      {
+        "sel": "[data-testid^=\"ticket-status-\"]",
+        "idx": 4,
+        "text": "Received",
+        "color": "rgb(14, 77, 82)",
+        "bg": "rgb(244, 241, 234)",
+        "contrast": 8.45,
+        "visible": true
+      },
+      {
+        "sel": "[data-testid^=\"ticket-status-\"]",
+        "idx": 5,
+        "text": "Received",
+        "color": "rgb(14, 77, 82)",
+        "bg": "rgb(244, 241, 234)",
+        "contrast": 8.45,
+        "visible": true
+      }
+    ]
+  },
+  "letters": {
+    "route": "/ai-tools/letters-and-follow-ups",
+    "entries": [
+      {
+        "sel": "[data-testid^=\"lf1-group-toggle-\"]",
+        "idx": 0,
+        "text": "Ask For A Change\nRequest an assessment, more help, or a change to the plan.\n3",
+        "color": "rgb(255, 255, 255)",
+        "bg": "rgba(14, 77, 82, 0.07)",
+        "contrast": 9.54,
+        "visible": true
+      },
+      {
+        "sel": "[data-testid^=\"lf1-group-toggle-\"]",
+        "idx": 1,
+        "text": "Dispute Or Disagree\nPush back on a charge, an assessment, or a classification de",
+        "color": "rgb(255, 255, 255)",
+        "bg": "rgb(165, 81, 43)",
+        "contrast": 5.51,
+        "visible": true
+      },
+      {
+        "sel": "[data-testid^=\"lf1-group-toggle-\"]",
+        "idx": 2,
+        "text": "Report A Problem Or Escalate\nRaise a service problem, an unresponsive care manag",
+        "color": "rgb(255, 255, 255)",
+        "bg": "rgb(165, 81, 43)",
+        "contrast": 5.51,
+        "visible": true
+      },
+      {
+        "sel": "[data-testid^=\"lf1-group-toggle-\"]",
+        "idx": 3,
+        "text": "Notify Of A Change\nTell them about a provider change, hardship, or updated detai",
+        "color": "rgb(11, 20, 22)",
+        "bg": "rgb(6, 32, 31)",
+        "contrast": 1.1,
+        "visible": true
+      },
+      {
+        "sel": "[data-testid^=\"lf1-group-toggle-\"]",
+        "idx": 4,
+        "text": "Reply To A Message\nDraft a considered response to something you received.\n1",
+        "color": "rgb(255, 255, 255)",
+        "bg": "rgba(14, 77, 82, 0.07)",
+        "contrast": 9.54,
+        "visible": true
+      },
+      {
+        "sel": "[data-testid^=\"lf1-group-toggle-\"]",
+        "idx": 5,
+        "text": "A Safety Concern\nWorried about someone's safety? Start here \u2014 we guide you to ca",
+        "color": "rgb(255, 255, 255)",
+        "bg": "rgb(6, 32, 31)",
+        "contrast": 17.02,
+        "visible": true
+      },
+      {
+        "sel": "[data-testid=\"lf1-group-toggle-notify\"]",
+        "idx": 0,
+        "text": "Notify Of A Change\nTell them about a provider change, hardship, or updated detai",
+        "color": "rgb(11, 20, 22)",
+        "bg": "rgb(6, 32, 31)",
+        "contrast": 1.1,
+        "visible": true
+      }
+    ]
+  },
+  "csc_q1": {
+    "route": "/ai-tools/classification-self-check",
+    "text": "1. How easily does the person you care for shower or bathe themselves?\nNo difficulty\nSlight\nModerate\nSignificant\nCannot do alone\nNot sure\nI don't know or haven't seen."
+  },
+  "light_mode": {
+    "theme_dark_present": false
+  },
+  "light_spotchecks": {
+    "/app/me": {
+      "loaded": true
+    },
+    "/support": {
+      "loaded": true
+    },
+    "/app/athm/projects": {
+      "loaded": true
+    },
+    "/ai-tools/letters-and-follow-ups": {
+      "loaded": true
+    }
+  }
+}

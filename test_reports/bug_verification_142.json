@@ -1,0 +1,59 @@
+{
+  "verdict": "not_fixed",
+  "user_reported_bug": "Remove 'Billed monthly' from all references on pricing and homepage. Homepage / still says 'Start 7-day free trial' even when the user is logged in. Do a full sweep \u2014 every page must reflect the PRICING-UI-1 v11 spec.",
+  "summary": "No relevant testing skill found. Focused UI verification passed for /pricing and homepage guest/logged-in CTA behavior, including Cathy login and pricing-table checks. However the requested full sweep is not complete: public /faq still displays stale '$19 per month' pricing, and source sweep found additional '$19/month' references in article and participants code.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [
+      {
+        "component": "FAQ pricing copy",
+        "issue": "Public /faq answer 'How much does Wayly cost?' still says 'Solo $19 per month. Family $39 per month...' instead of PRICING-UI-1 v11 fortnightly pricing.",
+        "selector": "data-testid=faq-search-input / faq-group-wayly-software",
+        "priority": "HIGH"
+      },
+      {
+        "component": "Full pricing copy sweep",
+        "issue": "Source sweep still finds '$19/month' in frontend/src/data/seoToolArticles.js and frontend/src/pages/extended/Participants.jsx, plus '$19 per month' in frontend/src/data/faq.js.",
+        "selector": "source sweep",
+        "priority": "HIGH"
+      }
+    ],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/test_reports/pricing_ui_bug_iter142_playwright.py",
+    "/app/test_reports/pricing_ui_bug_iter142_public_sweep.py",
+    "/app/test_reports/pricing_ui_bug_iter142_source_sweep.py",
+    "/app/test_reports/pricing_ui_bug_iter142_source_sweep_output.txt"
+  ],
+  "action_items": [
+    "Update /app/frontend/src/data/faq.js pricing answer to PRICING-UI-1 v11 fortnightly prices.",
+    "Replace remaining '$19/month' / stale monthly plan copy in /app/frontend/src/data/seoToolArticles.js and /app/frontend/src/pages/extended/Participants.jsx with the correct $24.50 per fortnight add-on/plan language and current Family pricing where applicable.",
+    "Re-run a source sweep for 'Billed monthly', '$19/month', and '$19 per month', then re-test /pricing, /, /faq, and any affected participants/article UI."
+  ],
+  "critical_code_review_comments": [
+    "Pricing.jsx and Landing.jsx changes look effective in browser: no 'Billed monthly' on /pricing or /, guest sublines match, logged-in homepage CTAs are Buy Solo/Buy Family and navigate to /pricing, logged-in pricing CTAs are Buy Solo/Buy Family, and Adviser-branded PDF reports has no checkmarks.",
+    "But full-sweep requirement is unmet: source sweep result: Billed monthly=0, '$19/month'=6, '$19 per month'=1. Runtime public /faq confirms a visible stale '$19 per month' answer."
+  ],
+  "updated_files": [
+    "/app/test_reports/pricing_ui_bug_iter142_playwright.py",
+    "/app/test_reports/pricing_ui_bug_iter142_public_sweep.py",
+    "/app/test_reports/pricing_ui_bug_iter142_source_sweep.py",
+    "/app/test_reports/pricing_ui_bug_iter142_source_sweep_output.txt",
+    "/app/test_reports/bug_verification_142.json",
+    "/app/test_reports/iteration_142.json"
+  ],
+  "success_rate": {
+    "backend": "N/A",
+    "frontend": "85%"
+  },
+  "seed_data_creation": "None. Used existing cathy@example.com / testpass123 credentials from /app/memory/test_credentials.md.",
+  "retest_needed": true,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "No relevant testing skill found. Re-test the same focused flows plus the newly fixed stale pricing locations: /faq visible answer, article slug sah-invoice-checker-verify-support-at-home-invoice-five-minutes if rendered, and /app/participants add/upgrade copy after login/onboarding as needed. Skip Stripe checkout redirects.",
+  "rca_of_the_issue": "The immediate Pricing.jsx/Landing.jsx changes fixed the reported pricing/homepage cards, but the broader copy audit missed shared/public content data and extended participants UI strings that still contain old monthly pricing."
+}

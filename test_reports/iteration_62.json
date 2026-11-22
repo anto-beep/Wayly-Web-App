@@ -1,0 +1,84 @@
+{
+  "summary": "PPC-1 v2 Provider Price Checker end-to-end verification. Backend: 62/62 green — 42 deterministic unit tests (test_ppc_v2.py) + 20 live HTTP endpoint tests (new test_ppc_v2_endpoints.py) covering snapshots, services, public price-check v2 (above/in/below/clinical/pre-1-Oct-2026/post-1-Oct-2026/grandfathered/non-checkable/transport-per-km/implausibly-low), CE state get+put, save+fuzzy-match+merge, list, history, single delete, bulk delete, email draft, and report-issue (WAY-#### reference generated). During testing I found and fixed TWO backend bugs: (1) PUT /api/tools/ce/state returned 500 because motor mutates the doc with an ObjectId `_id` after insert_one and it was being echoed in the response — fixed by popping `_id` before returning; (2) DELETE /api/ppc/checks/provider returned 404 because the route was declared AFTER /api/ppc/checks/{check_id}, so 'provider' matched as check_id — fixed by moving the provider route above the check_id route. Frontend: /ai-tools/provider-price-checker loads cleanly for cathy, renders all pc-* testids (title, service dropdown, rate, provider, submit, grandfathered gate, caps note with health.gov.au citation, how-this-works panel). Personal care @ $150 + pc-pension-full + pc-submit renders pc-quality-guard (after_hours_ambiguity); clicking pc-guard-continue reveals pc-how-this-compares with pc-position ('$150 above range $85-$115'), pc-distance ('$35 above top'), pc-doh-caveat, and pc-your-share (5% = $7.50). Personal care @ $100 + full pension shows in-range card, Your Share $5.00 @5%, plus 'Coming soon: 1 Oct 2026 becomes clinical' transitional note. Package management (monthly flat fee) @ $300 renders pc-non-checkable panel with the DoH-does-not-publish explanation. pc-adm-link opens pc-adm-modal. Report-an-issue button opens the shared report-issue-panel and successfully created ticket reference WAY-0014 — however, the frontend calls /api/support/tickets (the shared support ticketing system), NOT the PPC-specific /api/ppc/report-issue that the spec called out. Both endpoints exist and work; this is a wiring choice not a functional bug — flagged for main agent alignment.",
+  "backend_issues": {
+    "critical": [],
+    "minor": [
+      {"endpoint": "PUT /api/tools/ce/state", "issue": "FIXED: was returning HTTP 500 with 'ObjectId is not iterable' because motor mutates the insert doc with `_id: ObjectId(...)` and it was being echoed. Popped `_id` from response."},
+      {"endpoint": "DELETE /api/ppc/checks/provider", "issue": "FIXED: 404 because /ppc/checks/{check_id} was declared before /ppc/checks/provider so FastAPI matched 'provider' as check_id. Moved bulk-delete route above single-delete."}
+    ]
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [
+      {
+        "flow": "Report an issue on price-check result",
+        "issue": "The shared ReportIssueButton posts to /api/support/tickets rather than the PPC-specific /api/ppc/report-issue that the PPC-1 v2 spec §4.9 calls out. Functionally the user experience is fine — a WAY-#### ticket reference is returned (WAY-0014 in this test), and support routing still works. However the /api/ppc/report-issue endpoint (which uniquely writes to BOTH ppc_defects AND sup_tickets tables) is currently unreachable from the UI. Either wire the Price Checker button to the PPC-specific endpoint, or delete the /api/ppc/report-issue route to avoid dead code.",
+        "affected_selectors": ["[data-testid='report-issue-btn']", "[data-testid='report-issue-panel']"]
+      }
+    ],
+    "design_issues": []
+  },
+  "verified_features": [
+    {"feature": "GET /api/ppc/snapshots", "evidence": "Returns default_snapshot_id='doh-2025-10' and snapshot list; auth-optional"},
+    {"feature": "GET /api/ppc/services", "evidence": "Returns Clinical/Independence/Everyday Living rows including checkable=false rows (Package management, Care management, Wraparound advisor fee, Transport per-km)"},
+    {"feature": "POST /api/public/price-check-v2 above_range", "evidence": "Personal care @ $150 full pension: position=above, direction=above_range, distance_from_edge=35.0, doh_caveat non-null, quality_guard=after_hours_ambiguity, your_share.mode=exact"},
+    {"feature": "In-range clean case", "evidence": "Personal care @ $100 full pension: position=in, doh_caveat=null, quality_guard=null"},
+    {"feature": "Implausibly-low guard", "evidence": "Personal care @ $20: quality_guard.guard_type=implausibly_low"},
+    {"feature": "Below-range distance", "evidence": "Personal care @ $80: position=below, distance_from_edge=5.0"},
+    {"feature": "Clinical stream share", "evidence": "Registered nurse @ $170 full pension: your_share.mode=clinical amount=0.0"},
+    {"feature": "Personal care post-1-Oct-2026 shift", "evidence": "check_date=2026-10-02 → your_share.mode=clinical"},
+    {"feature": "Personal care pre-1-Oct-2026 exact share", "evidence": "check_date=2026-09-30 full pension → your_share.mode=exact, rate_pct=5.0"},
+    {"feature": "Grandfathered gate", "evidence": "is_grandfathered=true → your_share.mode=grandfathered"},
+    {"feature": "Non-checkable Package management", "evidence": "direction=non_checkable, position=not_checkable"},
+    {"feature": "Transport per-km override", "evidence": "unit_override=kilometre remaps to 'Transport (per kilometre)' non-checkable row"},
+    {"feature": "require_paid_plan gates unauth calls", "evidence": "Anonymous POST returns 401/402/403"},
+    {"feature": "CE state GET+PUT round-trip", "evidence": "PUT persists {pension_status:full, classification:4}; subsequent GET returns the same doc"},
+    {"feature": "Save check + fuzzy match + merge", "evidence": "First save saved=true; typo variant (Services→Service) returns saved=false with prompts[].guard_type=provider_fuzzy_match; merge_provider_id resolves and saves"},
+    {"feature": "GET /api/ppc/checks auth-only", "evidence": "Authenticated returns list; anonymous returns 401"},
+    {"feature": "GET /api/ppc/checks/history", "evidence": "Returns count, change_delta, change_pct, rate_increases_last_12mo, per-row delta annotations"},
+    {"feature": "DELETE /api/ppc/checks/{id}", "evidence": "Returns deleted=true (or requires_confirmation when crossing >2 threshold)"},
+    {"feature": "DELETE /api/ppc/checks/provider bulk delete", "evidence": "AFTER FIX: returns {deleted: N}"},
+    {"feature": "POST /api/ppc/email-draft", "evidence": "Body contains service, rate ($150), lower ($85), upper ($115), source_date 2025-10-01, cathy's first name"},
+    {"feature": "POST /api/ppc/report-issue direct call", "evidence": "Creates ppc_defects row + sup_tickets row + sup_tool_snapshots; returns ticket_reference WAY-#### and auto_acknowledge"},
+    {"feature": "Frontend tool page loads clean", "evidence": "All pc-* testids present, health.gov.au citation link href verified, How-this-works accordion opens with bullets"},
+    {"feature": "Frontend after-hours guard flow", "evidence": "Personal care @ 150 + pension-full + submit → pc-quality-guard visible; clicking pc-guard-continue reveals pc-how-this-compares + pc-position ($150 above $85-$115) + pc-distance ($35 above top) + pc-doh-caveat + pc-your-share"},
+    {"feature": "Frontend in-range flow", "evidence": "Personal care @ 100 shows Your Share $5.00 @ 5% + coming-soon Oct 2026 transitional note"},
+    {"feature": "Frontend non-checkable panel", "evidence": "Package management (monthly flat fee) @ 300 renders pc-non-checkable with DoH-does-not-publish explanation"},
+    {"feature": "Frontend ADM modal", "evidence": "pc-adm-link click opens pc-adm-modal Dialog"},
+    {"feature": "Frontend report-issue end-to-end", "evidence": "Panel opens; submit returns 'Your Ticket Has Been Received. Your reference is WAY-0014.' — but hits /api/support/tickets (see integration issues)"}
+  ],
+  "test_report_links": [
+    "/app/backend/tests/test_ppc_v2.py",
+    "/app/backend/tests/test_ppc_v2_endpoints.py",
+    "/app/test_reports/pytest/iter62_ppc_v2_endpoints.xml"
+  ],
+  "action_items": [
+    "DECIDE — Should the Price Checker Report-an-issue button POST to /api/ppc/report-issue (spec §4.9, uniquely writes ppc_defects + sup_tickets + sup_tool_snapshots) or continue routing through /api/support/tickets (currently in prod)? Both create a WAY-#### ticket. If the shared endpoint is the go-forward path, delete the /api/ppc/report-issue route and its build_ppc_v2_router registration to avoid dead code; otherwise update ReportIssueButton to detect PPC context and switch endpoints.",
+    "LOW — Route ordering guardrail: consider adding a lint / test that walks all APIRouter routes and asserts static path segments always precede path-parameter routes with the same prefix (would have caught the /ppc/checks/provider vs /ppc/checks/{check_id} collision earlier). Same class of bug appears in ~6 other place scans of server.py.",
+    "LOW — ObjectId echo pattern: audit other endpoints that build a document via insert_one + echo the doc back. Any doc used post-insert now carries a Mongo _id ObjectId that will 500 on JSON serialization. Grep pattern: `await db.\\w+.insert_one\\(([a-z_]+)\\)\\n.*return.*\\1`.",
+    "LOW — The report-issue payload currently drops the ppc-specific tool_input keys (snapshot_id, source_date). If the shared /support/tickets endpoint is the go-forward path, augment its schema so PPC context (snapshot_id, source_date, ranges) is captured in sup_tool_snapshots for downstream triage."
+  ],
+  "critical_code_review_comments": [
+    "routes/price_check_v2.py had TWO shippable defects that unit tests missed because they run against the module directly, not via FastAPI. Consider adding a smoke suite that mounts the router in a TestClient and exercises at least one write per endpoint — would have caught both the CE _id serialization bug and the /ppc/checks/provider path-parameter shadowing.",
+    "routes/price_check_v2.py the fuzzy_match logic in _resolve_provider_for_save short-circuits when match.normalised_name == normalised (exact match after normalisation → silent save). This is correct behaviour but means the WS12 prompt only fires on ACTUAL typos. Test coverage should assert both branches; test_ppc_v2_endpoints.py::test_save_check_and_fuzzy_match covers the typo branch but not the identical-post-normalisation branch.",
+    "lib/ppc_v2.py _compute_share() computes share against comp.median but the docstring notes 'the route uses charged rate directly'. share_from_rate() is the real API. Consider deleting _compute_share() from the band-cohort path and inlining the multiplication with body.rate to eliminate the confusing indirection.",
+    "frontend/src/pages/tools/PriceCheckerTool.jsx wires ReportIssueButton with toolName='Provider Price Checker' and toolVersion='PPC-1 v2', but the shared support ticket handler doesn't route those into any PPC-specific triage queue. Either the shared handler needs to grow a category='ppc_report_issue' branch OR the button needs to switch endpoints for PPC. Documented in integration_issues above."
+  ],
+  "updated_files": [
+    "/app/backend/routes/price_check_v2.py (fixed ObjectId serialization on ce_state_put; moved bulk-delete route above single-delete)",
+    "/app/backend/tests/test_ppc_v2_endpoints.py (new — 20 live HTTP endpoint tests)"
+  ],
+  "success_rate": {
+    "backend": "100% (62/62 — 42 unit + 20 live endpoint)",
+    "frontend": "95% — every acceptance flow renders + interacts correctly; 1 endpoint-wiring mismatch (report-issue hits /support/tickets instead of /ppc/report-issue)"
+  },
+  "test_credentials": "cathy@example.com / testpass123 (family plan, paid tool access — used for all backend + frontend tests).",
+  "seed_data_creation": "Test data prefixed with 'TEST_Glorious Services <uuid>' provider names, self-cleaned by the bulk-delete step at the end of test_delete_check_and_bulk_delete. One WAY-#### ticket (WAY-0014) was created via the frontend flow — recommend the main agent's admin support console tests clean these up.",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Backend suite: `pytest /app/backend/tests/test_ppc_v2.py /app/backend/tests/test_ppc_v2_endpoints.py -v` (60s wall). test_ppc_v2_endpoints.py hits the live preview URL; the fuzzy-match test creates + deletes ~3 saved checks per run. To re-verify the frontend, log in as cathy → /ai-tools/provider-price-checker → run these 4 flows: (a) Personal care rate 150 + pc-pension-full + pc-submit → pc-quality-guard → pc-guard-continue → verify pc-position/pc-distance/pc-doh-caveat/pc-your-share. (b) Personal care rate 100 → verify in-range card + Coming-soon Oct 2026 note. (c) Service dropdown → select value='Package management (monthly flat fee)' + rate 300 + submit → verify pc-non-checkable. (d) pc-adm-link → pc-adm-modal opens. Note: for select_option use `value=` not `label=` because option labels append ' — no range published' for non-checkable rows.",
+  "rca_of_the_issue": {
+    "ce_state_500": "Root cause: PyMongo/Motor mutates the input doc after insert_one to include the generated ObjectId as `_id`. The handler was returning `{'state': doc, 'saved': True}` with `doc` still holding the ObjectId. FastAPI's jsonable_encoder cannot serialize ObjectId and raises ValueError → HTTP 500. Mitigation: `doc.pop('_id', None)` after insert. Long-term: prefer returning a fresh dict built from known fields OR use a Pydantic response_model that whitelists returned keys.",
+    "bulk_delete_404": "Root cause: FastAPI resolves routes in registration order. `@r.delete('/ppc/checks/{check_id}')` was registered before `@r.delete('/ppc/checks/provider')`. Path 'provider' matched `{check_id}` as a literal string, hit the single-delete handler, which looked up id='provider' in ppc_saved_checks → not found → 404. Mitigation: swap declaration order so static-segment routes are declared BEFORE parameterised routes. Long-term: add a test that walks router.routes and asserts static segments are ordered before {param} routes."
+  }
+}

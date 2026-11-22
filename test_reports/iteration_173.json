@@ -1,0 +1,39 @@
+{
+  "summary": "Mobile-only UI verification of the 6 bug fixes on Wayly Expo web preview after login as cathy@example.com (family plan). 5 of 6 fixes are correctly implemented. Bug #2 (teal CTA must have WHITE text) is NOT fixed on the Dashboard 'Upload a Statement' CTA — text still renders dark rgb(28,43,45) on teal rgb(14,77,82). Root cause identified in shared T component (ui.tsx L271).",
+  "platforms_tested": ["mobile"],
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "mobile": {
+      "ui_bugs": [
+        {
+          "component": "Dashboard 'Upload a Statement' CTA (and any other Pressable using <T> for its label on a teal/primary bg)",
+          "issue": "Text still renders DARK (rgb(28,43,45)) on the teal button background (rgb(14,77,82)) — bug #2 in the review request. Caller passes color:'#fff' but T ignores it. See screenshot /tmp/dashboard.png.",
+          "testID": "dashboard-upload-cta",
+          "priority": "HIGH"
+        }
+      ],
+      "integration_issues": [],
+      "design_issues": [],
+      "react_native_issues": []
+    }
+  },
+  "parity_issues": [],
+  "test_report_links": ["/tmp/dashboard.png", "/tmp/drawer.png", "/tmp/statements.png", "/tmp/upload.png"],
+  "action_items": [
+    "Fix /app/mobile/src/components/ui.tsx line 271: change `style={[merged, { color }]}` to `style={[{ color }, merged]}` so caller-supplied `color` in the `style` prop wins over the component default. This will unblock the white-text-on-teal requirement app-wide for any <T> used inside a coloured Pressable (dashboard-upload-cta, dashboard-upgrade-cta paywall CTA at index.tsx:194, and any similar).",
+    "After the T fix, re-verify /(tabs) dashboard CTA renders WHITE 'Upload a Statement' on teal, then spot-check other teal CTAs (paywall 'Choose a Plan', anywhere else using T for the label). The <Button> component (ui.tsx:142) already uses raw <Text> with p.fg so it is unaffected."
+  ],
+  "critical_code_review_comments": [
+    "ui.tsx `T` component style precedence bug: `<Text style={[merged, { color }]}>` places the default color AFTER caller styles, silently overriding any `color` a caller passes via `style`. This is a subtle footgun across the whole mobile codebase — swap the order so the base color is a fallback (place it first) and the caller's merged style (which already reflects their explicit color) wins.",
+    "index.tsx L192-195: the paywall 'Choose a Plan' button uses `<T style={{...color: colors.primaryFg}}>` inside a teal Pressable. Same bug applies — will also render dark on teal until the T fix lands.",
+    "(tabs)/_layout.tsx correctly registers the 'more' tab with a tabPress listener that preventDefault + openDrawer, and hides settings/family/ask via href:null. Good.",
+    "AppDrawer backdrop uses `{flex:1, flexDirection:'row'}` with no backgroundColor, so the right-of-panel area is truly transparent (bug #3 fixed). Tapping outside still closes because the outer Pressable handles onPress. Good."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "n/a (skipped)", "frontend": "5/6 fixes verified (83%)"},
+  "seed_data_creation": "None",
+  "retest_needed": true,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "Login cathy@example.com/testpass123 on https://mobile-parity-sweep.expo.preview.emergentagent.com (mobile viewport 390x844). Verified: (1) no household/participant switcher chip on dashboard — PASS; (2) dashboard 'Upload a Statement' CTA text is STILL DARK on teal — FAIL, root cause is <T> component style order in /app/mobile/src/components/ui.tsx line 271; (3) drawer backdrop is transparent (no dark overlay), tapping outside closes — PASS; (4) bottom tabs = Dashboard, AI Tools, Statements, More; Settings gone; tab-more opens drawer with 6 groups (today, money, journeys, care, paperwork, account) — PASS; (5) Statements screen has no duplicate 'Statements'/'Support at Home statements' row under header (the 'Statements' DIV that appeared in DOM scan is the bottom tab label, not a duplicate heading) — PASS; (6) Upload screen title = 'Upload a Statement', no Invoice toggle, three source rows (file/camera/library) present — PASS. After main agent fixes the T style-order bug, only bug #2 needs re-verification.",
+  "rca of the issue": "In /app/mobile/src/components/ui.tsx the T component renders `<Text style={[merged, { color }]}>` (line 271). `merged` is `{ ...typeScale[variant], ...callerStyle }` and already contains the caller's `color:'#fff'` when Dashboard passes it at index.tsx:142. Because the second array element `{ color }` (colors.text = dark) is applied AFTER merged, it always overrides the caller. Result: every <T> nested inside a coloured Pressable renders with the default text color, breaking bug #2 on dashboard-upload-cta (and dashboard-upgrade-cta paywall button). Fix: swap the array order to `style={[{ color }, merged]}` so caller's color in merged wins."
+}

@@ -1,0 +1,84 @@
+# CPR-FINDINGS-UX-1 v2 · Workstream D1 — web ↔ mobile parity manifest.
+#
+# Per PARITY-1 v1 and locked decision L13: no user-facing CPR-1 feature ships
+# to production web until the mobile counterpart is at least "in progress" and
+# passing acceptance for the same feature.
+#
+# States: implemented | in_progress | not_started
+# verified: web = automated Playwright; mobile = source-review parity only while
+# the Expo web-preview SecureStore auth-injection limitation persists.
+version: 1
+tool: CPR-1
+features:
+  - id: A3_verification_panel
+    description: "Flagship 5-check Verification panel (Decimal), always visible."
+    web: implemented
+    mobile: implemented
+    verified: { web: automated_iter238, mobile: source_parity_iter238 }
+
+  - id: A_findings_engine
+    description: "Rule Registry two-stage pipeline, banned-rule suppression, confidence calibration."
+    web: implemented
+    mobile: implemented
+    verified: { web: golden_ci, mobile: golden_ci }
+
+  - id: B7_plan_summary
+    description: "Plain-English plan summary panel + verdict."
+    web: implemented
+    mobile: implemented
+    verified: { web: automated_iter239, mobile: source_parity }
+
+  - id: B9_downloadable_pdf
+    description: "Watermarked summary PDF (verification panel + severity-ordered findings)."
+    web: implemented          # server-rendered POST /care-plans/summary.pdf + download button
+    mobile: in_progress       # uses existing ResultActions export; native share of server PDF pending (D2)
+    verified: { web: automated_iter239, mobile: source_parity }
+
+  - id: C1_draft_letter_handoff
+    description: "Per-finding 'Draft letter about this' -> pre-filled LF-1 correspondence."
+    web: implemented          # navigates /tools/letters-and-follow-ups/<id>
+    mobile: implemented       # pushes /correspondence/<id> (per-surface LF-1 editor route)
+    verified: { web: automated_iter240, mobile: source_parity }
+
+  - id: B6_filter_search
+    description: "Saved-plans register search + classification filter (+ web compliance-flags toggle)."
+    web: implemented
+    mobile: implemented
+    verified: { web: automated_iter239, mobile: source_parity }
+
+  - id: B2_processing_state
+    description: "Staged plain-language progress (Reading -> Checking rules -> Building summary)."
+    web: implemented
+    mobile: implemented
+    verified: { web: pending, mobile: source_parity }
+
+  - id: C3_delete_review
+    description: "Delete a saved review; hard delete removes row + findings + runs + extractions."
+    web: implemented          # 'Delete forever' in trash tab; DELETE ?hard=true
+    mobile: implemented       # inline confirm + hard delete on the list
+    verified: { web: pending, mobile: source_parity }
+
+  # ---- Remaining single-gate items (not yet started) ----
+  - id: B1_screen_redesign
+    description: "Full three-region web / stacked mobile workspace + first-use save modal."
+    web: not_started
+    mobile: not_started
+    verified: { web: n/a, mobile: n/a }
+
+  - id: B5_persisted_reviews_optout
+    description: "Dedicated care_plan_reviews store + 'Don't save this review' auto-save opt-out + dedup."
+    web: not_started          # currently reuses the care_plans register
+    mobile: not_started
+    verified: { web: n/a, mobile: n/a }
+
+  - id: C2_borrowed_data_chips
+    description: "Origin + age chips (CSC-1 / CE-2 / INDEX-1) with 90-day staleness warning."
+    web: not_started
+    mobile: not_started
+    verified: { web: n/a, mobile: n/a }
+
+  - id: D2_mobile_native
+    description: "Native picker (done), background-continuation notification, native share sheet, haptic delete confirm."
+    web: n/a
+    mobile: in_progress       # camera + picker done; background notif + share sheet + haptics pending (needs native build)
+    verified: { mobile: source_parity }

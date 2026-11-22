@@ -1,0 +1,30 @@
+{
+  "summary": "Frontend-only content verification for the Support at Home article changes on Wayly. (1) New article '/resources/articles/support-at-home-financial-hardship-assistance' renders fully: H1 title, excerpt subtitle, Key takeaways block, ToC listing all 7 sections, all 7 section bodies (what-it-is, income test, assets/gifting, SA456 pre-req, how-to-apply steps, what-happens-while-you-wait, where-numbers-come-from), 6-question FAQ accordion (all exact FAQ titles found in DOM), and Related Reading cards. No DRAFT/NEEDS REVIEW banner, no $undefined, no leftover '**' markdown, no console errors (only a cosmetic 404 for a missing asset and a PostHog bot warning). Figure checks pass: $170.31, $48,270.30, SA462 all present. (2) Existing article '/resources/articles/how-much-will-i-pay-for-support-at-home' now shows '$170.31 per fortnight' and the outdated '$165.05' is GONE from the entire page (checked hardship paragraph + 'Where these numbers come from' sources list). (3) Cross-links verified: new-article → /ai-tools/contribution-estimator (1), /ai-tools/letters-and-follow-ups (1), /resources/articles/how-much-will-i-pay-for-support-at-home (3); how-much → /ai-tools/contribution-estimator (2), /resources/articles/support-at-home-financial-hardship-assistance (1). Clicking the cross-link navigates without 404. (4) Articles index at /resources/articles lists the new 'Financial Hardship Assistance' card; clicking it lands on the new article with correct H1.",
+  "platforms_tested": ["web"],
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "web": {
+      "ui_bugs": [],
+      "integration_issues": [],
+      "design_issues": []
+    }
+  },
+  "parity_issues": [],
+  "test_report_links": [
+    "/app/test_reports/iter_fin_hardship.jpeg",
+    "/app/test_reports/iter_how_much.jpeg",
+    "/app/test_reports/iter_hardship_faq.jpeg",
+    "/app/test_reports/iter_index.jpeg"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "Static content module /app/frontend/src/data/seoArticles2026.js is large and growing (2000+ lines, 20+ articles). Consider splitting one article per file under /data/seoArticles/*.js with an index that re-exports, so each article is diff-friendly and lazy-loadable. Not a blocker for this change."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "N/A (skipped per request)", "frontend": "100%"},
+  "seed_data_creation": "None",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Content-only change. New article slug 'support-at-home-financial-hardship-assistance' is live and published (no draft flag). The $170.31 hardship figure is applied in both the new article and the existing 'how-much-will-i-pay-for-support-at-home' article; $165.05 has been fully removed. All internal links (contribution-estimator, letters-and-follow-ups, cross-article links, index card) verified to navigate without 404.",
+  "rca of the issue": ""
+}

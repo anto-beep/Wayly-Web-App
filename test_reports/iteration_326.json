@@ -1,0 +1,33 @@
+{
+  "summary": "Iter 326 verified the 3 critical production bug fixes on the shared backend. 16/16 pytest cases pass: (BUG1) POST /api/lf1/correspondence/{id}/generate-async returns {job_id, status:'processing'} in <1s and the poll endpoint GET /api/lf1/generate-jobs/{job_id} reaches status=done with a non-empty letter body; source_data_missing still surfaces cleanly as a job error with error_detail.missing_fields. (BUG2) All 8 dashboard GETs (/budget/current, /statements, /family-thread, /audit-log, /chat/history, /budget/eligible-pathways, /nudges, /account/health) return 200 in <15s each; POST /insights/summarise runs off-loop (a concurrent GET /auth/me during a summarise call completes in <10s, proving llm_wrapper is no longer blocking the event loop). (BUG3) A fresh correspondence entry has user_saved falsy; PATCH /autosave sets user_saved=true; DELETE removes the entry and it disappears from GET /lf1/correspondence (ghost draft cleanup). Web UI probe confirmed login works and dashboard renders with 0 skeleton elements after 6-8s (no skeleton stall). The web letters route path used in the review request (/tools/letters-and-follow-ups) 404'd for this preview build; a routing/URL concern to confirm with main agent, but does not affect the backend fixes which are the source of the 3 production bugs.",
+  "platforms_tested": ["web", "backend"],
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "web": {
+      "ui_bugs": [],
+      "integration_issues": [
+        {"flow": "Letters tool navigation", "issue": "Direct URL /tools/letters-and-follow-ups returned the Wayly 404 page for logged-in Cathy in this preview build; couldn't verify the auto-draft/discard UI flow end-to-end via browser. Main agent should confirm the current route path (may be nested under /app/... post-refactor).", "affected_selectors": ["lf1-situation-*", "lf1-generate-button", "lf1-detail-leave-modal", "lf1-detail-leave-discard"]}
+      ],
+      "design_issues": []
+    },
+    "mobile": {"ui_bugs": [], "integration_issues": [], "design_issues": [], "react_native_issues": []}
+  },
+  "parity_issues": [],
+  "test_report_links": ["/app/backend/tests/test_iter326_bugs.py", "/app/test_reports/pytest/iter326.xml"],
+  "action_items": [
+    "Confirm/document the correct web route for the Letters & Follow-ups tool in the current build; the review request path /tools/letters-and-follow-ups 404s in preview. Once confirmed, main agent (or next testing agent) can run the discard-deletes-ghost UI parity test on web + Expo.",
+    "Backend fixes for BUG1, BUG2, BUG3 are verified via pytest — no further main-agent action needed on those."
+  ],
+  "critical_code_review_comments": [
+    "lf1.py: _run_generate_job correctly uses asyncio.create_task and stores status in db.lf1_generate_jobs; ttl/expiry not enforced on the jobs collection - long-lived preview envs will accumulate rows (consider a TTL index or periodic sweep).",
+    "llm_wrapper.py: solid design — dedicated ThreadPoolExecutor + wait_for + per-model circuit breaker + semaphore. The known intermittent freeze (agents.stream_chat_with_kindred and aw2 streaming) is still NOT wrapped this pass, per main agent note — worth prioritising next."
+  ],
+  "updated_files": ["/app/backend/tests/test_iter326_bugs.py"],
+  "success_rate": {"backend": "100% (16/16)", "frontend": "partial - dashboard render verified, letters route probe blocked by 404"},
+  "test_credentials": "cathy@example.com / testpass123 (Family plan, participant Dorothy)",
+  "seed_data_creation": "None. Tests self-create + self-delete correspondence entries.",
+  "retest_needed": false,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "Backend regression suite for the 3 critical bugs lives at /app/backend/tests/test_iter326_bugs.py (16 tests, ~16s). Re-run before any lf1 or insights change. Web/mobile UI parity for the discard-ghost-draft flow was NOT completed because the /tools/letters-and-follow-ups direct URL 404s in preview - need to discover the live route (likely nested under /app) before writing the UI parity test. The insights summarise concurrent-GET test proves the event loop is no longer blocked - that is the definitive check for BUG2.",
+  "rca of the issue": "BUG1 root cause was a synchronous 30-70s LLM call on the HTTP request path tripping Cloudflare 524. Fix: generate-async submits + returns job_id instantly; a background asyncio task runs _do_generate and updates lf1_generate_jobs; client polls. Verified: submit <1s, poll reaches done. BUG2 root cause was raw emergentintegrations LlmChat calls blocking the FastAPI event loop (LiteLLM's ~600s httpx default). Fix: all LLM sites rerouted through lib/llm_wrapper.chat_send which offloads onto a dedicated ThreadPoolExecutor with wait_for + timeout + per-model circuit breaker. Verified: concurrent GET during summarise completes cleanly. BUG3 root cause: 'Leave without saving' just navigated away, leaving the empty correspondence row in Mongo, cluttering the mailbox. Fix: autosave sets user_saved=true; frontend discard action calls DELETE only when status=='draft' && !sent_at && !user_saved. Verified end-to-end at the API layer."
+}

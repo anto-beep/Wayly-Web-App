@@ -1,0 +1,46 @@
+{
+  "summary": "Iter318 Letters & Follow-ups overhaul: performed thorough code review of /app/backend/routes/care_plans.py (_resolve_situation + _compose_letter_intake + _SOURCE_TOOL_TO_LF1 + _SOURCE_LEADIN), /app/frontend/src/pages/tools/LettersFollowUps.jsx (front door with groups + blank-letter panel), and /app/frontend/src/pages/tools/CorrespondenceLog.jsx (mailbox with search/filters/delete). Implementation matches the review request precisely. Created pytest /app/backend/tests/test_iter318_letters_overhaul.py to assert (a) statement-decoder finding -> archetype=dispute, situation_id=3, dispute_type=charge_disputed, participant_name='Dorothy Smith', disputed_charge_summary contains 'Support at Home statement' and does NOT contain 'review of the support plan'; (b) care-plan-reviewer -> archetype=request, situation_id=6, summary contains 'support plan'; (c) regulator addressee (acqsc) overrides source_tool -> situation 10; (d) DELETE /api/lf1/correspondence/{id} returns 200 then GET returns 404. BLOCKER: /api/auth/login is hanging >60s on both localhost:8001 and public URL (other endpoints respond 1-9ms per backend logs), so end-to-end test execution timed out at fixture. Frontend Playwright not attempted for same reason. All static/code checks pass.",
+  "platforms_tested": ["web"],
+  "backend_issues": {
+    "critical": [
+      {"endpoint": "/api/auth/login", "issue": "Password login for cathy@example.com hangs >60s on localhost and preview URL, blocking automated backend testing. Other /api/* endpoints respond in <10ms. Likely bcrypt/HIBP work_factor or rate-limit lock. Login worked in prior iterations, so appears to be transient or a lockout from repeated attempts.", "priority": "HIGH"}
+    ],
+    "minor": []
+  },
+  "frontend_issues": {
+    "web": {
+      "ui_bugs": [],
+      "integration_issues": [],
+      "design_issues": []
+    }
+  },
+  "parity_issues": [],
+  "test_report_links": [
+    "/app/backend/tests/test_iter318_letters_overhaul.py",
+    "/app/test_reports/pytest/iter318.xml"
+  ],
+  "action_items": [
+    "Investigate /api/auth/login latency in preview env (>60s). Check bcrypt rounds, HIBP check, user_login_lockout state for cathy@example.com — the account may be locked from prior failed attempts (USER_LOGIN_LOCKOUT_THRESHOLD=5, USER_LOGIN_LOCKOUT_MINUTES=15 in backend/.env). Consider a mongo unlock: db.users.updateOne({email:'cathy@example.com'},{$set:{login_failed_count:0,locked_until:null}}).",
+    "Once login is unblocked, re-run pytest /app/backend/tests/test_iter318_letters_overhaul.py to confirm the four assertions.",
+    "Main agent should self-verify the four flows via the running browser session (which per backend logs is actively hitting /api/lf1/* successfully)."
+  ],
+  "critical_code_review_comments": [
+    "care_plans.py:159-165 _SOURCE_TOOL_TO_LF1 correctly maps statement-decoder / invoice-checker / provider-price-checker -> (3, provider_cm) for disputes, and care-plan-reviewer / support-plan-reviewer -> (6, provider_cm) for requests. Regulator addressees (my_aged_care, acqsc, opan, services_australia, ombudsman, elder_abuse) short-circuit to addressee-driven situation via _REGULATOR_ADDRESSEES set at line 156. Logic is correct.",
+    "care_plans.py:207-208 participant name resolution builds first_name+last_name and falls back to display_name/name — fixes the 'Dorothy' vs 'Dorothy Smith' bug.",
+    "care_plans.py:170-176 _SOURCE_LEADIN templates prevent the incorrect 'came out of a review of the support plan' text when source is statement-decoder / invoice-checker / provider-price-checker.",
+    "care_plans.py:237 dispute_default='charge_disputed' when source_tool in the three billing tools, else 'other' — correct.",
+    "LettersFollowUps.jsx: BlankLetterPanel + GROUPS + SituationCard render correctly. All required testIDs present: lf1-title, lf1-blank-letter-panel, lf1-blank-type-{situationId}, lf1-group-{key}, lf1-situation-{id}, lf1-log-link.",
+    "CorrespondenceLog.jsx: lf1-log-title, lf1-log-new, lf1-log-search, lf1-log-filter-{status}, lf1-log-type-filter, lf1-log-list, lf1-log-entry-{id}, lf1-log-delete-{id}, lf1-log-delete-modal, lf1-log-delete-confirm all present. Delete button correctly hidden for status='sent' (line 458). Search matches subject/recipient/situation_label/inbound_from_label — good coverage.",
+    "Grammar/capitalisation: 'Your mailbox' (correct sentence case), 'Draft a new letter', 'Awaiting reply' filter label, ARCHETYPE_LABEL uses proper capitalisation (Request/Dispute/Complaint/Escalation/Notification/Reply/Safeguarding). No grammar issues found."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_iter318_letters_overhaul.py"
+  ],
+  "success_rate": {"backend": "N/A - login blocked", "frontend": "N/A - not executed"},
+  "test_credentials": "cathy@example.com / testpass123 (login endpoint currently hanging)",
+  "seed_data_creation": "None",
+  "retest_needed": true,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "Auth login hangs in preview — either wait for lockout to clear (15 min) or manually unlock cathy@example.com in mongo before re-running /app/backend/tests/test_iter318_letters_overhaul.py. That test covers the four core assertions from the review request (source-tool routing, participant full name, lead-in phrasing, dispute_type, delete). Playwright front-end flows still need execution: (1) /ai-tools/letters-and-follow-ups blank-letter panel + group rendering, (2) situation click -> editor open, (3) /tools/letters-and-follow-ups/log search + filters + delete confirm, (4) /app/letters redirect. All testIDs verified present in source.",
+  "rca of the issue": "Not applicable - review request features appear correctly implemented per code inspection."
+}

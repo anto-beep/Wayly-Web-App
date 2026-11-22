@@ -1,0 +1,44 @@
+# INDEX-1 v1 · Deploy 1a — Scheduled Legislative Changes
+# Known future changes with certain effective dates. CI drift detection cannot
+# find these because no interim government publication moves ahead of them;
+# they need to be seeded here explicitly.
+#
+# Format mirrors monetary_constants.yaml but keys are effective dates so the
+# "30 days lookahead" CI check can produce a chronological report.
+version: 1
+scheduled_changes:
+  - id: personal_care_funding_1_oct_2026
+    effective_from: 2026-10-01
+    title: "Personal care funding change (Support at Home reforms)"
+    summary: >
+      From 1 October 2026 personal care under Support at Home moves from the
+      Independence contribution category to Clinical Supports and is fully
+      government-funded for approved participants with available funds, so the
+      participant contribution for personal care is $0 from that date. Personal
+      care still draws on the participant's Support at Home funds; only the
+      participant share changes. Statements and invoices dated on or after
+      1 October 2026 should show a $0 personal-care contribution; a contribution
+      still appearing is likely a provider that has not yet repriced.
+    affected_keys:
+      - classification.1.daily_base_individual
+      - classification.2.daily_base_individual
+      - classification.3.daily_base_individual
+      - classification.4.daily_base_individual
+      - classification.5.daily_base_individual
+      - classification.6.daily_base_individual
+      - classification.7.daily_base_individual
+      - classification.8.daily_base_individual
+    action_required: >
+      Antony to publish the new rates in monetary_constants.yaml by
+      15 September 2026 (a fortnight before commencement). CI drift check
+      will alert 30 days out (approximately 1 September 2026).
+    source_type: primary_legislation
+    source_url: "PENDING"
+    source_citation: >
+      Placeholder pending publication of the DoH indexation table for
+      1 October 2026. Track via
+      https://www.health.gov.au/our-work/support-at-home
+    lookahead_alert_days: 30
+    review_owner: antony
+    added_at: 2026-07-08
+    added_by: antony

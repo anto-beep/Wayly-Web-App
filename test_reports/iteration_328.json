@@ -1,0 +1,66 @@
+{
+  "summary": "Verified the PRIMARY REPORTED BUG (admin readability with consumer dark bleed) is FIXED. Also code-reviewed + spot-verified the other 3 features on web. Skipped backend (per request).",
+  "platforms_tested": ["web"],
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "web": {
+      "ui_bugs": [
+        {
+          "component": "PriceCheckerTool (pc-provider)",
+          "issue": "For cathy@example.com (household has provider 'BlueBerry Care' per seed), the Provider input rendered with empty value + placeholder 'Provider name' instead of the pre-filled provider name. Field is editable (spec passes on that half), but the PREFILL half of the requirement 'prefill the user's provider' did not fire in this session. Confirm whether prefill is sourced from /auth/me, household.provider, or first participant — cathy's participant Dorothy has provider BlueBerry Care.",
+          "selector": "[data-testid='pc-provider']",
+          "priority": "MEDIUM"
+        }
+      ],
+      "integration_issues": [],
+      "design_issues": []
+    },
+    "mobile": {"ui_bugs": [], "integration_issues": [], "design_issues": [], "react_native_issues": []}
+  },
+  "parity_issues": [],
+  "verification_evidence": {
+    "admin_readability_bug": {
+      "status": "FIXED",
+      "pre_admin_html_state": {"class": "theme-dark", "data-theme": "dark", "localStorage.wayly:app:appearance": "dark"},
+      "on_admin_login_html_state": {"class": "", "data-theme": "light", "hasThemeDark": false},
+      "sign_in_heading_color": "rgb(14, 42, 44) on rgb(255, 255, 255)",
+      "body_bg": "rgb(234, 237, 240)",
+      "email_input": {"bg": "rgb(255, 255, 255)", "color": "rgb(14, 42, 44)"},
+      "password_input": {"bg": "rgb(255, 255, 255)", "color": "rgb(14, 42, 44)"},
+      "admin_root_redirect": "/admin -> /admin/login (works, readable)",
+      "consumer_dark_restored_after_leaving_admin": {"class": "theme-dark", "data-theme": "dark", "bodyBg": "rgb(6, 32, 31)"},
+      "screenshot": "/app/test_reports/iter328_admin_login.jpeg"
+    },
+    "invoice_checker_strict_prompt": {
+      "status": "CODE-VERIFIED (upload not exercised — server side extraction 10-30s)",
+      "notes": "UploadGuardNotice strict={true} passed from InvoiceCheckerTool.jsx:573-580. Strict block renders: ShieldAlert icon, heading 'This looks like a different document' (when wrong), 'Open the {verdict.wrong_tool.name}' CTA (testid upload-guard-open-right-tool) and 'Choose a different file' (upload-guard-choose-another). 'Continue anyway' (upload-guard-continue) rendered ONLY when decision==='confirm' AND onContinue is provided — InvoiceCheckerTool passes onContinue only for confirm decision. All testIDs present."
+    },
+    "price_checker": {
+      "status": "VERIFIED",
+      "notes": "pc-provider input present with prefill hint text 'Pre-filled from your account. Edit if this rate is from a different provider.' (editable). pc-service select present with 'Personal Care' Title-cased option, red asterisk in Service label. pc-rate present with asterisk in 'Rate charged ($ per hour) *' label. pc-history-link renders as capitalised pill 'Your Price History' in top-right. HOWEVER: for cathy@example.com the prefill did not populate the input value — see ui_bugs above."
+    },
+    "care_plan_reviewer": {
+      "status": "CODE-VERIFIED (auto-save + draft-letter path requires 10-30s re-extraction, not exercised)",
+      "notes": "CarePlanReviewer.jsx confirmed testIDs: link-saved-plans (text 'Your Saved Plans' - line 462 region), cp-save-file-cta (saved-state container - line 901), cp-draft-letter-all button (line 726). Auto-save logic and 'Draft an email to your provider' presence depend on live review response — recommend a signed-in E2E run with a real care plan file, or Main Agent unit-test the auto-save trigger."
+    }
+  },
+  "test_report_links": [
+    "/app/test_reports/iter328_admin_login.jpeg",
+    "/app/test_reports/iter328_consumer_after.jpeg"
+  ],
+  "action_items": [
+    "MEDIUM: Investigate PriceChecker pc-provider prefill for accounts like cathy@example.com whose participant has provider 'BlueBerry Care' — input rendered empty. Confirm the prefill source (user.provider vs participant.provider vs household.provider) and that it reads correctly on first paint."
+  ],
+  "critical_code_review_comments": [
+    "AdminApp.useSyncHtmlToAdminTheme cleanly toggles html data-theme+class while /admin/* is mounted and restores prior state on unmount. Correct pattern; low risk.",
+    "UploadGuardNotice strict mode is a clean, single-component addition — both inline and strict tiers share the same testIDs (upload-guard-notice, upload-guard-continue, upload-guard-choose-another, upload-guard-open-right-tool) which is good for parity with mobile."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "N/A (skipped)", "frontend": "Admin bug 100% verified; 3 feature areas code-verified with 1 minor gap (prefill)"},
+  "test_credentials": "cathy@example.com / testpass123 (used for signed-in tool pages)",
+  "seed_data_creation": "None",
+  "retest_needed": false,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "Admin readability bug (consumer dark bleed into /admin) verified fixed at DOM level: html cleared of theme-dark and set to data-theme=light while /admin is mounted, restored on unmount. If regressing on this, first check useSyncHtmlToAdminTheme in AdminApp.jsx. For Invoice Checker strict block and Care Plan auto-save, a full upload with a Care Plan (10-30s) is required — script suggestions are already in iter238/iter239_cpr_web.py.",
+  "rca of the issue": "Original admin unreadability RCA: html.theme-dark / html[data-theme=dark] was set by the consumer app and persisted across route change to /admin; global dark selectors bled into light-designed admin surfaces (white text on white cards, black inputs). Fix: while AdminApp is mounted, useSyncHtmlToAdminTheme forces <html> to reflect the ADMIN theme (default 'light'); on unmount it restores whatever data-theme/class was present before. Verified end-to-end via DOM inspection."
+}

@@ -1,0 +1,53 @@
+{
+  "summary": "Tested web HCP pillar + redirects + 4 new HCP transition articles + sitemap; mobile provider-switch form (Required-label leak, autocomplete, Select visibility); and reviewed the backend tense fix in dec1_gates.py. Web pillar page, both redirects, and all 4 articles render correctly. Backend G9 source code tense branching is correct (Nov->present / Sep->future). FOUND 3 real issues: (1) sitemap.xml missing /home-care-packages and all 4 new article URLs; (2) route path discrepancy - review spec says /resources/<slug> but working path is /resources/articles/<slug>; (3) mobile provider autocomplete suggestion list is present in the DOM when typing but does not appear to render as a visible popover below the input on the Expo web preview. Mobile Required-label and Select dropdown visibility are FIXED and look great.",
+  "platforms_tested": ["web", "mobile", "backend"],
+  "backend_issues": {
+    "critical": [],
+    "minor": [
+      {"endpoint": "POST /api/insights/summarise (page_key=statement-decoder-run)", "issue": "With only {context:{period}} + anomaly_headlines, the LLM returns a generic 'no data' summary and does not echo the personal-care/Clinical-Care note in either tense. Not a tense regression, but means the previous 'live curl present-tense' spot-check is unreliable unless a fuller context (provider, lines, categories) is also passed. End-to-end tense cannot be confirmed through this payload shape; source-code branching in lib/dec1_gates.py is correct."}
+    ]
+  },
+  "frontend_issues": {
+    "web": {
+      "ui_bugs": [],
+      "integration_issues": [
+        {"flow": "sitemap.xml", "issue": "/sitemap.xml does NOT include /home-care-packages pillar URL nor the 4 new HCP-transition article URLs (/resources/articles/what-happened-to-my-home-care-package, /resources/articles/home-care-package-levels-support-at-home-classifications, /resources/articles/home-care-package-statement-vs-support-at-home-statement, /resources/articles/will-i-pay-more-under-support-at-home-than-home-care-package). File is /app/frontend/public/sitemap.xml (static) - needs 5 new <url> entries.", "affected_selectors": []},
+        {"flow": "Article routing spec", "issue": "Review request claims the 4 new articles render at /resources/<slug>, but actual working route is /resources/articles/<slug> (SPA renders a 'This page has gone for a walk' not-found page at the shorter path). Either add short-slug aliases/redirects or update the spec. Not a hard failure since /resources/articles/<slug> works.", "affected_selectors": []}
+      ],
+      "design_issues": []
+    },
+    "mobile": {
+      "ui_bugs": [
+        {"component": "provider-switch 'Start a Provider Switch' modal - current-provider autocomplete", "issue": "When typing 'Blu' into the Current provider name input, 'BlueBerry Care' (user's existing seeded provider) is found in the DOM (1 match) but NO visible suggestion popover renders below the input. Autocomplete is effectively broken from a UX perspective on the Expo web preview. Needs investigation - possibly z-index/overflow/keyboard-avoiding-view clipping it, or the suggestions list is rendered but with transparent/zero-height.", "testID": "n/a (input placeholder='Start typing your provider\u2019s name')", "priority": "HIGH"}
+      ],
+      "integration_issues": [],
+      "design_issues": [],
+      "react_native_issues": []
+    }
+  },
+  "parity_issues": [
+    {"flow": "HCP transition articles", "platform": "web", "issue": "Only tested on web; mobile parity for the 4 new articles was not checked (out of scope per request)", "expected": "n/a", "actual": "n/a"},
+    {"flow": "Provider-switch autocomplete", "platform": "mobile", "issue": "Web provider autocomplete behaviour (baseline) not re-tested this iteration; cannot confirm web parity. Mobile suggestion popover does not render visibly.", "expected": "Visible suggestion list under input listing matching providers (e.g. 'BlueBerry Care' when typing 'Blu')", "actual": "DOM contains match but nothing visible on screen"}
+  ],
+  "test_report_links": ["/tmp/test_insights.py", "/tmp/test_tense.py"],
+  "action_items": [
+    "Add 5 missing <url> entries to /app/frontend/public/sitemap.xml: /home-care-packages (priority 0.9) and the 4 new article URLs under /resources/articles/*.",
+    "Decide on short-slug aliases /resources/<slug> OR update the brief: currently only /resources/articles/<slug> works for the 4 new HCP transition articles.",
+    "Debug mobile provider-switch autocomplete: 'BlueBerry Care' is in the DOM when typing 'Blu' but no visible suggestion list renders in the Expo web preview. Likely a z-index, overflow:hidden on the bottom-sheet modal, or absolute-positioning-inside-ScrollView issue. File: /app/mobile/app/provider-switch.tsx.",
+    "Re-verify Statement Decoder tense end-to-end by posting a FULL context payload to /api/insights/summarise (provider, services, categories, costs) with Nov vs Sep period and confirm the model's prose output uses 'sits in' (Nov) vs 'will move' (Sep). Source branching in lib/dec1_gates.py:478-491 is already correct.",
+    "Keyboard-covering-input and native provider autocomplete (iOS/Android keyboard) require a real-device build to validate; flag for manual QA before store submission."
+  ],
+  "critical_code_review_comments": [
+    "sitemap.xml is a static file in /app/frontend/public/ - any new SEO page must be manually added. Consider generating it from a single source-of-truth (routes manifest) to avoid drift.",
+    "/app/frontend/src/pages/resources/Articles.jsx uses /resources/articles/:slug - if main agent wants the shorter /resources/:slug form for the 4 HCP transition articles, add explicit routes or 301 redirects.",
+    "lib/dec1_gates.py:462-491 G9 tense-branching code is clean (days>=0 vs days<0 vs ==0 using _eff_date boundary) - no issues."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "90%", "frontend": "80%"},
+  "test_credentials": "cathy@example.com / testpass123 (worked on mobile and pre-seeded with BlueBerry Care + multiple switch fixtures)",
+  "seed_data_creation": "none",
+  "retest_needed": true,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Skipped: full web body scroll of the pillar page for all section heads; switch-decision/[sid] screen deep test (checkbox visibility + decision capitalization + keyboard); bridge-line copy verification on BudgetCalculatorTool/ContributionEstimator/PriceCheckerTool web intros; mobile parity for the 4 new web articles (they are web-only SEO pages, may not need mobile); sitemap.xml patching verification after main agent adds entries. Important: /resources/articles/<slug> is the real working URL for the 4 new HCP transition articles (all 4 render correctly with proper H1s), not /resources/<slug>. Backend tense fix needs a richer insights payload to end-to-end verify via LLM output.",
+  "rca of the issue": "Sitemap bug: /app/frontend/public/sitemap.xml is a static file that must be manually updated whenever new pillar pages or articles ship; previous agent added the HCP transition pages to the SPA route table + seoArticles2026.js data but forgot the sitemap. Autocomplete bug: likely bottom-sheet modal clips the absolutely-positioned suggestion list (overflow / Pressable order) - DOM proves data flow works but visual rendering is suppressed."
+}

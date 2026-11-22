@@ -1,0 +1,23 @@
+{
+  "results": {
+    "verify_stage_appears": false
+  },
+  "sig": [
+    [
+      200,
+      "https://tool-showcase-wide--2w9s0vq0.preview.emergentagent.com/api/auth/signup"
+    ],
+    [
+      200,
+      "https://tool-showcase-wide--2w9s0vq0.preview.emergentagent.com/api/persona"
+    ],
+    [
+      200,
+      "https://tool-showcase-wide--2w9s0vq0.preview.emergentagent.com/api/persona"
+    ],
+    [
+      200,
+      "https://tool-showcase-wide--2w9s0vq0.preview.emergentagent.com/api/persona"
+    ]
+  ]
+}

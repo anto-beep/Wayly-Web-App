@@ -1,0 +1,53 @@
+{
+  "verdict": "not_fixed",
+  "user_reported_bug": "The bottom nav still not fixed, its showing Quarterly Pacing, and Statements and the widgets are still showing, remove them. Also on the statements page, the intro isn't displayed properly either when its in horizontal view. Check how every screen appears against the horizontal orientation/view on mobile.",
+  "summary": "No relevant testing skill found. Logged in as cathy@example.com and verified the exact mobile nav/widget/landscape flows at 393x852, 852x393, and 1440x900. The main reported symptoms are fixed: mobile bottom nav shows exactly Dashboard, AI Tools, Statements, Settings; Help and Accessibility launchers are display:none below 1024px and visible on desktop; landscape Statements intro/title/cards/buttons render correctly; sidebar is hidden on landscape mobile. However the landscape mobile layout is still not fully correct because the visible bottom nav overlaps page content at the bottom of /app, /app/statements, and /app/pacing.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [
+      {
+        "component": "Layout / mobile bottom nav spacer",
+        "issue": "At 852x393 landscape mobile, the bottom nav is visible (65px high) but main has computed padding-bottom: 0px, so content ends behind the fixed nav at document bottom. Evidence: /app/statements main bottom 372.89 vs nav top 328; /app main bottom 372.72 vs nav top 328; /app/pacing also overlapped. This means horizontal mobile screens still do not fully match portrait mobile behavior.",
+        "selector": ".has-bottom-nav main, [data-testid='mobile-bottom-nav']",
+        "priority": "HIGH"
+      }
+    ],
+    "integration_issues": [],
+    "design_issues": [
+      {
+        "screen": "Landscape mobile 852x393 (/app, /app/statements, /app/pacing)",
+        "issues": [
+          "Bottom nav overlays the bottom of page content because the spacer is removed at min-width 768px while the nav remains visible until 1024px."
+        ]
+      }
+    ]
+  },
+  "test_report_links": [
+    "/app/test_reports/bottom_nav_landscape_iter134_playwright.py"
+  ],
+  "action_items": [
+    "Keep the bottom-nav content spacer active for all viewports where the mobile bottom nav is visible, likely by changing the .has-bottom-nav main padding reset from @media (min-width: 768px) to @media (min-width: 1024px) or equivalent lg breakpoint logic.",
+    "Retest 852x393 at the bottom of /app, /app/statements, and /app/pacing after the spacer fix."
+  ],
+  "critical_code_review_comments": [
+    "Layout.jsx, PageIntro.jsx, StatementsList.jsx, CaregiverDashboard.jsx, QuarterlyPacing.jsx, and widget-hide CSS match the intended nav/sidebar/header changes in code review.",
+    "index.css still has .has-bottom-nav main { padding-bottom: 5rem; } followed by @media (min-width: 768px) { .has-bottom-nav main { padding-bottom: 0; } }, but the mobile bottom nav now hides only at lg (1024px). This breakpoint mismatch causes the remaining landscape overlap."
+  ],
+  "updated_files": [
+    "/app/test_reports/bottom_nav_landscape_iter134_playwright.py",
+    "/app/test_reports/bug_verification_134.json",
+    "/app/test_reports/iteration_134.json"
+  ],
+  "success_rate": {
+    "backend": "N/A - frontend only",
+    "frontend": "83%"
+  },
+  "seed_data_creation": "None. Used existing caregiver test account cathy@example.com / testpass123.",
+  "retest_needed": true,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "Primary nav/widget/Statements intro fixes passed in runtime UI. Focus next retest on the remaining landscape mobile bottom-nav spacer: at 852x393 scroll to the bottom of /app, /app/statements, and /app/pacing and ensure no content is hidden behind [data-testid='mobile-bottom-nav'].",
+  "rca_of_the_issue": "The fix moved the mobile layout/sidebar breakpoint to lg (1024px), but the existing bottom-nav main padding spacer still resets at md (768px). Therefore landscape phones in the 768-1023px band show the fixed mobile bottom nav without the bottom content spacer. Non-blocking console noise was observed from a localhost websocket/font requests, but it did not affect the verified UI flow. No APIs were mocked."
+}

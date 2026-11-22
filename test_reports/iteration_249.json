@@ -1,0 +1,34 @@
+{
+  "summary": "Timeline unification verified on BOTH web and mobile. Web ParticipantTimeline now reads from GET /api/core/participants/{pid}/timeline (canonical) and renders 80 events grouped by month with human summaries. Filter chips work (statements=20, care_plan=0 shows empty-filtered, reassessments=7, contributions=4, providers=15, all=20). Mobile timeline reads the same canonical endpoint and renders the same events in the same order. Parity confirmed: both surfaces show the same first cards (22 Aug 2026 Contribution estimate saved (Class 5), 21 Aug 2026 Escalation draft x3, Dispute draft). Scenario-sourced events (event_source='scenario': 3, lifecycle_change: 1, alert: 1) plus tool events (invoice_checker: 20, loop1: 19, lf1: 9, csc: 7, sd3/sdl1/statement_decoder/ce/ce3/cmp1/core/test_core1) all appear in the web feed alongside statements/invoices. No blank feed, no crash, no regression on mobile.",
+  "platforms_tested": ["web", "mobile"],
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "web": {
+      "ui_bugs": [],
+      "integration_issues": [],
+      "design_issues": []
+    },
+    "mobile": {
+      "ui_bugs": [],
+      "integration_issues": [],
+      "design_issues": [],
+      "react_native_issues": []
+    }
+  },
+  "parity_issues": [],
+  "test_report_links": [],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "Web fetches /core/.../timeline?limit=80 whereas mobile fetches limit=100. Both hit the same canonical endpoint, but page sizes diverge slightly — consider aligning both to 100 for full parity or exposing a shared constant.",
+    "Web ParticipantTimeline.jsx filter 'statements' matches signature substring 'statement' or 'invoice'; the current test data returns 20 cards for 'statements' filter because the endpoint response contains 20 invoice_checked events and 5 statement_decoded events. This is expected behaviour but may confuse users who expect Statements filter to exclude invoices — worth revisiting the label or splitting into two chips.",
+    "Web 'care_plan' filter correctly shows the empty-filtered state as no care_plan/careplan/care plan matches were present in the loaded 80 events; consider surfacing care-plan events in the seed data for cathy@example.com so all filters can be exercised end-to-end."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "n/a (frontend-only iter)", "frontend": "100%"},
+  "test_credentials": "cathy@example.com / testpass123 (Family, active participant Mum/Dorothy)",
+  "seed_data_creation": "",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Timeline is now canonicalised on GET /api/core/participants/{pid}/timeline. Web ParticipantTimeline.jsx adapts events -> items shape. Mobile app/timeline.tsx consumes events directly. cathy@example.com has 80 timeline events covering event_source in {ce, lf1, statement_decoder, invoice_checker, cmp1, loop1, csc, scenario, sdl1, sd3, core, test_core1, ce3} and event_type incl. alert (1) and lifecycle_change (1) — good for future filter/rendering tests.",
+  "rca of the issue": ""
+}

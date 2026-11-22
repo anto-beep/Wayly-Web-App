@@ -1,0 +1,40 @@
+{
+  "summary": "Iter29 testing complete. Backend: 22/22 pytest cases PASS covering adviser invite tokens, public invite preview (200/404/409 already_accepted), resend-invite rotation + already_linked 409, signup-with-invite auto-link, Document Vault CRUD (list/upload/get/download/patch/delete), send-to-decoder (wrong_category 400 + happy path with job polling), and adviser read-only access (?as_client_id 200 + non-adviser 403 + cross-adviser 404). Frontend: All required data-testids present and functional — adviser-invite-state-{id}='Invite pending', adviser-client-resend-{id} triggers POST /resend-invite and shows sonner toast 'Invite re-sent to ...', signup-invite-banner renders adviser name + notes and pre-fills name + email, /app/documents page renders 8 category pills (all + 7), upload works, docvault-card-{id} + Download/Edit/Delete buttons present, docvault-edit-modal + docvault-edit-save work, sidebar Documents link routes correctly.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [
+      {"component": "DocumentVault page (or Statements list)", "issue": "React warning: 'Encountered two children with the same key' — month strings (May/Apr) being used as keys somewhere; non-unique. Multiple instances logged on /app/documents load.", "selector": "console", "priority": "LOW"}
+    ],
+    "integration_issues": [],
+    "design_issues": [
+      {"screen": "AdviserPortal Your clients table", "issues": ["Linked column shows 'Invite pending' even for clients whose status is ACTIVE but who haven't yet linked a household (e.g., 'Invitee QA', 'Margaret Brown', 'Signup UI Test'). Copy is ambiguous — these clients have user accounts but no household. Consider 'Awaiting household onboarding' or 'User linked · household pending' for that intermediate state."]}
+    ]
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_iter29_docvault_invite.py",
+    "/app/test_reports/pytest/iter29_docvault_invite.xml"
+  ],
+  "action_items": [
+    "(Optional) Fix duplicate React key warning shown in console on /app/documents — likely a month-label key collision in a child component (e.g., Statements grouping or DocVault grouping). Use stable unique ids instead of period_label.",
+    "(Copy polish) On AdviserPortal, differentiate 'Invite pending' (no user yet) from 'User linked, household pending' for clients with linked_user_id but no linked_household_id."
+  ],
+  "critical_code_review_comments": [
+    "documents_routes.py uses base64 storage in Mongo — fine for an MVP but will scale poorly past a few thousand docs per household. The MAX_VAULT_BYTES=100MB cap mitigates risk for now; consider GridFS or S3 in a later iter.",
+    "list_documents hard-codes `d['has_file']=True` after excluding file_b64 from projection. If a doc row was inserted without file_b64 it would incorrectly report has_file:true. Currently uploads always set file_b64 so safe in practice, but a defensive check on `file_size_bytes>0` would be cleaner.",
+    "Adviser invite email uses os.environ.get('PUBLIC_APP_ORIGIN', 'https://wayly.com.au') — when running on the preview env, PUBLIC_APP_ORIGIN is not set so invite links point to wayly.com.au instead of the preview URL. Not a blocker for prod, but means clicking the invite link from a real preview-env test email lands on the wrong host. Consider setting PUBLIC_APP_ORIGIN in preview backend/.env.",
+    "send-to-decoder happy path successfully kicked off an async job and the polling endpoint returned status='done' with a statement_id in ~15s. Document row's last_decoded_statement_id was updated. Working as designed."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_iter29_docvault_invite.py (NEW)"
+  ],
+  "success_rate": {"backend": "100% (22/22)", "frontend": "100% on listed acceptance criteria"},
+  "test_credentials": "Used cathy@example.com / testpass123 (family) and mark.adviser@example.com / AdviserPass1! (adviser). Fresh TEST_invite_*@example.com generated per-run for signup auto-link test.",
+  "seed_data_creation": "Several adviser_clients rows created during testing under mark.adviser@example.com (TEST_invite_*, TEST_signupui_*, TEST_signupbanner_*, TEST_uistate_*, TEST_unlinked_ui, UI State Test, Banner Tester). One linked TEST_invite_* user was actually created via the signup flow with a fresh household-less account. None of these affect the production data path; the test prefix makes them easy to clean later.",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Iter29 adds (a) adviser invite email + token + auto-link on signup, and (b) Document Vault at /api/documents with adviser read-only via ?as_client_id. Both fully tested. Backend test file at /app/backend/tests/test_iter29_docvault_invite.py is self-contained and idempotent (uses uuid-prefixed emails). Note Resend is in verified-email-only sandbox mode — email_result.ok will be false with reason for any recipient other than a.chiware2@gmail.com, but invite_token still persists correctly and signup auto-link still works because the test reads the token directly from the API response. UI testids verified: adviser-invite-state-{id}, adviser-client-resend-{id}, signup-invite-banner, docvault-cat-{cat}, docvault-card-{id}, docvault-decode-{id}, docvault-edit-modal, docvault-edit-save."
+}

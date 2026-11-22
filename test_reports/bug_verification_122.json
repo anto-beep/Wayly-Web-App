@@ -1,0 +1,39 @@
+{
+  "verdict": "fixed",
+  "user_reported_bug": "see attached screenshot where Andrew is the participant selected but its showing Dorothy in the profile page. Also the 'Profile' selection isnt highlighted when on that page. the switcher needs to be working as intended showing that participant data when switched over",
+  "summary": "No relevant testing skill found. Focused UI retest on the preview environment passed: after logging in as cathy@example.com, direct participant URLs and header switcher selections now stay in sync with URL, localStorage, header chip, and profile H1. The Profile sidebar item is highlighted on canonical participant profile routes and after /app/me redirects. Focused participant-scoped cascade checks also passed for ATHM, CSC, Ask Wayly, LF-2, and BC-2.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/test_reports/profile_switcher_bug_iter122_playwright.py",
+    "/app/test_reports/profile_switcher_bug_iter122_results.json",
+    "/app/test_reports/bug_verification_122.json",
+    "/app/test_reports/iteration_122.json"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "ParticipantProfile.jsx now includes the wayly:participant-changed listener and runtime evidence shows the post-direct-URL switcher path updates router state correctly. No critical code-review blocker found for the reported flow."
+  ],
+  "updated_files": [
+    "/app/test_reports/profile_switcher_bug_iter122_playwright.py",
+    "/app/test_reports/profile_switcher_bug_iter122_results.json",
+    "/app/test_reports/bug_verification_122.json",
+    "/app/test_reports/iteration_122.json"
+  ],
+  "success_rate": {
+    "backend": "not_applicable",
+    "frontend": "100%"
+  },
+  "seed_data_creation": "No seed data created. Used existing cathy@example.com account and existing Dorothy/Robert participant records.",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Mandatory skill lookup was performed with query 'participant switcher profile highlight'; no relevant testing skill was found. Primary proof: Dorothy persisted -> direct Robert URL shows Robert/chip/H1/Profile highlight -> header switcher Dorothy updates pathname to /app/participants/0c538637-b0dd-4982-8f78-b32814c6a5eb, localStorage to Dorothy id, chip to Dorothy, and H1 to Mum's profile. /app/me and focused ATHM/CSC/Ask Wayly/LF-2/BC-2 cascade checks also passed. No MOCKED APIs were used.",
+  "rca_of_the_issue": "Verified mitigation for the previous race: ParticipantProfile's direct listener for the wayly:participant-changed custom event now bridges the switcher click to router navigation after the direct-URL-wins path. Runtime evidence shows direct URL still wins initially, but later user switcher selections navigate to and render the newly selected participant. No mocked integrations were used."
+}

@@ -1,0 +1,82 @@
+{
+  "admin_token_ok": true,
+  "after_admin_nav": {
+    "htmlClasses": "",
+    "dataTheme": "light",
+    "hasThemeDark": false,
+    "adminRoot": "light",
+    "appearance": "dark",
+    "adminPref": null,
+    "bodyBg": "rgb(234, 237, 240)",
+    "mainBg": "rgb(251, 248, 243)"
+  },
+  "after_hard_refresh": {
+    "htmlClasses": "",
+    "dataTheme": "light",
+    "hasThemeDark": false,
+    "adminRoot": "light",
+    "appearance": "dark",
+    "adminPref": null,
+    "bodyBg": "rgb(234, 237, 240)",
+    "rootBg": "rgb(251, 248, 243)"
+  },
+  "bug_fixed_hard_refresh": true,
+  "reload_2": {
+    "dt": "light",
+    "td": false,
+    "ar": "light"
+  },
+  "reload_3": {
+    "dt": "light",
+    "td": false,
+    "ar": "light"
+  },
+  "reload_4": {
+    "dt": "light",
+    "td": false,
+    "ar": "light"
+  },
+  "nav": {
+    "/admin": {
+      "dt": "light",
+      "td": false,
+      "ar": "light"
+    },
+    "/admin/subscriptions": {
+      "dt": "light",
+      "td": false,
+      "ar": "light"
+    },
+    "/admin/audit-log": {
+      "dt": "light",
+      "td": false,
+      "ar": "light"
+    },
+    "/admin/health": {
+      "dt": "light",
+      "td": false,
+      "ar": "light"
+    }
+  },
+  "toggle_dark": {
+    "dt": "dark",
+    "td": true,
+    "ar": "dark"
+  },
+  "toggle_light": {
+    "dt": "light",
+    "td": false,
+    "ar": "light"
+  },
+  "consumer_restored": {
+    "dt": "dark",
+    "td": true,
+    "appearance": "dark"
+  },
+  "readability": {
+    "headingText": "Users (246)",
+    "headingColor": "rgb(14, 42, 44)",
+    "cardBg": "rgb(255, 255, 255)",
+    "bodyBg": "rgb(234, 237, 240)"
+  }
+}

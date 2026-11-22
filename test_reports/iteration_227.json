@@ -1,0 +1,35 @@
+{
+  "summary": "CMP-1 mobile parity (mobile/app/complaints.tsx) verified end-to-end via Expo web preview as cathy@example.com. Complaints list loads (2 seed rows), 4-step wizard opens & advances, required-field gating works, elder_abuse selection shows/hides cmp1-new-elder-safeguard, POST /api/cmp1/participants/{pid}/complaints returns 200 and a new cmp1-row-* appears, ACQSC form toggles and POST /submit-to-acqsc returns 200 with an audit-trail entry rendered by cmp1-acqsc-trail-list-*, submission history 'DELIVERED to info@agedcarequality.gov.au' shows correctly. All required data-testids present. No red screen, no console errors.",
+  "platforms_tested": ["mobile"],
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "mobile": {
+      "ui_bugs": [],
+      "integration_issues": [],
+      "design_issues": [],
+      "react_native_issues": []
+    }
+  },
+  "parity_issues": [],
+  "test_report_links": [
+    "/app/test_reports/iter227_complaints.jpeg",
+    "/app/test_reports/iter227_step3_review.jpeg",
+    "/app/test_reports/iter227_final.jpeg"
+  ],
+  "action_items": [
+    "OPTIONAL — investigate whether GET /api/cmp1/participants/{pid}/complaints returns evidence_bundle_id in the list payload. During this run cmp1-bundle-pdf-* count was 0 across 3 rows (2 pre-existing + 1 newly-created). The mobile screen only renders the link when c.evidence_bundle_id is truthy, so if the API omits/nulls it in list mode the PDF affordance never appears (functional but not verifiable in this env). Confirm web ComplaintsList.jsx shows the same result for the same participant — if web shows the link and mobile does not, that's a parity gap; otherwise both behave identically."
+  ],
+  "critical_code_review_comments": [
+    "Minor: /app/mobile/app/complaints.tsx line 174 uses process.env.EXPO_PUBLIC_BACKEND_URL directly for the bundle PDF URL. Works via Linking.openURL but bypasses the apiFetch auth header — if the /export.pdf endpoint requires bearer auth the mobile deep-open may 401. Web uses <a href> under the browser session; mobile has no session cookie in Linking. Consider using a signed short-lived URL or expo-web-browser with headers.",
+    "Info: LInput uses TextInput; keyboardType for provider_email is not set to 'email-address' (line 308) — minor UX polish for mobile.",
+    "Info: RN Web renders disabled Pressable as aria-disabled=true (not native disabled). Playwright is_disabled() returns False. Not a bug — verified visual + behavioural gating via aria-disabled attribute."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "N/A (skipped)", "frontend": "100%"},
+  "test_credentials": "cathy@example.com / testpass123 (Family, active participant Mum → pid 0c538637-b0dd-4982-8f78-b32814c6a5eb)",
+  "seed_data_creation": "Created one TEST_iter227 complaint (id a9348717-a443-4d91-a4c3-bb5a8d052af4, provider 'TEST_iter227 Provider Co', billing_dispute/minor) and one ACQSC submission on it. Two pre-existing TEST_iter* complaints from earlier iterations remained. Safe to delete post-verification.",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Mobile Expo preview URL: https://endpoint-migrate-2.expo.preview.emergentagent.com. Direct route /complaints works and is also linked from the drawer nav (Guided Journeys group). ParticipantContext resolves cathy's active participant automatically. Wizard Select is a full-screen React Native Modal — click options with exact text match (e.g. 'Elder abuse (safeguard resources shown)', 'Billing dispute'). aria-disabled='true' is the way to check button disabled state on RN Web (not native :disabled).",
+  "rca of the issue": ""
+}

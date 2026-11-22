@@ -1,0 +1,49 @@
+{
+  "summary": "Frontend-only UX overhaul retest on WEB (logged in as cathy@example.com). CSC v2: PASS end-to-end — csc-current prefilled to '4' with csc-current-prefilled hint, header teal rgb(14,77,82) with white text, csc-wayly-summary renders with 'roughly $763 to $763 a week' plain-English (no 'Jean-style' jargon), gold border/accent icon, csc-comparison 8/8 rows each with plain description + $annual + '≈ $X/wk', 'You're likely here' gold badge on primary band (Level 5). Assessor toggle + PDF download button verified. Dark mode: wayly bg stays light (rgb(251,252,254)) with dark-teal text — legible, no dark-on-dark. Price Checker: All testids present (pc-stat-charged, pc-your-share, pc-range, pc-compare-bars, pc-charge-pin, report-issue-btn). Ran with 'Domestic assistance' @ $90. pc-stat-charged bg=teal-tint rgba(14,77,82,0.1), pc-range bg=sage-tint rgba(66,95,71,0.13), 'Within the range' badge + charge pin visible. Report-Issue button clay rgb(194,104,61) with white text; hover darkens to rgb(168,87,53) — text stays white and readable in both light & dark. Budget Calculator: bc-supplements clay-tinted rgba(165,81,43,0.11), bc-annual-summary teal-tinted rgba(14,77,82,0.1) — result cards rendered (quarterly $6,681.60, per-stream, lifetime cap). Invoice Checker: section.max-w-[1720px] present and rendering. MOBILE NOT RE-TESTED this iteration — iter277 previously verified mobile CSC parity; recommend a follow-up mobile pass for the new PC/BC coloured accents.",
+  "platforms_tested": ["web"],
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "web": {
+      "ui_bugs": [
+        {"component": "PriceCheckerTool - pc-your-share stat card", "issue": "The middle 'Your share' stat card renders with a plain grey/near-white bg rgb(238,241,245) — NOT a distinct clay accent as required. Only pc-stat-charged (teal) and pc-range (sage) have coloured accents; pc-your-share is visually flat and inconsistent with the teal/clay/sage trio. This is only true in the placeholder (empty) state before a contribution rate is picked; needs a clay-tint bg on the card even in placeholder state to meet the acceptance criterion.", "selector": "[data-testid=\"pc-your-share\"]", "priority": "MEDIUM"}
+      ],
+      "integration_issues": [],
+      "design_issues": [
+        {"screen": "Budget Calculator (dark mode)", "issues": ["bc-supplements in dark mode: bg is rgba(165,81,43,0.11) (very translucent clay) and text remains rgb(28,43,45) (dark primary-k). Over a dark app background this composites to a dark card with dark text — potential low-contrast risk. Consider raising the clay opacity to ~0.18-0.22 in dark mode and/or flipping the text token to a light variant inside .dark scope."]},
+        {"screen": "CSC quiz (all modes)", "issues": ["React hydration warning persists: '<span> cannot be a child of <option>' — emergent editor dev-instrumentation wrapping the mapped <option> children in csc-current <select>. Non-blocking, cosmetic console noise (same as iter277)."]}
+      ]
+    },
+    "mobile": {"ui_bugs": [], "integration_issues": [], "design_issues": [], "react_native_issues": []}
+  },
+  "parity_issues": [
+    {"flow": "PC/BC coloured accents + Report-Issue hover readability", "platform": "mobile", "issue": "Not re-tested on mobile this iteration; iter277 covered CSC only. Cannot confirm mobile parity for the new coloured stat cards or the report-issue hover state.", "expected": "Same colour tokens + hover behaviour on mobile", "actual": "Untested"}
+  ],
+  "test_report_links": [
+    "/app/test_reports/iter278_csc_light.jpeg",
+    "/app/test_reports/iter278_csc_dark.jpeg",
+    "/app/test_reports/iter278_pc_light.jpeg",
+    "/app/test_reports/iter278_pc_dark.jpeg",
+    "/app/test_reports/iter278_bc_light.jpeg",
+    "/app/test_reports/iter278_bc_dark.jpeg",
+    "/app/test_reports/iter278_invoice_wide.jpeg"
+  ],
+  "action_items": [
+    "Fix pc-your-share card to render with a clay-tinted background (matching pc-stat-charged teal + pc-range sage) even in the placeholder/empty state — currently rgb(238,241,245) plain grey.",
+    "Raise bc-supplements clay tint opacity for dark mode OR flip text token to a light variant so the section stays legible on the dark app bg.",
+    "(Optional) Silence the '<span> cannot be a child of <option>' hydration warning in ClassificationCheck.jsx (csc-current select) — carried over from iter277.",
+    "Run a mobile parity pass on /tool/provider-price-checker and /tool/budget-calculator for the new coloured stat cards and Report-Issue hover state."
+  ],
+  "critical_code_review_comments": [
+    "PriceCheckerTool.jsx line 834 uses testId 'pc-your-share' on a StatCard whose surface style falls back to the default (grey) when no contribution rate is set — should apply the clay accent class (e.g. sect-clay) in the same way pc-stat-charged uses teal and pc-range uses sage.",
+    "BudgetCalculatorTool.jsx uses 'sect-clay' at rgba(165,81,43,0.11) for bc-supplements; consider a dedicated dark-mode variant to preserve readable contrast when the app bg flips dark.",
+    "CSC Wayly Summary + comparison implementation is clean; weekly figures via /52 rounding read naturally. Consider adding a comma separator to the weekly $ where the value >= $1,000 (currently '$1,502/wk' is fine, but ensure Intl formatter is used consistently)."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "n/a (frontend only)", "frontend": "~92% (web) — 1 medium UI bug (pc-your-share) + 1 dark-mode design nit (bc-supplements)"},
+  "test_credentials": "cathy@example.com / testpass123",
+  "seed_data_creation": "none",
+  "retest_needed": true,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "Web verification of the UX overhaul is complete. Outstanding: (a) pc-your-share needs clay bg in placeholder state; (b) bc-supplements dark-mode contrast; (c) mobile parity for PC/BC coloured accents was NOT re-tested this iteration. When retesting mobile, hit /tool/provider-price-checker and /tool/budget-calculator via the Expo web preview at https://llm-timeout-fix.expo.preview.emergentagent.com with viewport 375x667.",
+  "rca of the issue": "pc-your-share renders with the default StatCard surface (light grey) because the coloured accent (sect-clay) is applied only on the coloured StatCard variants used for pc-stat-charged (teal) and pc-range (sage); the middle 'Your share' card in placeholder state was missed. Root cause is a conditional style branch in PriceCheckerTool.jsx around line 830-840 where the accent class isn't applied when the share amount is undefined."
+}

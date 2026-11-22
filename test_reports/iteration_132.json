@@ -1,0 +1,78 @@
+{
+  "verdict": "not_fixed",
+  "user_reported_bug": "Refine the Budget Scenarios page and perform a global button contrast fix. Budget Scenarios: make the 'Adjusted What-If' column significantly more distinct from Baseline (highlight/double-border), use green/red indicators for numerical differences (savings=bold green, extra cost=sharp red), consistent in light+dark. Button contrast: no button same colour as its background; teal buttons use white/off-white text; clay backgrounds use a distinct shade/border (no clay-on-clay); all button text high-contrast/legible.",
+  "summary": "No relevant testing skill found. Logged in as cathy@example.com on the preview URL and tested Budget Scenarios in light+dark, the dark dashboard/statement button and badge contrast cases, the AI disclaimer/Your Rights panel, and the legacy invoice-checker route. Several fixes pass (slider red/green deltas in both themes, Save scenario contrast, Complete now CTA, AI anomaly disclaimer, High/Medium/Low badges, and /app/tools/invoice-checker/list redirect), but the Budget Scenarios adjusted column is still not a readable clay-highlighted what-if column and dark mode still has flat/transparent primary buttons plus a Your Rights pill with 1.16:1 contrast.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [
+      {
+        "component": "Budget Scenarios adjusted What-If column",
+        "issue": "Light mode: adjusted column uses transparent background/effective bg equal to page bg, neutral border rgb(231,223,213), blue ring, and the What-If badge is white text on transparent/warm bg with 1.06:1 contrast. It is not the requested clay highlight/double-border and the badge is barely visible.",
+        "selector": "[data-testid='bc2-adjusted-col'], [data-testid='bc2-adjusted-col-badge']",
+        "priority": "HIGH"
+      },
+      {
+        "component": "Budget Scenarios adjusted What-If column",
+        "issue": "Dark mode: adjusted column text is dark rgb(26,18,6) on dark translucent clay effective bg rgb(46,41,36), measured 1.29:1. The border remains neutral rgb(42,58,60), not clay, so the column is both low-contrast and not a clay-highlighted/double-border treatment.",
+        "selector": "[data-testid='bc2-adjusted-col']",
+        "priority": "HIGH"
+      },
+      {
+        "component": "Dashboard/statement primary buttons",
+        "issue": "Some intended filled primary buttons render transparent/flat in dark mode despite high text contrast: dashboard Upload a statement, statement Ask, and Ask Wayly about this all computed background rgba(0,0,0,0) while using bg-primary-k classes.",
+        "selector": "[data-testid='dashboard-upload-cta']; .app-shell button.bg-primary-k; .app-shell a.bg-primary-k",
+        "priority": "HIGH"
+      },
+      {
+        "component": "Statement detail Your Rights panel",
+        "issue": "The 'Relevant here' pill in the Your Rights panel is dark text rgb(26,18,6) on dark surface rgb(21,36,37), measured 1.16:1, so the carried-over Your Rights legibility issue is not fully fixed.",
+        "selector": "[data-testid='statement-rights-panel'] .bg-terracotta\\/10.text-terracotta",
+        "priority": "MEDIUM"
+      }
+    ],
+    "integration_issues": [],
+    "design_issues": [
+      {
+        "screen": "/app/budget-scenarios",
+        "issues": [
+          "Savings/extra-cost banners and per-quarter deltas update correctly when moving Spending pace to -30/+30 in both themes.",
+          "However the adjusted column's highlight/badge treatment is not visually or contrast-safe in both themes."
+        ]
+      }
+    ]
+  },
+  "test_report_links": [
+    "/app/test_reports/bug_verification_132_playwright.py",
+    "/app/test_reports/bug_verification_132_results.json"
+  ],
+  "action_items": [
+    "Fix BudgetScenarios adjusted column classes: replace undefined bg-clay/border-clay/ring-clay with defined Wayly clay utilities or explicit CSS; ensure the What-If badge has a real clay fill and >=4.5:1 contrast in light mode.",
+    "Fix dark-mode BudgetScenarios so bg-clay/10 containers do not receive dark foreground text; adjusted column text must be readable while retaining a clay tint/border.",
+    "Fix the dark primary/accent CSS selectors so solid bg-primary-k elements with hover:bg-primary-k/90 still get a visible fill/border, not transparent/flat.",
+    "Fix the Statement Rights 'Relevant here' pill contrast; do not apply dark text to bg-terracotta/10 when the actual computed background is transparent/dark, or provide a real light pill fill."
+  ],
+  "critical_code_review_comments": [
+    "BudgetScenarios.jsx uses bg-clay, border-clay, ring-clay, and bg-clay/10, but tailwind.config.js defines wayly-clay-* rather than a clay color alias; computed light-mode styles are transparent/neutral instead of clay.",
+    "index.css dark contrast pass 2 includes [class*='bg-clay/']:not(button):not(a):not([role='button']) { color:#1A1206 }, which applies to the entire adjusted projection column and causes 1.29:1 dark-mode text contrast.",
+    "index.css light-accent chip rule also catches bg-terracotta/10 pills like Statement Rights 'Relevant here', causing dark text on a dark/transparent background in dark mode.",
+    "The solid accent selector :not([class*='bg-primary-k/']) can exclude solid bg-primary-k elements that also include hover:bg-primary-k/90, leaving some intended filled buttons transparent in dark mode."
+  ],
+  "updated_files": [
+    "/app/test_reports/bug_verification_132_playwright.py",
+    "/app/test_reports/bug_verification_132_results.json",
+    "/app/test_reports/bug_verification_132.json",
+    "/app/test_reports/iteration_132.json"
+  ],
+  "success_rate": {
+    "backend": "N/A - frontend only",
+    "frontend": "14/19 focused checks passed (74%); verdict not_fixed because high-priority user-visible contrast/highlight issues remain."
+  },
+  "seed_data_creation": "None",
+  "retest_needed": true,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "Use /app/test_reports/bug_verification_132_playwright.py. Passing: login, light/dark slider red extra-cost and green savings deltas, Save scenario contrast, Complete now CTA contrast, AI anomaly disclaimer, High/Medium/Low priority pills, legacy invoice-checker redirect. Failing: Budget adjusted column light/dark contrast/highlight, transparent bg-primary-k buttons in dark, Your Rights 'Relevant here' pill contrast.",
+  "rca_of_the_issue": "Repro: login as cathy@example.com/testpass123, set wayly:app:appearance to light/dark, open /app/budget-scenarios. The adjusted column uses undefined clay utilities, so in light mode the badge/fill are transparent; in dark mode a broad CSS rule for bg-clay/ sets dark text on a dark tinted panel. On /app and statement detail, solid bg-primary-k buttons with hover opacity classes can be excluded from the dark fill override. On /app/statements/408fcbf3-c126-4897-a9b1-c76628c49ca7, the Your Rights 'Relevant here' pill remains low contrast."
+}

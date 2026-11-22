@@ -1,0 +1,38 @@
+{
+  "verdict": "fixed",
+  "user_reported_bug": "On the different AI Tools page, there is this section (see attached screenshot) telling users to start their 7 day free trial. It shouldnt be showing on pages where users are already authenticated/logged in/already on a free trial or paid plan. That section should only show when users are not logged in the frontend. also create a bit of space between it and the footer, they are too close",
+  "summary": "Fixed. Focused UI/auth regression testing confirmed the ToolExplainer free-trial CTA is absent for logged-in cathy@example.com on 3 AI Tools pages, remains visible for anonymous visitors on 2 pages, and the explainer has pb-20/80px bottom padding with visible footer spacing. Loaded ai-testing-core; AI generation was not in scope for this UI-only bug.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/test_reports/tool_cta_bug_verification_iter113.py",
+    "/app/test_reports/tool_cta_bug_verification_iter113_results.json"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "Reviewed /app/frontend/src/components/ToolExplainer.jsx: CTA is gated by {!user && (...)} and the explainer container includes pb-20.",
+    "Reviewed /app/frontend/src/context/AuthContext.jsx and /app/frontend/src/App.js: authenticated AI Tools routes wait for auth loading before rendering, so the anonymous CTA did not appear after login/route navigation in runtime tests."
+  ],
+  "updated_files": [
+    "/app/test_reports/tool_cta_bug_verification_iter113.py",
+    "/app/test_reports/tool_cta_bug_verification_iter113_results.json",
+    "/app/test_reports/bug_verification_113.json",
+    "/app/test_reports/iteration_113.json"
+  ],
+  "success_rate": {
+    "backend": "100% auth login smoke",
+    "frontend": "100%"
+  },
+  "seed_data_creation": "None. Used existing caregiver test account cathy@example.com / testpass123 from /app/memory/test_credentials.md.",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Evidence: anonymous invoice-checker and statement-decoder showed exact CTA sections and Start Your 7-Day Free Trial text; authenticated cathy@example.com had [data-testid^='tool-cta-'] count 0 on invoice-checker, statement-decoder, and care-plan-reviewer. All checked explainers had class 'space-y-16 mt-16 pb-20' and computed padding-bottom 80px with >=80px last-content-to-footer gap.",
+  "rca_of_the_issue": "Original symptom was an unconditional ToolExplainer CTA on AI Tools pages. The fix gates the CTA on AuthContext user being absent and adds pb-20 to the explainer container. Runtime tests against the preview URL verified both behaviours."
+}

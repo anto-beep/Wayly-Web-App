@@ -1,0 +1,24 @@
+{
+  "summary": "Verified all three billing bug fixes end-to-end. BUG 1: /api/billing/v2/addon-checkout now charges $24.50 (not $19.00). BUG 1b: constants PLAN_PRICES_MONTHLY={SOLO:24.50, FAMILY:49.50}, ADDON_PRICE_MONTHLY=24.50. BUG 2: /api/billing/v2/cancel-pending-addon cancels unpaid addons and archives their participants (status→REMOVED, removal_reason=checkout_cancelled). BUG 3/3b: Settings→Plan and Billing header shows fortnightTotal matching billing-fortnight-total; breakdown line appears iff addonCount>0. Regressions on /api/payments/prices and /api/v2/participants pass.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {"ui_bugs": [], "integration_issues": [], "design_issues": []},
+  "test_report_links": [
+    "/app/backend/tests/test_iter148_billing_bugs.py",
+    "/app/test_reports/pytest/iter148.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "batch3_routes.py line 286 still contains legacy error message copy: 'Adding a participant requires Solo ($19/mo) or Family ($39/mo).' — should be updated to $24.50 fortnight / $49.50 fortnight to match the corrected pricing.",
+    "batch3_models.py comment says 'legacy name kept for compatibility' but ADDON_PRICE_MONTHLY still named _MONTHLY while representing fortnightly — consider renaming to ADDON_PRICE_FORTNIGHT with a compat alias, to avoid future confusion (currently 3 call-sites read the same variable)."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_iter148_billing_bugs.py"
+  ],
+  "success_rate": {"backend": "100%", "frontend": "100%"},
+  "test_credentials": "cathy@example.com / testpass123 (Family plan, owner of account e26010fd-…). Cathy account had 27 accumulated TEST participants from prior iterations — cleaned up to 3 (Dorothy primary, Robert, Patricia) via mongo update to allow addon test to run under MAX_PARTICIPANTS_PER_ACCOUNT=10.",
+  "seed_data_creation": "Cleaned up 24 stale TEST_/PW_/Lebron participants on cathy account (set status=REMOVED). Created and rolled back a test addon participant TESTLuke148 as part of BUG 2 verification (already archived by cancel-pending-addon call).",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "The cancel-pending-addon endpoint is verified. Frontend wiring on ?cancelled=1 (in Participants page) is a follow-up per the request note — not yet in scope for this iteration. When testing, note that cathy account had TEST- prefixed leftovers requiring cleanup; the test itself calls cancel-pending-addon at the end and archives its own addition.",
+  "rca of the issue": "BUG 1 root cause: ADDON_PRICE_MONTHLY was 19.00 in batch3_models.py. Fix: updated to 24.50 (with plan prices updated to fortnightly). BUG 2 root cause: no rollback path when Stripe checkout cancelled — participant record persisted while addon row stayed pending. Fix: new POST /api/billing/v2/cancel-pending-addon endpoint atomically CANCELLED unpaid addon rows and set participant status=REMOVED with removal_reason=checkout_cancelled. BUG 3 root cause: BillingTab header rendered only base plan price while the breakdown/participants pages showed total, creating perceived mismatch. Fix: header now renders fortnightTotal = base + addonCount×24.50, and adds a breakdown line when addonCount>0."
+}

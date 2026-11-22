@@ -1,0 +1,70 @@
+{
+  "summary": "iter357 Price-Checker dark-mode polish verified end-to-end on web (cathy, paid). Logged in via /api/auth/login, wrote kindred_token + wayly:app:appearance='dark', navigated to /ai-tools/provider-price-checker, submitted rate=$250/hour for Personal Care (Test Provider), dismissed the quality guard, and reached the pc-how-this-compares result view. Then repeated the flow in light mode. 3 of the 6 dark-mode requirements PASS (one-line pc-position heading, pc-num-hl highlighted numbers, pc-pdf-export + pc-open-email button colours). 3 FAIL in dark mode due to CSS specificity: (a) dm-bar-track shows as clay rgb(165,81,43) not neutral rgba(255,255,255,0.10) — all three bar rows sit on an orange fill, breaking the 'coloured bar as graphic' intent; (b) the three stat cards pc-stat-charged / pc-your-share / pc-range ALL render the same rgb(14,48,51) dark-teal — the required distinct teal/clay-brown/sage backgrounds are not applied; (c) pc-save-check renders clay rgb(165,81,43) not teal #1C7C83. Root cause in every case is that the earlier `html.theme-dark .app-shell .sect-*` / `.bg-primary-k` override rules (3 class specificity) beat the new iter357 `html.theme-dark [data-testid=...]` / `html.theme-dark .dm-bar-track` rules (2 class specificity) even with !important, because both sides use !important and the higher-specificity selector wins. Light-mode regression is CLEAN: pc-position one line, pc-num-hl clay #A5512B, tonal sect-teal/clay/sage stat cards, distinct button colours. Also noted: the dark-mode highlight colour is CSS #E8956B whereas spec called for #E89A6F (visually equivalent brighter clay — minor).",
+  "platforms_tested": ["web"],
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "web": {
+      "ui_bugs": [
+        {
+          "component": "Price Checker comparison bar track (dark mode)",
+          "issue": "dm-bar-track computed background-color = rgb(165, 81, 43) (clay) in dark mode instead of rgba(255,255,255,0.10). All three bar rows (You pay / Typical median / Usual range) sit on an orange fill; the coloured bar fills therefore do NOT read as graphics on a neutral track — the requirement explicitly called out this bug. Cause: `.bg-primary-k/5` class on the same div is being darkened to clay by the earlier `html.theme-dark .app-shell .bg-primary-k` rule (3 classes, !important), which beats `html.theme-dark .dm-bar-track` (2 classes, !important). Fix: raise the iter357 rule to `html.theme-dark .app-shell .dm-bar-track { background-color: rgba(255,255,255,0.10) !important; }` OR add a color-token override on the same rule so alpha applies to white, not clay.",
+          "selector": "[data-testid='pc-compare-bars'] .dm-bar-track",
+          "priority": "HIGH"
+        },
+        {
+          "component": "Price Checker result stat cards (dark mode)",
+          "issue": "All THREE cards render identical dark-teal rgb(14,48,51) — pc-stat-charged, pc-your-share, and pc-range are visually indistinguishable in dark. Expected: teal #0E3A3E / clay-brown #33231A / sage-green #16281C. Cause: `html.theme-dark .app-shell .sect-teal|sect-clay|sect-sage` rules (3-class specificity) beat the new `html.theme-dark [data-testid=...]` rules (2-class specificity) — both use !important, so higher specificity wins. Fix: bump the iter357 selectors to `html.theme-dark .app-shell [data-testid='pc-stat-charged'] { ... }` (etc.) so they add up to 3 classes as well, and beat the sect-* generic rules by source order.",
+          "selector": "[data-testid='pc-stat-charged'], [data-testid='pc-your-share'], [data-testid='pc-range']",
+          "priority": "HIGH"
+        },
+        {
+          "component": "Price Checker Save button (dark mode)",
+          "issue": "pc-save-check computed background-color = rgb(165,81,43) (clay) instead of the required teal #1C7C83. pc-pdf-export = #C2683D ✓ and pc-open-email = #5C8063 ✓ are correct — only Save is wrong. Cause: SaveCheckButton renders with a `bg-primary-k`-family class that the app-shell darker override recolours to clay (same specificity trap as the stat cards). Fix: raise `html.theme-dark [data-testid='pc-save-check']` to `html.theme-dark .app-shell [data-testid='pc-save-check'] { background-color:#1C7C83 !important; }`.",
+          "selector": "[data-testid='pc-save-check']",
+          "priority": "HIGH"
+        },
+        {
+          "component": "Price Checker pc-num-hl dark colour",
+          "issue": "Dark-mode highlight computed color = rgb(232,149,107) = #E8956B; spec called for #E89A6F. Visually near-identical brighter clay and passes the 'stand out in dark' requirement, but it's a minor drift from the spec value. Fix (optional): change /app/frontend/src/index.css line 674 from #E8956B to #E89A6F.",
+          "selector": ".pc-num-hl",
+          "priority": "LOW"
+        }
+      ],
+      "integration_issues": [],
+      "design_issues": [
+        {
+          "screen": "Price Checker result — pc-position heading (dark & light)",
+          "issues": [
+            "Heading renders on ONE line as required (whitespace-nowrap, estLines=1 confirmed) but with the DoH-personal-care result string the text ('Your rate of $250.00 per hour is above the published range of $85.00 to $115.00 for personal care.') visibly extends past the card / viewport at 1440px width. scrollWidth==clientWidth on the span itself because the parent flex container doesn't constrain it. Not a blocker — the whitespace-nowrap requirement is satisfied — but consider adding overflow handling or a shorter format for very long strings."
+          ]
+        }
+      ]
+    },
+    "mobile": {"ui_bugs": [], "integration_issues": [], "design_issues": [], "react_native_issues": []}
+  },
+  "parity_issues": [],
+  "test_report_links": [
+    "/app/test_reports/iter357_dark_mode/findings.json",
+    "/app/test_reports/iter357_dark_mode/dark_result.jpeg",
+    "/app/test_reports/iter357_dark_mode/light_result.jpeg"
+  ],
+  "action_items": [
+    "Fix CSS specificity for dm-bar-track in dark mode — bump to `html.theme-dark .app-shell .dm-bar-track { background-color: rgba(255,255,255,0.10) !important; }` so it wins against the .app-shell .bg-primary-k dark override.",
+    "Fix stat-card dark backgrounds — bump each iter357 `html.theme-dark [data-testid='pc-stat-charged|pc-your-share|pc-range|pc-range-unavailable']` rule to include `.app-shell` so specificity matches/beats the generic `.sect-teal|sect-clay|sect-sage` dark overrides.",
+    "Fix pc-save-check dark colour — bump `html.theme-dark [data-testid='pc-save-check']` to `html.theme-dark .app-shell [data-testid='pc-save-check'] { background-color:#1C7C83 !important; }` (PDF & Email already win because their base classes aren't captured by the app-shell rule).",
+    "(Optional) Align .pc-num-hl dark colour to spec: change #E8956B → #E89A6F in /app/frontend/src/index.css line 674.",
+    "After fixes, re-verify by re-running /app/test_reports/iter357_dark_mode/findings.json flow — expected dark values: dm_bar_track_bg rgba(255,255,255,0.10), stat_charged_bg rgb(14,58,62), stat_your_share_bg rgb(51,35,26), stat_range_bg rgb(22,40,28), btn_save.bg rgb(28,124,131)."
+  ],
+  "critical_code_review_comments": [
+    "CSS specificity trap: iter357 dark-mode rules all use `html.theme-dark [data-testid=...]` (2 classes) with !important, but the pre-existing app-shell dark overrides use `html.theme-dark .app-shell .sect-...` (3 classes) with !important. When both sides use !important, higher class specificity wins — hence 3 of the 6 iter357 checks silently fail on the actual page even though the CSS is present in the file. Rule of thumb for future iter*-scoped dark rules: match or exceed the specificity of the base .app-shell dark override you are trying to beat.",
+    "highlightNumbers() helper is well-scoped and does the right thing on the observed distance_summary payload, but the resulting sentence for 'above range' contains only ONE number ($135.00) — so the test only exercises a single wrap. Consider verifying with a payload that has $ and % tokens together (e.g. by hitting a percentage-showing scenario) so the helper's `\\d+(?:\\.\\d+)?%` branch is exercised in QA."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "n/a (skipped per request)", "frontend": "50% (3 of 6 dark-mode requirements pass; light-mode regression clean)"},
+  "test_credentials": "cathy@example.com / testpass123 (Family, paid, access_state=active) — read from /app/memory/test_credentials.md",
+  "seed_data_creation": "",
+  "retest_needed": true,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Re-verify dark-mode Price Checker after CSS-specificity fixes land. Reproduce with: (1) API login cathy@example.com / testpass123, stash kindred_token + kindred_refresh_token, set localStorage wayly:app:appearance='dark'; (2) goto /ai-tools/provider-price-checker with wait_until='domcontentloaded' (networkidle times out on this route); (3) pick Personal Care from the first <select>, rate=250, provider='Test Provider'; (4) submit — a quality guard fires because $250/hr is unrealistic — click pc-guard-continue; (5) read computed styles of dm-bar-track, pc-stat-charged, pc-your-share, pc-range, pc-save-check, pc-pdf-export, pc-open-email. Expected passing values listed in action_items. Reuse /app/test_reports/iter357_dark_mode/findings.json for a diff.",
+  "rca of the issue": "All three dark-mode failures share ONE root cause: CSS specificity war between iter357's testid-scoped rules and the pre-existing `html.theme-dark .app-shell .sect-*` / `.bg-primary-k` dark-mode overrides. Both sides use !important, so the tie-breaker is class-count specificity (3-class .app-shell rules beat 2-class testid rules). The iter357 CSS is otherwise correct and does not need any behavioural rewrite — every affected rule just needs `.app-shell` prepended so the total specificity matches. Same pattern was used successfully in the file for the dash-detail-btn override (line 680) which already includes `.app-shell` for exactly this reason."
+}

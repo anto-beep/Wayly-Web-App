@@ -1,0 +1,27 @@
+{
+  "summary": "Retested ONLY the mobile onboarding wizard after fix (WaylyHeader → AppHeader in /app/mobile/app/onboarding.tsx). Fresh signup (mobtest+1786869239@example.com / Wayly!2026x) → app auto-routes to /onboarding, screen mounts cleanly with NO 'useDrawer must be used within DrawerProvider' error. Completed full flow: Step 1 essentials (first_name/last_name/dob 1946-05-12/pension full_pension/class 4/provider BlueBerry Care/delivery email) → onboarding-step1-continue → Step 2 auth checkbox → onboarding-step2-continue (POST /api/participants returned 201, household created, GET /api/auth/me refreshed) → Step 3 onboarding-step3-skip → Step 4 shows 60% profile completeness → onboarding-finish → router.replace('/(tabs)') lands on /(tabs) dashboard rendering 'Mob, this quarter · Classification 4 · $6,682 per quarter' with tab-dashboard visible and NO bounce back to /onboarding. Feature (H) mobile onboarding wizard is now fully working. Zero console errors / zero pageerrors captured during the run.",
+  "platforms_tested": ["mobile"],
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "mobile": {
+      "ui_bugs": [],
+      "integration_issues": [],
+      "design_issues": [],
+      "react_native_issues": []
+    }
+  },
+  "parity_issues": [],
+  "test_report_links": [],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "WaylyHeader silently requires DrawerProvider — consider making useDrawer defensive (return a no-op default when no provider is present) so future reuse outside (tabs) doesn't crash. Not blocking now that onboarding no longer uses WaylyHeader, but a latent trap for any future out-of-tabs screen that imports WaylyHeader."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "n/a", "frontend": "100% (onboarding 4/4 steps PASS + dashboard entry verified)"},
+  "test_credentials": "Fresh signup used: mobtest+1786869239@example.com / Wayly!2026x. Cathy (cathy@example.com/testpass123) unchanged.",
+  "seed_data_creation": "One new caregiver user + one new household + one participant record (Mob Tester, Class 4, BlueBerry Care, full_pension) created via the onboarding POST /api/participants — safe to leave, no invites issued.",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "All 8 mobile-parity features (including onboarding wizard) now PASS on Expo web preview at 390x844. Combined with iteration_159 (7/8 pass) the mobile surface is green. If future changes touch WaylyHeader or DrawerContext, retest onboarding entry from a fresh signup because that combination broke it before.",
+  "rca of the issue": "Fix confirmed: /app/mobile/app/onboarding.tsx now imports AppHeader (line 6) and renders <AppHeader title=\"Set up your household\" ... /> (line 149) instead of the previous <WaylyHeader />. AppHeader does not call useDrawer(), so the screen mounts cleanly outside the (tabs) DrawerProvider scope. End-to-end verified: signup → onboarding step 1..4 → POST /participants 201 → router.replace('/(tabs)') → dashboard loads with household_id set (participant name and Classification 4 visible)."
+}

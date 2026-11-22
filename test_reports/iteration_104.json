@@ -1,0 +1,26 @@
+{
+  "summary": "Iteration 104 review: Dashboard 500 sweep + CPR-2 v1 slice + CE-3 v2 pension wizard. Ran full pytest suite (ce3 v1+v2, cpr2 v1, lca1 iter112, loop1, core1): 67/67 PASSED. Directly verified public API: GET /api/statements=200 (36 rows, legacy datetime uploaded_at coerced to ISO string), GET /api/budget/current=200 (stable sort OK), GET /api/cpr2/status returns primary_label='Support Plan Reviewer' with aliases, GET /api/ce3/status shows version='v1+pension_wizard' with pension_change_wizard surface. Frontend E2E via Playwright as cathy@example.com: Contribution Position page renders ce3-pension-change-cta-section with 'Current: Part age pension'; open-btn opens ce3-pension-wizard-modal Step 1; selecting partner_deceased reveals ce3-pension-wizard-bereavement-msg; Preview impact POSTs preview and advances to Step 2 showing prior→new, Lifeline 13 11 14 + Bereavement Care support-resources, and backdated notice; Continue reaches Step 3; Commit closes modal. Everything green.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {"ui_bugs": [], "integration_issues": [], "design_issues": []},
+  "test_report_links": [
+    "/app/backend/tests/ce3/test_ce3_v2_pension.py",
+    "/app/backend/tests/cpr2/test_cpr2_v1.py",
+    "/app/backend/tests/ce3/test_ce3_v1.py",
+    "/app/backend/tests/lca1/test_iteration_112.py",
+    "/app/backend/tests/loop1/",
+    "/app/backend/tests/core1/test_core1_v1.py",
+    "/app/test_reports/pytest/iter_pension_cpr2.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "Sidebar in preview still shows 'Care Plan Reviewer' label — this is the tools navigation label. If the CPR-2 v1 rename intends to surface 'Support Plan Reviewer' in the sidebar (not only via API/status), consider updating the sidebar copy. Not blocking since aliases in cpr2/status include both names and rename-notification/ack API drives the in-app announcement.",
+    "Step-2 preview text 'You haven\\'t saved a contribution estimate yet, so we can\\'t show an exact impact' when there is no CE estimate — copy is correct but delta math ($) values are not surfaced. Consider showing zeros or a clearer disabled state so users understand nothing will be lost on commit."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "100% (67/67)", "frontend": "100% (full CE-3 v2 wizard flow verified)"},
+  "test_credentials": "cathy@example.com / testpass123 (caregiver, participant 0c538637-b0dd-4982-8f78-b32814c6a5eb Dorothy)",
+  "seed_data_creation": "None; used existing seeded household. Committed pension change during frontend test writes a pension_change_history row + CORE-1 timeline_event as expected.",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Dashboard 500 fix verified from public URL (statements + budget/current both 200). CPR-2 v1 status/rename/goal-ledger/re-review/LCA-1 subscriber tests 10/10 green. CE-3 v2 pension wizard 10/10 green + full UI wizard flow verified end-to-end (Step 1 → Preview → Step 2 with support resources & backdated flag → Step 3 → Commit closes modal). Sidebar copy still says 'Care Plan Reviewer' — noted but non-blocking."
+}
