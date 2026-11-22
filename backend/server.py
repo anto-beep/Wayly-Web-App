@@ -74,6 +74,7 @@ from models import (
 )
 import budget as budget_lib
 import program_reference as _pr
+from lib.fundtrack import compute_ladder as _compute_ladder
 from agents import parse_statement, explain_anomalies, chat_with_kindred
 from wrapper import run_wrapper
 import email_service
@@ -3108,6 +3109,58 @@ async def current_budget(request: Request, user_id: str = Depends(get_current_us
         })
 
     cap_amount = budget_lib.lifetime_cap(h.get("is_grandfathered", False))
+
+    # FUNDTRACK-1 canonical figure ladder (D1-D5): one server-side computation,
+    # rendered identically on every surface. E (used so far) is the confirmed
+    # quarter burn; carryover and booked-forward care are not tracked yet so
+    # C and G are 0 (H == F). Confidence is anchored to the newest statement's
+    # age, never asserted.
+    anchor_age_days = None
+    if statements_sorted:
+        _top = statements_sorted[0]
+        _upl = _top.get("uploaded_at") or _top.get("created_at")
+        try:
+            if isinstance(_upl, str):
+                _upl = datetime.fromisoformat(_upl.replace("Z", "+00:00"))
+            if isinstance(_upl, datetime):
+                _now_utc = datetime.now(timezone.utc)
+                _upl = _upl if _upl.tzinfo else _upl.replace(tzinfo=timezone.utc)
+                anchor_age_days = max(0, (_now_utc - _upl).days)
+        except Exception:
+            anchor_age_days = None
+    ladder = _compute_ladder(
+        classification=classification,
+        used_so_far=sum(burn.values()),
+        anchor_statement_age_days=anchor_age_days,
+        quarter_window=(q_start, q_end, q_label),
+    )
+
+    # FUNDTRACK-1 capture layer: fold the household's own entered charges into E
+    # (used so far) and booked care into G (committed forward), with statements
+    # superseding entered charges for their period (never double counted). Only
+    # when an active participant scopes the view and the feature is enabled.
+    try:
+        _ft_enabled = h.get("fundtrack_enabled")
+        if _ft_enabled is None:
+            _ft_enabled = os.environ.get("FUNDTRACK_1_FLAG", "true").lower() != "false"
+        if p and p.get("id") and _ft_enabled:
+            _today = datetime.now(timezone.utc).date()
+            _trk = await _ft_tracking.gather_tracking(
+                db, household_id=h["id"], participant_id=p["id"],
+                q_start=q_start, q_end=q_end, today=_today,
+            )
+            _e_total = sum(burn.values()) + (_trk.get("entered_used_aud") or 0.0)
+            _g_total = _trk.get("G_aud") or 0.0
+            if (_trk.get("entered_used_aud") or 0.0) > 0 or _g_total > 0:
+                ladder = _compute_ladder(
+                    classification=classification,
+                    used_so_far=_e_total,
+                    committed_forward=_g_total,
+                    anchor_statement_age_days=anchor_age_days,
+                    quarter_window=(q_start, q_end, q_label),
+                )
+    except Exception as _ft_e:
+        logger.warning("FUNDTRACK-1 budget fold failed: %s", _ft_e)
     return {
         "classification": classification,
         "classification_label": budget_lib.CLASSIFICATIONS[classification]["label"],
@@ -3120,6 +3173,7 @@ async def current_budget(request: Request, user_id: str = Depends(get_current_us
         "care_management_quarterly": care_management_quarterly,
         "quarterly_usable": quarterly_usable,
         "rollover_cap": budget_lib.rollover_cap(classification),
+        "ladder": ladder,
         "streams": streams,
         "allocation_source": allocation_source,
         "streams_note": streams_note,
@@ -7703,6 +7757,8 @@ from routes.athm1 import athm1_router, init_athm1_routes, ensure_athm1_indexes
 from routes.chsp1 import chsp1_router, init_chsp1_routes, ensure_chsp1_indexes
 from routes.bc2 import bc2_router, init_bc2_routes, ensure_bc2_indexes
 from routes.bsc1 import bsc1_router, init_bsc1_routes, ensure_bsc1_indexes
+from routes.fundtrack import fundtrack_router, init_fundtrack_routes, ensure_fundtrack_indexes
+from lib.fundtrack import tracking as _ft_tracking
 from routes.sdl1 import sdl1_router, init_sdl1_routes, ensure_sdl1_indexes
 from routes.fc2 import fc2_router, init_fc2_routes, ensure_fc2_indexes
 from routes.lf2 import lf2_router, init_lf2_routes, ensure_lf2_indexes
@@ -7842,6 +7898,7 @@ init_athm1_routes(db=db, user_dep=_user_from_request_required, core1_assert_acce
 init_chsp1_routes(db=db, user_dep=_user_from_request_required, loop1_open_case=loop1_open_case)
 init_bc2_routes(db=db, user_dep=_user_from_request_required, core1_assert_access=core1_assert_access)
 init_bsc1_routes(db=db, user_dep=_user_from_request_required, core1_assert_access=core1_assert_access)
+init_fundtrack_routes(db=db, user_dep=_user_from_request_required, core1_assert_access=core1_assert_access)
 init_sdl1_routes(db=db, user_dep=_user_from_request_required, core1_assert_access=core1_assert_access, core1_write_timeline=core1_write_timeline, loop1_open_case=loop1_open_case)
 init_fc2_routes(db=db, user_dep=_user_from_request_required, core1_assert_access=core1_assert_access, loop1_open_case=loop1_open_case)
 try:
@@ -7905,6 +7962,7 @@ api.include_router(athm1_router)
 api.include_router(chsp1_router)
 api.include_router(bc2_router)
 api.include_router(bsc1_router)
+api.include_router(fundtrack_router)
 api.include_router(sdl1_router)
 api.include_router(fc2_router)
 api.include_router(lf2_router)
@@ -9631,6 +9689,7 @@ async def _start_batch3_migration_and_purge():
         try:
             await ensure_bc2_indexes()
             await ensure_bsc1_indexes()
+            await ensure_fundtrack_indexes()
         except Exception as e:
             logger.warning("BC-2 index creation failed: %s", e)
         # SDL-1 indexes

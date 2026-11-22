@@ -19,6 +19,7 @@ import { usePersonaCopy } from "@/hooks/usePersonaCopy";
 import { useParticipants } from "@/context/ParticipantsContext";
 import ParticipantContactsPanel from "@/components/ParticipantContactsPanel";
 import BC2Projection from "@/components/BC2Projection";
+import FundtrackPanel from "@/components/fundtrack/FundtrackPanel";
 import SmartAISummary from "@/components/SmartAISummary";
 import DashboardActionBar from "@/components/DashboardActionBar";
 import { TOOL_COUNT } from "@/config/toolRegistry";
@@ -152,17 +153,27 @@ function BudgetDonut({ pctFill, pctLabel, tone, size = 168, stroke = 20 }) {
  * this quarter) and keeps the rest as quiet, tappable mini-stats.
  */
 function AtAGlance({ budget, statements, alertCount, toReviewHref, lifetimeCapHref }) {
-    const spent = budget.streams.reduce((a, s) => a + s.spent, 0);
-    // Official quarterly budget = annual ÷ 4 (includes the 10% care-management share),
-    // so the headline matches the plan, calculator and reviewer for this classification.
-    const quarterlyBudget = budget.quarterly_gross ?? budget.quarterly_total ?? budget.quarterly_usable;
-    const careMgmt = budget.care_management_quarterly ?? 0;
-    const left = quarterlyBudget - spent;
-    const pctUsed = quarterlyBudget > 0 ? Math.max(0, Math.min(100, (spent / quarterlyBudget) * 100)) : 0;
-    // Uncapped % for the text row so the over-budget state carries a real signal
-    // (e.g. "150% of budget used"); the progress bar stays clamped at 100% for layout.
-    const pctUsedDisplay = quarterlyBudget > 0 ? Math.max(0, Math.round((spent / quarterlyBudget) * 100)) : 0;
-    const over = left < 0;
+    // FUNDTRACK-1 canonical ladder (D1): "available for care" is the NET budget
+    // after the 10% care management deduction (D), and "left" is D - E (F), never
+    // gross minus spend. Fall back to the raw fields only if the ladder is absent.
+    const L = budget.ladder || null;
+    const fig = (L && L.figures) || {};
+    const spent = fig.E ?? budget.streams.reduce((a, s) => a + s.spent, 0);
+    const available = fig.D ?? (budget.quarterly_usable ?? 0);   // D, net available for care
+    const left = fig.F ?? (available - spent);                   // F, left for care
+    const spare = fig.H ?? left;                                 // H, spare for extra care
+    const careMgmt = fig.B ?? (budget.care_management_quarterly ?? 0);
+    const status = L && L.status;
+    const proj = (L && L.projection) || {};
+    const pctUsed = L && L.utilisation
+        ? Math.max(0, Math.min(100, L.utilisation.used_pct_of_available))
+        : (available > 0 ? Math.max(0, Math.min(100, (spent / available) * 100)) : 0);
+    const pctUsedDisplay = L && L.utilisation
+        ? Math.max(0, Math.round(L.utilisation.used_pct_of_available))
+        : (available > 0 ? Math.max(0, Math.round((spent / available) * 100)) : 0);
+    const elapsedPct = (L && L.quarter) ? L.quarter.elapsed_pct : null;
+    const over = status === "overspend_risk" || left < 0;
+    const underspend = status === "underspend_risk";
     const toneHex = (over || pctUsed >= 90) ? "#C0392B" : pctUsed >= 75 ? "#C2683D" : "#4E6E54";
     return (
         <section
@@ -175,12 +186,13 @@ function AtAGlance({ budget, statements, alertCount, toReviewHref, lifetimeCapHr
                     <BudgetDonut pctFill={pctUsed} pctLabel={pctUsedDisplay} tone={toneHex} />
                     <div className="min-w-0 flex-1 w-full text-center sm:text-left">
                         <span className={`block text-sm sm:text-[15px] uppercase tracking-[0.14em] font-bold ${over ? "text-terracotta" : "text-primary-k"}`} data-testid="glance-budget-status">
-                            {over ? "Over budget this quarter" : "Left to spend this quarter"}
+                            {over ? "Over budget this quarter" : "Left for care this quarter"}
                         </span>
                         {budget.quarter_label && (
                             <span className="mt-1.5 inline-flex items-center gap-1.5 rounded-pill bg-primary-k/[0.07] px-2.5 py-1 text-xs font-semibold tracking-wide text-primary-k/75" data-testid="glance-quarter-months">
                                 <Calendar className="h-3.5 w-3.5" />
                                 {String(budget.quarter_label).replace(/-/, " – ")}
+                                {elapsedPct != null && <span className="text-primary-k/55">· {elapsedPct}% through</span>}
                             </span>
                         )}
                         <div className="mt-1.5 flex items-baseline gap-2 flex-wrap justify-center sm:justify-start">
@@ -189,16 +201,29 @@ function AtAGlance({ budget, statements, alertCount, toReviewHref, lifetimeCapHr
                             </span>
                             <span className="text-sm text-primary-k/70 font-medium">of</span>
                             <span className="font-heading text-3xl tabular-nums leading-tight text-primary-k/80" data-testid="glance-budget">
-                                {formatAUD2(quarterlyBudget)}
+                                {formatAUD2(available)}
                             </span>
-                            <span className="text-sm text-primary-k/70 font-medium">this quarter</span>
+                            <span className="text-sm text-primary-k/70 font-medium">available this quarter</span>
                         </div>
+                        <p className="mt-2 text-sm text-primary-k/75" data-testid="glance-spare">
+                            Spare for extra care: <span className="tabular-nums font-semibold">{formatAUD2(spare)}</span>
+                        </p>
                         <p className="mt-3.5 inline-flex items-center gap-2 text-base font-semibold text-primary-k" data-testid="glance-spent">
                             <span className="h-3 w-3 rounded-full flex-none" style={{ backgroundColor: toneHex }} />
-                            <span className="tabular-nums font-bold">{formatAUD2(spent)}</span> spent so far
+                            <span className="tabular-nums font-bold">{formatAUD2(spent)}</span> used so far
                         </p>
                         {careMgmt > 0 && (
-                            <p className="mt-2 text-sm text-primary-k/70" data-testid="glance-care-management">{formatAUD2(careMgmt)} of this is care management (10% of the quarterly budget).</p>
+                            <p className="mt-2 text-sm text-primary-k/70" data-testid="glance-care-management">{formatAUD2(careMgmt)} care management is set aside automatically (10% of your quarter's funding), and is not part of the amount available for care above.</p>
+                        )}
+                        {underspend && proj.forfeit_aud > 0 && (
+                            <p className="mt-2 text-sm font-medium text-[#6B4A0F]" data-testid="glance-forfeit">
+                                At this pace, about {formatAUD2(proj.forfeit_aud)} of this quarter's funding looks likely to be returned on {budget.quarter_end ? new Date(budget.quarter_end).toLocaleDateString("en-AU", { day: "numeric", month: "short" }) : "quarter end"}. It may be worth talking to your provider about care you need but are not getting.
+                            </p>
+                        )}
+                        {over && proj.shortfall_aud > 0 && (
+                            <p className="mt-2 text-sm font-medium text-terracotta" data-testid="glance-shortfall">
+                                Booked care is estimated to be about {formatAUD2(proj.shortfall_aud)} above what is left this quarter. Check prices or ask your provider to confirm your balance.
+                            </p>
                         )}
                     </div>
                 </div>
@@ -324,17 +349,22 @@ export default function CaregiverDashboard() {
     const latestInvoiceFindings = (latestInvoice?.reconciliation?.findings) || [];
     const ttkCount = latestStatementAnomalies.length + latestInvoiceFindings.length;
 
-    // Budget view — mirror AtAGlance exactly so the Wayly Summary tells the
-    // SAME story as the donut (spent, % used, over / left).
-    const budgetSpent = budget ? budget.streams.reduce((acc, s) => acc + s.spent, 0) : 0;
-    const budgetQuarterly = budget
-        ? (budget.quarterly_gross ?? budget.quarterly_total ?? budget.quarterly_usable ?? 0)
-        : 0;
-    const budgetLeft = budgetQuarterly - budgetSpent;
-    const budgetOver = budgetLeft < 0;
-    const budgetPctUsed = budgetQuarterly > 0
-        ? Math.max(0, Math.round((budgetSpent / budgetQuarterly) * 100))
-        : 0;
+    // Budget view — mirror AtAGlance exactly, from the canonical ladder, so the
+    // Wayly Summary tells the SAME story as the donut and is DATE-AWARE (D4):
+    // "used so far" and "left for care" are net figures, and the summary is
+    // given how far through the quarter today is so it can never call a 58%
+    // quarter "early days".
+    const _ladder = budget?.ladder || null;
+    const _fig = (_ladder && _ladder.figures) || {};
+    const _proj = (_ladder && _ladder.projection) || {};
+    const budgetSpent = _fig.E ?? (budget ? budget.streams.reduce((acc, s) => acc + s.spent, 0) : 0);
+    const budgetAvailable = _fig.D ?? (budget ? (budget.quarterly_usable ?? 0) : 0);
+    const budgetLeft = _fig.F ?? (budgetAvailable - budgetSpent);
+    const budgetStatus = _ladder ? _ladder.status : null;
+    const budgetOver = budgetStatus === "overspend_risk" || budgetLeft < 0;
+    const budgetPctUsed = (_ladder && _ladder.utilisation)
+        ? Math.max(0, Math.round(_ladder.utilisation.used_pct_of_available))
+        : (budgetAvailable > 0 ? Math.max(0, Math.round((budgetSpent / budgetAvailable) * 100)) : 0);
 
     return (
         <div className="space-y-8" data-testid="caregiver-dashboard">
@@ -364,9 +394,20 @@ export default function CaregiverDashboard() {
                         provider: displayProvider || null,
                         plan,
                         quarter_label: budget?.quarter_label,
-                        quarterly_budget_aud: budgetQuarterly || null,
-                        quarterly_spent_aud: budgetSpent || null,
+                        quarter_elapsed_pct: _ladder?.quarter?.elapsed_pct ?? null,
+                        quarter_elapsed_days: _ladder?.quarter?.elapsed_days ?? null,
+                        quarter_total_days: _ladder?.quarter?.total_days ?? null,
+                        quarter_as_at_date: _ladder?.quarter?.as_at ?? null,
+                        available_for_care_aud: budget ? budgetAvailable : null,
+                        quarterly_budget_aud: budget ? budgetAvailable : null,
+                        quarterly_spent_aud: budget ? budgetSpent : null,
+                        left_for_care_aud: budget ? budgetLeft : null,
+                        budget_status: budgetStatus,
                         budget_percent_used: budget ? budgetPctUsed : null,
+                        projected_forfeit_aud: budget && budgetStatus === "underspend_risk" ? (_proj.forfeit_aud ?? null) : null,
+                        projected_shortfall_aud: budget && budgetStatus === "overspend_risk" ? (_proj.shortfall_aud ?? null) : null,
+                        projection_method: budget ? (_proj.method ?? null) : null,
+                        carryover_cap_aud: budget ? (_ladder?.carryover_cap_aud ?? null) : null,
                         over_budget: budget ? budgetOver : null,
                         amount_over_budget_aud: budget && budgetOver ? Math.abs(budgetLeft) : null,
                         amount_remaining_aud: budget && !budgetOver ? budgetLeft : null,
@@ -446,6 +487,13 @@ export default function CaregiverDashboard() {
                     alertCount={(latest?.anomalies || []).length}
                     toReviewHref={latest ? `/app/statements/${latest.id}` : "/app/statements"}
                     lifetimeCapHref={activeParticipant?.id ? `/app/participants/${activeParticipant.id}/contribution-position` : "/app/contribution-position"}
+                />
+            )}
+
+            {!isFree && budget && activeParticipant?.id && (
+                <FundtrackPanel
+                    participantId={activeParticipant.id}
+                    onChanged={() => api.get("/budget/current").then((r) => setBudget(r.data)).catch(() => {})}
                 />
             )}
 

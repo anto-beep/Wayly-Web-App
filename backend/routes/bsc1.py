@@ -22,6 +22,7 @@ from pydantic import BaseModel, Field
 
 import budget as budget_lib
 from lib import ppc_v2
+from lib.fundtrack import compute_ladder, carryover_cap
 
 logger = logging.getLogger("bsc1")
 
@@ -165,6 +166,22 @@ async def _gather_baseline(pid: str, request: Request) -> dict:
     burn_total = sum(burn_by_stream.values())
     contributed_total = budget_lib.compute_contributions(items)
 
+    # Age of the newest statement anchoring these figures (for D5 confidence).
+    anchor_age_days: Optional[int] = None
+    newest = await _db.statements.find_one(
+        q, {"_id": 0, "uploaded_at": 1, "created_at": 1}, sort=[("uploaded_at", -1)]
+    )
+    if newest:
+        upl = newest.get("uploaded_at") or newest.get("created_at")
+        try:
+            if isinstance(upl, str):
+                upl = datetime.fromisoformat(upl.replace("Z", "+00:00"))
+            if isinstance(upl, datetime):
+                upl = upl if upl.tzinfo else upl.replace(tzinfo=timezone.utc)
+                anchor_age_days = max(0, (datetime.now(timezone.utc) - upl).days)
+        except Exception:
+            anchor_age_days = None
+
     gf = bool(p.get("is_grandfathered"))
     cap = budget_lib.lifetime_cap(gf)
 
@@ -179,6 +196,7 @@ async def _gather_baseline(pid: str, request: Request) -> dict:
         "burn_by_stream": burn_by_stream,
         "burn_total": burn_total,
         "has_decoded_spend": len(items) > 0,
+        "anchor_age_days": anchor_age_days,
         "contributed_to_date": contributed_total,
         "lifetime_cap": cap,
         "is_grandfathered": gf,
@@ -186,9 +204,11 @@ async def _gather_baseline(pid: str, request: Request) -> dict:
 
 
 def _quarterly_available(cls: int) -> Decimal:
-    # Gross quarterly budget (annual/4, incl. the 10% care-management share),
-    # matching the dashboard/calculator (quarterly_budget() is post-CM).
-    return _q(budget_lib.quarterly_budget(cls)) / Decimal("0.9")
+    # NET quarterly budget = "available for care" (A - B), AFTER the 10% care
+    # management deduction. FUNDTRACK-1 D1: never use the gross classification
+    # figure as what the household can spend. budget_lib.quarterly_budget()
+    # already returns this net value.
+    return _q(budget_lib.quarterly_budget(cls))
 
 
 def _label_for(start: date) -> str:
@@ -254,7 +274,8 @@ def _recurring_quarterly_delta(c: Change) -> Decimal:
 
 
 def _project(base: dict, changes: List[Change], *, spend_to_date: Decimal,
-             pace_pct: Optional[float], carry_in: Decimal, confidence: str) -> dict:
+             pace_pct: Optional[float], carry_in: Decimal, confidence: str,
+             today: date) -> dict:
     windows = _quarter_windows(base["quarter_start"], base["quarter_end"])
     cls = base["classification"]
 
@@ -267,10 +288,20 @@ def _project(base: dict, changes: List[Change], *, spend_to_date: Decimal,
     base_available = _quarterly_available(cls)
     avail = _quarterly_available(new_cls)
 
-    # Baseline projected variable spend per quarter: extrapolate the current
-    # quarter's pace; if nothing decoded, assume ~85% of the budget.
+    # D3/D4: project the current quarter's spend from the ELAPSED-QUARTER pace,
+    # not from spend-to-date (which would assume no further spend and label an
+    # actual as a projection). Linear pace = burn so far / fraction of the
+    # quarter elapsed. If nothing is decoded, assume ~85% of the budget.
     base_burn = _q(base["burn_total"])
-    pace = base_burn if base_burn > 0 else (base_available * Decimal("0.85"))
+    q0_total_days = (base["quarter_end"] - base["quarter_start"]).days + 1
+    q0_elapsed_days = max(0, min(q0_total_days, (today - base["quarter_start"]).days + 1))
+    elapsed_frac = (Decimal(q0_elapsed_days) / Decimal(q0_total_days)) if q0_total_days else Decimal("1")
+    if base_burn > 0 and elapsed_frac > 0:
+        pace = base_burn / elapsed_frac
+    elif base_burn > 0:
+        pace = base_burn
+    else:
+        pace = base_available * Decimal("0.85")
 
     # Recurring deltas (all quarters) and pace/price multipliers.
     recurring_delta = Decimal("0")
@@ -344,17 +375,39 @@ def _project(base: dict, changes: List[Change], *, spend_to_date: Decimal,
         carry = carry_fwd
 
     q0 = quarters[0]
-    status = _status_for(_q(q0["available_aud"]), _q(q0["projected_total_aud"]),
-                         _q(q0["spent_to_date_aud"]), run_out_date, windows[0])
+    # FUNDTRACK-1 canonical ladder for the current quarter. G ("booked") is ONLY
+    # the care the scenario explicitly adds forward (0 for the baseline), so F,
+    # G and H match the dashboard exactly for the same baseline. The scenario's
+    # own Q0 projected total drives the status, cap and dollar forfeit via the
+    # override, without inflating G/H.
+    q0_projected = _q(q0["projected_total_aud"])
+    baseline_q0 = max(pace, spend_to_date)          # linear-pace baseline, no changes
+    g_bookings = max(Decimal("0"), q0_projected - baseline_q0)
+    has_changes = any(
+        c.type in ("add_service", "change_service", "one_off_cost") for c in changes
+    )
+    ladder = compute_ladder(
+        classification=new_cls,
+        used_so_far=spend_to_date,
+        committed_forward=g_bookings,
+        carry_in=carry_in,
+        anchor_statement_age_days=base.get("anchor_age_days"),
+        today=today,
+        quarter_window=(base["quarter_start"], base["quarter_end"], base["quarter_label"]),
+        projected_total_override=q0_projected,
+        method_override=("booked_care" if has_changes else "linear_pace"),
+    )
+    status = ladder["status"]
     return {
         "classification_used": new_cls,
         "base_available_aud": _cents(base_available),
         "available_aud": _cents(avail),
         "quarters": quarters,
         "status": status,
+        "ladder": ladder,
         "run_out_date": q0["run_out_date"],
         "change_deltas": deltas_out,
-        "confidence": confidence,
+        "confidence": ladder["confidence"]["level"],
     }
 
 
@@ -386,39 +439,41 @@ def _split_categories(burn_by_stream: dict, total: Decimal) -> Dict[str, float]:
     return {k: _cents(total * (agg[k] / s)) for k in _CAT_KEYS}
 
 
-def _status_for(available: Decimal, projected: Decimal, spent: Decimal,
-                run_out: Optional[str], w0: dict) -> str:
-    if spent > available:
-        return "already_over"
-    if run_out and _date_in(run_out, w0):
-        return "runs_out"
-    unspent = available - projected
-    if available > 0 and unspent < (available * Decimal("0.10")):
-        return "tight" if unspent >= 0 else "runs_out"
-    return "on_track"
-
-
 def _hero(base: dict, result: dict) -> dict:
     name = base["participant_name"]
     q0 = result["quarters"][0]
-    status = result["status"]
-    unspent = q0["projected_unspent_aud"]
+    ladder = result["ladder"]
+    status = ladder["status"]
+    proj = ladder["projection"]
+    fig = ladder["figures"]
     ql = q0["quarter_label"]
     qend = _fmt_date(q0["quarter_end"])
+    forfeit_date = _fmt_date(proj.get("forfeit_date"))
     money = lambda n: "$" + format(int(round(abs(n))), ",")
-    if status == "on_track":
-        answer = f"At this pace, {name}'s {ql} budget lasts the whole quarter, finishing with about {money(unspent)} unspent."
-        action = "Nothing to action."
-    elif status == "tight":
-        answer = f"At this pace, {name}'s {ql} budget just lasts, with about {money(unspent)} left at {qend}."
-        action = "Worth keeping an eye on."
-    elif status == "runs_out":
-        rod = _fmt_date(result["run_out_date"]) if result.get("run_out_date") else f"late in {ql}"
-        answer = f"At this pace, the budget runs out around {rod}."
-        action = "Worth raising with the care coordinator now."
-    else:  # already_over
-        answer = f"Spending this quarter is already about {money(unspent)} over the budget."
-        action = "Ask the provider how the overspend is being handled."
+    method_label = {
+        "booked_care": "based on the care booked to the end of the quarter",
+        "linear_pace": "based on the pace of spending so far",
+        "no_further_spend": "based on spending so far",
+    }.get(proj.get("method"), "based on the pace of spending so far")
+
+    if status == "underspend_risk":
+        answer = (
+            f"About {money(proj['forfeit_aud'])} of {name}'s {ql} care funding looks likely to be "
+            f"returned on {forfeit_date} ({method_label}). This is an estimate."
+        )
+        action = "It may be worth talking to the provider about care they need but are not getting."
+    elif status == "overspend_risk":
+        answer = (
+            f"{name}'s booked care is estimated to be about {money(proj['shortfall_aud'])} above what is "
+            f"left this quarter ({method_label})."
+        )
+        action = "Check those prices or ask the provider to confirm the balance. The service agreement sets out who pays if an overspend happens."
+    else:  # on_track
+        answer = (
+            f"At this pace, {name}'s {ql} funding is on track, with about {money(fig['F'])} left for care "
+            f"and {money(fig['H'])} spare for extra care."
+        )
+        action = "Nothing in this budget needs action right now."
     return {
         "status": status,
         "answer": answer,
@@ -426,10 +481,17 @@ def _hero(base: dict, result: dict) -> dict:
         "name": name,
         "quarter_label": ql,
         "quarter_end": q0["quarter_end"],
-        "unspent_aud": unspent,
+        # Canonical ladder figures (A..H) so the hero reads the same numbers.
+        "available_aud": fig["D"],
+        "left_for_care_aud": fig["F"],
+        "spare_for_extra_aud": fig["H"],
+        "projected_total_aud": proj["projected_total_aud"],
+        "projected_unspent_aud": proj["projected_unspent_aud"],
+        "forfeit_aud": proj["forfeit_aud"],
+        "shortfall_aud": proj["shortfall_aud"],
+        "projection_method": proj["method"],
+        "carryover_cap_aud": ladder["carryover_cap_aud"],
         "run_out_date": result.get("run_out_date"),
-        "available_aud": q0["available_aud"],
-        "projected_total_aud": q0["projected_total_aud"],
     }
 
 
@@ -446,23 +508,26 @@ def _fmt_date(iso: Optional[str]) -> str:
 async def _compute(pid: str, request: Request, body: ComputeBody) -> dict:
     base = await _gather_baseline(pid, request)
 
-    # spend-to-date: user estimate (medium confidence) or decoded burn (high),
-    # else 0 (low confidence).
+    # as-of date anchors the elapsed-quarter pace projection (D4).
+    try:
+        today = date.fromisoformat(body.as_of[:10]) if body.as_of else date.today()
+    except Exception:
+        today = date.today()
+
+    # spend-to-date (E): user estimate or decoded burn, else 0. Confidence is
+    # NO LONGER asserted here (D5) — the ladder derives it from named inputs.
     if body.spend_to_date_aud is not None:
         spend_to_date = _q(body.spend_to_date_aud)
-        confidence = "medium"
     elif base["has_decoded_spend"]:
         spend_to_date = _q(base["burn_total"])
-        confidence = "high"
     else:
         spend_to_date = Decimal("0")
-        confidence = "low"
     carry_in = _q(body.carry_forward_in_aud)
 
     scenario = _project(base, body.changes, spend_to_date=spend_to_date,
-                        pace_pct=body.pace_pct, carry_in=carry_in, confidence=confidence)
+                        pace_pct=body.pace_pct, carry_in=carry_in, confidence="", today=today)
     baseline = _project(base, [], spend_to_date=spend_to_date,
-                        pace_pct=None, carry_in=carry_in, confidence=confidence)
+                        pace_pct=None, carry_in=carry_in, confidence="", today=today)
     hero = _hero(base, scenario)
 
     delta_vs_baseline = (_q(scenario["quarters"][0]["projected_total_aud"])
@@ -477,7 +542,7 @@ async def _compute(pid: str, request: Request, body: ComputeBody) -> dict:
         "funding": {
             "label": "government funding",
             "quarterly_budget_aud": scenario["available_aud"],
-            "note": "This is the government-funded budget for the quarter, not what you pay.",
+            "note": "This is the government-funded budget for the quarter, after care management, not what you pay.",
         },
         "contribution": {
             "note": "What you pay depends on your means assessment. See the Contribution Estimator for your figure.",
@@ -487,6 +552,7 @@ async def _compute(pid: str, request: Request, body: ComputeBody) -> dict:
             "is_grandfathered": base["is_grandfathered"],
         },
         "confidence": scenario["confidence"],
+        "ladder": scenario["ladder"],
         "hero": hero,
         "quarters": scenario["quarters"],
         "baseline": {"quarters": baseline["quarters"]},

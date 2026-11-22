@@ -48,6 +48,9 @@ export default function BC2Projection({ participantId }) {
 
     const cur = data.current_quarter;
     const cap = data.lifetime_cap_position;
+    const ladder = data.ladder || null;
+    const lstatus = ladder && ladder.status;
+    const lproj = (ladder && ladder.projection) || {};
     const pct = cur.quarterly_budget_aud ? Math.min(100, Math.round((cur.burn_total_aud / cur.quarterly_budget_aud) * 100)) : 0;
     const capPct = cap.lifetime_cap_aud ? Math.min(100, Math.round((cap.contributed_to_date_aud / cap.lifetime_cap_aud) * 100)) : 0;
 
@@ -95,8 +98,18 @@ export default function BC2Projection({ participantId }) {
                     <p className={`text-[0.95rem] mt-2.5 font-semibold ${statusTone}`}>
                         {overBudget
                             ? `You have gone over this quarter's budget by ${money(cur.burn_total_aud - cur.quarterly_budget_aud)}.`
-                            : `${money(cur.headroom_aud)} left to spend before ${endPhrase}.`}
+                            : `${money(cur.headroom_aud)} left for care before ${endPhrase}.`}
                     </p>
+                    {lstatus === "underspend_risk" && lproj.forfeit_aud > 0 && (
+                        <p className="text-[0.9rem] mt-2 font-medium text-[#6B4A0F]" data-testid="bc2-projection-forfeit">
+                            At this pace, about {money(lproj.forfeit_aud)} looks likely to be returned to the government this quarter. It may be worth discussing care you need but are not getting with your provider.
+                        </p>
+                    )}
+                    {lstatus === "overspend_risk" && lproj.shortfall_aud > 0 && (
+                        <p className="text-[0.9rem] mt-2 font-medium text-terracotta" data-testid="bc2-projection-shortfall">
+                            Booked care is tracking about {money(lproj.shortfall_aud)} above what is left this quarter. Check your prices or ask your provider to confirm your balance.
+                        </p>
+                    )}
                 </div>
 
                 {/* Lifetime cap — soft clay */}

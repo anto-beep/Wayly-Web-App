@@ -1,0 +1,45 @@
+{
+  "summary": "FUNDTRACK-1 verified on BOTH web and mobile against the shared backend. Backend pytest green (21/21: 11 endpoint iter409 + 10 tracking). Web dashboard FundtrackPanel + /app/weekly-budget render correctly with all expected testIDs (fundtrack-panel, fundtrack-add-charge, fundtrack-whatif, fundtrack-open-weekly, weekly-page, weekly-booked, weekly-actions, weekly-source-note, weekly-add-charge, weekly-whatif, weekly-something-changed) and the ChargeEntryDialog exposes the 3 tabs (charge-tab-usual/scan/type). Mobile dashboard FundtrackPanel + /weekly-budget render the SAME testIDs; ChargeEntrySheet 3 tabs OK; WhatIfCareSheet (whatif-close, whatif-book) OK; VisitChangeSheet (visit-change-sheet, visit-change-save, visit-change-did_not_happen) OK. PARITY confirmed: web and mobile show identical money ladder figures from the same overview endpoint ($6,868.83 D, $4,564.59 E, $2,304.24 F=H, $1,054.61 shortfall) and identical alert set (shortfall_risk only). Backend what-if endpoint verified: 7 visits × $100 Cleaning weekly → total $700, revised_spare $1,604.24, boundary=false.",
+  "platforms_tested": ["web", "mobile"],
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "web": {
+      "ui_bugs": [],
+      "integration_issues": [],
+      "design_issues": []
+    },
+    "mobile": {
+      "ui_bugs": [
+        {"component": "WhatIfCareSheet", "issue": "testID='whatif-revised-h' is only rendered once the async what-if computation finishes (debounce 350ms + network round-trip). A short wait (<2.5s) after opening the sheet returns MISSING. Code is correct (/app/mobile/src/components/fundtrack/WhatIfCareSheet.tsx:131 passes testID to Stat which wraps a View). This is a timing/flakiness consideration for tests, not a functional bug — whatif-close and whatif-book render immediately as expected. Suggest wrapping testID on the outer result container so selector is queryable before compute completes.", "testID": "whatif-revised-h", "priority": "LOW"}
+      ],
+      "integration_issues": [],
+      "design_issues": [],
+      "react_native_issues": []
+    }
+  },
+  "parity_issues": [],
+  "test_report_links": [
+    "/app/backend/tests/test_fundtrack_endpoints_iter409.py",
+    "/app/backend/tests/test_fundtrack_tracking.py",
+    "/app/test_reports/iter410_web_weekly.jpeg",
+    "/app/test_reports/iter410_mob_dash.jpeg",
+    "/app/test_reports/iter410_mob_weekly.jpeg"
+  ],
+  "action_items": [
+    "(LOW) Consider moving testID='whatif-revised-h' (or adding an additional wrapper testID) so selectors can resolve even when the async result hasn't yet been computed — avoids flakiness in future e2e tests.",
+    "(INFO) Web test runs occasionally missed whatif-dialog / visit-change-dialog selectors on first click due to modal open timing; code paths exist and functionally render — add explicit wait_for_selector in future scripts."
+  ],
+  "critical_code_review_comments": [
+    "FundtrackPanel (mobile) correctly reuses the same overview endpoint and renders the same card contract as web — parity is maintained at the rendering level.",
+    "WhatIfCareSheet mobile debounces computes (350ms) and matches the web dialog's live-recompute behaviour.",
+    "WeeklyBudget mobile screen correctly orders ladder → alerts → booked → actions → used → superseded → pending as per spec; matches web."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "100% (21/21)", "frontend": "100% web, ~95% mobile (1 flaky testID due to async timing)"},
+  "test_credentials": "cathy@example.com / testpass123 (Family; active participant Dorothy id 0c538637-b0dd-4982-8f78-b32814c6a5eb)",
+  "seed_data_creation": "none",
+  "retest_needed": false,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "FUNDTRACK-1 passed on both surfaces. Dorothy quarter Oct–Dec 2026: ladder A=7632.04, D=6868.83, E=4564.59, F=H=2304.24. Only one alert visible (shortfall_risk). 83 saved_services. Mobile login button label is 'Log In' (not 'Sign in'). On web, prefer form-based login (tokens not accepted via localStorage key). For mobile, cathy's home dashboard shows 'Mum' as active participant but /weekly-budget resolves to Dorothy via ParticipantContext. All testIDs listed in review_request are present except for one timing-dependent one (whatif-revised-h).",
+  "rca of the issue": "N/A — this was a verification pass only."
+}

@@ -126,6 +126,7 @@ const ProviderComparison = lazy(() => import("@/pages/ProviderComparison"));
 const CarerSelfAssessment = lazy(() => import("@/pages/CarerSelfAssessment"));
 const HandoverPack = lazy(() => import("@/pages/HandoverPack"));
 const BudgetScenarios = lazy(() => import("@/pages/BudgetScenarios"));
+const WeeklyBudget = lazy(() => import("@/pages/WeeklyBudget"));
 const AttendanceLog = lazy(() => import("@/pages/AttendanceLog"));
 const FamilyCoordinatorHub = lazy(() => import("@/pages/FamilyCoordinator"));
 const AskWaylyV2 = lazy(() => import("@/pages/AskWaylyV2"));
@@ -583,6 +584,7 @@ function App() {
                     <Route path="/app/carer/self-assessment" element={<RequireAuth><Layout><ToolLockGate><CarerSelfAssessment /></ToolLockGate></Layout></RequireAuth>} />
                     <Route path="/app/carer/handover-pack" element={<RequireAuth><Layout><ToolLockGate><HandoverPack /></ToolLockGate></Layout></RequireAuth>} />
                     <Route path="/app/budget-scenarios" element={<RequireAuth><Layout><BudgetScenarios /></Layout></RequireAuth>} />
+                    <Route path="/app/weekly-budget" element={<RequireAuth><Layout><WeeklyBudget /></Layout></RequireAuth>} />
                     <Route path="/app/participants/:id/attendance" element={<RequireAuth><Layout><AttendanceLog /></Layout></RequireAuth>} />
                     <Route path="/app/participants/:id/coordinator" element={<RequireAuth><Layout><FamilyCoordinatorHub /></Layout></RequireAuth>} />
                     <Route path="/app/csc/stream-mix-and-iat" element={<RequireAuth><Layout><ToolLockGate><CscStreamMixIat /></ToolLockGate></Layout></RequireAuth>} />

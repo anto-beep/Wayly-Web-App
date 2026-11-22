@@ -11,6 +11,8 @@ import { Link } from "react-router-dom";
 import { toast } from "sonner";
 import { api } from "@/lib/api";
 import { useParticipants } from "@/context/ParticipantsContext";
+import BudgetLadderCard from "@/components/BudgetLadderCard";
+import FundtrackPanel from "@/components/fundtrack/FundtrackPanel";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -31,10 +33,13 @@ const titleCase = (str) => !str ? "" : String(str).split(/(\s+)/).map((tok, i) =
 }).join("");
 
 const STATUS_META = {
+    underspend_risk: { label: "Underspend risk", color: "#6B4A0F", bg: "#C2683D", Icon: AlertTriangle },
     on_track: { label: "On track", color: "#6B8F71", bg: "#6B8F71", Icon: CheckCircle2 },
+    overspend_risk: { label: "Overspend risk", color: "#B4472B", bg: "#B4472B", Icon: TrendingUp },
+    // legacy fallbacks (pre-FUNDTRACK scenarios saved on disk)
     tight: { label: "Tight", color: "#C2683D", bg: "#C2683D", Icon: AlertTriangle },
-    runs_out: { label: "Runs out", color: "#C2683D", bg: "#C2683D", Icon: Clock },
-    already_over: { label: "Already over", color: "#B4472B", bg: "#B4472B", Icon: TrendingUp },
+    runs_out: { label: "Overspend risk", color: "#C2683D", bg: "#C2683D", Icon: Clock },
+    already_over: { label: "Overspend risk", color: "#B4472B", bg: "#B4472B", Icon: TrendingUp },
 };
 
 // Distinct, meaning-coded tints for the hero stat pills so each figure reads at
@@ -49,7 +54,7 @@ const PILL_TONES = {
 };
 // The status pill borrows the colour that matches the status so the hero reads
 // as a mix of colours, not a wall of teal.
-const STATUS_PILL_TONE = { on_track: "left", tight: "spend", runs_out: "over", already_over: "over" };
+const STATUS_PILL_TONE = { on_track: "left", underspend_risk: "spend", overspend_risk: "over", tight: "spend", runs_out: "over", already_over: "over" };
 
 const QUESTION_CARDS = [
     { key: "add_service", title: "Add or change a service", hint: "What if we add cleaning, or go from 2 to 3 hours a visit?", Icon: Plus },
@@ -178,10 +183,16 @@ export default function BudgetScenarios() {
                             </div>
                             <p className="mt-3 font-heading text-2xl leading-snug text-white" data-testid="bsc1-hero-answer">{hero.answer}</p>
                             <div className="mt-5 grid grid-cols-2 sm:grid-cols-4 gap-3">
-                                <HeroPill tone="budget" Icon={Wallet} label="Budget this quarter" value={AUD0(hero.available_aud)} />
+                                <HeroPill tone="budget" Icon={Wallet} label="Available for care" value={AUD0(hero.available_aud)} />
                                 <HeroPill tone="spend" Icon={TrendingUp} label="Projected spend" value={AUD0(hero.projected_total_aud)} />
-                                <HeroPill tone={hero.unspent_aud < 0 ? "over" : "left"} Icon={hero.unspent_aud < 0 ? AlertTriangle : CheckCircle2} label={hero.unspent_aud < 0 ? "Projected over" : "Projected left"} value={AUD0(hero.unspent_aud)} />
-                                <HeroPill tone={STATUS_PILL_TONE[hero.status] || "status"} Icon={meta.Icon} label={hero.run_out_date ? "Runs out" : "Status"} value={hero.run_out_date ? fmtDate(hero.run_out_date) : meta.label} />
+                                {hero.status === "underspend_risk" ? (
+                                    <HeroPill tone="spend" Icon={AlertTriangle} label="Likely returned" value={AUD0(hero.forfeit_aud)} />
+                                ) : hero.status === "overspend_risk" ? (
+                                    <HeroPill tone="over" Icon={AlertTriangle} label="Projected short" value={AUD0(hero.shortfall_aud)} />
+                                ) : (
+                                    <HeroPill tone="left" Icon={CheckCircle2} label="Left for care" value={AUD0(hero.left_for_care_aud)} />
+                                )}
+                                <HeroPill tone={STATUS_PILL_TONE[hero.status] || "status"} Icon={meta.Icon} label="Status" value={meta.label} />
                             </div>
                             <div className="mt-5 flex items-center justify-between flex-wrap gap-2">
                                 <p className="text-sm text-white/85">{hero.action_line}</p>
@@ -192,6 +203,12 @@ export default function BudgetScenarios() {
                             </div>
                         </div>
                     </div>
+
+                    {/* CANONICAL FIGURE LADDER (same card + payload as the dashboard) */}
+                    {result.ladder && <BudgetLadderCard ladder={result.ladder} />}
+
+                    {/* FUNDTRACK-1 capture layer: charge entry, what-if, alerts */}
+                    <FundtrackPanel participantId={pid} onChanged={() => { /* recompute picks up entered charges on next poll */ setChanges((c) => [...c]); }} />
 
                     {/* FUNDING + CONTRIBUTION STRIP */}
                     <div className="rounded-2xl border border-primary-k/10 bg-white p-4 flex flex-col sm:flex-row sm:items-center gap-3 justify-between" data-testid="bsc1-funding-strip">

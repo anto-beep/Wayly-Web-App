@@ -1,0 +1,49 @@
+{
+  "summary": "FUNDTRACK-1 / BSC-1 budget-defect fixes VERIFIED PASS on backend, web and mobile. Shared compute_ladder correctly powers /api/budget/current, /api/bsc1/compute, and /api/bc2/.../projection with identical A..H figures for Dorothy (A $7,632.04, B $763.21, C $0, D $6,868.83 NET, E $4,564.59, F $2,304.24, G $0, H $2,304.24). D1 (D is NET, F=D-E), D2 (status enum = overspend_risk for Dorothy, 3-state model), D3 (projection method 'linear_pace', projected_total_aud $7,923.44 differs from E $4,564.59 at 58% elapsed), D4 (Wayly Summary text explicitly says 'quarter is now 58% of the way through, meaning just over half the time has passed'; no 'early days'), D5 (confidence derived, 'medium' with anchor_statement input on backend; UI renders 'Low' pill on BSC, both derived not bare-asserted), D8 (hero exposes forfeit_aud/shortfall_aud/left_for_care_aud, NOT unspent_aud) all satisfied. Full parity confirmed: web dashboard, web budget-scenarios, mobile dashboard, and mobile budget-scenarios all show identical D/E/F and status='Overspend risk' with shortfall $1,054.61. All 11 ladder unit tests pass; all 11 new endpoint tests pass.",
+  "platforms_tested": ["web", "mobile"],
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "web": {
+      "ui_bugs": [],
+      "integration_issues": [],
+      "design_issues": []
+    },
+    "mobile": {
+      "ui_bugs": [
+        {"component": "Dashboard at-a-glance", "issue": "'$6,868.83 available this quarter' is rendered inline next to glance-left (line 284 of mobile/app/(tabs)/index.tsx) but lacks a dedicated testID='glance-budget'. Web dashboard exposes it as glance-budget. Functional parity holds (value is visible and correct); only the testID selector is missing, which breaks a direct selector-based parity probe.", "testID": "glance-budget", "priority": "LOW"}
+      ],
+      "integration_issues": [],
+      "design_issues": [],
+      "react_native_issues": [
+        {"component": "shadow* style props", "issue": "Console warning: '\"shadow*\" style props are deprecated. Use \"boxShadow\".' — pre-existing, not caused by this fix. Reference: Expo web preview console during /budget-scenarios load."},
+        {"component": "pointerEvents prop", "issue": "Console warning: 'props.pointerEvents is deprecated. Use style.pointerEvents' — pre-existing, not caused by this fix."}
+      ]
+    }
+  },
+  "parity_issues": [
+    {"flow": "Dashboard available-this-quarter selector", "platform": "mobile", "issue": "glance-budget testID missing on mobile dashboard; the $6,868.83 value is shown inline but cannot be queried via data-testid='glance-budget' like on web.", "expected": "testID='glance-budget' wrapping the $6,868.83 value, matching web.", "actual": "No glance-budget testID on mobile; value rendered inside a sibling Text."}
+  ],
+  "test_report_links": [
+    "/app/backend/tests/test_fundtrack_ladder.py",
+    "/app/backend/tests/test_fundtrack_endpoints_iter409.py",
+    "/app/test_reports/iter409_bsc_web.jpeg",
+    "/app/test_reports/iter409_mob_dash.jpeg",
+    "/app/test_reports/iter409_mob_bsc.jpeg"
+  ],
+  "action_items": [
+    "(LOW) Add testID='glance-budget' to the mobile dashboard Text that renders the 'of $X available this quarter' value (/app/mobile/app/(tabs)/index.tsx ~line 284) so mobile matches web for selector parity."
+  ],
+  "critical_code_review_comments": [
+    "compute_ladder centralisation is a clean, testable abstraction — three endpoints now return one shape and the UI parity is byte-for-byte on the figures.",
+    "Hero correctly drops raw 'unspent_aud' and surfaces forfeit_aud/shortfall_aud/left_for_care_aud, closing D1/D8.",
+    "Confidence is derived with structured inputs (anchor_statement age gating medium vs high) rather than a bare string — closes D5."
+  ],
+  "updated_files": ["/app/backend/tests/test_fundtrack_endpoints_iter409.py"],
+  "success_rate": {"backend": "100% (11/11 ladder unit + 11/11 endpoint)", "frontend": "100% web, ~95% mobile (1 missing testID, value correct)"},
+  "test_credentials": "cathy@example.com / testpass123 (Family, participant Dorothy class 4, id 0c538637-b0dd-4982-8f78-b32814c6a5eb)",
+  "seed_data_creation": "none",
+  "retest_needed": false,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "Dorothy's quarter Oct–Dec 2026 is 58% elapsed. Canonical ladder figures: A 7632.04, B 763.21, C 0, D 6868.83, E 4564.59, F 2304.24, G 0, H 2304.24. Status=overspend_risk, shortfall=1054.61, projection.method=linear_pace, projected_total=7923.44. Web Wayly Summary quotes '58% of the way through'. Mobile dashboard glance-budget testID missing is the only parity nit.",
+  "rca of the issue": "N/A — this was a verification run. Prior defects root-caused by main agent to a non-canonical NET/gross confusion and a missing projection pathway, both fixed by centralising on compute_ladder."
+}

@@ -10,6 +10,7 @@ import { fonts, radius, spacing } from "@/src/theme/tokens";
 import { moneyWhole } from "@/src/utils/format";
 
 type Projection = {
+  ladder?: any;
   current_quarter: { quarter_label?: string; quarterly_budget_aud?: number; burn_total_aud?: number; headroom_aud?: number };
   next_quarters: { quarter_label?: string; projected_spend_aud?: number; projected_headroom_aud?: number }[];
   lifetime_cap_position: { lifetime_cap_aud?: number; contributed_to_date_aud?: number; remaining_headroom_aud?: number };
@@ -49,6 +50,8 @@ export function BudgetRunway({ participantId }: { participantId: string }) {
   const capPct = cap.lifetime_cap_aud ? Math.min(100, Math.round((cap.contributed_to_date_aud! / cap.lifetime_cap_aud) * 100)) : 0;
   const over = (cur.headroom_aud || 0) < 0;
   const barColor = pct >= 90 ? colors.terracotta : pct >= 75 ? colors.gold : colors.sage;
+  const lstatus = data.ladder?.status;
+  const lproj = data.ladder?.projection || {};
 
   return (
     <Card testID="bc2-projection-card" style={{ padding: 0, overflow: "hidden" }}>
@@ -78,8 +81,18 @@ export function BudgetRunway({ participantId }: { participantId: string }) {
             <View testID="bc2-projection-burn-bar" style={{ width: `${Math.max(2, pct)}%`, height: "100%", backgroundColor: barColor, borderRadius: 999 }} />
           </View>
           <T style={{ fontSize: 13, marginTop: 6, fontFamily: fonts.bodyMedium, color: pct >= 90 ? colors.terracotta : pct >= 75 ? colors.gold : colors.sage }}>
-            {over ? `Over budget by ${moneyWhole(Math.abs(cur.headroom_aud || 0))}.` : `${moneyWhole(cur.headroom_aud || 0)} left to spend before ${quarterEndPhrase(cur.quarter_label)}.`}
+            {over ? `Over budget by ${moneyWhole(Math.abs(cur.headroom_aud || 0))}.` : `${moneyWhole(cur.headroom_aud || 0)} left for care before ${quarterEndPhrase(cur.quarter_label)}.`}
           </T>
+          {lstatus === "underspend_risk" && (lproj.forfeit_aud || 0) > 0 ? (
+            <T testID="bc2-projection-forfeit" style={{ fontSize: 12.5, marginTop: 6, fontFamily: fonts.bodyMedium, color: "#6B4A0F" }}>
+              At this pace, about {moneyWhole(lproj.forfeit_aud)} looks likely to be returned to the government this quarter. It may be worth discussing care you need but are not getting with your provider.
+            </T>
+          ) : null}
+          {lstatus === "overspend_risk" && (lproj.shortfall_aud || 0) > 0 ? (
+            <T testID="bc2-projection-shortfall" style={{ fontSize: 12.5, marginTop: 6, fontFamily: fonts.bodyMedium, color: colors.terracotta }}>
+              Booked care is tracking about {moneyWhole(lproj.shortfall_aud)} above what is left this quarter. Check your prices or ask your provider to confirm your balance.
+            </T>
+          ) : null}
         </View>
 
         {/* Lifetime cap — soft clay */}

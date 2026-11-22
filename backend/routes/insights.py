@@ -42,7 +42,7 @@ CACHE_TTL_SECONDS = 60 * 60 * 24  # 24h
 MAX_CONTEXT_BYTES = 12_000  # cap payload sent to the LLM
 # Bump when the system prompt / summary style changes so cached summaries from
 # the old (thinner) prompt are not served after a prompt upgrade.
-_PROMPT_VERSION = "v2-2para-160-200"
+_PROMPT_VERSION = "v3-fundtrack-dateaware"
 
 
 def init_insights(*, db, user_dep):
@@ -138,18 +138,37 @@ _DASHBOARD_PAGE_KEYS = {"dashboard", "caregiver-dashboard"}
 
 _DASHBOARD_SUMMARY_OVERRIDE = (
     " PAGE OVERRIDE (dashboard): Base EVERY budget statement strictly on these context fields: "
-    "over_budget, quarterly_spent_aud, quarterly_budget_aud, budget_percent_used, "
-    "amount_over_budget_aud, amount_remaining_aud. "
-    "If over_budget is true, you MUST lead with the fact that the participant is OVER this quarter's budget: "
-    "state how much has been spent (quarterly_spent_aud) against the budget (quarterly_budget_aud), the "
-    "percent used (budget_percent_used), and how much they are over by (amount_over_budget_aud). "
-    "When over_budget is true you must NEVER say any money is 'available to spend', 'left to spend', or "
-    "'remaining'. Only talk about money available or left to spend when over_budget is false, using "
-    "amount_remaining_aud. "
-    "For anomalies, refer ONLY to latest_statement_open_anomalies (the LATEST statement); never imply a total "
-    "across all statements. You may also note latest_invoice_issue_count when has_invoice_on_file is true. "
-    "Write the two short, warm paragraphs from the base rules (160 to 200 words), weaving these budget facts "
-    "in plainly and reassuring the reader where the budget is on track."
+    "budget_status, available_for_care_aud, quarterly_spent_aud, left_for_care_aud, "
+    "budget_percent_used, over_budget, amount_over_budget_aud, amount_remaining_aud, "
+    "quarter_elapsed_pct, quarter_elapsed_days, quarter_total_days, projected_forfeit_aud, "
+    "projected_shortfall_aud, projection_method, carryover_cap_aud. "
+    "CRITICAL TIMING RULE: You MUST describe where the quarter sits using quarter_elapsed_pct and "
+    "quarter_elapsed_days / quarter_total_days ONLY. NEVER infer how far through the quarter it is "
+    "from how much has been spent. If quarter_elapsed_pct is 40 or more you must NOT say it is 'early "
+    "days', 'the early stages', 'plenty of time', or anything implying the quarter has barely begun; "
+    "say plainly how far through the quarter they are (for example 'a bit over halfway through the "
+    "quarter'). "
+    "The money figures are ALREADY NET of the 10% care management: available_for_care_aud is what is "
+    "available to spend on care this quarter and left_for_care_aud is what remains. Treat "
+    "quarterly_care_management_aud as set aside automatically, NOT as money the household can spend. "
+    "STATUS RULES, keyed on budget_status: "
+    "If budget_status is 'overspend_risk', lead with the fact that booked care is tracking ABOVE what "
+    "is left (projected_shortfall_aud), and NEVER say money is 'available', 'left to spend' or "
+    "'remaining'. "
+    "If budget_status is 'underspend_risk', you MUST treat this as something to flag, NOT reassurance: "
+    "say that at the current pace about projected_forfeit_aud of this quarter's care funding looks "
+    "likely to be returned to the government (anything unspent above carryover_cap_aud is lost), and "
+    "gently suggest it may be worth discussing unmet care needs with the provider. NEVER describe a "
+    "large unspent amount as a good thing, 'well within budget', 'no cause for concern', or 'plenty of "
+    "room'. "
+    "If budget_status is 'on_track', reassure warmly using left_for_care_aud. "
+    "Only ever present a positive, relaxed budget picture when budget_status is exactly 'on_track'. "
+    "For anomalies, refer ONLY to latest_statement_open_anomalies (the LATEST statement); never imply a "
+    "total across all statements. You may also note latest_invoice_issue_count when has_invoice_on_file "
+    "is true. If there are open anomalies or a forfeit or shortfall is projected, do NOT tell the reader "
+    "there is nothing to do. "
+    "Write the two short, warm paragraphs from the base rules (160 to 200 words), weaving these budget "
+    "facts in plainly."
 )
 
 _DECODER_SUMMARY_OVERRIDE = (

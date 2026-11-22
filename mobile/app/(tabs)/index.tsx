@@ -15,6 +15,7 @@ import { StreamProgress, Stream } from "@/src/components/StreamProgress";
 import { SmartAISummary } from "@/src/components/SmartAISummary";
 import { DashboardActionBar } from "@/src/components/DashboardActionBar";
 import { BudgetRunway } from "@/src/components/BudgetRunway";
+import { FundtrackPanel } from "@/src/components/fundtrack/FundtrackPanel";
 import { Button, Card, Loading, StatePanel, T } from "@/src/components/ui";
 import { useAuth } from "@/src/context/AuthContext";
 import { useParticipants } from "@/src/context/ParticipantContext";
@@ -135,14 +136,25 @@ export default function Dashboard() {
   const displayName = active?.display_name || "";
   const displayProvider = active?.provider_name || "";
   const planCfg = PLAN_LABELS[plan] || PLAN_LABELS.free;
-  const spent = (budget?.streams || []).reduce((a, s) => a + (s.spent || 0), 0);
+  const spent = (budget as any)?.ladder?.figures?.E ?? (budget?.streams || []).reduce((a, s) => a + (s.spent || 0), 0);
+  // FUNDTRACK-1 canonical ladder (D1): "available for care" is the NET budget
+  // after the 10% care management deduction (D), and "left" is D - E (F).
+  const _ladder = (budget as any)?.ladder || null;
+  const _fig = (_ladder && _ladder.figures) || {};
+  const _proj = (_ladder && _ladder.projection) || {};
   const usable = budget?.quarterly_usable ?? budget?.quarterly_total ?? 0;
-  // Official quarterly budget = annual ÷ 4 (includes the 10% care-management share).
-  const quarterlyBudget = budget?.quarterly_gross ?? budget?.quarterly_total ?? usable;
-  const careMgmt = budget?.care_management_quarterly ?? 0;
-  const left = quarterlyBudget - spent;
-  const budgetOver = left < 0;
-  const budgetPctUsed = quarterlyBudget > 0 ? Math.max(0, Math.round((spent / quarterlyBudget) * 100)) : 0;
+  const available = _fig.D ?? usable;                      // D, net available for care
+  const quarterlyBudget = available;
+  const careMgmt = _fig.B ?? (budget?.care_management_quarterly ?? 0);
+  const left = _fig.F ?? (available - spent);              // F, left for care
+  const spare = _fig.H ?? left;                            // H, spare for extra care
+  const budgetStatus = _ladder ? _ladder.status : null;
+  const budgetOver = budgetStatus === "overspend_risk" || left < 0;
+  const budgetUnderspend = budgetStatus === "underspend_risk";
+  const elapsedPct = _ladder?.quarter?.elapsed_pct ?? null;
+  const budgetPctUsed = (_ladder && _ladder.utilisation)
+    ? Math.max(0, Math.round(_ladder.utilisation.used_pct_of_available))
+    : (available > 0 ? Math.max(0, Math.round((spent / available) * 100)) : 0);
   const latest = statements[0];
   // Things To Know and the dashboard summary reflect ONLY the most recent
   // statement and the most recent invoice, never an aggregate across every one.
@@ -214,9 +226,20 @@ export default function Dashboard() {
                   provider: displayProvider || null,
                   plan,
                   quarter_label: budget?.quarter_label,
-                  quarterly_budget_aud: quarterlyBudget || null,
+                  quarter_elapsed_pct: elapsedPct,
+                  quarter_elapsed_days: _ladder?.quarter?.elapsed_days ?? null,
+                  quarter_total_days: _ladder?.quarter?.total_days ?? null,
+                  quarter_as_at_date: _ladder?.quarter?.as_at ?? null,
+                  available_for_care_aud: budget ? available : null,
+                  quarterly_budget_aud: budget ? available : null,
                   quarterly_spent_aud: spent || null,
+                  left_for_care_aud: budget ? left : null,
+                  budget_status: budgetStatus,
                   budget_percent_used: budget ? budgetPctUsed : null,
+                  projected_forfeit_aud: budget && budgetUnderspend ? (_proj.forfeit_aud ?? null) : null,
+                  projected_shortfall_aud: budget && budgetOver ? (_proj.shortfall_aud ?? null) : null,
+                  projection_method: budget ? (_proj.method ?? null) : null,
+                  carryover_cap_aud: budget ? (_ladder?.carryover_cap_aud ?? null) : null,
                   over_budget: budget ? budgetOver : null,
                   amount_over_budget_aud: budget && budgetOver ? Math.abs(left) : null,
                   amount_remaining_aud: budget && !budgetOver ? left : null,
@@ -248,24 +271,31 @@ export default function Dashboard() {
                     <View style={[styles.statusPill, { backgroundColor: budgetOver ? colors.errorSoft : colors.sageSoft }]}>
                       <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: budgetOver ? colors.terracotta : colors.sage }} />
                       <T style={{ fontFamily: fonts.bodySemi, fontSize: 11, letterSpacing: 0.7, color: budgetOver ? colors.terracotta : colors.sage }} testID="glance-budget-status">
-                        {budgetOver ? "OVER BUDGET THIS QUARTER" : "LEFT TO SPEND THIS QUARTER"}
+                        {budgetOver ? "OVER BUDGET THIS QUARTER" : "LEFT FOR CARE THIS QUARTER"}
                       </T>
                     </View>
                     {budget?.quarter_label ? (
                       <View style={[styles.quarterPill, { backgroundColor: colors.primary + "12" }]} testID="glance-quarter-months">
                         <Calendar size={13} color={colors.heading} />
-                        <T style={{ fontFamily: fonts.bodySemi, fontSize: 12, letterSpacing: 0.3, color: colors.heading }}>{String(budget.quarter_label).replace(/-/, " – ")}</T>
+                        <T style={{ fontFamily: fonts.bodySemi, fontSize: 12, letterSpacing: 0.3, color: colors.heading }}>{String(budget.quarter_label).replace(/-/, " – ")}{elapsedPct != null ? ` · ${elapsedPct}% through` : ""}</T>
                       </View>
                     ) : null}
                     <View style={{ flexDirection: "row", alignItems: "baseline", gap: 6, marginTop: 10, flexWrap: "wrap", justifyContent: "center" }}>
                       <T style={{ fontFamily: fonts.heading, fontSize: 28, lineHeight: 32, color: budgetOver ? colors.terracotta : colors.heading }} testID="glance-left">{money(Math.abs(left))}</T>
-                      <T variant="small" style={{ color: colors.muted }}>of {moneyWhole(quarterlyBudget)} this quarter</T>
+                      <T variant="small" style={{ color: colors.muted }} testID="glance-budget">of {moneyWhole(available)} available this quarter</T>
                     </View>
+                    <T variant="small" style={{ color: colors.text, marginTop: 8 }} testID="glance-spare">Spare for extra care: <T style={{ fontFamily: fonts.bodySemi, color: colors.text }}>{money(spare)}</T></T>
                     <View style={{ flexDirection: "row", alignItems: "center", gap: 8, marginTop: 10 }}>
                       <View style={{ width: 12, height: 12, borderRadius: 6, backgroundColor: budgetOver || budgetPctUsed >= 90 ? colors.terracotta : budgetPctUsed >= 75 ? colors.gold : colors.sage }} />
-                      <T variant="small" style={{ color: colors.text }} testID="glance-spent"><T style={{ fontFamily: fonts.bodySemi, color: colors.text }}>{money(spent)}</T> spent so far</T>
+                      <T variant="small" style={{ color: colors.text }} testID="glance-spent"><T style={{ fontFamily: fonts.bodySemi, color: colors.text }}>{money(spent)}</T> used so far</T>
                     </View>
-                    {careMgmt > 0 ? <T variant="small" style={{ color: colors.muted, marginTop: 6, textAlign: "center" }} testID="glance-care-management">{money(careMgmt)} of this is care management (10% of the quarterly budget).</T> : null}
+                    {careMgmt > 0 ? <T variant="small" style={{ color: colors.muted, marginTop: 6, textAlign: "center" }} testID="glance-care-management">{money(careMgmt)} care management is set aside automatically (10% of your quarter's funding), not part of the amount available for care.</T> : null}
+                    {budgetUnderspend && (_proj.forfeit_aud || 0) > 0 ? (
+                      <T variant="small" style={{ color: "#6B4A0F", marginTop: 8, textAlign: "center", fontFamily: fonts.bodyMedium }} testID="glance-forfeit">At this pace, about {money(_proj.forfeit_aud)} of this quarter's funding looks likely to be returned. It may be worth talking to your provider about care you need but are not getting.</T>
+                    ) : null}
+                    {budgetOver && (_proj.shortfall_aud || 0) > 0 ? (
+                      <T variant="small" style={{ color: colors.terracotta, marginTop: 8, textAlign: "center", fontFamily: fonts.bodyMedium }} testID="glance-shortfall">Booked care is estimated to be about {money(_proj.shortfall_aud)} above what is left this quarter. Check prices or ask your provider to confirm your balance.</T>
+                    ) : null}
                   </View>
                   {/* Mini-stats — To review / Statements / Lifetime cap (parity with web AtAGlance) */}
                   <View style={[styles.miniStatRow, { borderTopColor: colors.border }]}>
@@ -296,6 +326,13 @@ export default function Dashboard() {
                     </View>
                   </View>
                 </Card>
+              </View>
+            ) : null}
+
+            {/* FUNDTRACK-1 capture layer: alerts + charge entry + what-if */}
+            {!isFree && budget && activeId ? (
+              <View style={{ paddingHorizontal: spacing.lg, marginTop: spacing.lg }}>
+                <FundtrackPanel participantId={activeId} onChanged={load} />
               </View>
             ) : null}
 

@@ -19,6 +19,8 @@ import {
 
 import { AppHeader, Badge, Button, Card, Field, Loading, Select, StatePanel, T } from "@/src/components/ui";
 import HScrollFade from "@/src/components/HScrollFade";
+import { BudgetLadderCard } from "@/src/components/BudgetLadderCard";
+import { FundtrackPanel } from "@/src/components/fundtrack/FundtrackPanel";
 import { useParticipants } from "@/src/context/ParticipantContext";
 import { apiFetch } from "@/src/lib/api";
 import { useTheme } from "@/src/theme/ThemeContext";
@@ -40,7 +42,7 @@ const PILL_TONES: Record<string, { bg: string; ring: string; icon: string; label
 };
 // The status pill borrows the colour that matches the status so the hero reads
 // as a mix of colours, not a wall of teal.
-const STATUS_PILL_TONE: Record<string, string> = { on_track: "left", tight: "spend", runs_out: "over", already_over: "over" };
+const STATUS_PILL_TONE: Record<string, string> = { on_track: "left", underspend_risk: "spend", overspend_risk: "over", tight: "spend", runs_out: "over", already_over: "over" };
 
 type ChangeType =
   | "add_service" | "change_service" | "remove_service" | "pause_services"
@@ -56,10 +58,12 @@ type Service = { service_id: string; name: string; plain_name: string; unit: str
 type Scenario = { id: string; name: string; changes?: Change[]; spend_to_date_aud?: number | null; pace_pct?: number | null; carry_forward_in_aud?: number | null; last_result?: any };
 
 const STATUS_META: Record<string, { label: string; color: string; tone: "success" | "alert" | "error" | "neutral"; Icon: any }> = {
+  underspend_risk: { label: "Underspend risk", color: "#C2683D", tone: "alert", Icon: AlertTriangle },
   on_track: { label: "On track", color: "#6B8F71", tone: "success", Icon: CheckCircle2 },
+  overspend_risk: { label: "Overspend risk", color: "#B4472B", tone: "error", Icon: TrendingUp },
   tight: { label: "Tight", color: "#C2683D", tone: "alert", Icon: Clock },
-  runs_out: { label: "Runs out", color: "#C2683D", tone: "alert", Icon: Clock },
-  already_over: { label: "Already over", color: "#B4472B", tone: "error", Icon: TrendingUp },
+  runs_out: { label: "Overspend risk", color: "#C2683D", tone: "alert", Icon: Clock },
+  already_over: { label: "Overspend risk", color: "#B4472B", tone: "error", Icon: TrendingUp },
 };
 
 const QUESTION_CARDS: { key: ChangeType; title: string; hint: string; Icon: any }[] = [
@@ -210,10 +214,16 @@ export default function BudgetScenariosScreen() {
             </View>
             <T testID="bsc1-hero-answer" style={{ fontFamily: fonts.headingSemi, fontSize: 21, lineHeight: 28, color: "#fff", marginTop: spacing.sm }}>{hero.answer}</T>
             <View style={styles.heroPillRow}>
-              <HeroPill tone="budget" Icon={Wallet} label="Budget this quarter" value={moneyWhole(hero.available_aud)} />
+              <HeroPill tone="budget" Icon={Wallet} label="Available for care" value={moneyWhole(hero.available_aud)} />
               <HeroPill tone="spend" Icon={TrendingUp} label="Projected spend" value={moneyWhole(hero.projected_total_aud)} />
-              <HeroPill tone={hero.unspent_aud < 0 ? "over" : "left"} Icon={hero.unspent_aud < 0 ? AlertTriangle : CheckCircle2} label={hero.unspent_aud < 0 ? "Projected over" : "Projected left"} value={moneyWhole(hero.unspent_aud)} />
-              <HeroPill tone={STATUS_PILL_TONE[hero.status] || "status"} Icon={meta.Icon} label={hero.run_out_date ? "Runs out" : "Status"} value={hero.run_out_date ? shortDate(hero.run_out_date) : meta.label} />
+              {hero.status === "underspend_risk" ? (
+                <HeroPill tone="spend" Icon={AlertTriangle} label="Likely returned" value={moneyWhole(hero.forfeit_aud)} />
+              ) : hero.status === "overspend_risk" ? (
+                <HeroPill tone="over" Icon={AlertTriangle} label="Projected short" value={moneyWhole(hero.shortfall_aud)} />
+              ) : (
+                <HeroPill tone="left" Icon={CheckCircle2} label="Left for care" value={moneyWhole(hero.left_for_care_aud)} />
+              )}
+              <HeroPill tone={STATUS_PILL_TONE[hero.status] || "status"} Icon={meta.Icon} label="Status" value={meta.label} />
             </View>
             <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginTop: spacing.md, gap: 8, flexWrap: "wrap" }}>
               <T style={{ fontFamily: fonts.body, fontSize: 13, color: "rgba(255,255,255,0.85)", flex: 1 }}>{hero.action_line}</T>
@@ -223,6 +233,12 @@ export default function BudgetScenariosScreen() {
               </View>
             </View>
           </LinearGradient>
+
+          {/* CANONICAL FIGURE LADDER (same payload + labels as web/dashboard) */}
+          {result.ladder ? <BudgetLadderCard ladder={result.ladder} /> : null}
+
+          {/* FUNDTRACK-1 capture layer: charge entry, what-if, alerts */}
+          {pid ? <FundtrackPanel participantId={pid} onChanged={() => setChanges((c) => [...c])} /> : null}
 
           {/* FUNDING + CONTRIBUTION STRIP */}
           <Card testID="bsc1-funding-strip">

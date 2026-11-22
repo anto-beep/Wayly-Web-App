@@ -24,6 +24,7 @@ from motor.motor_asyncio import AsyncIOMotorDatabase
 from pydantic import BaseModel, Field
 
 import budget as budget_lib
+from lib.fundtrack import compute_ladder as _compute_ladder
 
 logger = logging.getLogger("bc2")
 
@@ -93,6 +94,7 @@ def _quarter_bounds(start: date) -> tuple[date, date, str]:
 class ProjectionOut(BaseModel):
     participant_id: str
     classification: int
+    ladder: Dict[str, Any] = Field(default_factory=dict)
     current_quarter: Dict[str, Any]
     next_quarters: List[Dict[str, Any]]
     lifetime_cap_position: Dict[str, Any]
@@ -133,10 +135,18 @@ async def _compute_projection(pid: str, request: Request, overrides: Optional["P
         items.extend(s.get("line_items") or [])
     burn_current = budget_lib.compute_burn(items, q_start, q_end)
     contributed_total = budget_lib.compute_contributions(items)
-    # Official quarterly budget = annual ÷ 4 (includes the 10% care-management
-    # share), matching the dashboard, calculator and reviewer. quarterly_budget()
-    # returns the post-CM usable amount, so gross it back up by 0.9.
-    quarterly = round(budget_lib.quarterly_budget(cls) / 0.9, 2)
+    # FUNDTRACK-1 D1: "available for care" is the NET quarterly budget (after
+    # the 10% care management deduction), NOT the gross classification figure.
+    # budget_lib.quarterly_budget() already returns that net value. Never
+    # subtract spend from the gross figure. The canonical ladder is the single
+    # source of the eight figures; this surface renders F (left for care).
+    quarterly = round(budget_lib.quarterly_budget(cls), 2)
+    burn_total_now = round(sum(burn_current.values()), 2)
+    ladder = _compute_ladder(
+        classification=cls,
+        used_so_far=burn_total_now,
+        quarter_window=(q_start, q_end, q_label),
+    )
 
     spend_factor = 1.0 + (ov.spend_adjustment_pct or 0.0) / 100.0
     idx_factor = 1.0 + (ov.indexation_percent or 0.0) / 100.0
@@ -165,14 +175,17 @@ async def _compute_projection(pid: str, request: Request, overrides: Optional["P
         "participant_id": pid,
         "classification": cls,
         "base_classification": base_cls,
+        "ladder": ladder,
         "current_quarter": {
             "quarter_label": q_label,
             "quarter_start": q_start.isoformat(),
             "quarter_end": q_end.isoformat(),
+            # quarterly_budget_aud is the NET available-for-care figure (D).
             "quarterly_budget_aud": quarterly,
             "burn_by_stream_aud": burn_current,
-            "burn_total_aud": round(sum(burn_current.values()), 2),
-            "headroom_aud": round(quarterly - sum(burn_current.values()), 2),
+            "burn_total_aud": burn_total_now,
+            # headroom == F (left for care = available - used).
+            "headroom_aud": round(quarterly - burn_total_now, 2),
         },
         "next_quarters": projection,
         "lifetime_cap_position": {
