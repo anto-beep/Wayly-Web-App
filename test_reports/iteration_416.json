@@ -1,0 +1,41 @@
+{
+  "summary": "Verified (1) Web + Mobile dashboard budget-box rename to Starting / Used / Available Budget and (2) mobile toast sweep. Web dashboard renders 3 GlanceTile boxes (glance-starting $6,868.83, glance-spent $4,564.59, glance-spare $2,304.24) with the new STARTING BUDGET / USED BUDGET / AVAILABLE BUDGET labels. Mobile dashboard renders the same three testIDs with identical labels and values — no crash, GlanceBox is defined at module scope. Mobile toast system confirmed end-to-end via Correspondence add + delete (both success toasts appeared top-of-screen). All 20 regression routes (care-plans, complaints, cases, correspondence, documents, family-members, letters, athm, chsp-tools, handover-pack, hospital, referrals, profile-edit, budget-scenarios, scenarios, provider-switch, pacing, price-history, contribution-position, reports) loaded without a red-box or 'is not defined' error. Backend skipped per request.",
+  "platforms_tested": ["web", "mobile"],
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "web": {
+      "ui_bugs": [],
+      "integration_issues": [],
+      "design_issues": []
+    },
+    "mobile": {
+      "ui_bugs": [
+        {"component": "GlanceBox (dashboard)", "issue": "On 390px viewport the Starting Budget value is ellipsized to '$6,868....' because 17px heading + 10px horizontal padding is too wide for a 5-digit AUD figure in a third-width box. Label 'STARTING BUDGET' also wraps to two lines. adjustsFontSizeToFit is set but minimumFontScale=0.6 leaves it just above fit. Consider dropping label to 8px / letterSpacing, value to 15-16px, or using moneyWhole() for the three tiles.", "testID": "glance-starting", "priority": "LOW"}
+      ],
+      "integration_issues": [],
+      "design_issues": [
+        {"screen": "Dashboard — three budget tiles", "issues": ["Starting Budget value truncated on small widths (see ui_bug above); other two tiles ($4,564.59 and $2,304.24) fit fine."]}
+      ],
+      "react_native_issues": []
+    }
+  },
+  "parity_issues": [],
+  "test_report_links": [
+    "/app/test_reports/iter416_web_tiles.jpg",
+    "/app/test_reports/iter416_mob_tiles.jpg",
+    "/app/test_reports/iter416_corr_added.jpg",
+    "/app/test_reports/iter416_corr_deleted.jpg"
+  ],
+  "action_items": [
+    "(LOW) Tighten mobile dashboard GlanceBox typography so 5-digit AUD values (e.g. $6,868.83) don't ellipsize on 390px width — e.g. value fontSize 15-16 or use moneyWhole() for the three tiles."
+  ],
+  "critical_code_review_comments": [],
+  "updated_files": [],
+  "success_rate": {"backend": "skipped", "frontend": "100% (dashboard rename + toast sweep + 20-route regression all pass)"},
+  "test_credentials": "cathy@example.com / testpass123 (Family plan, active participant Dorothy had budget figures)",
+  "seed_data_creation": "Created 1 TEST_ correspondence row ('TEST_Counterparty_416' / 'TEST_iter416') and deleted it in the same run via the trash icon — no residual TEST_ data left.",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Both dashboards now show the renamed three-tile layout (Starting/Used/Available). Mobile ToastHost is mounted in app/_layout.tsx and the module-level `toast` singleton from /app/mobile/src/components/Toast.tsx works — proven via correspondence add+delete. All 20 toast-edited screens render cleanly on first load. Only cosmetic follow-up is the mobile Starting Budget value ellipsis on small widths.",
+  "rca of the issue": ""
+}

@@ -6,6 +6,7 @@ import { Crown, Mail, Trash2, UserPlus, Users, X } from "lucide-react-native";
 import { AppHeader, Badge, Button, Card, Field, Loading, StatePanel, T } from "@/src/components/ui";
 import { useAuth } from "@/src/context/AuthContext";
 import { apiFetch, ApiError } from "@/src/lib/api";
+import { toast } from "@/src/components/Toast";
 import { useTheme } from "@/src/theme/ThemeContext";
 import { fonts, radius, spacing } from "@/src/theme/tokens";
 import { formatDate } from "@/src/utils/format";
@@ -77,7 +78,7 @@ export default function FamilyMembersScreen() {
 
   const approve = async (mid: string) => {
     setBusyId(mid);
-    try { await apiFetch(`/household/memberships/${mid}/approve`, { method: "POST", body: {} }); await load(); }
+    try { await apiFetch(`/household/memberships/${mid}/approve`, { method: "POST", body: {} }); toast.success("Access approved."); await load(); }
     catch (e) { Alert.alert("Could not approve", e instanceof ApiError ? e.message : "Please try again."); }
     finally { setBusyId(null); }
   };
@@ -88,7 +89,7 @@ export default function FamilyMembersScreen() {
       {
         text: "Deny", style: "destructive", onPress: async () => {
           setBusyId(mid);
-          try { await apiFetch(`/household/memberships/${mid}/deny`, { method: "POST", body: {} }); await load(); }
+          try { await apiFetch(`/household/memberships/${mid}/deny`, { method: "POST", body: {} }); toast.success("Access denied."); await load(); }
           catch (e) { Alert.alert("Could not deny", e instanceof ApiError ? e.message : "Please try again."); }
           finally { setBusyId(null); }
         },
@@ -98,7 +99,7 @@ export default function FamilyMembersScreen() {
 
   const resend = async (token: string) => {
     setBusyId(token);
-    try { await apiFetch(`/household/invite/${token}/resend`, { method: "POST", body: {} }); Alert.alert("Invitation resent"); await load(); }
+    try { await apiFetch(`/household/invite/${token}/resend`, { method: "POST", body: {} }); toast.success("Invitation resent."); await load(); }
     catch (e) { Alert.alert("Could not resend", e instanceof ApiError ? e.message : "Please try again."); }
     finally { setBusyId(null); }
   };
@@ -109,7 +110,7 @@ export default function FamilyMembersScreen() {
       {
         text: "Revoke", style: "destructive", onPress: async () => {
           setBusyId(token);
-          try { await apiFetch(`/household/invite/${token}`, { method: "DELETE" }); await load(); }
+          try { await apiFetch(`/household/invite/${token}`, { method: "DELETE" }); toast.success("Invitation revoked."); await load(); }
           catch (e) { Alert.alert("Could not revoke", e instanceof ApiError ? e.message : "Please try again."); }
           finally { setBusyId(null); }
         },
@@ -123,7 +124,7 @@ export default function FamilyMembersScreen() {
       { text: "Cancel", style: "cancel" },
       {
         text: "Remove", style: "destructive", onPress: async () => {
-          try { await apiFetch(`/household/members/${m.user_id}`, { method: "DELETE" }); await load(); }
+          try { await apiFetch(`/household/members/${m.user_id}`, { method: "DELETE" }); toast.success("Member removed."); await load(); }
           catch (e) { Alert.alert("Could not remove", e instanceof ApiError ? e.message : "Please try again."); }
         },
       },

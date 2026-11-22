@@ -9,6 +9,7 @@ import { PageIntro } from "@/src/components/PageIntro";
 import { useParticipants } from "@/src/context/ParticipantContext";
 import { useAuth } from "@/src/context/AuthContext";
 import { apiFetch, ApiError, uploadFile } from "@/src/lib/api";
+import { toast } from "@/src/components/Toast";
 import { useTheme } from "@/src/theme/ThemeContext";
 import { fonts, radius, spacing } from "@/src/theme/tokens";
 
@@ -90,6 +91,7 @@ export default function AthmProjectsScreen() {
       }
       resetForm();
       setShowForm(false);
+      toast.success("Project created.");
       load();
     } catch (e) { setError(e instanceof ApiError ? e.message : "Could not create project."); }
     finally { setBusy(false); }

@@ -8,6 +8,7 @@ import { AppHeader, Button, Card, Field, Loading, StatePanel, T } from "@/src/co
 import { PageIntro } from "@/src/components/PageIntro";
 import { useParticipants } from "@/src/context/ParticipantContext";
 import { apiFetch } from "@/src/lib/api";
+import { toast } from "@/src/components/Toast";
 import { downloadAndShare } from "@/src/lib/download";
 import { useTheme } from "@/src/theme/ThemeContext";
 import { fonts, radius, spacing } from "@/src/theme/tokens";
@@ -83,6 +84,7 @@ export default function HandoverPackScreen() {
       } });
       resetForm();
       setShowForm(false);
+      toast.success("Handover pack saved.");
       load();
     } catch { /* keep form */ } finally { setSaving(false); }
   };

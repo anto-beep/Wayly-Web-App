@@ -6,6 +6,7 @@ import { HeartPulse, Plus, X, Building2, CalendarDays } from "lucide-react-nativ
 import { AppHeader, Badge, Button, Card, DateField, Field, Loading, StatePanel, T } from "@/src/components/ui";
 import { useParticipants } from "@/src/context/ParticipantContext";
 import { apiFetch } from "@/src/lib/api";
+import { toast } from "@/src/components/Toast";
 import { useTheme } from "@/src/theme/ThemeContext";
 import { fonts, spacing } from "@/src/theme/tokens";
 
@@ -73,18 +74,19 @@ export default function HospitalScreen() {
       } });
       setForm({ hospital_name: "", admission_date: today(), ward: "", reason: "", pause_services: true });
       setShowForm(false);
+      toast.success("Hospital admission logged.");
       load();
     } catch { /* leave form open */ } finally { setSaving(false); }
   };
 
   const requestRcp = async (id: string) => {
     setBusyId(id);
-    try { await apiFetch(`/hospital/admissions/${id}/request-rcp`, { method: "POST", body: {} }); load(); }
+    try { await apiFetch(`/hospital/admissions/${id}/request-rcp`, { method: "POST", body: {} }); toast.success("Restorative Care Pathway requested."); load(); }
     catch { setBusyId(null); }
   };
   const discharge = async (id: string) => {
     setBusyId(id);
-    try { await apiFetch(`/hospital/admissions/${id}/discharge`, { method: "POST", body: { discharge_date: today() } }); load(); }
+    try { await apiFetch(`/hospital/admissions/${id}/discharge`, { method: "POST", body: { discharge_date: today() } }); toast.success("Discharge recorded."); load(); }
     catch { setBusyId(null); }
   };
 

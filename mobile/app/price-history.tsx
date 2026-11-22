@@ -6,6 +6,7 @@ import { TrendingUp, TrendingDown, Minus, PiggyBank, PartyPopper, X, AlertTriang
 
 import { AppHeader, Button, Card, Loading, StatePanel, T } from "@/src/components/ui";
 import { apiFetch, ApiError } from "@/src/lib/api";
+import { toast } from "@/src/components/Toast";
 import { useTheme } from "@/src/theme/ThemeContext";
 import { fonts, radius, spacing } from "@/src/theme/tokens";
 
@@ -197,6 +198,7 @@ function HistoryGroup({ group, colors, onChanged }: any) {
         return;
       }
       setRowConfirm(null); onChanged?.();
+      toast.success("Price check deleted.");
     } catch (e) { setErr(e instanceof ApiError ? e.message : "Delete failed."); }
     finally { setBusy(false); }
   };
@@ -206,6 +208,7 @@ function HistoryGroup({ group, colors, onChanged }: any) {
     try {
       await apiFetch(`/ppc/checks/provider?service=${encodeURIComponent(group.service)}&provider=${encodeURIComponent(group.provider_display_name)}`, { method: "DELETE" });
       setBulkOpen(false); onChanged?.();
+      toast.success("Price checks deleted.");
     } catch (e) { setErr(e instanceof ApiError ? e.message : "Bulk delete failed."); }
     finally { setBusy(false); }
   };

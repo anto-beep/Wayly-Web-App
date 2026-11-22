@@ -6,6 +6,7 @@ import { ClipboardList, Sparkles, Mail, Download, X, Copy, Check, Archive, Trash
 
 import { AppHeader, Badge, Button, Card, Field, Loading, StatePanel, T } from "@/src/components/ui";
 import { apiFetch } from "@/src/lib/api";
+import { toast } from "@/src/components/Toast";
 import { downloadAndShare } from "@/src/lib/download";
 import { useTheme } from "@/src/theme/ThemeContext";
 import { fonts, radius, spacing } from "@/src/theme/tokens";
@@ -68,13 +69,13 @@ export default function CarePlanDetailScreen() {
 
   const saveNotes = async () => {
     setSavingNotes(true);
-    try { await apiFetch(`/care-plans/${id}/notes`, { method: "PATCH", body: { notes } }); }
+    try { await apiFetch(`/care-plans/${id}/notes`, { method: "PATCH", body: { notes } }); toast.success("Notes saved."); }
     catch { /* ignore */ } finally { setSavingNotes(false); }
   };
 
   const reAnalyse = async () => {
     setAnalysing(true);
-    try { await apiFetch(`/care-plans/${id}/analyse`, { method: "POST", body: {} }); await load(); }
+    try { await apiFetch(`/care-plans/${id}/analyse`, { method: "POST", body: {} }); toast.success("Review re-run — findings updated."); await load(); }
     catch { /* ignore */ } finally { setAnalysing(false); }
   };
 
@@ -101,13 +102,13 @@ export default function CarePlanDetailScreen() {
 
   const archivePlan = async () => {
     setActionBusy("archive");
-    try { await apiFetch(`/care-plans/${id}/archive`, { method: "POST", body: {} }); router.replace("/care-plans"); }
+    try { await apiFetch(`/care-plans/${id}/archive`, { method: "POST", body: {} }); toast.success("Care plan archived."); router.replace("/care-plans"); }
     catch { /* ignore */ } finally { setActionBusy(""); }
   };
 
   const deletePlan = async () => {
     setActionBusy("delete");
-    try { await apiFetch(`/care-plans/${id}`, { method: "DELETE" }); setConfirmDel(false); router.replace("/care-plans"); }
+    try { await apiFetch(`/care-plans/${id}`, { method: "DELETE" }); toast.success("Care plan deleted."); setConfirmDel(false); router.replace("/care-plans"); }
     catch { /* ignore */ } finally { setActionBusy(""); }
   };
 

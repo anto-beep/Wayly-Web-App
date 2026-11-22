@@ -228,7 +228,7 @@ function VisitChangeDialog({ pid, visit, onClose, onSaved }) {
                 amount: (needsAmount || isExtra) ? (amount === "" ? null : Number(amount)) : null,
                 scope: "just_this",
             });
-            toast.success("Noted. The figures have been updated.");
+            toast.success("Noted — the figures have been updated. Check your latest balance.");
             onSaved?.();
         } catch (e) { toast.error(e?.response?.data?.detail || "Could not record that."); }
         finally { setBusy(false); }
@@ -306,7 +306,7 @@ function UsedEntriesTable({ items, onChanged, pid, savedServices = [] }) {
 
     const del = async (id) => {
         setBusyId(id);
-        try { await api.delete(`/fundtrack/charges/${id}`); toast.success("Entry Deleted."); setConfirmId(null); onChanged?.(); }
+        try { await api.delete(`/fundtrack/charges/${id}`); toast.success("Entry deleted. Your budget's been updated — check your latest balance."); setConfirmId(null); onChanged?.(); }
         catch (e) { toast.error(e?.response?.data?.detail || "Could not delete that entry."); }
         finally { setBusyId(null); }
     };
@@ -410,12 +410,12 @@ function EditEntryDialog({ entry, pid, savedServices = [], onClose, onSaved }) {
                     source: "entered", service_name: serviceName.trim(), stream,
                     date: date || todayISO(), amount: amount === "" ? null : Number(amount),
                 });
-                toast.success("Entry Added.");
+                toast.success("Entry added. Your budget's been updated — check your latest balance.");
             } else {
                 await api.patch(`/fundtrack/charges/${entry.id}`, {
                     service_name: serviceName.trim(), date, amount: amount === "" ? null : Number(amount),
                 });
-                toast.success("Entry Updated.");
+                toast.success("Entry updated. Your budget's been updated — check your latest balance.");
             }
             onSaved?.();
         } catch (e) { toast.error(e?.response?.data?.detail || "Could not save that entry."); }

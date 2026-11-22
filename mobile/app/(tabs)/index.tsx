@@ -73,6 +73,19 @@ function BudgetDonut({ pctFill, pctLabel, tone, size = 124, stroke = 16 }: { pct
   );
 }
 
+// Three equal budget boxes (parity with web GlanceTile): label + value + mini bar.
+function GlanceBox({ label, value, pct = 0, bg, testID }: { label: string; value: string; pct?: number; bg: string; testID?: string }) {
+  return (
+    <View testID={testID} style={{ flex: 1, backgroundColor: bg, borderRadius: radius.md, paddingHorizontal: 10, paddingVertical: 11 }}>
+      <T numberOfLines={2} style={{ fontFamily: fonts.bodySemi, fontSize: 9, letterSpacing: 0.5, color: "rgba(255,255,255,0.85)" }}>{label.toUpperCase()}</T>
+      <T numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.5} style={{ fontFamily: fonts.heading, fontSize: 14, lineHeight: 19, marginTop: 4, color: "#fff" }}>{value}</T>
+      <View style={{ height: 5, borderRadius: 999, backgroundColor: "rgba(255,255,255,0.25)", overflow: "hidden", marginTop: 8 }}>
+        <View style={{ height: "100%", width: `${Math.max(0, Math.min(100, pct))}%`, backgroundColor: "rgba(255,255,255,0.9)", borderRadius: 999 }} />
+      </View>
+    </View>
+  );
+}
+
 export default function Dashboard() {
   const { user, viewOnly } = useAuth();
   const { activeId, active } = useParticipants();
@@ -298,28 +311,11 @@ export default function Dashboard() {
                     </View>
                   </View>
 
-                  {/* visual stat chips */}
+                  {/* three budget boxes (parity with web: Starting / Used / Available) */}
                   <View style={{ flexDirection: "row", gap: spacing.sm, marginTop: spacing.md }}>
-                    <View testID="glance-spent" style={{ flex: 1, backgroundColor: "#9E2F23", borderRadius: radius.md, padding: 12 }}>
-                      <View style={{ flexDirection: "row", alignItems: "center", gap: 5 }}>
-                        <TrendingUp size={13} color="#fff" />
-                        <T style={{ fontFamily: fonts.bodySemi, fontSize: 9, letterSpacing: 0.6, color: "rgba(255,255,255,0.85)" }}>USED SO FAR</T>
-                      </View>
-                      <T style={{ fontFamily: fonts.heading, fontSize: 19, lineHeight: 24, marginTop: 4, color: "#fff" }}>{money(spent)}</T>
-                      <View style={{ height: 5, borderRadius: 999, backgroundColor: "rgba(255,255,255,0.25)", overflow: "hidden", marginTop: 8 }}>
-                        <View style={{ height: "100%", width: `${Math.max(0, Math.min(100, budgetPctUsed))}%`, backgroundColor: "rgba(255,255,255,0.9)", borderRadius: 999 }} />
-                      </View>
-                    </View>
-                    <View testID="glance-spare" style={{ flex: 1, backgroundColor: "#A5512B", borderRadius: radius.md, padding: 12 }}>
-                      <View style={{ flexDirection: "row", alignItems: "center", gap: 5 }}>
-                        <Sparkles size={13} color="#fff" />
-                        <T style={{ fontFamily: fonts.bodySemi, fontSize: 9, letterSpacing: 0.6, color: "rgba(255,255,255,0.85)" }}>SPARE FOR CARE</T>
-                      </View>
-                      <T style={{ fontFamily: fonts.heading, fontSize: 19, lineHeight: 24, marginTop: 4, color: "#fff" }}>{money(spare)}</T>
-                      <View style={{ height: 5, borderRadius: 999, backgroundColor: "rgba(255,255,255,0.25)", overflow: "hidden", marginTop: 8 }}>
-                        <View style={{ height: "100%", width: `${available > 0 ? Math.max(0, Math.min(100, (spare / available) * 100)) : 0}%`, backgroundColor: "rgba(255,255,255,0.9)", borderRadius: 999 }} />
-                      </View>
-                    </View>
+                    <GlanceBox testID="glance-starting" label="Starting Budget" value={money(available)} pct={100} bg="#0E4D52" />
+                    <GlanceBox testID="glance-spent" label="Used Budget" value={money(spent)} pct={budgetPctUsed} bg="#9E2F23" />
+                    <GlanceBox testID="glance-spare" label="Available Budget" value={money(spare)} pct={available > 0 ? (spare / available) * 100 : 0} bg="#A5512B" />
                   </View>
 
                   <View style={{ marginTop: spacing.md }}>

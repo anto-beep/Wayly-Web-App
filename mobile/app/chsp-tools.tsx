@@ -7,6 +7,7 @@ import { HeartPulse, ReceiptText, ArrowRight, CheckCircle2, ShieldAlert, Home, C
 import { AppHeader, Badge, Button, Card, Loading, Select, T } from "@/src/components/ui";
 import { PageIntro } from "@/src/components/PageIntro";
 import { apiFetch, ApiError, uploadFile } from "@/src/lib/api";
+import { toast } from "@/src/components/Toast";
 import { sharePostPdf } from "@/src/lib/download";
 import { useTheme } from "@/src/theme/ThemeContext";
 import { fonts, radius, spacing } from "@/src/theme/tokens";
@@ -224,12 +225,13 @@ function WS1FeeCheck({ services, colors }: any) {
         rate_effective_date: form.rate_effective_date || null, billed_period_start: form.billed_period_start || null,
         result,
       } });
+      toast.success("Fee check saved.");
       loadSaved();
     } catch { /* ignore */ } finally { setSaving(false); }
   };
 
   const deleteSaved = async (id: string) => {
-    try { await apiFetch(`/chsp1/fee-check/saved/${id}`, { method: "DELETE" }); setSaved((l) => l.filter((s) => s.id !== id)); } catch { /* ignore */ }
+    try { await apiFetch(`/chsp1/fee-check/saved/${id}`, { method: "DELETE" }); toast.success("Saved check deleted."); setSaved((l) => l.filter((s) => s.id !== id)); } catch { /* ignore */ }
   };
 
   const serviceOpts = [{ value: "", label: "Manual entry" }, ...services.map((s: any) => ({ value: s.id, label: `${serviceTypeLabel(s.service_type)} · ${s.provider_name}` }))];
@@ -522,7 +524,7 @@ function ChspProfileCard({ profile, onCreate, colors }: any) {
 
   const submit = async () => {
     setBusy(true); setError("");
-    try { await apiFetch("/chsp1/profile", { method: "POST", body: { current_chsp_status: status, chsp_start_date: auToISO(start) } }); setEditing(false); onCreate?.(); }
+    try { await apiFetch("/chsp1/profile", { method: "POST", body: { current_chsp_status: status, chsp_start_date: auToISO(start) } }); toast.success("CHSP profile saved."); setEditing(false); onCreate?.(); }
     catch (e) { setError(e instanceof ApiError ? e.message : "Could not save profile."); }
     finally { setBusy(false); }
   };
@@ -574,12 +576,13 @@ function ChspServicesCard({ services, onAdded, colors }: any) {
     setBusyId(id);
     try {
       await apiFetch(`/chsp1/service-entries/${id}`, { method: "PATCH", body: { hourly_rate_or_fee: editRate === "" ? undefined : Number(editRate), start_date: editEff || undefined } });
+      toast.success("Service updated.");
       setEditId(null); onAdded?.();
     } catch { /* keep open */ } finally { setBusyId(null); }
   };
   const expire = async (id: string) => {
     setBusyId(id);
-    try { await apiFetch(`/chsp1/service-entries/${id}/expire`, { method: "POST" }); onAdded?.(); }
+    try { await apiFetch(`/chsp1/service-entries/${id}/expire`, { method: "POST" }); toast.success("Service ended."); onAdded?.(); }
     catch { /* ignore */ } finally { setBusyId(null); }
   };
 
@@ -597,6 +600,7 @@ function ChspServicesCard({ services, onAdded, colors }: any) {
       } });
       setForm({ service_type: "domestic_assistance", provider_name: "", hourly_rate_or_fee: "", weekly_frequency: "", client_contribution_per_unit: "", start_date: "" });
       setOpen(false);
+      toast.success("Service added.");
       onAdded?.();
     } catch (e) { setError(e instanceof ApiError ? e.message : "Could not add service."); }
     finally { setBusy(false); }

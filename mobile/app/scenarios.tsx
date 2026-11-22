@@ -6,6 +6,7 @@ import { ClipboardEdit, Plus, X, ChevronDown } from "lucide-react-native";
 import { AppHeader, Badge, Button, Card, DateField, Field, Loading, StatePanel, T } from "@/src/components/ui";
 import { useParticipants } from "@/src/context/ParticipantContext";
 import { apiFetch } from "@/src/lib/api";
+import { toast } from "@/src/components/Toast";
 import { useTheme } from "@/src/theme/ThemeContext";
 import { fonts, radius, spacing } from "@/src/theme/tokens";
 
@@ -73,6 +74,7 @@ export default function ScenariosScreen() {
       } });
       setForm({ event_type: "", label: "", effective_date: today(), note: "" });
       setShowForm(false);
+      toast.success("Event logged.");
       load();
       loadState();
     } catch { setSaveError("Couldn't log that event. Please try again."); }

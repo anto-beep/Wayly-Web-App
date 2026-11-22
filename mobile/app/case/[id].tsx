@@ -5,6 +5,7 @@ import { Plus } from "lucide-react-native";
 
 import { AppHeader, Badge, Button, Card, Field, Loading, T } from "@/src/components/ui";
 import { apiFetch, ApiError } from "@/src/lib/api";
+import { toast } from "@/src/components/Toast";
 import { useTheme } from "@/src/theme/ThemeContext";
 import { fonts, radius, spacing } from "@/src/theme/tokens";
 import { formatDateTime } from "@/src/utils/format";
@@ -34,7 +35,7 @@ export default function CaseDetailScreen() {
 
   const changeStatus = async (status: string) => {
     setBusy(true);
-    try { await apiFetch(`/loop/cases/${id}`, { method: "PATCH", body: { status } }); await load(); }
+    try { await apiFetch(`/loop/cases/${id}`, { method: "PATCH", body: { status } }); toast.success("Status updated."); await load(); }
     catch { /* ignore */ }
     finally { setBusy(false); }
   };
@@ -45,6 +46,7 @@ export default function CaseDetailScreen() {
     try {
       await apiFetch(`/loop/cases/${id}/events`, { method: "POST", body: { event_type: "note_added", note: note.trim() } });
       setNote("");
+      toast.success("Note added.");
       await load();
     } catch (e) { if (e instanceof ApiError) { /* surfaced below */ } }
     finally { setBusy(false); }

@@ -8,8 +8,9 @@ import { Modal, Pressable, ScrollView, View } from "react-native";
 import * as DocumentPicker from "expo-document-picker";
 import { Camera, Check, ListChecks, Loader2, Pencil, X } from "lucide-react-native";
 
-import { Button, Field, Select, T } from "@/src/components/ui";
+import { Button, DateField, Field, Select, T } from "@/src/components/ui";
 import { apiFetch, uploadFile } from "@/src/lib/api";
+import { toast } from "@/src/components/Toast";
 import { useTheme } from "@/src/theme/ThemeContext";
 import { fonts, radius, spacing } from "@/src/theme/tokens";
 import { money } from "@/src/utils/format";
@@ -41,19 +42,32 @@ export function ChargeEntrySheet({ pid, savedServices = [], visible, onClose, on
   const reset = () => { setName(""); setDate(todayISO()); setAmount(""); setStream("Everyday Living"); setScanRows(null); setTab("usual"); };
   const close = () => { reset(); onClose?.(); };
 
+  const confirmMsg = (payload: any) => {
+    const amt = payload.amount == null || payload.amount === "" ? "unpriced" : money(payload.amount);
+    return `Charge added: ${payload.service_name} · ${amt}. Your budget's been updated — check your latest balance.`;
+  };
+
   const post = async (payload: any) => {
     setBusy(true);
     try {
       const data = await apiFetch(`/fundtrack/participants/${pid}/charges`, { method: "POST", body: payload });
+      toast.success(confirmMsg(payload));
       onSaved?.(data);
       reset();
     } catch (e: any) {
-      // surface minimal error inline
-      setName((n) => n);
+      toast.error("Could not add that charge. Please try again.");
     } finally { setBusy(false); }
   };
 
-  const addFromSaved = (svc: any) => post({ source: "entered", service_id: svc.service_id, service_name: svc.service_name, stream: svc.stream, date: todayISO(), amount: svc.last_amount });
+  // Picking a usual service opens the editable "type" step (date + amount)
+  // instead of saving instantly, so the user can adjust before adding.
+  const pickSaved = (svc: any) => {
+    setName(svc.service_name || "");
+    setStream(svc.stream || "Everyday Living");
+    setAmount(svc.last_amount != null ? String(svc.last_amount) : "");
+    setDate(todayISO());
+    setTab("type");
+  };
   const submitType = () => { if (!name.trim()) return; post({ source: "entered", service_name: name.trim(), stream, date: date || todayISO(), amount: amount === "" ? null : Number(amount) }); };
 
   const pickAndScan = async () => {
@@ -77,8 +91,9 @@ export function ChargeEntrySheet({ pid, savedServices = [], visible, onClose, on
     try {
       let last;
       for (const r of rows) last = await apiFetch(`/fundtrack/participants/${pid}/charges`, { method: "POST", body: { source: "invoice", service_name: r.service_name, stream: r.stream, date: r.date || todayISO(), amount: r.amount === "" ? null : Number(r.amount) } });
+      toast.success(`Added ${rows.length} charge${rows.length === 1 ? "" : "s"} from your invoice. Your budget's been updated — check your latest balance.`);
       onSaved?.(last); reset();
-    } catch { /* ignore */ } finally { setBusy(false); }
+    } catch { toast.error("Could not add those charges. Please try again."); } finally { setBusy(false); }
   };
 
   const TABS = [{ key: "usual", label: "Usual", Icon: ListChecks }, { key: "scan", label: "Scan", Icon: Camera }, { key: "type", label: "Type", Icon: Pencil }];
@@ -107,13 +122,13 @@ export function ChargeEntrySheet({ pid, savedServices = [], visible, onClose, on
                 {savedServices.length === 0 ? (
                   <T style={{ color: colors.muted, fontSize: 14 }}>No usual services yet. Type a charge and it'll appear here next time.</T>
                 ) : savedServices.map((s: any) => (
-                  <Pressable key={s.service_id} testID={`charge-usual-${s.service_id}`} disabled={busy} onPress={() => addFromSaved(s)}
+                  <Pressable key={s.service_id} testID={`charge-usual-${s.service_id}`} onPress={() => pickSaved(s)}
                     style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", borderWidth: 1, borderColor: colors.border, borderRadius: radius.lg, padding: spacing.md }}>
                     <View style={{ flex: 1 }}>
                       <T style={{ fontFamily: fonts.bodySemi, fontSize: 14, color: colors.heading }}>{s.service_name}</T>
                       <T style={{ fontSize: 12, color: colors.muted }}>{s.stream} · last {money(s.last_amount)}</T>
                     </View>
-                    <T style={{ fontFamily: fonts.bodySemi, fontSize: 12, color: colors.cta }}>Add today →</T>
+                    <T style={{ fontFamily: fonts.bodySemi, fontSize: 12, color: colors.cta }}>Edit & add →</T>
                   </Pressable>
                 ))}
                 <View style={{ marginTop: spacing.sm, backgroundColor: colors.goldSoft, borderWidth: 1, borderColor: colors.gold + "4D", borderRadius: radius.md, paddingHorizontal: 12, paddingVertical: 8 }}>
@@ -125,6 +140,7 @@ export function ChargeEntrySheet({ pid, savedServices = [], visible, onClose, on
             {tab === "type" && (
               <View testID="charge-type" style={{ gap: spacing.md }}>
                 <Field label="What was the service?" value={name} onChangeText={setName} placeholder="e.g. Personal care" testID="charge-type-name" />
+                <DateField label="When" value={date} onChange={setDate} maximumDate={new Date()} testID="charge-type-date" />
                 <Field label="How much (optional)" value={amount} onChangeText={setAmount} keyboardType="decimal-pad" placeholder="leave blank if unknown" testID="charge-type-amount" />
                 <View style={{ flexDirection: "row", gap: spacing.md }}>
                   <View style={{ flex: 1 }}><Select label="Category" value={stream} onChange={setStream} options={STREAMS} testID="charge-type-stream" /></View>

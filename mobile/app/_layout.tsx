@@ -18,6 +18,7 @@ import { ViewOnlyBanner } from "@/src/components/ViewOnlyBanner";
 import { ViewOnlyBannerProvider } from "@/src/context/ViewOnlyBannerContext";
 import { AccessGate } from "@/src/components/AccessGate";
 import { ThemeProvider, useTheme } from "@/src/theme/ThemeContext";
+import { ToastHost } from "@/src/components/Toast";
 
 LogBox.ignoreAllLogs(true);
 
@@ -53,6 +54,7 @@ function ThemedStack() {
         <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.bg } }} />
       </ViewOnlyBannerProvider>
       <AccessGate />
+      <ToastHost />
     </View>
   );
 }

@@ -6,6 +6,7 @@ import { Calendar as CalendarIcon, Clock, MapPin, Plus, X, Pencil, Ban, Archive,
 
 import { AppHeader, Badge, Button, Card, DateField, Field, Loading, Select, StatePanel, T } from "@/src/components/ui";
 import { apiFetch } from "@/src/lib/api";
+import { toast } from "@/src/components/Toast";
 import { useTheme } from "@/src/theme/ThemeContext";
 import { fonts, radius, spacing } from "@/src/theme/tokens";
 
@@ -156,7 +157,8 @@ export default function CalendarScreen() {
       else await apiFetch(`/visits`, { method: "POST", body: body(draft) });
       setDraft(null);
       await load();
-    } catch { /* keep form open */ } finally { setSaving(false); }
+      toast.success(draft.id ? "Entry updated on your calendar." : "Entry added to your calendar.");
+    } catch { toast.error("Could not save that entry. Please try again."); } finally { setSaving(false); }
   };
 
   const setStatus = async (v: Visit, status: string) => {
@@ -168,13 +170,14 @@ export default function CalendarScreen() {
         kind: v.kind || "appointment", status,
       } });
       await load();
-    } catch { /* ignore */ } finally { setBusyId(null); }
+      toast.success(status === "cancelled" ? "Entry cancelled." : status === "archived" ? "Entry archived." : "Entry restored.");
+    } catch { toast.error("Could not update that entry."); } finally { setBusyId(null); }
   };
 
   const del = async (v: Visit) => {
     setBusyId(v.id);
-    try { await apiFetch(`/visits/${v.id}`, { method: "DELETE" }); await load(); }
-    catch { /* ignore */ } finally { setBusyId(null); setOpenId(null); }
+    try { await apiFetch(`/visits/${v.id}`, { method: "DELETE" }); toast.success("Entry deleted."); await load(); }
+    catch { toast.error("Could not delete that entry."); } finally { setBusyId(null); setOpenId(null); }
   };
 
   // Month-grid dot markers + selected-day highlight.

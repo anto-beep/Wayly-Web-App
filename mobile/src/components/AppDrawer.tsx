@@ -37,11 +37,10 @@ export function AppDrawer() {
   // starts closed each time the drawer opens, and opening one category closes
   // any other — only one open at a time.
   const [openGroup, setOpenGroup] = useState<string | null>(null);
+  // Every category starts collapsed each time the drawer opens (including
+  // "Today") — the user asked for a fully collapsed menu on open.
   useEffect(() => {
-    if (!open) return;
-    const activeGroup = NAV_GROUPS.find((g) => g.items.some((it) => isActive(it.route)));
-    setOpenGroup(activeGroup ? activeGroup.key : NAV_GROUPS[0]?.key ?? null);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    if (open) setOpenGroup(null);
   }, [open]);
 
   const go = (route: string) => {

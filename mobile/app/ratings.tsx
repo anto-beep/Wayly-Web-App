@@ -5,6 +5,7 @@ import { Star, Plus, X, Trash2, ThumbsUp } from "lucide-react-native";
 
 import { AppHeader, Button, Card, Field, Loading, StatePanel, T } from "@/src/components/ui";
 import { apiFetch } from "@/src/lib/api";
+import { toast } from "@/src/components/Toast";
 import { useTheme } from "@/src/theme/ThemeContext";
 import { fonts, radius, spacing } from "@/src/theme/tokens";
 
@@ -69,12 +70,13 @@ export default function RatingsScreen() {
       setForm({ provider_name: "", stars: 5, comment: "", would_recommend: true });
       setShowForm(false);
       load();
-    } catch { /* leave form open */ } finally { setSaving(false); }
+      toast.success("Rating saved.");
+    } catch { toast.error("Could not save that rating. Please try again."); } finally { setSaving(false); }
   };
 
   const remove = async (id: string) => {
     setItems((prev) => prev.filter((r) => r.id !== id));
-    try { await apiFetch(`/provider-ratings/${id}`, { method: "DELETE" }); } catch { load(); }
+    try { await apiFetch(`/provider-ratings/${id}`, { method: "DELETE" }); toast.success("Rating removed."); } catch { load(); }
   };
 
   return (

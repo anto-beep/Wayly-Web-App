@@ -9,16 +9,17 @@ import React, { useCallback, useEffect, useState } from "react";
 import { Modal, Pressable, RefreshControl, ScrollView, StyleSheet, View } from "react-native";
 import { router, useFocusEffect } from "expo-router";
 import {
-  Archive, CalendarClock, CalendarDays, CheckCircle2, Clock, Pencil, Plus, RefreshCw, Trash2, X,
+  Archive, ArrowUpDown, CalendarClock, CalendarDays, CheckCircle2, Clock, Pencil, Plus, RefreshCw, Trash2, X,
 } from "lucide-react-native";
 
-import { AppHeader, Button, Card, Field, Loading, StatePanel, T } from "@/src/components/ui";
+import { AppHeader, Button, Card, DateField, Field, Loading, Select, StatePanel, T } from "@/src/components/ui";
 import { BudgetLadderCard } from "@/src/components/BudgetLadderCard";
 import { FundtrackAlerts } from "@/src/components/fundtrack/FundtrackAlerts";
 import { ChargeEntrySheet } from "@/src/components/fundtrack/ChargeEntrySheet";
 import { WhatIfCareSheet } from "@/src/components/fundtrack/WhatIfCareSheet";
 import { useParticipants } from "@/src/context/ParticipantContext";
 import { apiFetch } from "@/src/lib/api";
+import { toast } from "@/src/components/Toast";
 import { useTheme } from "@/src/theme/ThemeContext";
 import { fonts, radius, spacing } from "@/src/theme/tokens";
 import { money, shortDate } from "@/src/utils/format";
@@ -33,6 +34,13 @@ const CHANGES = [
 
 const SRC: Record<string, string> = { entered: "You Entered", invoice: "From An Invoice", catch_up: "Catch-Up", booked: "Booked" };
 const srcLabel = (s: string) => SRC[s] || "You Entered";
+const todayISO = () => new Date().toISOString().slice(0, 10);
+const fmtDateFull = (iso?: string) => { if (!iso) return ""; try { const d = new Date(iso); const p = (n: number) => String(n).padStart(2, "0"); return `${p(d.getDate())}/${p(d.getMonth() + 1)}/${d.getFullYear()}`; } catch { return iso; } };
+const STREAM_OPTS = [
+  { value: "Clinical", label: "Clinical" },
+  { value: "Independence", label: "Independence" },
+  { value: "Everyday Living", label: "Everyday Living" },
+];
 
 const weekRange = () => {
   const now = new Date();
@@ -52,9 +60,6 @@ export default function WeeklyBudgetScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [sheet, setSheet] = useState<null | "charge" | "whatif">(null);
   const [changeVisit, setChangeVisit] = useState<any>(null);
-  const [editEntry, setEditEntry] = useState<any>(null);
-  const [confirmDel, setConfirmDel] = useState<string | null>(null);
-  const [busyDel, setBusyDel] = useState(false);
 
   const load = useCallback(async () => {
     if (!pid) { setLoading(false); return; }
@@ -67,12 +72,6 @@ export default function WeeklyBudgetScreen() {
     if (action === "what_if") setSheet("whatif");
     else if (action === "upload") router.push("/upload");
     else if (action === "letter") router.push("/letters");
-  };
-
-  const delEntry = async (id: string) => {
-    setBusyDel(true);
-    try { await apiFetch(`/fundtrack/charges/${id}`, { method: "DELETE" }); setConfirmDel(null); load(); }
-    catch { /* ignore */ } finally { setBusyDel(false); }
   };
 
   return (
@@ -148,50 +147,9 @@ export default function WeeklyBudgetScreen() {
             <ActionCard testID="weekly-something-changed" Icon={RefreshCw} title="Something changed" hint="A visit was missed or different" tone="gold" onPress={() => setChangeVisit(data.booked?.[0] || { blank: true })} />
           </View>
 
-          {/* what you've recorded */}
+          {/* what you've recorded — searchable / filterable / sortable list with edit + delete */}
           {(data.used || []).length > 0 ? (
-            <Card testID="weekly-used">
-              <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: spacing.sm, marginBottom: spacing.sm }}>
-                <View style={{ flexDirection: "row", alignItems: "center", gap: 6, flex: 1 }}>
-                  <CheckCircle2 size={16} color={colors.sage} />
-                  <T style={{ fontFamily: fonts.headingSemi, fontSize: 16, color: colors.heading }}>What You Have Recorded This Quarter</T>
-                </View>
-                <Pressable testID="weekly-used-add" onPress={() => setSheet("charge")} hitSlop={6} style={{ flexDirection: "row", alignItems: "center", gap: 4, backgroundColor: colors.primary, borderRadius: 999, paddingHorizontal: 10, paddingVertical: 6 }}>
-                  <Plus size={13} color="#fff" />
-                  <T style={{ fontFamily: fonts.bodySemi, fontSize: 12, color: "#fff" }}>Add</T>
-                </Pressable>
-              </View>
-              {data.used.map((u: any) => (
-                <View key={u.id} testID={`weekly-used-${u.id}`} style={{ paddingVertical: spacing.sm, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.border }}>
-                  <View style={{ flexDirection: "row", alignItems: "center", gap: spacing.sm }}>
-                    <View style={{ flex: 1 }}>
-                      <T style={{ fontFamily: fonts.body, fontSize: 14 }} numberOfLines={1}>{u.service_name}</T>
-                      <T variant="small" style={{ fontSize: 12 }}>{shortDate(u.date)} · {srcLabel(u.source)}</T>
-                    </View>
-                    <T style={{ fontFamily: fonts.bodySemi, fontSize: 14, color: colors.heading }}>{u.unpriced ? "Unpriced" : money(u.amount)}</T>
-                  </View>
-                  {confirmDel === u.id ? (
-                    <View style={{ flexDirection: "row", gap: spacing.lg, marginTop: 8, alignItems: "center" }}>
-                      <Pressable testID={`weekly-used-delete-confirm-${u.id}`} onPress={() => delEntry(u.id)} disabled={busyDel} hitSlop={6}>
-                        <T style={{ fontFamily: fonts.bodySemi, fontSize: 12, color: colors.terracotta }}>{busyDel ? "…" : "Confirm Delete"}</T>
-                      </Pressable>
-                      <Pressable onPress={() => setConfirmDel(null)} hitSlop={6}><T variant="small" style={{ fontSize: 12, color: colors.muted }}>Cancel</T></Pressable>
-                    </View>
-                  ) : (
-                    <View style={{ flexDirection: "row", gap: spacing.lg, marginTop: 8 }}>
-                      <Pressable testID={`weekly-used-edit-${u.id}`} onPress={() => setEditEntry(u)} hitSlop={6} style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
-                        <Pencil size={13} color={colors.primary} />
-                        <T style={{ fontFamily: fonts.bodySemi, fontSize: 12, color: colors.primary }}>Edit</T>
-                      </Pressable>
-                      <Pressable testID={`weekly-used-delete-${u.id}`} onPress={() => setConfirmDel(u.id)} hitSlop={6} style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
-                        <Trash2 size={13} color={colors.terracotta} />
-                        <T style={{ fontFamily: fonts.bodySemi, fontSize: 12, color: colors.terracotta }}>Delete</T>
-                      </Pressable>
-                    </View>
-                  )}
-                </View>
-              ))}
-            </Card>
+            <UsedEntriesCard items={data.used} pid={pid} savedServices={data.saved_services || []} onChanged={load} />
           ) : null}
 
           {/* superseded by a statement */}
@@ -238,9 +196,6 @@ export default function WeeklyBudgetScreen() {
       <WhatIfCareSheet pid={pid} savedServices={data?.saved_services || []} visible={sheet === "whatif"} onClose={() => setSheet(null)} onSaved={() => { setSheet(null); load(); }} />
       {changeVisit ? (
         <VisitChangeSheet pid={pid} visit={changeVisit} onClose={() => setChangeVisit(null)} onSaved={() => { setChangeVisit(null); load(); }} />
-      ) : null}
-      {editEntry ? (
-        <EditEntrySheet entry={editEntry} onClose={() => setEditEntry(null)} onSaved={() => { setEditEntry(null); load(); }} />
       ) : null}
     </View>
   );
@@ -293,8 +248,9 @@ function VisitChangeSheet({ pid, visit, onClose, onSaved }: any) {
           scope: "just_this",
         },
       });
+      toast.success("Noted — the figures have been updated. Check your latest balance.");
       onSaved?.();
-    } catch { /* ignore */ } finally { setBusy(false); }
+    } catch { toast.error("Could not record that change. Please try again."); } finally { setBusy(false); }
   };
 
   return (
@@ -328,43 +284,198 @@ function VisitChangeSheet({ pid, visit, onClose, onSaved }: any) {
   );
 }
 
-/** Edit a recorded entry (service / date / amount) via PATCH. */
-function EditEntrySheet({ entry, onClose, onSaved }: any) {
+/** Add (create) or edit a recorded entry (service / date / amount / category). */
+function EditEntrySheet({ entry, pid, savedServices = [], onClose, onSaved }: any) {
   const { colors } = useTheme();
+  const isCreate = !entry?.id;
   const [serviceName, setServiceName] = useState(entry?.service_name || "");
-  const [date, setDate] = useState((entry?.date || "").slice(0, 10));
+  const [date, setDate] = useState((entry?.date || todayISO()).slice(0, 10));
   const [amount, setAmount] = useState(entry?.amount != null ? String(entry.amount) : "");
+  const [stream, setStream] = useState(entry?.stream || "Everyday Living");
   const [busy, setBusy] = useState(false);
 
   const submit = async () => {
-    if (!serviceName.trim()) return;
+    if (!serviceName.trim()) { toast.error("Add a service name."); return; }
     setBusy(true);
     try {
-      await apiFetch(`/fundtrack/charges/${entry.id}`, {
-        method: "PATCH",
-        body: { service_name: serviceName.trim(), date, amount: amount === "" ? null : Number(amount) },
-      });
+      if (isCreate) {
+        await apiFetch(`/fundtrack/participants/${pid}/charges`, { method: "POST", body: { source: "entered", service_name: serviceName.trim(), stream, date: date || todayISO(), amount: amount === "" ? null : Number(amount) } });
+        toast.success("Entry added. Your budget's been updated — check your latest balance.");
+      } else {
+        await apiFetch(`/fundtrack/charges/${entry.id}`, { method: "PATCH", body: { service_name: serviceName.trim(), date, amount: amount === "" ? null : Number(amount) } });
+        toast.success("Entry updated. Your budget's been updated — check your latest balance.");
+      }
       onSaved?.();
-    } catch { /* ignore */ } finally { setBusy(false); }
+    } catch { toast.error("Could not save that entry. Please try again."); } finally { setBusy(false); }
   };
 
   return (
     <Modal visible transparent animationType="slide" onRequestClose={onClose}>
       <Pressable style={{ flex: 1, justifyContent: "flex-end", backgroundColor: colors.overlay }} onPress={onClose}>
-        <Pressable testID="edit-entry-sheet" onPress={(e) => e.stopPropagation()} style={{ backgroundColor: colors.surface, borderTopLeftRadius: radius.xl, borderTopRightRadius: radius.xl, paddingTop: spacing.md, paddingBottom: spacing.xl }}>
+        <Pressable testID="edit-entry-sheet" onPress={(e) => e.stopPropagation()} style={{ backgroundColor: colors.surface, borderTopLeftRadius: radius.xl, borderTopRightRadius: radius.xl, paddingTop: spacing.md, paddingBottom: spacing.xl, maxHeight: "88%" }}>
           <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingHorizontal: spacing.lg, paddingBottom: spacing.xs }}>
-            <T style={{ fontFamily: fonts.headingSemi, fontSize: 18, color: colors.heading }}>Edit Entry</T>
+            <T style={{ fontFamily: fonts.headingSemi, fontSize: 18, color: colors.heading }}>{isCreate ? "Add Entry" : "Edit Entry"}</T>
             <Pressable onPress={onClose} hitSlop={8} testID="edit-entry-close"><X size={22} color={colors.muted} /></Pressable>
           </View>
-          <View style={{ paddingHorizontal: spacing.lg, paddingTop: spacing.md, gap: spacing.md }}>
+          <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={{ paddingHorizontal: spacing.lg, paddingTop: spacing.md, gap: spacing.md }}>
+            {isCreate && savedServices.length > 0 ? (
+              <View>
+                <T variant="small" style={{ marginBottom: 6 }}>Quick pick from your usual care</T>
+                <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
+                  {savedServices.slice(0, 8).map((s: any) => (
+                    <Pressable key={s.service_id} testID={`edit-entry-pick-${s.service_id}`} onPress={() => { setServiceName(s.service_name); setStream(s.stream || "Everyday Living"); if (s.last_amount != null) setAmount(String(s.last_amount)); }}
+                      style={{ borderWidth: 1, borderColor: colors.border, borderRadius: radius.pill, paddingHorizontal: 12, paddingVertical: 7 }}>
+                      <T style={{ fontSize: 12, color: colors.heading }}>{s.service_name}</T>
+                    </Pressable>
+                  ))}
+                </View>
+              </View>
+            ) : null}
             <Field label="Service" value={serviceName} onChangeText={setServiceName} placeholder="e.g. Personal care" testID="edit-entry-service" />
-            <Field label="Date (YYYY-MM-DD)" value={date} onChangeText={setDate} placeholder="2026-11-22" testID="edit-entry-date" />
+            <DateField label="Date" value={date} onChange={setDate} maximumDate={new Date()} testID="edit-entry-date" />
             <Field label="Amount ($)" value={amount} onChangeText={setAmount} keyboardType="decimal-pad" placeholder="Unpriced" testID="edit-entry-amount" />
-            <Button label="Save Changes" testID="edit-entry-save" onPress={submit} loading={busy} />
-          </View>
+            {isCreate ? <Select label="Category" value={stream} onChange={setStream} options={STREAM_OPTS} testID="edit-entry-stream" /> : null}
+            <Button label={isCreate ? "Add Entry" : "Save Changes"} testID="edit-entry-save" onPress={submit} loading={busy} />
+          </ScrollView>
         </Pressable>
       </Pressable>
     </Modal>
+  );
+}
+
+/** Searchable / filterable / sortable recorded-entries list (parity with web). */
+function UsedEntriesCard({ items, pid, savedServices, onChanged }: { items: any[]; pid: string; savedServices: any[]; onChanged: () => void }) {
+  const { colors } = useTheme();
+  const [query, setQuery] = useState("");
+  const [source, setSource] = useState("all");
+  const [fromDate, setFromDate] = useState("");
+  const [toDate, setToDate] = useState("");
+  const [sortKey, setSortKey] = useState<"date" | "amount" | "service">("date");
+  const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
+  const [confirmDel, setConfirmDel] = useState<string | null>(null);
+  const [busyDel, setBusyDel] = useState(false);
+  const [editEntry, setEditEntry] = useState<any>(null);
+  const [adding, setAdding] = useState(false);
+
+  const sources = Array.from(new Set(items.map((i) => i.source))).filter(Boolean) as string[];
+  const filtered = items
+    .filter((i) => source === "all" || i.source === source)
+    .filter((i) => !query.trim() || (i.service_name || "").toLowerCase().includes(query.trim().toLowerCase()))
+    .filter((i) => { const d = (i.date || "").slice(0, 10); if (fromDate && d < fromDate) return false; if (toDate && d > toDate) return false; return true; });
+  const sorted = [...filtered].sort((a, b) => {
+    let av: any, bv: any;
+    if (sortKey === "service") { av = (a.service_name || "").toLowerCase(); bv = (b.service_name || "").toLowerCase(); }
+    else if (sortKey === "amount") { av = a.amount ?? -1; bv = b.amount ?? -1; }
+    else { av = a.date || ""; bv = b.date || ""; }
+    if (av < bv) return sortDir === "asc" ? -1 : 1;
+    if (av > bv) return sortDir === "asc" ? 1 : -1;
+    return 0;
+  });
+  const toggleSort = (k: "date" | "amount" | "service") => {
+    if (sortKey === k) setSortDir((d) => (d === "asc" ? "desc" : "asc"));
+    else { setSortKey(k); setSortDir(k === "service" ? "asc" : "desc"); }
+  };
+
+  const delEntry = async (id: string) => {
+    setBusyDel(true);
+    try { await apiFetch(`/fundtrack/charges/${id}`, { method: "DELETE" }); toast.success("Entry deleted. Your budget's been updated — check your latest balance."); setConfirmDel(null); onChanged?.(); }
+    catch { toast.error("Could not delete that entry. Please try again."); } finally { setBusyDel(false); }
+  };
+
+  const sourceChips = [{ value: "all", label: "All Sources" }, ...sources.map((s) => ({ value: s, label: srcLabel(s) }))];
+  const sortChips: { k: "date" | "amount" | "service"; label: string }[] = [{ k: "date", label: "Date" }, { k: "amount", label: "Amount" }, { k: "service", label: "Service" }];
+  const hasFilters = !!(query || source !== "all" || fromDate || toDate);
+
+  return (
+    <Card testID="weekly-used">
+      <View style={{ flexDirection: "row", alignItems: "center", gap: 6, marginBottom: spacing.sm }}>
+        <CheckCircle2 size={16} color={colors.sage} />
+        <T numberOfLines={1} adjustsFontSizeToFit style={{ flex: 1, fontFamily: fonts.headingSemi, fontSize: 15, color: colors.heading }}>What You Have Recorded This Quarter</T>
+        <Pressable testID="weekly-used-add" onPress={() => setAdding(true)} hitSlop={6} style={{ flexDirection: "row", alignItems: "center", gap: 4, backgroundColor: colors.primary, borderRadius: 999, paddingHorizontal: 10, paddingVertical: 6 }}>
+          <Plus size={13} color="#fff" />
+          <T style={{ fontFamily: fonts.bodySemi, fontSize: 12, color: "#fff" }}>Add Entry</T>
+        </Pressable>
+      </View>
+
+      {/* search */}
+      <Field value={query} onChangeText={setQuery} placeholder="Search services" testID="weekly-used-search" style={{ marginBottom: spacing.sm }} />
+
+      {/* source filter — single horizontal scroller (never wraps) */}
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingBottom: 2 }} style={{ marginBottom: spacing.sm }}>
+        {sourceChips.map((c) => {
+          const on = source === c.value;
+          return (
+            <Pressable key={c.value} testID={`weekly-used-source-${c.value}`} onPress={() => setSource(c.value)}
+              style={{ flexShrink: 0, borderWidth: 1, borderRadius: radius.pill, paddingHorizontal: 14, height: 34, alignItems: "center", justifyContent: "center", backgroundColor: on ? colors.primary : colors.surface, borderColor: on ? colors.primary : colors.border }}>
+              <T style={{ fontFamily: fonts.bodySemi, fontSize: 12.5, color: on ? "#fff" : colors.text }}>{c.label}</T>
+            </Pressable>
+          );
+        })}
+      </ScrollView>
+
+      {/* from–to date range */}
+      <View style={{ flexDirection: "row", gap: spacing.sm }}>
+        <View style={{ flex: 1 }}><DateField label="From" value={fromDate} onChange={setFromDate} maximumDate={new Date()} testID="weekly-used-from" placeholder="Any" /></View>
+        <View style={{ flex: 1 }}><DateField label="To" value={toDate} onChange={setToDate} maximumDate={new Date()} testID="weekly-used-to" placeholder="Any" /></View>
+      </View>
+      {hasFilters ? (
+        <Pressable testID="weekly-used-clear" onPress={() => { setQuery(""); setSource("all"); setFromDate(""); setToDate(""); }} hitSlop={6} style={{ alignSelf: "flex-start", marginTop: spacing.sm }}>
+          <T style={{ fontFamily: fonts.bodySemi, fontSize: 12, color: colors.cta }}>Clear filters</T>
+        </Pressable>
+      ) : null}
+
+      {/* sort — single horizontal scroller */}
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, alignItems: "center", paddingBottom: 2 }} style={{ marginTop: spacing.sm, marginBottom: spacing.sm }}>
+        <T variant="small" style={{ fontSize: 12, marginRight: 2 }}>Sort</T>
+        {sortChips.map((s) => {
+          const on = sortKey === s.k;
+          return (
+            <Pressable key={s.k} testID={`weekly-used-sort-${s.k}`} onPress={() => toggleSort(s.k)}
+              style={{ flexShrink: 0, flexDirection: "row", alignItems: "center", gap: 4, borderWidth: 1, borderRadius: radius.pill, paddingHorizontal: 12, height: 32, backgroundColor: on ? colors.primary : colors.surface, borderColor: on ? colors.primary : colors.border }}>
+              <T style={{ fontFamily: fonts.bodySemi, fontSize: 12, color: on ? "#fff" : colors.text }}>{s.label}</T>
+              {on ? <ArrowUpDown size={12} color="#fff" /> : null}
+            </Pressable>
+          );
+        })}
+      </ScrollView>
+
+      {/* list */}
+      {sorted.length === 0 ? (
+        <T testID="weekly-used-empty" variant="small" style={{ textAlign: "center", paddingVertical: spacing.lg }}>No entries match your filter.</T>
+      ) : sorted.map((u: any) => (
+        <View key={u.id} testID={`weekly-used-${u.id}`} style={{ paddingVertical: spacing.sm, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.border }}>
+          <View style={{ flexDirection: "row", alignItems: "center", gap: spacing.sm }}>
+            <View style={{ flex: 1 }}>
+              <T style={{ fontFamily: fonts.body, fontSize: 14 }} numberOfLines={1}>{u.service_name}</T>
+              <T variant="small" style={{ fontSize: 12 }}>{fmtDateFull(u.date)} · {srcLabel(u.source)}</T>
+            </View>
+            <T style={{ fontFamily: fonts.bodySemi, fontSize: 14, color: colors.heading }}>{u.unpriced ? "Unpriced" : money(u.amount)}</T>
+          </View>
+          {confirmDel === u.id ? (
+            <View style={{ flexDirection: "row", gap: spacing.lg, marginTop: 8, alignItems: "center" }}>
+              <Pressable testID={`weekly-used-delete-confirm-${u.id}`} onPress={() => delEntry(u.id)} disabled={busyDel} hitSlop={6}>
+                <T style={{ fontFamily: fonts.bodySemi, fontSize: 12, color: colors.terracotta }}>{busyDel ? "…" : "Confirm Delete"}</T>
+              </Pressable>
+              <Pressable onPress={() => setConfirmDel(null)} hitSlop={6}><T variant="small" style={{ fontSize: 12, color: colors.muted }}>Cancel</T></Pressable>
+            </View>
+          ) : (
+            <View style={{ flexDirection: "row", gap: spacing.lg, marginTop: 8 }}>
+              <Pressable testID={`weekly-used-edit-${u.id}`} onPress={() => setEditEntry(u)} hitSlop={6} style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
+                <Pencil size={13} color={colors.primary} />
+                <T style={{ fontFamily: fonts.bodySemi, fontSize: 12, color: colors.primary }}>Edit</T>
+              </Pressable>
+              <Pressable testID={`weekly-used-delete-${u.id}`} onPress={() => setConfirmDel(u.id)} hitSlop={6} style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
+                <Trash2 size={13} color={colors.terracotta} />
+                <T style={{ fontFamily: fonts.bodySemi, fontSize: 12, color: colors.terracotta }}>Delete</T>
+              </Pressable>
+            </View>
+          )}
+        </View>
+      ))}
+
+      {editEntry ? <EditEntrySheet entry={editEntry} pid={pid} onClose={() => setEditEntry(null)} onSaved={() => { setEditEntry(null); onChanged?.(); }} /> : null}
+      {adding ? <EditEntrySheet pid={pid} savedServices={savedServices} onClose={() => setAdding(false)} onSaved={() => { setAdding(false); onChanged?.(); }} /> : null}
+    </Card>
   );
 }
 

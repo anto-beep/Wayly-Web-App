@@ -8,6 +8,7 @@ import { SmartAISummary } from "@/src/components/SmartAISummary";
 import { PageIntro } from "@/src/components/PageIntro";
 import { useParticipants } from "@/src/context/ParticipantContext";
 import { apiFetch } from "@/src/lib/api";
+import { toast } from "@/src/components/Toast";
 import { useTheme } from "@/src/theme/ThemeContext";
 import { fonts, spacing } from "@/src/theme/tokens";
 import { formatDate } from "@/src/utils/format";
@@ -38,7 +39,7 @@ export default function CasesScreen() {
 
   const scan = async () => {
     setScanning(true);
-    try { await apiFetch(`/loop/cases/scan?participant_id=${activeId}`, { method: "POST", body: {} }); await load(); }
+    try { await apiFetch(`/loop/cases/scan?participant_id=${activeId}`, { method: "POST", body: {} }); toast.success("Scan complete — any new issues are listed below."); await load(); }
     catch { /* ignore */ }
     finally { setScanning(false); }
   };

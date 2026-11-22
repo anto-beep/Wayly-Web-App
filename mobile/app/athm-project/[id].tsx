@@ -7,6 +7,7 @@ import { ArrowRight, Plus, TimerReset, AlertTriangle, FileText, Trash2, Papercli
 import { AppHeader, Button, Card, Loading, Select, T } from "@/src/components/ui";
 import { useParticipants } from "@/src/context/ParticipantContext";
 import { apiFetch, ApiError, uploadFile } from "@/src/lib/api";
+import { toast } from "@/src/components/Toast";
 import { useTheme } from "@/src/theme/ThemeContext";
 import { fonts, radius, spacing } from "@/src/theme/tokens";
 import { PROJECT_TYPES } from "../athm";
@@ -73,22 +74,22 @@ export default function AthmProjectDetailScreen() {
     const next = STATUS_STEPS[Math.min(idx + 1, STATUS_STEPS.length - 3)];
     if (!next || next === project.status) return;
     setAdvancing(true);
-    try { await apiFetch(`/athm1/projects/${id}/advance-status`, { method: "POST", body: { to_status: next } }); await refreshAll(); }
+    try { await apiFetch(`/athm1/projects/${id}/advance-status`, { method: "POST", body: { to_status: next } }); toast.success("Project status updated."); await refreshAll(); }
     catch { /* ignore */ } finally { setAdvancing(false); }
   };
 
   const addItem = async () => {
     if (!newItem.item_name.trim()) return;
-    try { await apiFetch(`/athm1/projects/${id}/items`, { method: "POST", body: newItem }); setNewItem({ item_category: "mobility_aid", item_name: "", item_description: "" }); setShowItemForm(false); await refreshAll(); }
+    try { await apiFetch(`/athm1/projects/${id}/items`, { method: "POST", body: newItem }); toast.success("Item added."); setNewItem({ item_category: "mobility_aid", item_name: "", item_description: "" }); setShowItemForm(false); await refreshAll(); }
     catch { /* ignore */ }
   };
   const addMod = async () => {
     if (!newMod.modification_name.trim() || !newMod.location_in_home.trim()) return;
-    try { await apiFetch(`/athm1/projects/${id}/modifications`, { method: "POST", body: newMod }); setNewMod({ modification_category: "bathroom", modification_name: "", location_in_home: "", description: "" }); setShowModForm(false); await refreshAll(); }
+    try { await apiFetch(`/athm1/projects/${id}/modifications`, { method: "POST", body: newMod }); toast.success("Modification added."); setNewMod({ modification_category: "bathroom", modification_name: "", location_in_home: "", description: "" }); setShowModForm(false); await refreshAll(); }
     catch { /* ignore */ }
   };
   const startTrial = async (itemId: string, days: string) => {
-    try { await apiFetch(`/athm1/items/${itemId}/start-trial`, { method: "POST", body: { trial_start_date: new Date().toISOString().slice(0, 10), trial_period_days: Number(days) || 30 } }); await refreshAll(); }
+    try { await apiFetch(`/athm1/items/${itemId}/start-trial`, { method: "POST", body: { trial_start_date: new Date().toISOString().slice(0, 10), trial_period_days: Number(days) || 30 } }); toast.success("Trial started."); await refreshAll(); }
     catch { /* ignore */ }
   };
 
@@ -102,11 +103,12 @@ export default function AthmProjectDetailScreen() {
       if (up?.id) {
         const attached = await apiFetch<any>(`/athm1/projects/${id}/ot-referrals/attach`, { method: "POST", body: { document_id: up.id, notes: "" } });
         setReferrals(attached.referrals || []);
+        toast.success("OT referral attached.");
       }
     } catch { /* ignore */ } finally { setUploading(false); }
   };
   const detachReferral = async (docId: string) => {
-    try { const r = await apiFetch<any>(`/athm1/projects/${id}/ot-referrals/${docId}`, { method: "DELETE" }); setReferrals(r.referrals || []); }
+    try { const r = await apiFetch<any>(`/athm1/projects/${id}/ot-referrals/${docId}`, { method: "DELETE" }); toast.success("Referral removed."); setReferrals(r.referrals || []); }
     catch { /* ignore */ }
   };
 
@@ -252,6 +254,7 @@ function QuoteComparison({ mod, onRefresh, colors }: any) {
     setBusy(true); setErr("");
     try {
       await apiFetch(`/athm1/modifications/${mod.id}/quotes`, { method: "POST", body: { supplier_name: supplier, quote_amount: Number(amount), quote_date: new Date().toISOString().slice(0, 10), quote_details_summary: details } });
+      toast.success("Quote added.");
       setSupplier(""); setAmount(""); setDetails(""); onRefresh?.();
     } catch (e) { setErr(e instanceof ApiError ? e.message : "Could not save quote."); }
     finally { setBusy(false); }

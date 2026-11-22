@@ -32,6 +32,9 @@ export function FundtrackPanel({ participantId, onChanged }: { participantId?: s
   useEffect(() => { load(); }, [load]);
 
   const handleSaved = () => { load(); onChanged?.(); };
+  // Adding a charge from the dashboard closes the sheet and jumps to the
+  // Weekly View so the user sees the updated figures and the new entry.
+  const handleChargeSaved = () => { setSheet(null); load(); onChanged?.(); router.push("/weekly-budget"); };
   const onAlertAction = (action: string) => {
     if (action === "what_if") setSheet("whatif");
     else if (action === "weekly") router.push("/weekly-budget");
@@ -87,7 +90,7 @@ export function FundtrackPanel({ participantId, onChanged }: { participantId?: s
         ) : null}
       </View>
 
-      <ChargeEntrySheet pid={participantId} savedServices={data.saved_services || []} visible={sheet === "charge"} onClose={() => setSheet(null)} onSaved={handleSaved} />
+      <ChargeEntrySheet pid={participantId} savedServices={data.saved_services || []} visible={sheet === "charge"} onClose={() => setSheet(null)} onSaved={handleChargeSaved} />
       <WhatIfCareSheet pid={participantId} savedServices={data.saved_services || []} visible={sheet === "whatif"} onClose={() => setSheet(null)} onSaved={handleSaved} />
     </View>
   );

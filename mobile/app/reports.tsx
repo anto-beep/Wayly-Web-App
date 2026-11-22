@@ -10,6 +10,7 @@ import { AppHeader, Badge, Button, Loading, T } from "@/src/components/ui";
 import { PageIntro } from "@/src/components/PageIntro";
 import { useParticipants } from "@/src/context/ParticipantContext";
 import { apiFetch } from "@/src/lib/api";
+import { toast } from "@/src/components/Toast";
 import { useTheme } from "@/src/theme/ThemeContext";
 import { fonts, radius, spacing } from "@/src/theme/tokens";
 import { shortDate } from "@/src/utils/format";
@@ -53,6 +54,7 @@ export default function ReportsScreen() {
     setGenerating(report_type);
     try {
       await apiFetch("/reports/generate", { method: "POST", body: { report_type, participant_id: activeId } });
+      toast.success("Report is being generated — it'll appear here shortly.");
       setTimeout(load, 1800);
     } catch { /* ignore */ }
     finally { setTimeout(() => setGenerating(null), 1800); }

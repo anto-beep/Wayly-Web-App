@@ -11,6 +11,7 @@ import { PageIntro } from "@/src/components/PageIntro";
 import { SmartAISummary } from "@/src/components/SmartAISummary";
 import { useParticipants } from "@/src/context/ParticipantContext";
 import { apiFetch, ApiError } from "@/src/lib/api";
+import { toast } from "@/src/components/Toast";
 import { useTheme } from "@/src/theme/ThemeContext";
 import { fonts, radius, spacing } from "@/src/theme/tokens";
 
@@ -130,6 +131,7 @@ export default function LettersMailboxScreen() {
       await apiFetch(`/lf1/correspondence/${deleteTarget.id}`, { method: "DELETE" });
       setEntries((list) => list.filter((e) => e.id !== deleteTarget.id));
       setDeleteTarget(null);
+      toast.success("Letter deleted.");
       load();
     } catch { /* keep modal on error */ } finally { setBusyDelete(false); }
   };
@@ -320,7 +322,7 @@ function FollowUpRow({ entry, isOverdue = false, onEscalated, selectMode = false
   };
   const escalate = async () => {
     setBusy(true);
-    try { await apiFetch(`/lf1/correspondence/${id}/escalate`, { method: "POST" }); onEscalated(); }
+    try { await apiFetch(`/lf1/correspondence/${id}/escalate`, { method: "POST" }); toast.success("Letter escalated."); onEscalated(); }
     catch { /* silent */ } finally { setBusy(false); }
   };
   return (

@@ -8,6 +8,7 @@ import { PageIntro } from "@/src/components/PageIntro";
 import { SmartAISummary } from "@/src/components/SmartAISummary";
 import { useParticipants } from "@/src/context/ParticipantContext";
 import { apiFetch, ApiError } from "@/src/lib/api";
+import { toast } from "@/src/components/Toast";
 import { useTheme } from "@/src/theme/ThemeContext";
 import { fonts, radius, spacing } from "@/src/theme/tokens";
 
@@ -262,6 +263,7 @@ function NewComplaintModal({ visible, pid, colors, prefill, onClose, onCreated }
       } });
       setStep(0);
       setForm({ complaint_type: "billing_dispute", severity: "minor", provider_name: prefill?.provider_name || "", provider_email: "", subject_matter_summary: "", incident_start_date: "", incident_end_date: "", is_ongoing: false, desired_outcome: "correction_of_billing", desired_outcome_notes: "", is_anonymous_acqsc_submission: false, contains_immediate_safety_concerns: false });
+      toast.success("Complaint opened.");
       onCreated();
     } catch (e) { setError(e instanceof ApiError ? e.message : "Failed to save complaint"); }
     finally { setSubmitting(false); }

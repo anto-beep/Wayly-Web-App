@@ -5,6 +5,7 @@ import { Plus, Share2, Trash2 } from "lucide-react-native";
 
 import { AppHeader, Badge, Button, Card, Field, Loading, StatePanel, T } from "@/src/components/ui";
 import { apiFetch, ApiError } from "@/src/lib/api";
+import { toast } from "@/src/components/Toast";
 import { useTheme } from "@/src/theme/ThemeContext";
 import { fonts, radius, spacing } from "@/src/theme/tokens";
 import { formatDate } from "@/src/utils/format";
@@ -49,6 +50,7 @@ export default function ReferralsScreen() {
     try {
       await apiFetch("/referrals", { method: "POST", body: { referred_to: to.trim(), kind, contact: contact.trim() || null, reason: reason.trim() || null, status: "open", referred_at: new Date().toISOString() } });
       setTo(""); setContact(""); setReason(""); setKind("specialist"); setShowForm(false);
+      toast.success("Referral added.");
       await load();
     } catch (e) {
       setErr(e instanceof ApiError ? e.message : "Could not add the referral. Please try again.");
@@ -58,7 +60,7 @@ export default function ReferralsScreen() {
   const cycleStatus = async (r: Referral) => {
     const next = STATUSES[(STATUSES.indexOf(r.status) + 1) % STATUSES.length];
     setItems((xs) => xs.map((x) => (x.id === r.id ? { ...x, status: next } : x)));
-    try { await apiFetch(`/referrals/${r.id}`, { method: "PATCH", body: { ...r, status: next } }); }
+    try { await apiFetch(`/referrals/${r.id}`, { method: "PATCH", body: { ...r, status: next } }); toast.success("Referral status updated."); }
     catch { load(); }
   };
 
@@ -66,7 +68,7 @@ export default function ReferralsScreen() {
     Alert.alert("Remove referral", `Remove the referral to ${r.referred_to}?`, [
       { text: "Cancel", style: "cancel" },
       { text: "Remove", style: "destructive", onPress: async () => {
-        try { await apiFetch(`/referrals/${r.id}`, { method: "DELETE" }); await load(); } catch { /* ignore */ }
+        try { await apiFetch(`/referrals/${r.id}`, { method: "DELETE" }); toast.success("Referral removed."); await load(); } catch { /* ignore */ }
       } },
     ]);
   };

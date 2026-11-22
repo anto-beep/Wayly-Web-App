@@ -7,6 +7,7 @@ import { AppHeader, Badge, Button, Card, Loading, StatePanel, T } from "@/src/co
 import { PageIntro } from "@/src/components/PageIntro";
 import { useParticipants } from "@/src/context/ParticipantContext";
 import { apiFetch } from "@/src/lib/api";
+import { toast } from "@/src/components/Toast";
 import { useTheme } from "@/src/theme/ThemeContext";
 import { fonts, radius, spacing } from "@/src/theme/tokens";
 import { formatMonthYear, money, moneyWhole } from "@/src/utils/format";
@@ -61,6 +62,7 @@ function PensionWizard({ participantId, onCommitted }: { participantId: string; 
     setBusy(true); setError("");
     try {
       await apiFetch(`/ce3/participants/${participantId}/pension-change/commit`, { method: "POST", body: { new_pension_status: newStatus, effective_date: today } });
+      toast.success("Pension change applied.");
       reset(); onCommitted();
     } catch (e: any) { setError(e?.message || "Could not apply the change."); }
     finally { setBusy(false); }

@@ -7,6 +7,7 @@ import { AppHeader, Badge, Button, Card, Field, Loading, Select, StatePanel, T }
 import { useParticipants } from "@/src/context/ParticipantContext";
 import { useAuth } from "@/src/context/AuthContext";
 import { apiFetch, ApiError } from "@/src/lib/api";
+import { toast } from "@/src/components/Toast";
 import { useTheme } from "@/src/theme/ThemeContext";
 import { fonts, radius, spacing } from "@/src/theme/tokens";
 import { sanitizeAI } from "@/src/utils/format";
@@ -126,6 +127,7 @@ export default function CarePlanChangesScreen() {
       resetForm();
       setShowForm(false);
       load();
+      toast.success(form.id ? "Request updated." : "Request letter generated.");
     } catch (e) {
       setSaveError(e instanceof ApiError ? e.message : "Couldn't generate the request. Please try again.");
     } finally { setSaving(false); }
@@ -145,6 +147,7 @@ export default function CarePlanChangesScreen() {
       } });
       setForm((f) => ({ ...f, id: data?.id || f.id }));
       load();
+      toast.success("Draft saved.");
     } catch (e) {
       setSaveError(e instanceof ApiError ? e.message : "Couldn't save the draft. Please try again.");
     } finally { setSavingDraft(false); }
@@ -169,7 +172,8 @@ export default function CarePlanChangesScreen() {
       await apiFetch(`/amendments/${id}`, { method: "DELETE" });
       if (form.id === id) { resetForm(); setShowForm(false); }
       load();
-    } catch { /* ignore */ }
+      toast.success("Request deleted.");
+    } catch { toast.error("Could not delete that request."); }
   };
 
   const serviceSelectValue = form.service_custom ? CUSTOM : (serviceOptions.includes(form.service_name) ? form.service_name : (form.service_name ? CUSTOM : ""));

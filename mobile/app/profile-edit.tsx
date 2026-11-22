@@ -6,6 +6,7 @@ import { Check, Mail, X } from "lucide-react-native";
 import { AppHeader, Badge, Button, Card, Field, T } from "@/src/components/ui";
 import { useAuth } from "@/src/context/AuthContext";
 import { apiFetch, ApiError } from "@/src/lib/api";
+import { toast } from "@/src/components/Toast";
 import { useTheme } from "@/src/theme/ThemeContext";
 import { fonts, spacing } from "@/src/theme/tokens";
 import { shortDate } from "@/src/utils/format";
@@ -47,7 +48,7 @@ function EmailChangeCard({ currentEmail }: { currentEmail: string }) {
 
   const cancelPending = async () => {
     setBusy(true);
-    try { await apiFetch("/auth/email/change-request", { method: "DELETE" }); await load(); }
+    try { await apiFetch("/auth/email/change-request", { method: "DELETE" }); toast.success("Email change cancelled."); await load(); }
     catch { /* ignore */ }
     finally { setBusy(false); }
   };
@@ -117,6 +118,7 @@ export default function ProfileEditScreen() {
       await apiFetch("/me/contacts", { method: "PUT", body: { phone_e164: trimmed || null } });
       await refreshUser();
       setMsg("Saved.");
+      toast.success("Profile saved.");
     } catch (e) {
       setErr(e instanceof ApiError ? e.message : "Enter your phone in international format, for example +61412345678.");
     } finally { setSaving(false); }

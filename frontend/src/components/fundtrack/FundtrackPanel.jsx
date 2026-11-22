@@ -28,6 +28,9 @@ export default function FundtrackPanel({ participantId, onChanged }) {
     useEffect(() => { load(); }, [load]);
 
     const handleSaved = () => { load(); onChanged?.(); };
+    // Adding a charge from the dashboard jumps the user to the Weekly View so
+    // they can see the updated figures and the new entry in context.
+    const handleChargeSaved = () => { load(); onChanged?.(); navigate("/app/weekly-budget"); };
     const onAlertAction = (action) => {
         if (action === "what_if") setDialog("whatif");
         else if (action === "weekly") navigate("/app/weekly-budget");
@@ -80,7 +83,7 @@ export default function FundtrackPanel({ participantId, onChanged }) {
             </div>
 
             {dialog === "charge" && (
-                <ChargeEntryDialog pid={participantId} savedServices={data.saved_services} onClose={() => setDialog(null)} onSaved={handleSaved} />
+                <ChargeEntryDialog pid={participantId} savedServices={data.saved_services} onClose={() => setDialog(null)} onSaved={handleChargeSaved} />
             )}
             {dialog === "whatif" && (
                 <WhatIfCareDialog pid={participantId} savedServices={data.saved_services} onClose={() => setDialog(null)} onSaved={handleSaved} />

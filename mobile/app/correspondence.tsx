@@ -5,6 +5,7 @@ import { Mail, ArrowUpRight, ArrowDownLeft, Plus, X, Trash2 } from "lucide-react
 
 import { AppHeader, Button, Card, DateField, Field, Loading, Select, StatePanel, T } from "@/src/components/ui";
 import { apiFetch } from "@/src/lib/api";
+import { toast } from "@/src/components/Toast";
 import { useTheme } from "@/src/theme/ThemeContext";
 import { fonts, radius, spacing } from "@/src/theme/tokens";
 
@@ -67,13 +68,14 @@ export default function CorrespondenceScreen() {
         occurred_at: `${form.occurred_at}T00:00:00`,
       } });
       setForm(null);
+      toast.success("Correspondence logged.");
       await load();
     } catch { /* keep form open */ } finally { setSaving(false); }
   };
 
   const del = async (id: string) => {
     setBusyId(id);
-    try { await apiFetch(`/correspondence/${id}`, { method: "DELETE" }); await load(); }
+    try { await apiFetch(`/correspondence/${id}`, { method: "DELETE" }); toast.success("Correspondence deleted."); await load(); }
     catch { /* ignore */ } finally { setBusyId(null); }
   };
 

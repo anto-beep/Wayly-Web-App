@@ -9,6 +9,7 @@ import { PageIntro } from "@/src/components/PageIntro";
 import { SmartAISummary } from "@/src/components/SmartAISummary";
 import { useParticipants } from "@/src/context/ParticipantContext";
 import { apiFetch, ApiError } from "@/src/lib/api";
+import { toast } from "@/src/components/Toast";
 import { useTheme } from "@/src/theme/ThemeContext";
 import { fonts, radius, spacing } from "@/src/theme/tokens";
 
@@ -178,6 +179,7 @@ function NewSwitchModal({ visible, pid, colors, onClose, onCreated, defaultProvi
     try {
       await apiFetch(`/psw1/participants/${pid}/switches`, { method: "POST", body: form });
       setForm({ current_provider_name: defaultProvider || "", initial_reason_for_switch: "billing_disputes_unresolved", reason_notes: "" });
+      toast.success("Provider switch started.");
       onCreated();
     } catch (e) { setErr(e instanceof ApiError ? e.message : "Could not create switch."); }
     finally { setBusy(false); }

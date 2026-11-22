@@ -8,6 +8,7 @@ import { PageIntro } from "@/src/components/PageIntro";
 import { useParticipants } from "@/src/context/ParticipantContext";
 import { useAuth } from "@/src/context/AuthContext";
 import { apiFetch } from "@/src/lib/api";
+import { toast } from "@/src/components/Toast";
 import { useTheme } from "@/src/theme/ThemeContext";
 import { fonts, radius, spacing } from "@/src/theme/tokens";
 
@@ -66,17 +67,17 @@ export default function CarePlansScreen() {
 
   const softDelete = async (id: string) => {
     setBusyId(id);
-    try { await apiFetch(`/care-plans/${id}`, { method: "DELETE" }); await load(); }
+    try { await apiFetch(`/care-plans/${id}`, { method: "DELETE" }); toast.success("Care plan moved to trash."); await load(); }
     catch { setError(true); } finally { setBusyId(null); }
   };
   const restore = async (id: string) => {
     setBusyId(id);
-    try { await apiFetch(`/care-plans/${id}/restore`, { method: "POST", body: {} }); await load(); }
+    try { await apiFetch(`/care-plans/${id}/restore`, { method: "POST", body: {} }); toast.success("Care plan restored."); await load(); }
     catch { setError(true); } finally { setBusyId(null); }
   };
   const hardDelete = async (id: string) => {
     setBusyId(id);
-    try { await apiFetch(`/care-plans/${id}?hard=true`, { method: "DELETE" }); await load(); }
+    try { await apiFetch(`/care-plans/${id}?hard=true`, { method: "DELETE" }); toast.success("Care plan permanently deleted."); await load(); }
     catch { setError(true); } finally { setBusyId(null); }
   };
 

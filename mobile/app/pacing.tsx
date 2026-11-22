@@ -21,6 +21,7 @@ import {
 import { AppHeader, Badge, Button, Card, DateField, Field, Loading, Select, StatePanel, T } from "@/src/components/ui";
 import { useParticipants } from "@/src/context/ParticipantContext";
 import { apiFetch } from "@/src/lib/api";
+import { toast } from "@/src/components/Toast";
 import { useTheme } from "@/src/theme/ThemeContext";
 import { fonts, radius, spacing } from "@/src/theme/tokens";
 import { money } from "@/src/utils/format";
@@ -319,6 +320,7 @@ function LedgerRow({ entry, onChanged }: { entry: Ledger; onChanged: () => void 
     try {
       await apiFetch(`/qp1/ledger/${entry.id}/${kind}`, { method: "POST", body: body || {} });
       setShowChanged(false);
+      toast.success("Change recorded.");
       onChanged();
     } catch { /* silent */ }
     finally { setBusy(false); }
@@ -399,6 +401,7 @@ function AdHocForm({ participantId, onSaved }: { participantId: string; onSaved:
         actual_date: when, actual_duration_hours: Number(dur), actual_rate: Number(rate), notes: note.trim() || null,
       } });
       setServiceType(""); setProvider(""); setDur("1"); setRate(""); setNote(""); setOpen(false);
+      toast.success("Visit logged.");
       onSaved();
     } catch { setErr("Could not save"); }
     finally { setBusy(false); }
@@ -600,7 +603,7 @@ function ScheduleRow({ sched, onChanged }: { sched: any; onChanged: () => void }
   const [busy, setBusy] = useState(false);
   async function end() {
     setBusy(true);
-    try { await apiFetch(`/qp1/schedules/${sched.id}`, { method: "DELETE" }); onChanged(); }
+    try { await apiFetch(`/qp1/schedules/${sched.id}`, { method: "DELETE" }); toast.success("Schedule ended."); onChanged(); }
     catch { /* silent */ }
     finally { setBusy(false); }
   }
@@ -649,6 +652,7 @@ function ScheduleForm({ participantId, onSaved }: { participantId: string; onSav
         duration_hours: Number(dur), hourly_rate: Number(rate), effective_from: from,
       } });
       setServiceType(""); setProvider(""); setDur("1"); setRate(""); setOpen(false);
+      toast.success("Schedule added.");
       onSaved();
     } catch { setErr("Could not save"); }
     finally { setBusy(false); }

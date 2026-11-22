@@ -5,6 +5,7 @@ import { LifeBuoy, Plus, Search } from "lucide-react-native";
 
 import { AppHeader, Badge, Button, Card, Field, Loading, StatePanel, T } from "@/src/components/ui";
 import { apiFetch, ApiError } from "@/src/lib/api";
+import { toast } from "@/src/components/Toast";
 import { useTheme } from "@/src/theme/ThemeContext";
 import { fonts, radius, spacing } from "@/src/theme/tokens";
 import { formatDate, timeAgo } from "@/src/utils/format";
@@ -75,6 +76,7 @@ export default function SupportScreen() {
       await apiFetch("/support/tickets", { method: "POST", body: { channel: "manual", category, user_note: note.trim(), tool_name: "Support page" } });
       setNote(""); setCategory("other"); setShowForm(false);
       await load();
+      toast.success("Your support request has been sent. We'll get back to you here.");
     } catch (e) {
       setErr(e instanceof ApiError ? e.message : "Could not raise your request. Please try again.");
     } finally { setSaving(false); }

@@ -9,6 +9,7 @@ import DecoderResultView from "@/src/components/DecoderResultView";
 import { SmartAISummary } from "@/src/components/SmartAISummary";
 import ReportIssueButton from "@/src/components/ReportIssueButton";
 import { apiFetch } from "@/src/lib/api";
+import { toast } from "@/src/components/Toast";
 import { useParticipants } from "@/src/context/ParticipantContext";
 import { cacheGet, cacheSet } from "@/src/lib/cache";
 import { downloadAndShare } from "@/src/lib/download";
@@ -117,6 +118,7 @@ export default function StatementDetail() {
         method: "DELETE",
         headers: { "Idempotency-Key": `arch-${stmt.id}-${Date.now()}` },
       });
+      toast.success("Statement archived.");
       router.replace("/(tabs)/statements");
     } catch {
       setDlError("Couldn't archive this statement. Please try again.");
@@ -134,6 +136,7 @@ export default function StatementDetail() {
         method: "POST",
         headers: { "Idempotency-Key": `rest-${stmt.id}-${Date.now()}` },
       });
+      toast.success("Statement restored.");
       await load();
     } catch {
       setDlError("Couldn't restore this statement. Please try again.");

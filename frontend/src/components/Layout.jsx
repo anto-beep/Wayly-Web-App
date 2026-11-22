@@ -173,18 +173,9 @@ const bottomNavItems = primaryNav.filter((n) => n.mobile);
 // behaviour), but the group containing the current route auto-opens so users
 // see where they are.
 function MobileDrawerGroup({ group, drawerPathname, onNavigate }) {
-    const hasActive = group.items.some((it) => {
-        if (typeof it.to !== "string") return false;
-        if (it.matchPrefix && drawerPathname.startsWith(it.matchPrefix)) return true;
-        // Ignore modal-trigger routes containing "?" for active detection
-        if (it.to.includes("?")) return false;
-        if (it.end) return drawerPathname === it.to;
-        return drawerPathname === it.to || drawerPathname.startsWith(it.to + "/");
-    });
-    const [open, setOpen] = useState(hasActive);
-    useEffect(() => {
-        if (hasActive) setOpen(true);
-    }, [hasActive]);
+    // All groups start collapsed when the drawer opens (including "Today") —
+    // the user asked for a fully collapsed menu on open.
+    const [open, setOpen] = useState(false);
     return (
         <div className="border-b border-kindred last:border-0 py-1" data-testid={`drawer-group-${group.key}`}>
             <button

@@ -9,6 +9,7 @@ import { AppHeader, Button, Card, DateField, Field, Loading, Select, StatePanel,
 import { useAuth } from "@/src/context/AuthContext";
 import { useParticipants } from "@/src/context/ParticipantContext";
 import { apiFetch, ApiError } from "@/src/lib/api";
+import { toast } from "@/src/components/Toast";
 import { startAddonCheckout } from "@/src/lib/plans";
 import { useTheme } from "@/src/theme/ThemeContext";
 import { fonts, radius, spacing } from "@/src/theme/tokens";
@@ -218,7 +219,7 @@ export default function ParticipantsScreen() {
   // ---- Other actions ----
   const promote = (p: PP) => Alert.alert("Make primary", `Set ${p.first_name} as the primary participant?`, [
     { text: "Cancel", style: "cancel" },
-    { text: "Make primary", onPress: async () => { try { await apiFetch(`/participants/${p.id}/promote`, { method: "POST", body: {} }); await loadAll(); await reload(); } catch { Alert.alert("Could not promote"); } } },
+    { text: "Make primary", onPress: async () => { try { await apiFetch(`/participants/${p.id}/promote`, { method: "POST", body: {} }); await loadAll(); await reload(); toast.success(`${p.first_name} is now the primary participant.`); } catch { toast.error("Could not make that person primary."); } } },
   ]);
 
   const openRemove = (p: PP) => { setRemoveChoice("stay"); setRemoveTarget(p); };
@@ -235,12 +236,14 @@ export default function ParticipantsScreen() {
       apiFetch("/payments/sync-plan-to-participants", { method: "POST", body: {} }).catch(() => {});
       if (data?.plan_downgrade_scheduled?.effective) {
         Alert.alert("Participant removed", `Plan downgrades to Solo on ${formatDate(data.plan_downgrade_scheduled.effective)}.`);
+      } else {
+        toast.success("Participant removed.");
       }
     } catch (e) { Alert.alert("Could not remove", e instanceof ApiError ? e.message : ""); }
     finally { setBusy(false); }
   };
 
-  const restore = async (p: PP) => { try { await apiFetch(`/v2/participants/${p.id}/restore`, { method: "POST", body: {} }); await loadAll(); await reload(); } catch { Alert.alert("Could not restore"); } };
+  const restore = async (p: PP) => { try { await apiFetch(`/v2/participants/${p.id}/restore`, { method: "POST", body: {} }); await loadAll(); await reload(); toast.success(`${p.first_name} restored.`); } catch { toast.error("Could not restore that participant."); } };
 
   const hardDelete = (p: PP) => {
     const full = `${p.first_name || ""} ${p.last_name || ""}`.trim();

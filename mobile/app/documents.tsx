@@ -9,6 +9,7 @@ import * as ImagePicker from "expo-image-picker";
 import { AppHeader, Badge, Button, Card, Field, Loading, Select, StatePanel, T } from "@/src/components/ui";
 import { PageIntro } from "@/src/components/PageIntro";
 import { apiFetch, ApiError, uploadFile } from "@/src/lib/api";
+import { toast } from "@/src/components/Toast";
 import { downloadAndShare } from "@/src/lib/download";
 import { useTheme } from "@/src/theme/ThemeContext";
 import { fonts, radius, spacing } from "@/src/theme/tokens";
@@ -108,6 +109,7 @@ export default function DocumentsScreen() {
         notes: editForm.notes.trim() || null,
       } });
       setEditing(null);
+      toast.success("Document updated.");
       await load();
     } catch { /* keep modal open */ } finally { setSavingEdit(false); }
   };
@@ -128,6 +130,7 @@ export default function DocumentsScreen() {
     setDlError("");
     try {
       await apiFetch(`/documents/${d.id}/send-to-decoder`, { method: "POST" });
+      toast.success("Sent to the Statement Decoder.");
       router.push("/(tabs)/statements" as any);
     } catch (e) {
       setDlError(e instanceof ApiError ? e.message : "Could not send to the decoder. Statements can be decoded once their category is set to Statement.");
@@ -215,6 +218,7 @@ export default function DocumentsScreen() {
       setShowUpload(false);
       setPicked(null);
       setDocTitle("");
+      toast.success("Document uploaded.");
       await load();
     } catch (e) {
       setUploadError(e instanceof ApiError ? e.message : "Upload failed. Please try again.");

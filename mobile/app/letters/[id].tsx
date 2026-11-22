@@ -12,6 +12,7 @@ import * as DocumentPicker from "expo-document-picker";
 import { AppHeader, Badge, Button, Card, Loading, Select, StatePanel, T } from "@/src/components/ui";
 import ReportIssueButton from "@/src/components/ReportIssueButton";
 import { apiFetch, ApiError } from "@/src/lib/api";
+import { toast } from "@/src/components/Toast";
 import { generateLetterAsync } from "@/src/lib/lf1Generate";
 import { sharePostPdf } from "@/src/lib/download";
 import { useParticipants } from "@/src/context/ParticipantContext";
@@ -453,6 +454,7 @@ function RecipientDirectoryCard({ entryId, currentSpecific, onApplied }: { entry
       const r = await apiFetch<{ recipient: any }>("/lf1/recipients", { method: "POST", body: { name: nm, email: email.trim() || null } });
       await loadRecipients();
       setName(""); setEmail(""); setAdding(false);
+      toast.success("Recipient saved.");
       if (r?.recipient) await apply(r.recipient);
     } catch { /* noop */ } finally { setSaving(false); }
   };
@@ -804,12 +806,12 @@ export default function CorrespondenceDetail() {
   };
 
   const markSent = async () => {
-    try { const r = await apiFetch<any>(`/lf1/correspondence/${id}`, { method: "PATCH", body: { status: "sent" } }); setEntry(r?.entry || r); }
+    try { const r = await apiFetch<any>(`/lf1/correspondence/${id}`, { method: "PATCH", body: { status: "sent" } }); setEntry(r?.entry || r); toast.success("Marked as sent."); }
     catch (e) { setError(e instanceof ApiError ? e.message : "Could not mark as sent."); }
   };
 
   const doDelete = async () => {
-    try { await apiFetch(`/lf1/correspondence/${id}`, { method: "DELETE" }); router.replace("/letters"); }
+    try { await apiFetch(`/lf1/correspondence/${id}`, { method: "DELETE" }); toast.success("Letter deleted."); router.replace("/letters"); }
     catch (e) { setError(e instanceof ApiError ? e.message : "Delete failed."); }
   };
 
@@ -1230,13 +1232,13 @@ function ShareAndSignOffPanel({ entry, entryId, onUpdated }: { entry: any; entry
 
   const share = async () => {
     setBusy(true); setError("");
-    try { await apiFetch(`/lf1/correspondence/${entryId}/share`, { method: "POST", body: { share_with_user_ids: selected, require_sign_off: requireSignOff, sign_off_message: null } }); onUpdated(); }
+    try { await apiFetch(`/lf1/correspondence/${entryId}/share`, { method: "POST", body: { share_with_user_ids: selected, require_sign_off: requireSignOff, sign_off_message: null } }); toast.success("Draft shared."); onUpdated(); }
     catch (e) { setError(e instanceof ApiError ? e.message : "Could not share this draft."); }
     finally { setBusy(false); }
   };
   const signOff = async () => {
     setBusySign(true); setError("");
-    try { await apiFetch(`/lf1/correspondence/${entryId}/sign-off`, { method: "POST", body: { note: null } }); onUpdated(); }
+    try { await apiFetch(`/lf1/correspondence/${entryId}/sign-off`, { method: "POST", body: { note: null } }); toast.success("Sign-off recorded."); onUpdated(); }
     catch (e) { setError(e instanceof ApiError ? e.message : "Could not record sign-off."); }
     finally { setBusySign(false); }
   };

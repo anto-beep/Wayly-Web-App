@@ -23,6 +23,7 @@ import { ParticipantSwitcher } from "@/src/components/ParticipantSwitcher";
 import { useAuth } from "@/src/context/AuthContext";
 import { useParticipants } from "@/src/context/ParticipantContext";
 import { apiFetch } from "@/src/lib/api";
+import { toast } from "@/src/components/Toast";
 import { useTheme } from "@/src/theme/ThemeContext";
 import { fonts, radius, spacing } from "@/src/theme/tokens";
 import { initials, timeAgo } from "@/src/utils/format";
@@ -116,6 +117,7 @@ export default function FamilyWall() {
       setBody("");
       setPhoto(null);
       await load();
+      toast.success("Posted to the family wall.");
     } catch {
       Alert.alert("Couldn't post", "Please try again.");
     } finally {
@@ -146,6 +148,7 @@ export default function FamilyWall() {
           setPosts((prev) => prev.filter((p) => p.id !== post.id));
           try {
             await apiFetch(`/wall/posts/${post.id}`, { method: "DELETE" });
+            toast.success("Post deleted.");
           } catch {
             load();
           }

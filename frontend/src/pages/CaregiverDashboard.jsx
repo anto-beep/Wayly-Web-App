@@ -246,9 +246,9 @@ function AtAGlance({ budget, statements, alertCount, toReviewHref, lifetimeCapHr
 
                 {/* uniform metric tiles, each with a mini bar */}
                 <div className="relative mt-6 grid grid-cols-3 gap-2.5 sm:gap-3">
-                    <GlanceTile label="Available" value={formatAUD2(available)} pct={100} bg="#0E4D52" />
-                    <GlanceTile testid="glance-spent" label="Used" value={formatAUD2(spent)} pct={pctUsed} bg="#9E2F23" />
-                    <GlanceTile testid="glance-spare" label="Spare" value={formatAUD2(spare)} pct={available > 0 ? (spare / available) * 100 : 0} bg="#A5512B" />
+                    <GlanceTile testid="glance-starting" label="Starting Budget" value={formatAUD2(available)} pct={100} bg="#0E4D52" />
+                    <GlanceTile testid="glance-spent" label="Used Budget" value={formatAUD2(spent)} pct={pctUsed} bg="#9E2F23" />
+                    <GlanceTile testid="glance-spare" label="Available Budget" value={formatAUD2(spare)} pct={available > 0 ? (spare / available) * 100 : 0} bg="#A5512B" />
                 </div>
 
                 {careMgmt > 0 && (

@@ -36,11 +36,16 @@ export default function ChargeEntryDialog({ pid, savedServices = [], initialTab 
     const [scanRows, setScanRows] = useState(null);
     const [scanning, setScanning] = useState(false);
 
+    const confirmMsg = (payload) => {
+        const amt = payload.amount == null || payload.amount === "" ? "unpriced" : AUD(payload.amount);
+        return `Charge added: ${payload.service_name} · ${amt}. Your budget's been updated — check your latest balance.`;
+    };
+
     const post = async (payload) => {
         setBusy(true);
         try {
             const { data } = await api.post(`/fundtrack/participants/${pid}/charges`, payload);
-            toast.success(data.message || "Added");
+            toast.success(confirmMsg(payload));
             onSaved?.(data);
             onClose?.();
         } catch (e) {
@@ -48,10 +53,15 @@ export default function ChargeEntryDialog({ pid, savedServices = [], initialTab 
         } finally { setBusy(false); }
     };
 
-    const addFromSaved = (svc) => post({
-        source: "entered", service_id: svc.service_id, service_name: svc.service_name,
-        stream: svc.stream, date: today(), amount: svc.last_amount,
-    });
+    // Picking a usual service no longer saves instantly — it pre-fills the
+    // editable "type" step (date + amount) so the user can adjust then add.
+    const pickSaved = (svc) => {
+        setName(svc.service_name || "");
+        setStream(svc.stream || "Everyday Living");
+        setAmount(svc.last_amount != null ? String(svc.last_amount) : "");
+        setDate(today());
+        setTab("type");
+    };
 
     const submitType = () => {
         if (!name.trim()) { toast.error("What was the service? Add a short name."); return; }
@@ -106,7 +116,7 @@ export default function ChargeEntryDialog({ pid, savedServices = [], initialTab 
                 });
                 last = data;
             }
-            toast.success(`Added ${rows.length} charge${rows.length === 1 ? "" : "s"} from your invoice.`);
+            toast.success(`Added ${rows.length} charge${rows.length === 1 ? "" : "s"} from your invoice. Your budget's been updated — check your latest balance.`);
             onSaved?.(last);
             onClose?.();
         } catch (e) {
@@ -145,19 +155,19 @@ export default function ChargeEntryDialog({ pid, savedServices = [], initialTab 
                             <ul className="space-y-2">
                                 {savedServices.map((s) => (
                                     <li key={s.service_id}>
-                                        <button onClick={() => addFromSaved(s)} disabled={busy} data-testid={`charge-usual-${s.service_id}`}
-                                            className="w-full text-left flex items-center justify-between gap-3 rounded-xl border border-primary-k/10 px-3 py-2.5 hover:border-clay/50 hover:shadow-sm transition-all disabled:opacity-50">
+                                        <button onClick={() => pickSaved(s)} data-testid={`charge-usual-${s.service_id}`}
+                                            className="w-full text-left flex items-center justify-between gap-3 rounded-xl border border-primary-k/10 px-3 py-2.5 hover:border-clay/50 hover:shadow-sm transition-all">
                                             <span className="min-w-0">
                                                 <span className="block text-sm font-semibold text-primary-k truncate">{s.service_name}</span>
                                                 <span className="block text-xs text-muted-k">{s.stream} · last {AUD(s.last_amount)}</span>
                                             </span>
-                                            <span className="text-xs font-semibold text-clay shrink-0">Add for today →</span>
+                                            <span className="text-xs font-semibold text-clay shrink-0">Edit &amp; add →</span>
                                         </button>
                                     </li>
                                 ))}
                             </ul>
                         )}
-                        <p className="mt-3 rounded-lg bg-gold/10 border border-gold/30 px-3 py-2 text-xs font-medium text-primary-k">Date defaults to today, amount to the last amount recorded. You can fix it afterwards.</p>
+                        <p className="mt-3 rounded-lg bg-gold/10 border border-gold/30 px-3 py-2 text-xs font-medium text-primary-k">We'll fill in today's date and the last amount — you can adjust the date and price before you add.</p>
                     </div>
                 )}
 

@@ -23,6 +23,7 @@ import { BudgetLadderCard } from "@/src/components/BudgetLadderCard";
 import { FundtrackPanel } from "@/src/components/fundtrack/FundtrackPanel";
 import { useParticipants } from "@/src/context/ParticipantContext";
 import { apiFetch } from "@/src/lib/api";
+import { toast } from "@/src/components/Toast";
 import { useTheme } from "@/src/theme/ThemeContext";
 import { fonts, radius, spacing } from "@/src/theme/tokens";
 import { moneyWhole, shortDate, titleCase } from "@/src/utils/format";
@@ -157,6 +158,7 @@ export default function BudgetScenariosScreen() {
     try {
       await apiFetch(`/bsc1/participants/${pid}/scenarios`, { method: "POST", body: { name: saveName.trim(), changes, ...overrides } });
       setSaveName("");
+      toast.success("Scenario saved.");
       loadScenarios();
     } catch (e: any) { setSaveErr(e?.message || "Could not save the scenario."); }
   };
@@ -167,7 +169,7 @@ export default function BudgetScenariosScreen() {
     setCarryIn(s.carry_forward_in_aud == null ? "" : String(s.carry_forward_in_aud));
   };
   const deleteScenario = async (id: string) => {
-    try { await apiFetch(`/bsc1/scenarios/${id}`, { method: "DELETE" }); setScenarios((s) => s.filter((x) => x.id !== id)); }
+    try { await apiFetch(`/bsc1/scenarios/${id}`, { method: "DELETE" }); toast.success("Scenario deleted."); setScenarios((s) => s.filter((x) => x.id !== id)); }
     catch { /* ignore */ }
   };
 
