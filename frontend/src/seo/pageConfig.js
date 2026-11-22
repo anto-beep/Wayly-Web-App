@@ -9,9 +9,9 @@
 
 export const SEO = {
     home: {
-        title: "Wayly · AI for Australian Support at Home",
+        title: "Support at Home Costs, Statements and Funding | Wayly",
         description:
-            "Decode aged-care statements, check classifications and plan budgets, Wayly's AI assistant helps Australian families understand Support at Home in plain English.",
+            "Check what your provider charged and see how much Support at Home funding is left. Australian-built, for people managing their own care or a loved one's.",
         path: "/",
     },
     features: {
