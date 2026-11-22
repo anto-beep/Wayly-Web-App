@@ -151,9 +151,15 @@ export default function WeeklyBudgetScreen() {
           {/* what you've recorded */}
           {(data.used || []).length > 0 ? (
             <Card testID="weekly-used">
-              <View style={{ flexDirection: "row", alignItems: "center", gap: 6, marginBottom: spacing.sm }}>
-                <CheckCircle2 size={16} color={colors.sage} />
-                <T style={{ fontFamily: fonts.headingSemi, fontSize: 16, color: colors.heading }}>What You Have Recorded This Quarter</T>
+              <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: spacing.sm, marginBottom: spacing.sm }}>
+                <View style={{ flexDirection: "row", alignItems: "center", gap: 6, flex: 1 }}>
+                  <CheckCircle2 size={16} color={colors.sage} />
+                  <T style={{ fontFamily: fonts.headingSemi, fontSize: 16, color: colors.heading }}>What You Have Recorded This Quarter</T>
+                </View>
+                <Pressable testID="weekly-used-add" onPress={() => setSheet("charge")} hitSlop={6} style={{ flexDirection: "row", alignItems: "center", gap: 4, backgroundColor: colors.primary, borderRadius: 999, paddingHorizontal: 10, paddingVertical: 6 }}>
+                  <Plus size={13} color="#fff" />
+                  <T style={{ fontFamily: fonts.bodySemi, fontSize: 12, color: "#fff" }}>Add</T>
+                </Pressable>
               </View>
               {data.used.map((u: any) => (
                 <View key={u.id} testID={`weekly-used-${u.id}`} style={{ paddingVertical: spacing.sm, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.border }}>

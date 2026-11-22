@@ -275,6 +275,8 @@ function VisitChangeDialog({ pid, visit, onClose, onSaved }) {
 function UsedEntriesTable({ items, onChanged, pid, savedServices = [] }) {
     const [query, setQuery] = useState("");
     const [source, setSource] = useState("all");
+    const [fromDate, setFromDate] = useState("");
+    const [toDate, setToDate] = useState("");
     const [sortKey, setSortKey] = useState("date");
     const [sortDir, setSortDir] = useState("desc");
     const [editing, setEditing] = useState(null);
@@ -285,7 +287,8 @@ function UsedEntriesTable({ items, onChanged, pid, savedServices = [] }) {
     const sources = Array.from(new Set(items.map((i) => i.source))).filter(Boolean);
     const filtered = items
         .filter((i) => source === "all" || i.source === source)
-        .filter((i) => !query.trim() || (i.service_name || "").toLowerCase().includes(query.trim().toLowerCase()));
+        .filter((i) => !query.trim() || (i.service_name || "").toLowerCase().includes(query.trim().toLowerCase()))
+        .filter((i) => { const d = (i.date || "").slice(0, 10); if (fromDate && d < fromDate) return false; if (toDate && d > toDate) return false; return true; });
     const sorted = [...filtered].sort((a, b) => {
         let av, bv;
         if (sortKey === "service") { av = (a.service_name || "").toLowerCase(); bv = (b.service_name || "").toLowerCase(); }
@@ -332,6 +335,12 @@ function UsedEntriesTable({ items, onChanged, pid, savedServices = [] }) {
                         <option value="all">All Sources</option>
                         {sources.map((s) => <option key={s} value={s}>{sourceLabel(s)}</option>)}
                     </select>
+                    <div className="flex items-center gap-1.5 text-xs text-muted-k">
+                        <span>From</span>
+                        <input type="date" value={fromDate} onChange={(e) => setFromDate(e.target.value)} data-testid="weekly-used-filter-from" className="py-1.5 px-2 rounded-lg border border-primary-k/15 bg-white text-primary-k" />
+                        <span>To</span>
+                        <input type="date" value={toDate} onChange={(e) => setToDate(e.target.value)} data-testid="weekly-used-filter-to" className="py-1.5 px-2 rounded-lg border border-primary-k/15 bg-white text-primary-k" />
+                    </div>
                     <button onClick={() => setAdding(true)} data-testid="weekly-used-add" className="inline-flex items-center gap-1.5 rounded-lg bg-primary-k px-3 py-1.5 text-sm font-semibold text-white hover:bg-primary-k/90 transition-colors">
                         <Plus className="w-3.5 h-3.5" /> Add Entry
                     </button>

@@ -8485,3 +8485,8 @@ Mirrored the web budget-hero colour treatment onto the mobile dashboard (app/(ta
 - **Date format**: web WeeklyBudget recorded-entries table date now DD/MM/YYYY (fmtDateFull); mobile already DD/MM/YYYY via shortDate. 
 - Mobile dashboard hero colours mirrored from web earlier (solid red/clay tiles + coloured notes) — left as readable light blocks in mobile dark mode (dark text on light block; not a readability bug).
 - Cleaned a leftover Test_wayly_edit demo charge created during automated testing.
+
+### Jun 2026 (fork) — Mobile Add Entry parity + web date filter (self-verified via screenshots)
+- **Mobile Add Entry** (app/weekly-budget.tsx): added an "Add" button (weekly-used-add) in the "What You Have Recorded This Quarter" card header that opens the existing (tested) ChargeEntrySheet (setSheet("charge")) → POST charge. Reused the proven flow rather than a new create sheet.
+- **Web date filter** (WeeklyBudget UsedEntriesTable): added From/To date inputs (weekly-used-filter-from / weekly-used-filter-to) alongside search + source filter; client-side filter on entry.date (YYYY-MM-DD slice). Empty-filter state message unchanged.
+- Re-seeded 4 demo charges for samburke (Personal care morning, Domestic assistance, Nursing visit, Physiotherapy) spread across Oct–Dec 2026 after automated delete-testing + a stray test charge cleanup had emptied the recorded list. Past-dated ones show under "Recorded", future-dated under "Booked".
