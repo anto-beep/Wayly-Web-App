@@ -218,15 +218,7 @@ function AtAGlance({ budget, statements, alertCount, toReviewHref, lifetimeCapHr
                 <div className="relative mt-6 flex flex-col sm:flex-row items-center gap-7 sm:gap-10">
                     <BudgetDonut pctFill={pctUsed} pctLabel={pctUsedDisplay} tone={toneHex} onDark size={152} stroke={18} />
                     <div className="min-w-0 flex-1 w-full text-center sm:text-left">
-                        <span
-                            data-testid="glance-budget-status"
-                            className="inline-flex items-center gap-1.5 rounded-pill px-3 py-1 text-[11px] font-bold uppercase tracking-[0.1em] text-white"
-                            style={{ backgroundColor: over ? "rgba(240,133,122,0.22)" : underspend ? "rgba(243,201,139,0.22)" : "rgba(127,200,160,0.22)" }}
-                        >
-                            <span className="h-2 w-2 rounded-full" style={{ backgroundColor: over ? "#F0857A" : underspend ? "#F3C98B" : "#7FC8A0" }} />
-                            {over ? "Over budget" : underspend ? "Underspend risk" : "On track"}
-                        </span>
-                        <div className="mt-3 flex items-baseline gap-2 flex-wrap justify-center sm:justify-start">
+                        <div className="flex items-baseline gap-2 flex-wrap justify-center sm:justify-start">
                             <span className="font-heading text-3xl sm:text-4xl leading-none tabular-nums text-white" data-testid="glance-left">{formatAUD2(Math.abs(left))}</span>
                         </div>
                         <p className="mt-1.5 text-sm text-white/70">

@@ -34,9 +34,9 @@ function inferAlertRoute(text?: string): string | null {
   if (/statement/.test(t)) return "/(tabs)/statements";
   if (/\b(cap|lifetime|contribution)\b/.test(t)) return "/contribution-position";
   if (/care plan|support plan/.test(t)) return "/care-plans";
-  if (/\b(provider|price|compare)\b/.test(t)) return "/compare-providers";
-  if (/letter|complaint/.test(t)) return "/letters";
   if (/budget|forfeit|shortfall|overspend|underspend|spend|quarter|funding|left for care/.test(t)) return "/budget-scenarios";
+  if (/letter|complaint/.test(t)) return "/letters";
+  if (/\b(price|compare|comparison)\b/.test(t)) return "/compare-providers";
   return null;
 }
 
@@ -205,7 +205,7 @@ export function SmartAISummary({
               <T style={{ fontFamily: fonts.headingSemi, fontSize: 18, color: headText }}>{resolvedTitle}</T>
               <T style={{ fontFamily: fonts.body, fontSize: 12, lineHeight: 16, color: colors.muted, marginTop: 2 }}>{meta.blurb}</T>
             </View>
-            <View style={{ flexDirection: "row", alignItems: "center", gap: spacing.sm }}>
+            <View style={{ flexDirection: "row", alignItems: "center", gap: spacing.sm, flexShrink: 0 }}>
               {summary ? (
                 <Pressable
                   testID={`smart-ai-summary-listen-${pageKey}`}
@@ -272,7 +272,7 @@ export function SmartAISummary({
 export default SmartAISummary;
 
 const styles = StyleSheet.create({
-  card: { borderRadius: radius.lg, borderWidth: 1, borderLeftWidth: 4, padding: spacing.lg, overflow: "hidden" },
+  card: { marginHorizontal: -spacing.lg, borderTopWidth: StyleSheet.hairlineWidth, borderBottomWidth: StyleSheet.hairlineWidth, borderLeftWidth: 4, padding: spacing.lg, overflow: "hidden" },
   iconWrap: { width: 40, height: 40, borderRadius: radius.pill, alignItems: "center", justifyContent: "center" },
   refreshBtn: { flexShrink: 0, flexDirection: "row", alignItems: "center", gap: 5, borderWidth: 1, borderRadius: radius.pill, paddingHorizontal: 12, paddingVertical: 6 },
   alert: { flexDirection: "row", gap: 8, borderWidth: 1, borderLeftWidth: 3, borderRadius: radius.md, paddingHorizontal: 12, paddingVertical: 9 },

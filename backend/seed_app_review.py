@@ -203,6 +203,52 @@ async def main() -> None:
     except Exception as e:
         print("[seed] statement seed failed:", repr(e))
 
+    # 5. Repair demo-data consistency (D7): the care recipient must show ONE
+    #    provider. Strip empty placeholder statements that accumulate from
+    #    tester activity, and align every remaining statement's displayed
+    #    provider to the primary participant's provider (fixes the case where a
+    #    decoded public sample — "Sunrise Home Care" — contradicts the real
+    #    household/invoice provider). Idempotent; runs on every boot.
+    try:
+        client = AsyncIOMotorClient(os.environ["MONGO_URL"])
+        db = client[os.environ["DB_NAME"]]
+        u = await db.users.find_one({"email": EMAIL}, {"_id": 0, "household_id": 1})
+        hid = (u or {}).get("household_id")
+        if hid:
+            part = await db.participants.find_one(
+                {"household_id": hid, "provider_name": {"$nin": [None, ""]}},
+                {"_id": 0, "provider_name": 1},
+                sort=[("is_primary", -1), ("created_at", 1)],
+            )
+            provider = (part or {}).get("provider_name")
+            dele = await db.statements.delete_many({
+                "household_id": hid,
+                "$and": [
+                    {"$or": [{"filename": None}, {"filename": {"$exists": False}}]},
+                    {"$or": [{"line_items": {"$exists": False}}, {"line_items": []}, {"line_items": None}]},
+                ],
+            })
+            if dele.deleted_count:
+                print(f"[seed] removed {dele.deleted_count} empty placeholder statement(s)")
+            if provider:
+                fixed = 0
+                async for s in db.statements.find({"household_id": hid}, {"extracted_json": 1}):
+                    ej = s.get("extracted_json")
+                    ej = dict(ej) if isinstance(ej, dict) else {}
+                    if ej.get("provider_name") != provider:
+                        ej["provider_name"] = provider
+                        await db.statements.update_one(
+                            {"_id": s["_id"]},
+                            {"$set": {"extracted_json": ej, "provider_name": provider}},
+                        )
+                        fixed += 1
+                if fixed:
+                    print(f"[seed] aligned {fixed} statement(s) to provider '{provider}'")
+        client.close()
+    except Exception as e:
+        print("[seed] consistency repair failed:", repr(e))
+
+
     print("[seed] done")
 
 

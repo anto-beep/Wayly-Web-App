@@ -106,7 +106,7 @@ export function ChargeEntrySheet({ pid, savedServices = [], visible, onClose, on
               <View testID="charge-usual" style={{ gap: spacing.sm }}>
                 {savedServices.length === 0 ? (
                   <T style={{ color: colors.muted, fontSize: 14 }}>No usual services yet. Type a charge and it'll appear here next time.</T>
-                ) : savedServices.slice(0, 12).map((s: any) => (
+                ) : savedServices.map((s: any) => (
                   <Pressable key={s.service_id} testID={`charge-usual-${s.service_id}`} disabled={busy} onPress={() => addFromSaved(s)}
                     style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", borderWidth: 1, borderColor: colors.border, borderRadius: radius.lg, padding: spacing.md }}>
                     <View style={{ flex: 1 }}>
@@ -116,7 +116,9 @@ export function ChargeEntrySheet({ pid, savedServices = [], visible, onClose, on
                     <T style={{ fontFamily: fonts.bodySemi, fontSize: 12, color: colors.cta }}>Add today →</T>
                   </Pressable>
                 ))}
-                <T style={{ fontSize: 11, color: colors.muted, marginTop: 4 }}>Date defaults to today, amount to the last amount recorded.</T>
+                <View style={{ marginTop: spacing.sm, backgroundColor: colors.goldSoft, borderWidth: 1, borderColor: colors.gold + "4D", borderRadius: radius.md, paddingHorizontal: 12, paddingVertical: 8 }}>
+                  <T style={{ fontSize: 12, color: "#6B4A0F", fontFamily: fonts.bodyMedium }}>Date defaults to today, amount to the last amount recorded. You can fix it afterwards.</T>
+                </View>
               </View>
             )}
 

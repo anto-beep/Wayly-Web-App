@@ -8445,3 +8445,16 @@ Verified PASS by testing agent (web, samburke@test.com):
 - **BUG — charge dialog capped saved services at 10**: `ChargeEntryDialog.jsx` removed `.slice(0,10)` → now lists the full saved-services list (verified 16 shown, scrollable). Hint line restyled as a gold info chip for visibility.
 - **More hero tweaks**: AtAGlance hero teal set to match the FundtrackPanel header exactly (`linear-gradient(135deg,#0E4D52,#13646A)`); donut progress arc changed off light-blue to gold `#F3C98B`; care-management note bumped text-xs → text-sm to match the forfeit/shortfall notes.
 - NOTE: these bug fixes are web-only as reported; mobile parity (ChargeEntrySheet list cap, mobile AI-summary routing) not yet checked.
+
+### Nov 2026 (fork) — Mobile parity + demo-data consistency (testing agent VERIFIED iteration_413.json)
+**Mobile parity** (mirrors the verified web fixes/tweaks; all 6 items PASS on Expo preview, samburke@test.com):
+- SmartAISummary.tsx `inferAlertRoute` reordered so budget/forfeit alerts → `/budget-scenarios` (was greedily matching 'provider' → `/compare-providers`); price/compare → `/compare-providers`.
+- ChargeEntrySheet.tsx removed the `slice(0,12)` cap → full saved-services list (16 shown); hint restyled as a gold chip.
+- Dashboard (tabs)/index.tsx budget chips recoloured to match web: 'USED SO FAR' red-tinted, 'SPARE FOR CARE' gold-tinted.
+- SmartAISummary.tsx card is now a FULL-WIDTH edge-to-edge band (`marginHorizontal: -spacing.lg`, hairline top/bottom borders + left accent, square edges) — applies to all 12 mobile summary host screens; Listen/Refresh buttons kept `flexShrink:0` and show properly. Verified no horizontal overflow on dashboard/statements/invoices.
+- Web: removed the redundant `glance-budget-status` pill from the AtAGlance hero.
+
+**Demo-data fix (D7)** — care recipient now shows ONE provider:
+- `seed_app_review.py` hardened with an idempotent repair step (runs on boot): aligns every demo-household statement's `extracted_json.provider_name` (+ a top-level `provider_name`) to the PRIMARY PARTICIPANT's provider, and removes truly-empty placeholder statements (no filename AND no line_items; scoped strictly to the demo household).
+- Applied to preview: Sam Burke now has 2 statements both 'Blueberry Care' (was a stray 'Sunrise Home Care' sample decode + 8 empty placeholders). Dashboard AI summary + alerts reference only 'Blueberry Care' on web and mobile.
+- NOTE: the hard-delete is narrowly scoped to the samburke demo household and placeholder-only docs (per the earlier delete guardrail), and is the user's explicit cleanup request.

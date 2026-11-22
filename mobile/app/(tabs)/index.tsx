@@ -301,17 +301,17 @@ export default function Dashboard() {
 
                   {/* visual stat chips */}
                   <View style={{ flexDirection: "row", gap: spacing.sm, marginTop: spacing.md }}>
-                    <View testID="glance-spent" style={{ flex: 1, borderWidth: 1, borderColor: colors.border, borderRadius: radius.md, padding: 12 }}>
+                    <View testID="glance-spent" style={{ flex: 1, borderWidth: 1, borderColor: colors.terracotta + "55", backgroundColor: colors.errorSoft, borderRadius: radius.md, padding: 12 }}>
                       <View style={{ flexDirection: "row", alignItems: "center", gap: 5 }}>
-                        <TrendingUp size={13} color={budgetOver || budgetPctUsed >= 90 ? colors.terracotta : budgetPctUsed >= 75 ? colors.gold : colors.sage} />
-                        <T style={{ fontFamily: fonts.bodySemi, fontSize: 9, letterSpacing: 0.6, color: colors.muted }}>USED SO FAR</T>
+                        <TrendingUp size={13} color={colors.terracotta} />
+                        <T style={{ fontFamily: fonts.bodySemi, fontSize: 9, letterSpacing: 0.6, color: colors.terracotta }}>USED SO FAR</T>
                       </View>
                       <T style={{ fontFamily: fonts.heading, fontSize: 19, lineHeight: 24, marginTop: 4, color: colors.heading }}>{money(spent)}</T>
                     </View>
-                    <View testID="glance-spare" style={{ flex: 1, borderWidth: 1, borderColor: colors.sage + "44", backgroundColor: colors.sageSoft, borderRadius: radius.md, padding: 12 }}>
+                    <View testID="glance-spare" style={{ flex: 1, borderWidth: 1, borderColor: colors.gold + "66", backgroundColor: colors.goldSoft, borderRadius: radius.md, padding: 12 }}>
                       <View style={{ flexDirection: "row", alignItems: "center", gap: 5 }}>
-                        <Sparkles size={13} color={colors.sage} />
-                        <T style={{ fontFamily: fonts.bodySemi, fontSize: 9, letterSpacing: 0.6, color: colors.sage }}>SPARE FOR CARE</T>
+                        <Sparkles size={13} color={colors.gold} />
+                        <T style={{ fontFamily: fonts.bodySemi, fontSize: 9, letterSpacing: 0.6, color: colors.gold }}>SPARE FOR CARE</T>
                       </View>
                       <T style={{ fontFamily: fonts.heading, fontSize: 19, lineHeight: 24, marginTop: 4, color: colors.heading }}>{money(spare)}</T>
                     </View>

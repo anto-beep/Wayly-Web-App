@@ -1,0 +1,30 @@
+{
+  "summary": "Mobile parity pass (iter 413) — all 6 verification items PASS. Logged in as samburke@test.com on the Expo web preview (390x844). Verified: (1) Dashboard Smart AI Summary alert routing: alert 0 'funding forfeited' now routes to /budget-scenarios (previously /compare-providers), alert 1 'statement' → /statements, alert 2 'invoice' → /invoices — all valid screens, no blank/error. (2) FundtrackPanel charge sheet 'Usual' tab renders 16 saved services (cap of 12 removed; list scrolls, no truncation). (3) Dashboard at-a-glance chips 'USED SO FAR' (glance-spent, red-tinted) and 'SPARE FOR CARE' (glance-spare, gold-tinted) render; card intact. (4) Smart AI Summary band with Listen + Refresh buttons renders full-width on Dashboard and Statements tab with scrollWidth==clientWidth==390 (no horizontal overflow); Invoices screen also has scrollWidth==clientWidth==390 with no overflow. (5) Demo-data consistency: dashboard AI summary body + alerts reference 'Blueberry Care' / 'Blueberry Care Pty Ltd' only; Statements tab body text contains 'blueberry' x9 and 'sunrise' x0. (6) Regression: dashboard, statements tab, and /weekly-budget all load cleanly (weekly shows 'This Week's Budget', $11,128.93 available, no red-box).",
+  "platforms_tested": ["mobile"],
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "mobile": {
+      "ui_bugs": [],
+      "integration_issues": [],
+      "design_issues": [],
+      "react_native_issues": []
+    }
+  },
+  "parity_issues": [],
+  "test_report_links": ["/app/test_reports/iter413_dash.jpg", "/app/test_reports/iter413_ai_sum.jpg", "/app/test_reports/iter413_alert0.jpg", "/app/test_reports/iter413_alert1.jpg", "/app/test_reports/iter413_alert2.jpg", "/app/test_reports/iter413_charge_sheet.jpg", "/app/test_reports/iter413_charge_usual.jpg", "/app/test_reports/iter413_statements.jpg", "/app/test_reports/iter413_invoices.jpg", "/app/test_reports/iter413_weekly.jpg"],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "SmartAISummary.tsx: inferAlertRoute now correctly orders budget/forfeit checks before price/compare — matches web behaviour. Works as expected end-to-end.",
+    "ChargeEntrySheet.tsx: slice(0,12) removal is in place — confirmed 16 saved services render and the list scrolls within the sheet.",
+    "SmartAISummary card uses marginHorizontal: -spacing.lg to achieve the full-width band — no horizontal overflow observed on dashboard, statements, or invoices at 390px viewport.",
+    "Demo seeder successfully consolidated the demo account to a single provider (Blueberry Care). Zero 'Sunrise Home Care' references across dashboard + statements."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "N/A (skipped per request)", "frontend": "100% (6/6)"},
+  "test_credentials": "samburke@test.com / CarTest123$ (demo Family-plan caregiver, participant Sam Burke, provider Blueberry Care)",
+  "seed_data_creation": "None — only read-only verification; no test records created.",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Mobile parity with web iter_412 is verified. Key verified testIDs: smart-ai-summary-dashboard, smart-ai-summary-body-dashboard, smart-ai-summary-listen-dashboard, smart-ai-summary-refresh-dashboard, smart-ai-summary-alert-dashboard-{0,1,2}, glance-spent, glance-spare, fundtrack-add-charge, charge-tab-usual, charge-usual-*. Login flow: mobile login screen requires clicking the 'Log In' button (page.get_by_text('Log In', exact=True)) — pressing Enter on the password input does NOT submit.",
+  "rca of the issue": ""
+}
