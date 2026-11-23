@@ -52,12 +52,12 @@ export default function ContributionSampleResult() {
                         const youPct = r.budget > 0 ? Math.min(100, (r.you / r.budget) * 100) : 0;
                         return (
                             <div key={r.key} className="rounded-xl border border-kindred p-4" style={{ backgroundColor: r.soft }}>
-                                <div className="flex items-start justify-between gap-3">
-                                    <div>
-                                        <div className="font-medium text-primary-k">{r.label}</div>
+                                <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between sm:gap-3">
+                                    <div className="min-w-0">
+                                        <div className="font-medium text-primary-k whitespace-nowrap">{r.label}</div>
                                         <div className="text-xs text-muted-k">{r.note}</div>
                                     </div>
-                                    <div className="text-right">
+                                    <div className="text-left sm:text-right shrink-0">
                                         <div className="font-heading text-lg text-primary-k tabular-nums leading-none">{aud2(r.budget)}</div>
                                         <div className="text-[11px] text-muted-k">in your budget a quarter</div>
                                     </div>
@@ -66,7 +66,7 @@ export default function ContributionSampleResult() {
                                     <div className="h-full" style={{ width: `${youPct}%`, backgroundColor: r.bar }} />
                                     <div className="h-full flex-1" style={{ backgroundColor: "rgba(66,95,71,0.25)" }} />
                                 </div>
-                                <div className="mt-2 flex items-center justify-between text-xs">
+                                <div className="mt-2 flex flex-wrap items-center justify-between gap-x-3 gap-y-1 text-xs">
                                     <span className="text-primary-k"><span className="font-semibold tabular-nums">{aud2(r.you)}</span> you {r.rate > 0 ? `(${r.rate}%)` : "(free)"}</span>
                                     <span className="text-muted-k"><span className="font-semibold tabular-nums">{aud2(r.govt)}</span> government</span>
                                 </div>
@@ -74,16 +74,16 @@ export default function ContributionSampleResult() {
                         );
                     })}
                 </div>
-                <div className="rounded-xl bg-primary-k text-white p-4 grid grid-cols-3 gap-2">
-                    <div>
+                <div className="rounded-xl bg-primary-k text-white p-4 grid grid-cols-1 sm:grid-cols-3 gap-y-2 sm:gap-2">
+                    <div className="flex items-baseline justify-between gap-2 sm:block">
                         <div className="text-[11px] uppercase tracking-wider text-white/70">Total budget</div>
                         <div className="font-heading text-xl tabular-nums">{aud2(totalBudget)}</div>
                     </div>
-                    <div>
+                    <div className="flex items-baseline justify-between gap-2 sm:block">
                         <div className="text-[11px] uppercase tracking-wider text-white/70">You pay</div>
                         <div className="font-heading text-xl tabular-nums">{aud2(totalYou)}</div>
                     </div>
-                    <div>
+                    <div className="flex items-baseline justify-between gap-2 sm:block">
                         <div className="text-[11px] uppercase tracking-wider text-white/70">Government</div>
                         <div className="font-heading text-xl tabular-nums">{aud2(totalGovt)}</div>
                     </div>

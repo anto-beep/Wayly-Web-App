@@ -73,7 +73,7 @@ export default function InvoiceInsightGraphics({ reconciliation }) {
             {billed > 0 && (
                 <div className="sect-teal border border-kindred rounded-2xl p-5" data-testid="invoice-money-graphic">
                     <div className="text-xs uppercase tracking-wider text-muted-k">Where Your Money Stands</div>
-                    <div className="mt-2 flex items-center gap-5">
+                    <div className="mt-2 flex flex-col sm:flex-row items-center gap-4 sm:gap-5">
                         <div className="relative h-[148px] w-[148px] flex-none">
                             <ResponsiveContainer width="100%" height="100%">
                                 <PieChart>
@@ -87,9 +87,9 @@ export default function InvoiceInsightGraphics({ reconciliation }) {
                                 <span className="text-[9px] uppercase tracking-wider text-muted-k mt-0.5">payable</span>
                             </div>
                         </div>
-                        <div className="flex-1 space-y-2">
-                            <div className="flex items-center justify-between rounded-lg item-teal border p-2.5"><span className="text-sm text-primary-k inline-flex items-center gap-2"><span className="h-3 w-3 rounded-full inline-block" style={{ backgroundColor: "#8FBF95" }} />Net payable</span><span className="font-semibold text-primary-k tabular-nums">{aud(net)}</span></div>
-                            <div className="flex items-center justify-between rounded-lg item-clay border p-2.5"><span className="text-sm text-primary-k inline-flex items-center gap-2"><span className="h-3 w-3 rounded-full inline-block" style={{ backgroundColor: "#F0B267" }} />Potential refund</span><span className="font-semibold text-primary-k tabular-nums">{aud(refund)}</span></div>
+                        <div className="w-full sm:flex-1 space-y-2">
+                            <div className="flex items-center justify-between gap-2 rounded-lg item-teal border p-2.5"><span className="min-w-0 text-sm text-primary-k inline-flex items-center gap-2"><span className="h-3 w-3 rounded-full inline-block shrink-0" style={{ backgroundColor: "#8FBF95" }} />Net payable</span><span className="font-semibold text-primary-k tabular-nums shrink-0 pl-2">{aud(net)}</span></div>
+                            <div className="flex items-center justify-between gap-2 rounded-lg item-clay border p-2.5"><span className="min-w-0 text-sm text-primary-k inline-flex items-center gap-2"><span className="h-3 w-3 rounded-full inline-block shrink-0" style={{ backgroundColor: "#F0B267" }} />Potential refund</span><span className="font-semibold text-primary-k tabular-nums shrink-0 pl-2">{aud(refund)}</span></div>
                             <div className="text-[11px] text-muted-k pl-1">of {aud(billed)} billed</div>
                         </div>
                     </div>
@@ -101,7 +101,7 @@ export default function InvoiceInsightGraphics({ reconciliation }) {
                         <div className="text-xs uppercase tracking-wider text-muted-k">What We Found</div>
                         <span className="text-[10px] uppercase tracking-wider text-muted-k inline-flex items-center gap-0.5">Tap to open <ChevronRight className="h-3 w-3" /></span>
                     </div>
-                    <div className="mt-2 flex items-center gap-5">
+                    <div className="mt-2 flex flex-col sm:flex-row items-center gap-4 sm:gap-5">
                         <button type="button" onClick={() => scrollTo("[data-testid=inv1-issue-register]")} data-testid="invoice-severity-donut" aria-label={`${totalFlags} things to check. Open the list.`} className="relative h-[148px] w-[148px] flex-none rounded-full transition-transform focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-k">
                             <ResponsiveContainer width="100%" height="100%">
                                 <PieChart>
@@ -115,11 +115,11 @@ export default function InvoiceInsightGraphics({ reconciliation }) {
                                 <span className="text-[9px] uppercase tracking-wider text-muted-k mt-0.5">to know</span>
                             </div>
                         </button>
-                        <div className="flex-1 space-y-2">
+                        <div className="w-full sm:flex-1 space-y-2">
                             {sevData.map((d) => (
                                 <button key={d.name} type="button" onClick={() => scrollTo("[data-testid=inv1-issue-register]")} data-testid={`invoice-severity-${d.name.replace(/\W+/g, "-").toLowerCase()}`} className="w-full flex items-center justify-between gap-2 rounded-lg border border-kindred px-2.5 py-2 text-left transition-transform hover:shadow-sm">
-                                    <span className="text-sm text-primary-k inline-flex items-center gap-2"><span className="h-3 w-3 rounded-full inline-block" style={{ backgroundColor: d.color }} /> {d.name}</span>
-                                    <span className="font-semibold text-primary-k tabular-nums inline-flex items-center gap-1">{d.value} <ChevronRight className="h-3.5 w-3.5 text-muted-k" /></span>
+                                    <span className="min-w-0 text-sm text-primary-k inline-flex items-center gap-2"><span className="h-3 w-3 rounded-full inline-block shrink-0" style={{ backgroundColor: d.color }} /> {d.name}</span>
+                                    <span className="font-semibold text-primary-k tabular-nums shrink-0 inline-flex items-center gap-1">{d.value} <ChevronRight className="h-3.5 w-3.5 text-muted-k" /></span>
                                 </button>
                             ))}
                         </div>

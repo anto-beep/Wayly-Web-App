@@ -23,13 +23,12 @@ export default function PriceSampleResult() {
     const domain = Math.max(R.charged, R.median, R.upper) * 1.1;
     const pctOf = (v) => Math.min(100, Math.max(2, (v / domain) * 100));
     const Bar = ({ label, value, color }) => (
-        <div className="flex items-center gap-3">
-            <span className="w-28 shrink-0 text-xs text-muted-k text-right">{label}</span>
-            <div className="flex-1 h-7 rounded-lg bg-primary-k/5 relative overflow-hidden">
-                <div className="absolute inset-y-0 left-0 rounded-lg flex items-center justify-end px-2" style={{ width: `${pctOf(value)}%`, backgroundColor: color }}>
-                    <span className="text-xs font-semibold text-white whitespace-nowrap">{aud2(value)}/{R.unit}</span>
-                </div>
+        <div className="flex items-center gap-2">
+            <span className="w-24 shrink-0 text-xs text-muted-k text-right">{label}</span>
+            <div className="flex-1 min-w-0 h-7 rounded-lg bg-primary-k/5 relative overflow-hidden">
+                <div className="absolute inset-y-0 left-0 rounded-lg" style={{ width: `${pctOf(value)}%`, backgroundColor: color }} />
             </div>
+            <span className="w-[86px] shrink-0 text-right text-xs font-semibold tabular-nums whitespace-nowrap" style={{ color }}>{aud2(value)}<span className="font-normal text-muted-k">/{R.unit}</span></span>
         </div>
     );
     return (
@@ -62,13 +61,12 @@ export default function PriceSampleResult() {
                     <div className="space-y-2.5">
                         <Bar label="You pay" value={R.charged} color="#B23A2E" />
                         <Bar label="Typical median" value={R.median} color="#0E4D52" />
-                        <div className="flex items-center gap-3">
-                            <span className="w-28 shrink-0 text-xs text-muted-k text-right">Usual range</span>
-                            <div className="flex-1 h-7 rounded-lg bg-primary-k/5 relative">
-                                <div className="absolute inset-y-0 rounded-lg bg-[#425F47]/25 border border-[#425F47]/40 flex items-center justify-center" style={{ left: `${pctOf(R.lower)}%`, width: `${Math.max(6, pctOf(R.upper) - pctOf(R.lower))}%` }}>
-                                    <span className="text-[10px] font-medium text-[#2f4633] whitespace-nowrap px-1">{aud2(R.lower)}–{aud2(R.upper)}</span>
-                                </div>
+                        <div className="flex items-center gap-2">
+                            <span className="w-24 shrink-0 text-xs text-muted-k text-right">Usual range</span>
+                            <div className="flex-1 min-w-0 h-7 rounded-lg bg-primary-k/5 relative overflow-hidden">
+                                <div className="absolute inset-y-0 rounded-lg bg-[#425F47]/30 border border-[#425F47]/40" style={{ left: `${pctOf(R.lower)}%`, width: `${Math.max(6, pctOf(R.upper) - pctOf(R.lower))}%` }} />
                             </div>
+                            <span className="w-[86px] shrink-0 text-right text-xs font-semibold text-[#2f4633] tabular-nums whitespace-nowrap">{aud2(R.lower)}–{aud2(R.upper)}</span>
                         </div>
                     </div>
                 </div>

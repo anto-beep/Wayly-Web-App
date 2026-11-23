@@ -35,11 +35,11 @@ export default function LettersSampleResult() {
             ctaBody="Pick a situation — a reply, a complaint, a request — add a few notes, and Wayly drafts a considered letter in the right tone, every time."
         >
             <div className="rounded-2xl border border-kindred bg-surface overflow-hidden">
-                <div className="flex items-center justify-between gap-3 border-b border-kindred bg-surface-2 px-5 py-3">
-                    <span className="inline-flex items-center gap-2 overline text-muted-k"><Mail className="h-3.5 w-3.5" /> Reply to a message · fee increase</span>
-                    <div className="flex items-center gap-2">
-                        <span className="inline-flex items-center gap-1.5 rounded-full border border-kindred bg-surface px-3 py-1.5 text-xs font-medium text-primary-k"><Copy className="h-3.5 w-3.5" /> Copy</span>
-                        <span className="inline-flex items-center gap-1.5 rounded-full bg-primary-k px-3 py-1.5 text-xs font-medium text-white"><Download className="h-3.5 w-3.5" /> Download</span>
+                <div className="flex flex-col items-start gap-3 border-b border-kindred bg-surface-2 px-5 py-3 sm:flex-row sm:items-center sm:justify-between">
+                    <span className="inline-flex items-center gap-2 overline text-muted-k min-w-0"><Mail className="h-3.5 w-3.5 shrink-0" /> Reply to a message · fee increase</span>
+                    <div className="flex items-center gap-2 shrink-0">
+                        <span className="inline-flex items-center gap-1.5 rounded-full border border-kindred bg-surface px-3 py-1.5 text-xs font-medium text-primary-k whitespace-nowrap"><Copy className="h-3.5 w-3.5 shrink-0" /> Copy</span>
+                        <span className="inline-flex items-center gap-1.5 rounded-full bg-primary-k px-3 py-1.5 text-xs font-medium text-white whitespace-nowrap"><Download className="h-3.5 w-3.5 shrink-0" /> Download</span>
                     </div>
                 </div>
                 <div className="p-6 sm:p-8">
