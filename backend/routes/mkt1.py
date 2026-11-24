@@ -73,6 +73,64 @@ def _public_url(asset: dict) -> str:
     return f"{base}{_media_path(asset)}" if base else _media_path(asset)
 
 
+def _thumb_url(asset: dict) -> Optional[str]:
+    if not asset.get("thumbnail_storage_path"):
+        return None
+    base = _public_base()
+    path = f"/api/mkt/thumb/{asset['id']}/cover.png"
+    return f"{base}{path}" if base else path
+
+
+def _readiness(a: dict) -> str:
+    """Is this asset ready to attach to a Buffer post?"""
+    if a.get("approval_status") != "approved":
+        return "not_approved"
+    if a.get("asset_type") == "document" and not a.get("thumbnail_storage_path"):
+        return "awaiting_thumbnail"
+    return "ready"
+
+
+def _gen_pdf_thumbnail(data: bytes) -> Optional[bytes]:
+    """First page of a PDF -> PNG cover (for LinkedIn document posts)."""
+    try:
+        import fitz  # PyMuPDF
+        doc = fitz.open(stream=data, filetype="pdf")
+        pix = doc.load_page(0).get_pixmap(matrix=fitz.Matrix(2, 2))
+        out = pix.tobytes("png")
+        doc.close()
+        return out
+    except Exception as e:
+        logger.info(f"pdf thumbnail generation failed: {e}")
+        return None
+
+
+def _manifest_asset(a: dict) -> dict:
+    """Sanitised, machine-readable record for the ChatGPT/Buffer manifest."""
+    return {
+        "asset_id": a["id"],
+        "campaign_id": a.get("campaign_id"),
+        "topic": a.get("content_topic", ""),
+        "media_url": _public_url(a),
+        "thumbnail_url": _thumb_url(a),
+        "asset_type": a.get("asset_type"),
+        "content_type": a.get("content_type"),
+        "carousel_order": a.get("carousel_order", 0),
+        "target_platform": a.get("target_platform", "all"),
+        "alt_text": a.get("alt_text", ""),
+        "canva_design_id": a.get("canva_design_id"),
+        "buffer_draft_id": a.get("buffer_draft_id"),
+        "checksum": a.get("checksum"),
+        "width": a.get("width"), "height": a.get("height"),
+        "version": a.get("version", 1),
+        "approval_status": a.get("approval_status", "draft"),
+        "publication_status": a.get("publication_status", "unpublished"),
+        "publishing_readiness": _readiness(a),
+    }
+
+
+MANIFEST_TOKEN = os.environ.get("MKT_MANIFEST_TOKEN")
+
+
 def _probe_dimensions(asset_type: str, ext: str, data: bytes) -> Dict[str, Any]:
     out: Dict[str, Any] = {"width": None, "height": None, "pages": None, "duration": None}
     try:
@@ -107,10 +165,13 @@ def _asset_public(a: dict) -> dict:
         "target_platform": a.get("target_platform", "all"),
         "content_type": a.get("content_type"),
         "media_url": _public_url(a),
+        "thumbnail_url": _thumb_url(a),
         "alt_text": a.get("alt_text"),
         "approval_status": a.get("approval_status", "draft"),
         "version": a.get("version", 1),
         "publication_status": a.get("publication_status", "unpublished"),
+        "publishing_readiness": _readiness(a),
+        "buffer_draft_id": a.get("buffer_draft_id"),
         "created_at": a.get("created_at"),
         "updated_at": a.get("updated_at"),
     }
@@ -144,6 +205,18 @@ async def _store_and_create(
     result = await asyncio.to_thread(store.put_object, key, data, content_type)
     dims = _probe_dimensions(asset_type, ext, data)
 
+    # LinkedIn document posts need a cover image — generate one for PDFs
+    thumb_path = None
+    if ext == "pdf":
+        thumb = _gen_pdf_thumbnail(data)
+        if thumb:
+            thumb_key = f"{store.APP_PREFIX}/{month}/{_slug(campaign_id)}/{asset_id}-v{version}-thumb.png"
+            try:
+                tr = await asyncio.to_thread(store.put_object, thumb_key, thumb, "image/png")
+                thumb_path = tr["path"]
+            except Exception as e:
+                logger.info(f"mkt thumbnail store failed: {e}")
+
     doc = {
         "id": asset_id,
         "campaign_id": campaign_id,
@@ -159,11 +232,13 @@ async def _store_and_create(
         "carousel_order": int(carousel_order or 0),
         "target_platform": target_platform if target_platform in PLATFORMS else "all",
         "storage_path": result["path"],
+        "thumbnail_storage_path": thumb_path,
         "content_type": content_type,
         "alt_text": alt_text or "",
         "approval_status": "draft",
         "version": version,
         "publication_status": "unpublished",
+        "buffer_draft_id": None,
         "is_deleted": False,
         "created_at": _now(), "updated_at": _now(),
     }
@@ -188,6 +263,7 @@ class AssetPatch(BaseModel):
     campaign_id: Optional[str] = None
     approval_status: Optional[str] = None
     publication_status: Optional[str] = None
+    buffer_draft_id: Optional[str] = None
 
 
 def build_mkt1_router() -> APIRouter:
@@ -395,6 +471,8 @@ def build_mkt1_router() -> APIRouter:
             if body.publication_status not in PUB_STATUS:
                 raise HTTPException(400, "Invalid publication_status")
             upd["publication_status"] = body.publication_status
+        if body.buffer_draft_id is not None:
+            upd["buffer_draft_id"] = body.buffer_draft_id.strip() or None
         if not upd:
             return _asset_public(a)
         upd["updated_at"] = _now()
@@ -418,41 +496,66 @@ def build_mkt1_router() -> APIRouter:
             {"is_deleted": {"$ne": True}, "approval_status": "approved"}
         ).sort([("campaign_id", 1), ("carousel_order", 1)]).to_list(5000)
 
-    @router.get("/manifest.json")
-    async def manifest_json(admin: dict = Depends(require_super_or_ops)):
-        assets = await _approved_assets()
+    def _manifest_payload(assets: List[dict]) -> dict:
         campaigns: Dict[str, Any] = {}
         for a in assets:
             cid = a.get("campaign_id") or "uncategorised"
             campaigns.setdefault(cid, {"campaign_id": cid, "assets": []})
-            campaigns[cid]["assets"].append({
-                "asset_id": a["id"], "media_url": _public_url(a), "asset_type": a.get("asset_type"),
-                "content_type": a.get("content_type"), "carousel_order": a.get("carousel_order", 0),
-                "target_platform": a.get("target_platform", "all"), "alt_text": a.get("alt_text", ""),
-                "canva_design_id": a.get("canva_design_id"), "checksum": a.get("checksum"),
-                "width": a.get("width"), "height": a.get("height"),
-                "publication_status": a.get("publication_status", "unpublished"),
-            })
+            campaigns[cid]["assets"].append(_manifest_asset(a))
         return {"generated_at": _now(), "campaign_count": len(campaigns),
                 "asset_count": len(assets), "campaigns": list(campaigns.values())}
 
-    @router.get("/manifest.csv")
-    async def manifest_csv(admin: dict = Depends(require_super_or_ops)):
-        assets = await _approved_assets()
+    _CSV_COLS = ["campaign_id", "topic", "asset_id", "media_url", "thumbnail_url",
+                 "asset_type", "content_type", "carousel_order", "target_platform",
+                 "alt_text", "canva_design_id", "buffer_draft_id", "checksum",
+                 "width", "height", "version", "approval_status",
+                 "publication_status", "publishing_readiness"]
+
+    def _manifest_csv_text(assets: List[dict]) -> str:
         buf = io.StringIO()
         w = csv.writer(buf)
-        w.writerow(["campaign_id", "asset_id", "media_url", "asset_type", "content_type",
-                    "carousel_order", "target_platform", "alt_text", "canva_design_id",
-                    "checksum", "width", "height", "publication_status"])
+        w.writerow(_CSV_COLS)
         for a in assets:
-            w.writerow([a.get("campaign_id", ""), a["id"], _public_url(a), a.get("asset_type", ""),
-                        a.get("content_type", ""), a.get("carousel_order", 0),
-                        a.get("target_platform", "all"), a.get("alt_text", ""),
-                        a.get("canva_design_id", "") or "", a.get("checksum", ""),
-                        a.get("width", "") or "", a.get("height", "") or "",
-                        a.get("publication_status", "unpublished")])
-        return Response(content=buf.getvalue(), media_type="text/csv",
+            m = _manifest_asset(a)
+            w.writerow([m.get(c, "") if m.get(c) is not None else "" for c in _CSV_COLS])
+        return buf.getvalue()
+
+    @router.get("/manifest.json")
+    async def manifest_json(admin: dict = Depends(require_super_or_ops)):
+        return _manifest_payload(await _approved_assets())
+
+    @router.get("/manifest.csv")
+    async def manifest_csv(admin: dict = Depends(require_super_or_ops)):
+        return Response(content=_manifest_csv_text(await _approved_assets()), media_type="text/csv",
                         headers={"Content-Disposition": "attachment; filename=wayly-marketing-manifest.csv"})
+
+    # Token-gated manifest for ChatGPT / external automation (no admin session).
+    def _check_manifest_token(token: Optional[str], request: Request):
+        supplied = token or request.headers.get("x-manifest-token")
+        if not MANIFEST_TOKEN or supplied != MANIFEST_TOKEN:
+            raise HTTPException(401, "Invalid or missing manifest token")
+
+    @router.get("/public-manifest.json")
+    async def public_manifest_json(request: Request, token: Optional[str] = None):
+        _check_manifest_token(token, request)
+        return _manifest_payload(await _approved_assets())
+
+    @router.get("/public-manifest.csv")
+    async def public_manifest_csv(request: Request, token: Optional[str] = None):
+        _check_manifest_token(token, request)
+        return Response(content=_manifest_csv_text(await _approved_assets()), media_type="text/csv",
+                        headers={"Content-Disposition": "attachment; filename=wayly-marketing-manifest.csv"})
+
+    @router.get("/manifest-link")
+    async def manifest_link(admin: dict = Depends(require_super_or_ops)):
+        if not MANIFEST_TOKEN:
+            raise HTTPException(503, "Manifest token not configured (set MKT_MANIFEST_TOKEN)")
+        base = _public_base()
+        return {
+            "json_url": f"{base}/api/mkt/public-manifest.json?token={MANIFEST_TOKEN}",
+            "csv_url": f"{base}/api/mkt/public-manifest.csv?token={MANIFEST_TOKEN}",
+            "header_name": "X-Manifest-Token", "token": MANIFEST_TOKEN,
+        }
 
     @router.get("/stats")
     async def stats(admin: dict = Depends(require_super_or_ops)):
@@ -486,6 +589,30 @@ def build_mkt1_router() -> APIRouter:
                 "Cache-Control": "public, max-age=31536000, immutable",
                 "ETag": etag,
                 "Content-Disposition": f'inline; filename="{filename}"',
+                "Content-Length": str(len(data)),
+                "Cross-Origin-Resource-Policy": "cross-origin",
+            },
+        )
+
+    @router.get("/thumb/{asset_id}/{filename}")
+    async def serve_thumb(asset_id: str, filename: str, request: Request):
+        """PUBLIC cover thumbnail for approved document (PDF) assets."""
+        a = await db.mkt_assets.find_one({"id": asset_id, "is_deleted": {"$ne": True}})
+        if not a or a.get("approval_status") != "approved" or not a.get("thumbnail_storage_path"):
+            raise HTTPException(404, "Not found")
+        etag = f'"{a.get("checksum", asset_id)}-thumb"'
+        if request.headers.get("if-none-match") == etag:
+            return Response(status_code=304)
+        try:
+            data, _ = await asyncio.to_thread(store.get_object, a["thumbnail_storage_path"])
+        except Exception as e:
+            logger.warning(f"mkt thumb fetch failed {asset_id}: {e}")
+            raise HTTPException(502, "Thumbnail temporarily unavailable")
+        return Response(
+            content=data, media_type="image/png",
+            headers={
+                "Cache-Control": "public, max-age=31536000, immutable",
+                "ETag": etag,
                 "Content-Length": str(len(data)),
                 "Cross-Origin-Resource-Policy": "cross-origin",
             },

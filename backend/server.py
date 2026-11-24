@@ -8128,6 +8128,14 @@ except Exception as _e:
     import logging as _logging
     _logging.getLogger("wayly").warning(f"routes.mkt_buffer failed to load: {_e}")
 
+# Social OS — Phase 2: Canva Connect (OAuth + design export -> asset library)
+try:
+    from routes.mkt_canva import build_mkt_canva_router
+    api.include_router(build_mkt_canva_router())
+except Exception as _e:
+    import logging as _logging
+    _logging.getLogger("wayly").warning(f"routes.mkt_canva failed to load: {_e}")
+
 # Milestone C — Founder Command Centre MVP (read-only aggregation)
 try:
     from routes.command_centre import build_command_centre_router

@@ -29,7 +29,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, Field
 
 from admin_auth import require_super_or_ops
-from routes.mkt1 import db, _slug, _now, _public_url, _audit, PLATFORMS
+from routes.mkt1 import db, _slug, _now, _public_url, _thumb_url, _audit, PLATFORMS
 
 logger = logging.getLogger(__name__)
 
@@ -49,9 +49,11 @@ DRAFT_STATUSES = {"draft", "scheduled", "sent", "sentFailed", "needsApproval"}
 # ------------------------------------------------------------------ GraphQL ops
 Q_CHANNELS = "query($o:OrganizationId!){channels(input:{organizationId:$o}){id name service}}"
 
-Q_POSTS = ("query($o:OrganizationId!){posts(input:{organizationId:$o,"
-           " filter:{status:[%s]}}){edges{node{id text status channelId"
-           " channelService dueAt assets{__typename}}}pageInfo{hasNextPage endCursor}}}")
+Q_POSTS = ("query($o:OrganizationId!,$a:String){posts(first:100,after:$a,input:{organizationId:$o,"
+           " filter:{status:[%s]}}){edges{node{id text status channelId channelService"
+           " dueAt createdAt assets{__typename}}}pageInfo{hasNextPage endCursor}}}")
+
+MAX_POSTS = 2000  # safety cap for full pagination
 
 Q_POST = ("query($id:PostId!){post(input:{id:$id}){id text status channelId"
           " channelService dueAt assets{__typename}}}")
@@ -110,6 +112,18 @@ def _check_url_sync(url: str) -> dict:
     return out
 
 
+async def _validate_media(matched: List[dict]) -> List[dict]:
+    """Check every media URL + any document/video cover thumbnail is publicly reachable."""
+    urls: List[str] = []
+    for m in matched:
+        urls.append(m["media_url"])
+        if m.get("thumbnail_url"):
+            urls.append(m["thumbnail_url"])
+    if not urls:
+        return []
+    return list(await asyncio.gather(*[asyncio.to_thread(_check_url_sync, u) for u in urls]))
+
+
 def _to_utc(local_str: str) -> str:
     """Interpret a naive 'YYYY-MM-DDTHH:MM[:SS]' as Australia/Sydney -> UTC Z."""
     try:
@@ -130,8 +144,18 @@ def _asset_input(a: dict) -> Optional[dict]:
             img["metadata"] = {"altText": a["alt_text"]}
         return {"image": img}
     if t == "video":
-        return {"video": {"url": url}}
-    return None  # document (PDF) needs a thumbnail+title — handled as a warning
+        vid: Dict[str, Any] = {"url": url}
+        thumb = _thumb_url(a)
+        if thumb:
+            vid["thumbnailUrl"] = thumb
+        return {"video": vid}
+    if t == "document":
+        thumb = _thumb_url(a)
+        if not thumb:
+            return None  # LinkedIn document needs a cover thumbnail
+        title = (a.get("content_topic") or a.get("filename") or "Wayly")[:200]
+        return {"document": {"url": url, "thumbnailUrl": thumb, "title": title}}
+    return None
 
 
 # ------------------------------------------------------------------- models
@@ -145,6 +169,12 @@ class PlanIn(BaseModel):
 class AttachIn(PlanIn):
     dry_run: bool = True
     idempotency_key: Optional[str] = None
+    force: bool = False
+
+
+class RecoverExecIn(BaseModel):
+    dry_run: bool = True
+    buffer_post_ids: Optional[List[str]] = None
     force: bool = False
 
 
@@ -178,28 +208,59 @@ def build_mkt_buffer_router() -> APIRouter:
         }
 
     # ----------------------------------------------------------- list drafts
+    async def _fetch_all_posts(status: str) -> List[dict]:
+        """Cursor-paginate the ENTIRE post set for a status (never just page 1)."""
+        out: List[dict] = []
+        cursor = None
+        while True:
+            data = await _gql(Q_POSTS % status, {"o": ORG_ID, "a": cursor})
+            conn = data.get("posts") or {}
+            for edge in conn.get("edges") or []:
+                n = edge.get("node")
+                if n:
+                    out.append(n)
+            page = conn.get("pageInfo") or {}
+            if page.get("hasNextPage") and page.get("endCursor") and len(out) < MAX_POSTS:
+                cursor = page["endCursor"]
+            else:
+                break
+        return out
+
+    def _norm_post(n: dict) -> dict:
+        return {
+            "id": n["id"],
+            "text": (n.get("text") or "").strip()[:280],
+            "status": n.get("status"),
+            "service": n.get("channelService"),
+            "channel_id": n.get("channelId"),
+            "due_at": n.get("dueAt"),
+            "created_at": n.get("createdAt"),
+            "asset_count": len(n.get("assets") or []),
+        }
+
     @router.get("/drafts")
-    async def drafts(status: str = Query("draft"), admin: dict = Depends(require_super_or_ops)):
+    async def drafts(status: str = Query("draft"), channel: Optional[str] = None,
+                     created_after: Optional[str] = None,
+                     admin: dict = Depends(require_super_or_ops)):
         if status not in DRAFT_STATUSES:
             raise HTTPException(400, f"Invalid status. Allowed: {', '.join(sorted(DRAFT_STATUSES))}")
-        data = await _gql(Q_POSTS % status, {"o": ORG_ID})
+        if channel and channel not in POST_SERVICES:
+            raise HTTPException(400, f"Invalid channel. Allowed: {', '.join(sorted(POST_SERVICES))}")
         known = set(EXPECTED_CHANNELS.values())
         rows = []
-        for edge in (data.get("posts") or {}).get("edges") or []:
-            n = edge.get("node") or {}
+        by_service: Dict[str, int] = {}
+        for n in await _fetch_all_posts(status):
             if n.get("channelId") not in known:
                 continue
-            txt = (n.get("text") or "").strip()
-            rows.append({
-                "id": n["id"],
-                "text": txt[:280],
-                "status": n.get("status"),
-                "service": n.get("channelService"),
-                "channel_id": n.get("channelId"),
-                "due_at": n.get("dueAt"),
-                "asset_count": len(n.get("assets") or []),
-            })
-        return {"status": status, "count": len(rows), "drafts": rows}
+            svc = n.get("channelService")
+            if channel and svc != channel:
+                continue
+            if created_after and (n.get("createdAt") or "") < created_after:
+                continue
+            by_service[svc] = by_service.get(svc, 0) + 1
+            rows.append(_norm_post(n))
+        rows.sort(key=lambda r: r.get("created_at") or "", reverse=True)
+        return {"status": status, "count": len(rows), "by_service": by_service, "drafts": rows}
 
     # ----------------------------------------------------------- resolve plan
     async def _resolve(body: PlanIn) -> dict:
@@ -228,22 +289,20 @@ def build_mkt_buffer_router() -> APIRouter:
         for a in assets:
             ai = _asset_input(a)
             if ai is None:
-                warnings.append(f"Skipped '{a.get('filename')}' — PDF documents need a thumbnail (not yet supported)")
+                warnings.append(f"Skipped '{a.get('filename')}' — document needs a cover thumbnail")
                 continue
             asset_inputs.append(ai)
             matched.append({
                 "asset_id": a["id"], "filename": a.get("filename"),
                 "asset_type": a.get("asset_type"), "carousel_order": a.get("carousel_order", 0),
-                "media_url": _public_url(a), "alt_text": a.get("alt_text", ""),
+                "media_url": _public_url(a), "thumbnail_url": _thumb_url(a), "alt_text": a.get("alt_text", ""),
             })
 
         if not asset_inputs:
             warnings.append("No attachable approved assets matched this campaign + platform")
 
-        # 3) validate every media URL is publicly reachable (as Buffer will fetch it)
-        checks = await asyncio.gather(*[
-            asyncio.to_thread(_check_url_sync, m["media_url"]) for m in matched
-        ]) if matched else []
+        # 3) validate every media URL (and any cover thumbnail) is publicly reachable
+        checks = await _validate_media(matched)
         media_ok = all(c["ok"] for c in checks) if checks else True
 
         # 4) build the exact editPost input
@@ -258,6 +317,7 @@ def build_mkt_buffer_router() -> APIRouter:
             schedule_label = "Attach media only (keep as draft)"
 
         return {
+            "buffer_post_id": body.buffer_post_id,
             "draft": {"id": draft["id"], "service": draft.get("channelService"),
                       "status": draft.get("status"), "current_asset_count": len(draft.get("assets") or []),
                       "text": (draft.get("text") or "")[:280]},
@@ -268,6 +328,72 @@ def build_mkt_buffer_router() -> APIRouter:
             "buffer_input": buffer_input, "warnings": warnings,
         }
 
+    async def _write_resolved(resolved: dict, admin: dict,
+                              idempotency_key: Optional[str] = None, force: bool = False) -> dict:
+        """Perform the live editPost on an EXISTING draft, verify, and record. Never creates a post."""
+        post_id = resolved["buffer_input"]["id"]
+        if resolved["asset_count"] == 0:
+            raise HTTPException(400, "Nothing to attach — no approved assets matched")
+        if not resolved["media_ok"]:
+            raise HTTPException(400, "One or more media URLs are not publicly reachable; aborting write")
+        asset_ids = sorted(m["asset_id"] for m in resolved["matched_assets"])
+
+        if idempotency_key:
+            prior = await db.mkt_buffer_jobs.find_one({"idempotency_key": idempotency_key, "result": "success"})
+            if prior and not force:
+                prior.pop("_id", None)
+                return {"idempotent": True, "result": "success", **prior}
+        if not force:
+            dup = await db.mkt_buffer_jobs.find_one({
+                "buffer_post_id": post_id, "asset_ids": asset_ids,
+                "due_at_utc": resolved["due_at_utc"], "result": "success"})
+            if dup:
+                dup.pop("_id", None)
+                return {"idempotent": True, "result": "success", **dup}
+
+        job_id = str(uuid.uuid4())
+        data = await _gql(M_EDIT, {"input": resolved["buffer_input"]})
+        payload = data.get("editPost") or {}
+        typename = payload.get("__typename")
+        if typename != "PostActionSuccess":
+            err = payload.get("message") or f"Buffer returned {typename}"
+            await db.mkt_buffer_jobs.insert_one({
+                "id": job_id, "buffer_post_id": post_id,
+                "campaign_id": resolved.get("campaign_id"), "platform": resolved.get("platform"),
+                "asset_ids": asset_ids, "asset_count": resolved["asset_count"],
+                "due_at_utc": resolved["due_at_utc"], "result": "error",
+                "error_message": err, "buffer_typename": typename,
+                "idempotency_key": idempotency_key, "actor_email": admin.get("email"),
+                "created_at": _now(),
+            })
+            await _audit("buffer_post", post_id, "attach_failed", admin, {"error": err})
+            raise HTTPException(502, f"Buffer rejected the update: {err}")
+
+        verify = (await _gql(Q_POST, {"id": post_id})).get("post") or {}
+        verified_count = len(verify.get("assets") or [])
+        new_pub = "scheduled" if resolved["due_at_utc"] else "unpublished"
+        await db.mkt_assets.update_many(
+            {"id": {"$in": asset_ids}},
+            {"$set": {"publication_status": new_pub, "buffer_post_id": post_id, "updated_at": _now()}})
+
+        job = {
+            "id": job_id, "buffer_post_id": post_id,
+            "campaign_id": resolved.get("campaign_id"), "platform": resolved.get("platform"),
+            "asset_ids": asset_ids, "asset_count": resolved["asset_count"],
+            "verified_asset_count": verified_count,
+            "due_at_utc": resolved["due_at_utc"], "buffer_status": verify.get("status"),
+            "result": "success", "idempotency_key": idempotency_key,
+            "actor_email": admin.get("email"), "created_at": _now(),
+        }
+        await db.mkt_buffer_jobs.insert_one(dict(job))
+        await _audit("buffer_post", post_id, "attach", admin,
+                     {"assets": resolved["asset_count"], "scheduled": bool(resolved["due_at_utc"])})
+        return {"result": "success",
+                "verify": {"status": verify.get("status"), "asset_count": verified_count,
+                           "due_at": verify.get("dueAt")},
+                **{k: job[k] for k in ("id", "buffer_post_id", "campaign_id", "platform",
+                                       "asset_count", "due_at_utc")}}
+
     @router.post("/plan")
     async def plan(body: PlanIn, admin: dict = Depends(require_super_or_ops)):
         return {"dry_run": True, **await _resolve(body)}
@@ -276,79 +402,90 @@ def build_mkt_buffer_router() -> APIRouter:
     @router.post("/attach")
     async def attach(body: AttachIn, admin: dict = Depends(require_super_or_ops)):
         resolved = await _resolve(body)
-
         if body.dry_run:
             return {"dry_run": True, "would_write": True, **resolved}
+        res = await _write_resolved(resolved, admin, body.idempotency_key, body.force)
+        return {"dry_run": False, **res}
 
-        if resolved["asset_count"] == 0:
-            raise HTTPException(400, "Nothing to attach — no approved assets matched")
-        if not resolved["media_ok"]:
-            raise HTTPException(400, "One or more media URLs are not publicly reachable; aborting write")
-
-        asset_ids = sorted(m["asset_id"] for m in resolved["matched_assets"])
-
-        # idempotency / duplicate prevention
-        if body.idempotency_key:
-            prior = await db.mkt_buffer_jobs.find_one(
-                {"idempotency_key": body.idempotency_key, "result": "success"})
-            if prior and not body.force:
-                prior.pop("_id", None)
-                return {"dry_run": False, "idempotent": True, "result": "success", **prior}
-        if not body.force:
-            dup = await db.mkt_buffer_jobs.find_one({
-                "buffer_post_id": body.buffer_post_id, "asset_ids": asset_ids,
-                "due_at_utc": resolved["due_at_utc"], "result": "success"})
-            if dup:
-                dup.pop("_id", None)
-                return {"dry_run": False, "idempotent": True, "result": "success", **dup}
-
-        job_id = str(uuid.uuid4())
-        # live write — editPost on an EXISTING draft only
-        data = await _gql(M_EDIT, {"input": resolved["buffer_input"]})
-        payload = data.get("editPost") or {}
-        typename = payload.get("__typename")
-
-        if typename != "PostActionSuccess":
-            err = payload.get("message") or f"Buffer returned {typename}"
-            await db.mkt_buffer_jobs.insert_one({
-                "id": job_id, "buffer_post_id": body.buffer_post_id,
-                "campaign_id": resolved["campaign_id"], "platform": resolved["platform"],
-                "asset_ids": asset_ids, "asset_count": resolved["asset_count"],
-                "due_at_utc": resolved["due_at_utc"], "result": "error",
-                "error_message": err, "buffer_typename": typename,
-                "idempotency_key": body.idempotency_key, "actor_email": admin.get("email"),
-                "created_at": _now(),
-            })
-            await _audit("buffer_post", body.buffer_post_id, "attach_failed", admin, {"error": err})
-            raise HTTPException(502, f"Buffer rejected the update: {err}")
-
-        # read the post back to verify the write landed
-        verify = (await _gql(Q_POST, {"id": body.buffer_post_id})).get("post") or {}
-        verified_count = len(verify.get("assets") or [])
-
-        new_pub = "scheduled" if resolved["due_at_utc"] else "unpublished"
-        await db.mkt_assets.update_many(
-            {"id": {"$in": asset_ids}},
-            {"$set": {"publication_status": new_pub, "buffer_post_id": body.buffer_post_id,
-                      "updated_at": _now()}})
-
-        job = {
-            "id": job_id, "buffer_post_id": body.buffer_post_id,
-            "campaign_id": resolved["campaign_id"], "platform": resolved["platform"],
-            "asset_ids": asset_ids, "asset_count": resolved["asset_count"],
-            "verified_asset_count": verified_count,
-            "due_at_utc": resolved["due_at_utc"], "buffer_status": verify.get("status"),
-            "result": "success", "idempotency_key": body.idempotency_key,
-            "actor_email": admin.get("email"), "created_at": _now(),
+    # ----------------------------------------------------------- bulk recovery
+    async def _resolve_by_draft(post_id: str) -> dict:
+        """Build an attach plan for a draft from assets EXPLICITLY linked via buffer_draft_id."""
+        draft = (await _gql(Q_POST, {"id": post_id})).get("post")
+        if not draft:
+            raise HTTPException(404, "Buffer post not found")
+        platform = (draft.get("channelService") or "").lower()
+        assets = await db.mkt_assets.find(
+            {"is_deleted": {"$ne": True}, "approval_status": "approved", "buffer_draft_id": post_id}
+        ).sort([("carousel_order", 1), ("created_at", 1)]).to_list(100)
+        warnings: List[str] = []
+        asset_inputs: List[dict] = []
+        matched: List[dict] = []
+        for a in assets:
+            ai = _asset_input(a)
+            if ai is None:
+                warnings.append(f"Skipped '{a.get('filename')}' — document needs a cover thumbnail")
+                continue
+            asset_inputs.append(ai)
+            matched.append({"asset_id": a["id"], "filename": a.get("filename"),
+                            "asset_type": a.get("asset_type"), "carousel_order": a.get("carousel_order", 0),
+                            "media_url": _public_url(a), "thumbnail_url": _thumb_url(a), "alt_text": a.get("alt_text", "")})
+        checks = await _validate_media(matched)
+        media_ok = all(c["ok"] for c in checks) if checks else True
+        # recovery attaches media only — scheduling stays disabled until acceptance tests pass
+        buffer_input = {"id": post_id, "assets": asset_inputs, "saveToDraft": True}
+        return {
+            "buffer_post_id": post_id, "campaign_id": None, "platform": platform,
+            "draft": {"id": post_id, "service": platform, "status": draft.get("status"),
+                      "current_asset_count": len(draft.get("assets") or []),
+                      "text": (draft.get("text") or "")[:280]},
+            "matched_assets": matched, "asset_count": len(asset_inputs),
+            "media_validation": checks, "media_ok": media_ok,
+            "schedule": "Attach media only (scheduling disabled)", "due_at_utc": None,
+            "buffer_input": buffer_input, "warnings": warnings,
         }
-        await db.mkt_buffer_jobs.insert_one(dict(job))
-        await _audit("buffer_post", body.buffer_post_id, "attach", admin,
-                     {"assets": resolved["asset_count"], "scheduled": bool(resolved["due_at_utc"])})
-        return {"dry_run": False, "result": "success",
-                "verify": {"status": verify.get("status"), "asset_count": verified_count,
-                           "due_at": verify.get("dueAt")},
-                **{k: job[k] for k in ("id", "buffer_post_id", "campaign_id", "platform",
-                                       "asset_count", "due_at_utc")}}
+
+    async def _linked_draft_ids() -> List[str]:
+        ids = await db.mkt_assets.distinct("buffer_draft_id", {
+            "is_deleted": {"$ne": True}, "approval_status": "approved",
+            "buffer_draft_id": {"$ne": None}})
+        return [i for i in ids if i]
+
+    @router.get("/recover/plan")
+    async def recover_plan(admin: dict = Depends(require_super_or_ops)):
+        ids = await _linked_draft_ids()
+        plans = []
+        for pid in ids[:100]:
+            try:
+                plans.append(await _resolve_by_draft(pid))
+            except HTTPException as e:
+                plans.append({"buffer_post_id": pid, "error": e.detail, "asset_count": 0, "media_ok": False})
+        ready = sum(1 for p in plans if p.get("asset_count") and p.get("media_ok"))
+        return {"linked_draft_count": len(ids), "ready": ready,
+                "blocked": len(plans) - ready, "plans": plans}
+
+    @router.post("/recover/execute")
+    async def recover_execute(body: RecoverExecIn, admin: dict = Depends(require_super_or_ops)):
+        ids = body.buffer_post_ids or await _linked_draft_ids()
+        results = []
+        for pid in ids:
+            try:
+                resolved = await _resolve_by_draft(pid)
+                if not resolved["asset_count"]:
+                    results.append({"buffer_post_id": pid, "status": "skipped", "reason": "no ready assets"})
+                    continue
+                if body.dry_run:
+                    results.append({"buffer_post_id": pid, "status": "dry_run",
+                                    "asset_count": resolved["asset_count"], "media_ok": resolved["media_ok"]})
+                    continue
+                if not resolved["media_ok"]:
+                    results.append({"buffer_post_id": pid, "status": "blocked", "reason": "media not reachable"})
+                    continue
+                r = await _write_resolved(resolved, admin, idempotency_key=f"recover:{pid}", force=body.force)
+                results.append({"buffer_post_id": pid, "status": "attached",
+                                "verified": r.get("verify"), "idempotent": r.get("idempotent", False)})
+            except HTTPException as e:
+                results.append({"buffer_post_id": pid, "status": "error", "reason": e.detail})
+        return {"dry_run": body.dry_run, "count": len(results), "results": results}
 
     # ----------------------------------------------------------- job history
     @router.get("/jobs")

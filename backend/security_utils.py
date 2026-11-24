@@ -67,6 +67,25 @@ def is_totp_encrypted(stored: Optional[str]) -> bool:
     return bool(stored) and stored.startswith(_ENC_PREFIX)
 
 
+def encrypt_text(plain: Optional[str]) -> Optional[str]:
+    """Generic Fernet wrap for arbitrary secret strings (e.g. OAuth tokens)."""
+    if not plain:
+        return plain
+    return _ENC_PREFIX + _fernet.encrypt(plain.encode("utf-8")).decode("utf-8")
+
+
+def decrypt_text(stored: Optional[str]) -> Optional[str]:
+    if not stored:
+        return stored
+    if not stored.startswith(_ENC_PREFIX):
+        return stored
+    try:
+        return _fernet.decrypt(stored[len(_ENC_PREFIX):].encode("utf-8")).decode("utf-8")
+    except InvalidToken:
+        log.error("secret could not be decrypted, wrong TOTP_ENC_KEY?")
+        return None
+
+
 # ----------------------------- HIBP k-Anonymity password breach check -----------------------------
 
 _HIBP_BLOCK = os.environ.get("HIBP_BLOCK_COMPROMISED", "true").lower() in ("1", "true", "yes")

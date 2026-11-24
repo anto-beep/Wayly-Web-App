@@ -8567,3 +8567,46 @@ Confirmed via official playbook; to build next:
 - P1: LinkedIn PDF document attach (needs a generated thumbnail).
 - P2: Phase 4 — publishing calendar/dashboard (statuses), retries/rate-limit handling, Metricool commitment check before migration, implementation report.
 
+---
+
+## Social OS — Phases 2/3/4 expansion (2026-11-24, production deployed)
+
+User approved all three enhancements; Social OS becomes the SINGLE owner of Buffer scheduling (kept DISABLED until live acceptance tests pass). ChatGPT owns strategy/content/Canva creative; Social OS owns media attachment + scheduling execution.
+
+### Buffer draft retrieval — pagination fix (DONE, verified)
+- `routes/mkt_buffer.py` `/drafts` now cursor-paginates ALL pages (`posts(first:100, after:$cursor)`, `_fetch_all_posts`, cap 2000). Added `channel` + `created_after` filters and `by_service` counts.
+- Verified live: **125 drafts** (LinkedIn 25, Instagram 68, Facebook 32) — previously only 10 shown. UI header shows the true counts.
+
+### Canva Connect — `routes/mkt_canva.py` (DONE build; live export needs founder to Connect)
+- OAuth 2.0 + PKCE, state one-time-use, tokens Fernet-encrypted at rest (`security_utils.encrypt_text/decrypt_text`, reuses TOTP_ENC_KEY), refresh-token rotation. Single founder connection doc `mkt_canva_tokens._id="wayly"`.
+- redirect_uri DERIVED from `FRONTEND_URL` (preview) / `PUBLIC_APP_URL` (prod) → `/api/mkt/canva/oauth/callback` (both registered in Canva). Scopes `design:content:read design:meta:read asset:read`.
+- Endpoints: `GET /status`, `GET /oauth/url` (authed → authorize URL), `GET /oauth/callback` (public, one-time state → stores tokens → redirects to `/admin/social-publishing?canva=…`), `POST /disconnect`, `GET /designs?query=`, `POST /export`, `GET /export/{id}` (polls Canva; on success downloads every URL immediately and ingests into mkt1 as DRAFT assets; multi-page → carousel_order per page).
+- Verified: status/configured, authorize URL params (PKCE S256, scopes, exact redirect, state). Live design browse/export require the founder to click Connect Canva (browser OAuth) — NOT yet exercised.
+
+### LinkedIn PDF carousel + cover thumbnail (DONE, verified)
+- `mkt1._store_and_create` auto-generates a first-page PNG cover for PDFs via PyMuPDF (`pymupdf==2.1`, pinned), stored separately; `thumbnail_storage_path` on the asset. Public cover route `GET /api/mkt/thumb/{id}/cover.png` (approved-only).
+- `mkt_buffer._asset_input` now builds Buffer `document` assets `{url, thumbnailUrl, title}` for PDFs and `video` with optional thumbnail; media validation checks the cover thumbnail reachability too (`_validate_media`).
+- Verified E2E: 2-page PDF → document asset, cover PNG public 200, plan builds valid `document` structure, media_ok true.
+
+### Bulk recovery — deterministic (DONE build + dry-run verified)
+- Assets carry `buffer_draft_id` (explicit link; set via PATCH or ChatGPT via manifest). `GET /mkt/buffer/recover/plan` (per-linked-draft plans, ready/blocked counts) and `POST /mkt/buffer/recover/execute` (`dry_run` default true; live = attach media only, `saveToDraft:true`, NO scheduling yet; idempotent `recover:{postId}`). Unlinked drafts stay "Awaiting Media" (never fuzzy-matched).
+- Shared live-write helper `_write_resolved` (idempotency + editPost + read-back verify + asset status update) used by `/attach` and recovery.
+
+### ChatGPT manifest (DONE, verified)
+- Enriched `_manifest_asset`: campaign_id, topic, media_url, thumbnail_url, asset_type, content_type, carousel_order, target_platform, alt_text, canva_design_id, buffer_draft_id, checksum, w/h, version, approval_status, publication_status, publishing_readiness.
+- Token-gated public retrieval (no admin session): `GET /api/mkt/public-manifest.json|.csv?token=…` or `X-Manifest-Token` header (`MKT_MANIFEST_TOKEN` in backend/.env). Admin `GET /mkt/manifest-link` returns the copyable URLs. UI shows them.
+
+### Web UI — `AdminSocialPublishing.jsx` (DONE, smoke-verified)
+- Canva connect/disconnect + design browser + export-to-library; Bulk recovery (Preview/Dry-run/Attach all LIVE); ChatGPT manifest links (copy); channel filter; draft counts; existing planner/attach + jobs.
+
+### Config added (backend/.env)
+- `MKT_MANIFEST_TOKEN` (ChatGPT manifest token), `MKT_AUTOPUBLISH_ENABLED=false` (worker flag, off until acceptance).
+- PRODUCTION: ensure `FRONTEND_URL`=`https://wayly.com.au` so Canva redirect + media URLs are production. Register BOTH Canva callback URLs (prod + preview).
+
+### NOT yet done / pending founder action
+- Live Canva OAuth connect + live design export (needs founder to click Connect Canva once).
+- Authorised FIRST live Buffer attach test on a founder-chosen draft (candidate list) — kept as DRAFT.
+- Automated 7-day scheduling worker (≥1/platform/day incl weekends, duplicate prevention across ChatGPT/Metricool, Buffer free-plan capacity, missed-post reschedule, failure retry/report) — build AFTER live acceptance passes; `MKT_AUTOPUBLISH_ENABLED` gate in place.
+- Phase 4 publishing calendar/dashboard + implementation report.
+- Verified: all new backend logic via E2E (Canva wiring, PDF→thumbnail→document, manifest, recovery dry-run) + UI render. No live Canva export or live Buffer write performed by the agent.
+
