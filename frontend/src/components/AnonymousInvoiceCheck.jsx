@@ -187,7 +187,7 @@ export default function AnonymousInvoiceCheck({ onSeeExample }) {
     };
 
     return (
-        <section className="mx-auto max-w-5xl px-4 sm:px-8" data-testid="anon-invoice-check">
+        <section className="mx-auto max-w-[1720px] px-6" data-testid="anon-invoice-check">
             <div className="bg-surface border border-kindred rounded-2xl p-6 sm:p-8 shadow-sm">
                 <span className="overline">Free · no account needed</span>
                 <h2 className="font-heading text-2xl sm:text-3xl text-primary-k mt-1 tracking-tight">
