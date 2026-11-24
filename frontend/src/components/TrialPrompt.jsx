@@ -7,7 +7,7 @@ import {
 import { useAuth } from "@/context/AuthContext";
 
 /**
- * TrialPrompt — a premium, context-aware "try Wayly free for 7 days" spotlight.
+ * TrialPrompt, a premium, context-aware "try Wayly free for 7 days" spotlight.
  *
  * Rules (per founder brief):
  *   - Logged-OUT visitors only, on PUBLIC pages (never app/onboarding/admin/auth).
@@ -31,9 +31,9 @@ function isBlockedRoute(p) {
 const VISIT_KEY = "wayly_trial_prompt_visited_v1";       // persists: seen the site before
 const SESSION_SUPPRESS = "wayly_trial_prompt_engaged";    // this tab/session: already clicked through
 
-const FIRST_DELAY = 60;     // seconds — brand-new visitor
-const RETURN_DELAY = 120;   // seconds — returning visitor
-const REPROMPT_DELAY = 300; // seconds — after a dismissal
+const FIRST_DELAY = 60;     // seconds, brand-new visitor
+const RETURN_DELAY = 120;   // seconds, returning visitor
+const REPROMPT_DELAY = 300; // seconds, after a dismissal
 
 // --- Context-aware first appearance -----------------------------------------
 // Most specific routes first; the last entry is the catch-all.
@@ -271,7 +271,7 @@ export default function TrialPrompt() {
             <div
                 className={`relative w-full max-w-[27rem] sm:max-w-lg overflow-hidden rounded-[32px] bg-[#F4F7F6] shadow-[0_30px_80px_-20px_rgba(6,32,31,0.55)] ring-1 ring-black/5 transition-all duration-300 ease-out motion-reduce:transition-none ${visible ? "opacity-100 translate-y-0 scale-100" : "opacity-0 translate-y-5 scale-95"} max-h-[92vh] overflow-y-auto`}
             >
-                {/* Premium teal header — centered icon halo, gold badge, glows */}
+                {/* Premium teal header, centered icon halo, gold badge, glows */}
                 <div className="relative overflow-hidden bg-gradient-to-br from-[#0A3B40] via-[#0E4D52] to-[#17757f] px-7 pt-9 pb-9 text-center sm:px-9">
                     <div aria-hidden="true" className="pointer-events-none absolute -top-20 -right-12 h-52 w-52 rounded-full bg-[#D99E47]/25 blur-3xl" />
                     <div aria-hidden="true" className="pointer-events-none absolute -bottom-24 -left-12 h-52 w-52 rounded-full bg-[#6B8F71]/30 blur-3xl" />

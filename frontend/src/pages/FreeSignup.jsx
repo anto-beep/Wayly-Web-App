@@ -12,7 +12,7 @@ import { ga4Track } from "@/lib/ga4";
 import { conv1 } from "@/lib/conv1";
 
 /**
- * FreeSignup — CONV-1 v2 Workstream D1.
+ * FreeSignup, CONV-1 v2 Workstream D1.
  *
  * A DISTINCT, streamlined no-card free account flow, deliberately separate from
  * the plan-centric /signup page so it never reads as an afterthought. Four
@@ -86,7 +86,7 @@ export default function FreeSignup() {
 
     return (
         <div className="min-h-screen bg-kindred flex flex-col">
-            <SeoHead title="Create a free Wayly account" description="A free Wayly account — no card. Check an invoice, decode a statement, and keep your results." path="/signup/free" />
+            <SeoHead title="Create a free Wayly account" description="A free Wayly account, no card. Check an invoice, decode a statement, and keep your results." path="/signup/free" />
             <div className="px-6 pt-8">
                 <Link to="/" aria-label="Wayly home"><WaylyLogo className="h-7" /></Link>
             </div>

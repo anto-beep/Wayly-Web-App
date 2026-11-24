@@ -118,7 +118,7 @@ const TOOL_LINKS = {
     },
 };
 
-// Rule 2.4 — link/label copy is Title Case. Capitalises major words, keeps
+// Rule 2.4, link/label copy is Title Case. Capitalises major words, keeps
 // minor words lowercase (except first), and preserves acronyms / brand casing.
 const TITLE_MINOR = new Set(["a", "an", "and", "as", "at", "but", "by", "for", "from", "in", "nor", "of", "on", "or", "per", "the", "to", "vs", "via", "with"]);
 function toTitleCase(str) {

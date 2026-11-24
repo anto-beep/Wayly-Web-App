@@ -119,7 +119,7 @@ function LastTouchedByPill({ participant }) {
     );
 }
 
-// Budget donut — a simple, easily-read ring showing how much of the quarter's
+// Budget donut, a simple, easily-read ring showing how much of the quarter's
 // budget has been used. Tone shifts sage → clay → red as it fills / goes over.
 function BudgetDonut({ pctFill, pctLabel, tone, size = 168, stroke = 20, onDark = false }) {
     const { isDark } = useTheme();
@@ -149,7 +149,7 @@ function BudgetDonut({ pctFill, pctLabel, tone, size = 168, stroke = 20, onDark 
     );
 }
 
-// A compact, uniform metric tile used inside the budget hero — label + value +
+// A compact, uniform metric tile used inside the budget hero, label + value +
 // a mini progress bar, so each figure reads as a small graphic at a glance.
 function GlanceTile({ label, value, pct = 0, bg = "#2E9E74", testid }) {
     return (
@@ -164,7 +164,7 @@ function GlanceTile({ label, value, pct = 0, bg = "#2E9E74", testid }) {
 }
 
 /**
- * AtAGlance — one calm, high-contrast summary that replaces the old wall of
+ * AtAGlance, one calm, high-contrast summary that replaces the old wall of
  * four stat cards. Leads with the single number that matters most (money left
  * this quarter) and keeps the rest as quiet, tappable mini-stats.
  */
@@ -200,7 +200,7 @@ function AtAGlance({ budget, statements, alertCount, toReviewHref, lifetimeCapHr
             data-testid="dashboard-at-a-glance"
             className="rounded-2xl border border-kindred bg-surface overflow-hidden shadow-sm"
         >
-            {/* Headline — a premium, colour-blocked budget hero with several
+            {/* Headline, a premium, colour-blocked budget hero with several
                 clear graphics (ring, gauge, metric tiles) on one type scale. */}
             <div className="relative overflow-hidden p-6 sm:p-8 bg-surface text-primary-k">
                 <div aria-hidden="true" className="pointer-events-none absolute -right-20 -top-24 h-56 w-56 rounded-full bg-primary-k/[0.04]" />
@@ -391,7 +391,7 @@ export default function CaregiverDashboard() {
     const latestInvoiceFindings = (latestInvoice?.reconciliation?.findings) || [];
     const ttkCount = latestStatementAnomalies.length + latestInvoiceFindings.length;
 
-    // Budget view — mirror AtAGlance exactly, from the canonical ladder, so the
+    // Budget view, mirror AtAGlance exactly, from the canonical ladder, so the
     // Wayly Summary tells the SAME story as the donut and is DATE-AWARE (D4):
     // "used so far" and "left for care" are net figures, and the summary is
     // given how far through the quarter today is so it can never call a 58%
@@ -425,7 +425,7 @@ export default function CaregiverDashboard() {
                 )}
             </div>
 
-            {/* What would you like to do? — the navigator */}
+            {/* What would you like to do?, the navigator */}
             {!loading && <DashboardActionBar />}
 
             {!loading && (
@@ -686,7 +686,7 @@ export default function CaregiverDashboard() {
                         </span>
                     </summary>
                     <div className="px-5 pb-6 pt-4 bg-surface" data-testid="alerts-card">
-                        {/* STATEMENTS — latest statement only */}
+                        {/* STATEMENTS, latest statement only */}
                         <div data-testid="ttk-statements-section">
                             <div className="flex items-center gap-2">
                                 <FileText className="h-4 w-4 text-primary-k" />
@@ -761,7 +761,7 @@ export default function CaregiverDashboard() {
                             )}
                         </div>
 
-                        {/* INVOICES — latest invoice only */}
+                        {/* INVOICES, latest invoice only */}
                         <div data-testid="ttk-invoices-section" className="mt-6 pt-5 border-t border-kindred">
                             <div className="flex items-center gap-2">
                                 <FileText className="h-4 w-4 text-clay" />
@@ -818,7 +818,7 @@ export default function CaregiverDashboard() {
                 </details>
             )}
 
-            {/* Family thread, Family plan only — surfaced high on the page */}
+            {/* Family thread, Family plan only, surfaced high on the page */}
             {isFamily && (
                 <div className="bg-[linear-gradient(135deg,rgba(107,143,113,0.16),rgba(244,239,231,0.4))] border border-sage/30 rounded-xl p-6" data-testid="family-preview-card">
                     <div className="flex items-center justify-between">

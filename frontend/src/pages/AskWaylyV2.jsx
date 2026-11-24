@@ -374,7 +374,7 @@ export default function AskWaylyV2() {
                 )}
             </section>
 
-            {/* Report an issue — sits BELOW the chat bar */}
+            {/* Report an issue, sits BELOW the chat bar */}
             <div className="flex justify-end" data-testid="aw2-report-issue">
                 <ReportIssueButton
                     toolName="Ask Wayly"

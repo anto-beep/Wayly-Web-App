@@ -226,7 +226,7 @@ function PublicAuthOnly({ children }) {
 
 function ToolLockGate({ children }) {
     /** When the user's plan is inactive (view-only), tools stay visible but
-     * are fully non-interactive — no running, uploading, or editing. The
+     * are fully non-interactive, no running, uploading, or editing. The
      * Reactivate button goes STRAIGHT to Stripe Checkout for a real payment. */
     const viewOnly = useExpiredTrial();
     const { user } = useAuth();
@@ -315,7 +315,7 @@ function AppearanceScope() {
             || localStorage.getItem("kindred_theme") // legacy fallback
             || "light";
         // Auth pages (login / signup / password reset / email verify) always
-        // render in light mode — dark mode is disabled on those pages per
+        // render in light mode, dark mode is disabled on those pages per
         // product decision, so they look identical to light mode.
         const authRoute = /^\/(login|signup|forgot|reset|verify-email)/i.test(pathname);
         const dark = pref === "dark" && !authRoute;
@@ -347,7 +347,7 @@ function ReassessmentLetterRedirectOrPage() {
     const { search } = useLocation();
     const { user, loading } = useAuth();
     const hasCscContext = /[?&](csc_run_id|primary)=/.test(search || "");
-    // Wait for /auth/me to resolve before deciding — otherwise the first render
+    // Wait for /auth/me to resolve before deciding, otherwise the first render
     // sees user=null and wrongly redirects a logged-in user to the Letters hub.
     if (loading) {
         return <AIToolsRoute><ReassessmentLetter /></AIToolsRoute>;

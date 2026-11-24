@@ -82,7 +82,7 @@ function ChecklistBlock({ title, items, slug, pdfTitle }) {
     return (
         <section className="mt-10" data-testid="template-checklist">
             <h2 className="font-heading text-2xl text-primary-k tracking-tight flex items-center gap-2"><ListChecks className="h-5 w-5 text-gold" /> {title}</h2>
-            <DocActions text={text} filename={`${slug}.doc`} pdfTitle={`${pdfTitle} — ${title}`} />
+            <DocActions text={text} filename={`${slug}.doc`} pdfTitle={`${pdfTitle}, ${title}`} />
             <ul className="mt-4 space-y-2">
                 {items.map((it, i) => (
                     <li key={i} className="flex items-start gap-3 rounded-xl border border-kindred bg-surface p-3 text-sm text-primary-k leading-relaxed">
@@ -100,7 +100,7 @@ function QuestionsBlock({ title, items, slug, pdfTitle }) {
     return (
         <section className="mt-10" data-testid="template-questions">
             <h2 className="font-heading text-2xl text-primary-k tracking-tight">{title}</h2>
-            <DocActions text={text} filename={`${slug}.doc`} pdfTitle={`${pdfTitle} — ${title}`} />
+            <DocActions text={text} filename={`${slug}.doc`} pdfTitle={`${pdfTitle}, ${title}`} />
             <ol className="mt-4 list-decimal pl-6 space-y-2 text-sm text-primary-k leading-relaxed">
                 {items.map((it, i) => <li key={i}>{it}</li>)}
             </ol>

@@ -7,7 +7,7 @@ import {
 } from "@/config/dashboardDestinations";
 
 /**
- * DashboardActionBar — "What would you like to do?"
+ * DashboardActionBar, "What would you like to do?"
  *
  * A calm, high-contrast navigator that sits near the top of the dashboard.
  * Caregivers can either type what they want (search jumps to the right tool or

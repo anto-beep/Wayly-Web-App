@@ -59,7 +59,7 @@ export default function InAppNudge() {
                         <Smartphone className="h-5 w-5 text-white" />
                     </div>
                     <div className="min-w-0">
-                        <div className="text-sm font-semibold text-[#0E2A47]">You&apos;re on Wayly a lot — try the app</div>
+                        <div className="text-sm font-semibold text-[#0E2A47]">You&apos;re on Wayly a lot, try the app</div>
                         <div className="text-xs text-[#5B6B7A] mt-0.5">It&apos;s faster for statements, invoices and your budget on the go.</div>
                     </div>
                 </div>

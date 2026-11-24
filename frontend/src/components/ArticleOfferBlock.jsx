@@ -5,18 +5,18 @@ import { isConv1FlagOn } from "@/config/conv1Flags";
 import conv1 from "@/lib/conv1";
 
 /**
- * ArticleOfferBlock — CONV-1 v2 Workstream G.
+ * ArticleOfferBlock, CONV-1 v2 Workstream G.
  *
  * A topic-matched offer the reader can act on without leaving the article's
  * mental context. Two placements:
- *   • variant="inline" — a compact band injected at ~60% scroll depth.
- *   • variant="end"    — a fuller card at the foot of every article.
+ *   • variant="inline", a compact band injected at ~60% scroll depth.
+ *   • variant="end"   , a fuller card at the foot of every article.
  *
  * The offer is matched to the article's browse category so the CTA always
  * points at the single most relevant free Wayly tool. Clicking fires the
  * K1 `article_cta_clicked` event with the slug, placement and matched offer.
  *
- * Gated by the `conv1_article_cta` flag — renders nothing when off.
+ * Gated by the `conv1_article_cta` flag, renders nothing when off.
  */
 
 // Category → the one free tool that best continues the reader's task.
@@ -37,7 +37,7 @@ const OFFER_BY_CATEGORY = {
 export const OFFERS = {
     invoice_checker: {
         eyebrow: "Put this to work",
-        title: "Check an aged-care invoice — free",
+        title: "Check an aged-care invoice, free",
         blurb: "Upload or paste an invoice and Wayly flags overcharges, duplicate items and fees that don't look right.",
         cta: "Check my invoice free",
         href: "/ai-tools/invoice-checker",
@@ -45,7 +45,7 @@ export const OFFERS = {
     },
     statement_decoder: {
         eyebrow: "Put this to work",
-        title: "Decode an aged-care statement — free",
+        title: "Decode an aged-care statement, free",
         blurb: "Paste a confusing statement and Wayly explains every line in plain English.",
         cta: "Decode my statement free",
         href: "/ai-tools/statement-decoder",
@@ -53,7 +53,7 @@ export const OFFERS = {
     },
     contribution_estimator: {
         eyebrow: "Work out your number",
-        title: "Estimate your aged-care contribution — free",
+        title: "Estimate your aged-care contribution, free",
         blurb: "Answer a few questions and see a plain-English estimate of what you may be asked to pay.",
         cta: "Estimate my contribution",
         href: "/ai-tools/contribution-estimator",
@@ -61,7 +61,7 @@ export const OFFERS = {
     },
     classification: {
         eyebrow: "Check where you sit",
-        title: "Check your likely classification — free",
+        title: "Check your likely classification, free",
         blurb: "A quick self-check that points to the Support at Home level your situation likely maps to.",
         cta: "Run the self-check",
         href: "/ai-tools/classification-self-check",
@@ -69,7 +69,7 @@ export const OFFERS = {
     },
     price_checker: {
         eyebrow: "Compare before you switch",
-        title: "Compare provider prices — free",
+        title: "Compare provider prices, free",
         blurb: "See how a provider's prices and fees stack up before you commit or switch.",
         cta: "Compare prices free",
         href: "/ai-tools/provider-price-checker",
@@ -77,7 +77,7 @@ export const OFFERS = {
     },
     ask_wayly: {
         eyebrow: "Still unsure?",
-        title: "Ask Wayly a question — free",
+        title: "Ask Wayly a question, free",
         blurb: "Describe your situation in your own words and get a plain-English answer grounded in the rules.",
         cta: "Ask Wayly",
         href: "/ask-wayly",
@@ -85,7 +85,7 @@ export const OFFERS = {
     },
     free_account: {
         eyebrow: "Keep going",
-        title: "Create a free Wayly account — no card",
+        title: "Create a free Wayly account, no card",
         blurb: "Save your checks, keep a few documents in one place and come back any time.",
         cta: "Create a free account",
         href: "/signup?plan=free",
@@ -102,7 +102,7 @@ export function resolveOffer(category, slug = "", title = "") {
             : "invoice_checker";
     }
     if (OFFER_BY_CATEGORY[category]) return OFFER_BY_CATEGORY[category];
-    // No known category (e.g. glossary terms) — infer a topic from the words.
+    // No known category (e.g. glossary terms), infer a topic from the words.
     if (hay.includes("invoice")) return "invoice_checker";
     if (hay.includes("statement")) return "statement_decoder";
     if (hay.includes("complain") || hay.includes("commission")) return "ask_wayly";

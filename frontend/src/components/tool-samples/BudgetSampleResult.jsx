@@ -1,7 +1,7 @@
 import React from "react";
 import ToolSampleShell, { aud, aud2 } from "@/components/tool-samples/ToolSampleShell";
 
-// Worked example for the Budget Calculator — real engine output for a
+// Worked example for the Budget Calculator, real engine output for a
 // Classification 6 participant (captured from POST /api/public/budget-calc).
 const R = {
     annual_total: 49461.91,
@@ -29,7 +29,7 @@ export default function BudgetSampleResult() {
             titleAccent="Laid Out Clearly"
             description="A worked example for a Classification 6 participant. This is exactly what the Budget Calculator shows you: your quarterly budget, the slice the provider takes for care management, what's left for care, and how it splits across the three streams."
             ctaTitle="Work Out Your Own Budget In Seconds"
-            ctaBody="Pick your classification and Wayly shows your real quarterly budget, your usable funds, rollover room and lifetime cap — then tracks your spend against it on any paid plan."
+            ctaBody="Pick your classification and Wayly shows your real quarterly budget, your usable funds, rollover room and lifetime cap, then tracks your spend against it on any paid plan."
         >
             <div className="rounded-2xl border border-kindred bg-surface-2/40 p-5">
                 <div className="text-xs uppercase tracking-[0.14em] font-semibold text-muted-k mb-3">Classification 6 · indicative</div>

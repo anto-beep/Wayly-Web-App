@@ -182,7 +182,7 @@ function VoiceTab({ pid }) {
                 <div className="rounded-xl border border-red-200 bg-red-50 p-4" data-testid="fc2-crisis">
                     <p className="text-sm font-medium text-red-800 flex items-center gap-2"><ShieldAlert className="w-4 h-4" />You don't have to face this alone</p>
                     <ul className="mt-2 space-y-1">
-                        {crisis.map((r) => <li key={r.name} className="text-sm text-red-700"><b>{r.name}</b>: {r.phone} — {r.note}</li>)}
+                        {crisis.map((r) => <li key={r.name} className="text-sm text-red-700"><b>{r.name}</b>: {r.phone}, {r.note}</li>)}
                     </ul>
                     <button onClick={() => setCrisis(null)} className="text-xs text-red-700 underline mt-2">Close</button>
                 </div>

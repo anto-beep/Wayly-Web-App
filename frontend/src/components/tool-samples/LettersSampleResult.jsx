@@ -2,7 +2,7 @@ import React from "react";
 import { Copy, Download, Mail } from "lucide-react";
 import ToolSampleShell from "@/components/tool-samples/ToolSampleShell";
 
-// Worked example for Letters & Follow-ups — a representative drafted reply for
+// Worked example for Letters & Follow-ups, a representative drafted reply for
 // a common scenario (responding to a provider's fee-increase notice). Sample
 // content, clearly labelled, showing the tool's letter-drafting output.
 const LETTER = `Dear Blueberry Care team,
@@ -30,9 +30,9 @@ export default function LettersSampleResult() {
             testid="letters-sample-output"
             titleLead="See the Follow-Up Letter"
             titleAccent="Wayly Writes"
-            description="A worked example for a common situation — replying to a provider's fee-increase notice. This is exactly what Letters & Follow-ups hands you: a calm, clear letter that asks the right questions and references your agreement and the rules, ready to copy, download or email."
+            description="A worked example for a common situation, replying to a provider's fee-increase notice. This is exactly what Letters & Follow-ups hands you: a calm, clear letter that asks the right questions and references your agreement and the rules, ready to copy, download or email."
             ctaTitle="Draft Your Own Letter"
-            ctaBody="Pick a situation — a reply, a complaint, a request — add a few notes, and Wayly drafts a considered letter in the right tone, every time."
+            ctaBody="Pick a situation, a reply, a complaint, a request, add a few notes, and Wayly drafts a considered letter in the right tone, every time."
         >
             <div className="rounded-2xl border border-kindred bg-surface overflow-hidden">
                 <div className="flex flex-col items-start gap-3 border-b border-kindred bg-surface-2 px-5 py-3 sm:flex-row sm:items-center sm:justify-between">

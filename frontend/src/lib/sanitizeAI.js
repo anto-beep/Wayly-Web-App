@@ -6,7 +6,7 @@
 export function sanitizeAI(text) {
     if (!text) return "";
     return String(text)
-        .replace(/\s*[—–]\s*/g, ", ")
+        .replace(/\s*[, –]\s*/g, ", ")
         .replace(/\s+-\s+/g, ", ")
         .replace(/,\s*,/g, ",");
 }

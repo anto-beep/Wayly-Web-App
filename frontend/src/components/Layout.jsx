@@ -25,7 +25,7 @@ import { LayoutContext } from "@/context/LayoutContext";
 import { TOOLS_ORDERED, isBadgeActive } from "@/config/toolRegistry";
 
 /**
- * AccountMenu — a single tidy dropdown on the far right of the header that
+ * AccountMenu, a single tidy dropdown on the far right of the header that
  * consolidates identity, plan and sign-out, so the top bar stays uncluttered.
  */
 function AccountMenu({ user, onLogout }) {
@@ -173,7 +173,7 @@ const bottomNavItems = primaryNav.filter((n) => n.mobile);
 // behaviour), but the group containing the current route auto-opens so users
 // see where they are.
 function MobileDrawerGroup({ group, drawerPathname, onNavigate }) {
-    // All groups start collapsed when the drawer opens (including "Today") —
+    // All groups start collapsed when the drawer opens (including "Today") , 
     // the user asked for a fully collapsed menu on open.
     const [open, setOpen] = useState(false);
     return (
@@ -239,7 +239,7 @@ export default function Layout({ children }) {
     const drawerPathname = location.pathname;
     const [drawerOpen, setDrawerOpen] = useState(false);
     // Sidebar accordion: exactly one group open at a time, all collapsed on
-    // load (fresh state each refresh / new tab — deliberately not persisted).
+    // load (fresh state each refresh / new tab, deliberately not persisted).
     const [openGroup, setOpenGroup] = useState(null);
 
     // Give every authenticated app page a friendly browser-tab title
@@ -280,7 +280,7 @@ export default function Layout({ children }) {
                     <div className="flex items-center gap-2 md:gap-2.5 min-w-0">
                         {user && <div className="hidden lg:block mr-1"><GlobalSearch /></div>}
                         {/* One notifications bell (personal + aged-care updates) beside the
-                            account-setup ring — grouped with clear spacing so each stands out. */}
+                            account-setup ring, grouped with clear spacing so each stands out. */}
                         {user && (
                             <div className="flex items-center gap-1.5">
                                 <NotificationsBell tone="light" />

@@ -2,7 +2,7 @@
  * Google Tag Manager (GTM-MVLXCD7D) dataLayer bridge for Wayly.
  *
  * The GTM container is loaded (PRODUCTION-HOST-GATED) from public/index.html.
- * GA4 (G-1E3HYT8R91) is configured INSIDE GTM — this module NEVER calls gtag
+ * GA4 (G-1E3HYT8R91) is configured INSIDE GTM, this module NEVER calls gtag
  * for GA4. It only pushes well-named, non-PII events onto window.dataLayer,
  * which GTM maps to GA4 events:
  *
@@ -18,14 +18,14 @@
  *    dry-run so wiring is observable on preview without sending data.
  *  - NO PII. Only a fixed allow-list of params is ever pushed: plan_type,
  *    signup_method, input_method, surface, is_sample, authenticated,
- *    environment — plus sanitized page fields for page_view.
+ *    environment, plus sanitized page fields for page_view.
  *  - EXACTLY ONCE. Conversion/funnel events dedupe on a stable id via
  *    localStorage so refresh / rerender / retry / repeated callbacks never
- *    double-count. The id is a LOCAL dedupe key only — never pushed to GA4.
+ *    double-count. The id is a LOCAL dedupe key only, never pushed to GA4.
  *
  * Campaign attribution (utm params / gclid) is captured natively by the GA4
  * tag in GTM on the landing page_view and persists across the session to the
- * sign_up / trial_started events — no PII and nothing extra to do here.
+ * sign_up / trial_started events, no PII and nothing extra to do here.
  */
 
 const PROD_HOSTS = new Set(["wayly.com.au", "www.wayly.com.au"]);
@@ -108,7 +108,7 @@ export function decoderInputMethod(raw) {
     }
 }
 
-// page_view fires once per route change (NOT deduped — revisits should count).
+// page_view fires once per route change (NOT deduped, revisits should count).
 export function gtmPageView(pathname) {
     if (typeof window === "undefined") return;
     const page_path = safePath(pathname || window.location.pathname);
@@ -124,9 +124,9 @@ export function gtmPageView(pathname) {
 export const ga4Track = {
     // Account CONFIRMED created (never on click/submit/failed).
     signUp: (id, o = {}) => pushOnce("wayly_sign_up_success", id, { signup_method: o.signup_method, plan_type: o.plan_type }),
-    // Free trial CONFIRMED active — the primary marketing conversion.
+    // Free trial CONFIRMED active, the primary marketing conversion.
     trialStarted: (id, o = {}) => pushOnce("wayly_trial_started", id, { plan_type: o.plan_type, signup_method: o.signup_method }),
-    // Decoder funnel — product-engagement, measured separately from trials.
+    // Decoder funnel, product-engagement, measured separately from trials.
     decoderStarted: (id, o = {}) => pushOnce("wayly_decoder_started", id, { input_method: o.input_method, is_sample: o.is_sample, surface: o.surface, authenticated: o.authenticated }),
     decoderCompleted: (id, o = {}) => pushOnce("wayly_decoder_completed", id, { input_method: o.input_method, is_sample: o.is_sample, surface: o.surface, authenticated: o.authenticated, plan_type: o.plan_type }),
     decoderFailed: (id, o = {}) => pushOnce("wayly_decoder_failed", id, { input_method: o.input_method, is_sample: o.is_sample, surface: o.surface, authenticated: o.authenticated }),

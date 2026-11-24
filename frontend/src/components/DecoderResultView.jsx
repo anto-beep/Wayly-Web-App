@@ -10,7 +10,7 @@ import { api } from "@/lib/api";
 import { readPersonaPreview } from "@/lib/persona";
 
 function aud(n) {
-    if (n == null) return "—";
+    if (n == null) return ", ";
     return new Intl.NumberFormat("en-AU", { style: "currency", currency: "AUD" }).format(n);
 }
 
@@ -122,7 +122,7 @@ const STREAM_LABEL = {
  * anomalies) plus the full line-item table from the Pass-1 extraction.
  */
 /**
- * FeeBreakdown — Fee Transparency (Jun 2026). Breaks out services, care
+ * FeeBreakdown, Fee Transparency (Jun 2026). Breaks out services, care
  * management, package management and GST as their own rows so the total the
  * family sees always adds up on screen. Values come from the Pass-1 extraction
  * (falls back to the summary) and only non-zero components are shown.
@@ -152,7 +152,7 @@ function FeeBreakdown({ extracted, summary }) {
     const reconciles = Math.abs(computed - total) <= Math.max(5, 0.02 * total);
     return (
         <section data-testid="decoder-fee-breakdown" className="overflow-hidden rounded-2xl border border-kindred bg-surface shadow-sm">
-            {/* Header strip — teal gradient with icon */}
+            {/* Header strip, teal gradient with icon */}
             <div className="flex items-center gap-3 bg-gradient-to-r from-[#0E4D52] to-[#13656B] px-5 py-4">
                 <span className="grid h-10 w-10 place-items-center rounded-xl bg-white/15 text-white">
                     <Wallet className="h-5 w-5" />
@@ -187,7 +187,7 @@ function FeeBreakdown({ extracted, summary }) {
                 <dt className="font-heading text-lg text-primary-k">Total Billed</dt>
                 <dd className="font-heading text-lg tabular-nums text-primary-k">{aud(total)}</dd>
             </div>
-            {/* Reconcile note — prominent pill */}
+            {/* Reconcile note, prominent pill */}
             {reported > 0 && (
                 <div className="px-5 pb-5 pt-3">
                     <div
@@ -210,7 +210,7 @@ function FeeBreakdown({ extracted, summary }) {
 }
 
 /**
- * ConfidenceLegend — a small "how we read this" note so families understand
+ * ConfidenceLegend, a small "how we read this" note so families understand
  * what low-confidence and unverified figures mean BEFORE they act on them.
  */
 function ConfidenceLegend({ lowConfidence, blocked, confidence }) {
@@ -397,11 +397,11 @@ export default function DecoderResultView({ result, onDraftLetter, onDraftAll })
 
             <InputMethodAccuracyNote method={result.input_method} parsingWarnings={result.parsing_warnings} />
 
-            {/* SECTION 0 removed — the structured summary banner below is the
+            {/* SECTION 0 removed, the structured summary banner below is the
                 single source of truth; the extra plain-English paragraph box
                 was redundant (two summaries confused users). */}
 
-            {/* SECTION 1, Summary banner — hidden when the statement is
+            {/* SECTION 1, Summary banner, hidden when the statement is
                 blocked, so untrusted totals are never presented as fact. */}
             {!blocked && (
             <section className="bg-primary-k text-white rounded-2xl p-6 relative" data-testid="decoder-summary-banner">
@@ -498,7 +498,7 @@ export default function DecoderResultView({ result, onDraftLetter, onDraftAll })
               </TooltipProvider>
             </section>
 
-            {/* SECTION 3, Stream breakdown — hidden when blocked. */}
+            {/* SECTION 3, Stream breakdown, hidden when blocked. */}
             {!blocked && streams.length > 0 && (
                 <section data-testid="decoder-stream-breakdown">
                     <div className="overline mb-3">Where the money went</div>
@@ -569,12 +569,12 @@ export default function DecoderResultView({ result, onDraftLetter, onDraftAll })
                                 return (
                                     <div key={i} className={`rounded-xl border p-3 ${flag ? "border-terracotta/40 bg-terracotta/5" : "border-kindred bg-surface"} ${cancelled ? "opacity-70" : ""}`}>
                                         <div className="flex items-start justify-between gap-2">
-                                            <span className={`text-primary-k font-medium text-sm min-w-0 ${cancelled ? "italic" : ""}`}>{li.service_description || "—"}</span>
+                                            <span className={`text-primary-k font-medium text-sm min-w-0 ${cancelled ? "italic" : ""}`}>{li.service_description || ", "}</span>
                                             <span className={`flex-none text-primary-k font-semibold tabular-nums text-sm ${cancelled ? "line-through" : ""}`}>{aud(li.gross)}</span>
                                         </div>
                                         <div className="mt-1.5 flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-k">
-                                            <span className="tabular-nums">{formatDate(li.date) || "—"}</span>
-                                            <span>{STREAM_LABEL[li.stream] || li.stream || "—"}</span>
+                                            <span className="tabular-nums">{formatDate(li.date) || ", "}</span>
+                                            <span>{STREAM_LABEL[li.stream] || li.stream || ", "}</span>
                                             {formatQtyUnit(li) && <span className="tabular-nums">{formatQtyUnit(li)}{li.unit_rate ? ` · ${aud(li.unit_rate)}` : ""}</span>}
                                             <span>Your share <span className="text-primary-k tabular-nums">{aud(li.participant_contribution)}</span></span>
                                             <span>Gov <span className="text-primary-k tabular-nums">{aud(li.government_paid)}</span></span>
@@ -611,12 +611,12 @@ export default function DecoderResultView({ result, onDraftLetter, onDraftAll })
                                         const flag = li.flags_in_original || li.provider_notes;
                                         return (
                                             <tr key={i} className={cancelled ? "text-muted-k italic" : "text-primary-k"}>
-                                                <td className="p-2.5 tabular-nums whitespace-nowrap">{formatDate(li.date) || "—"}</td>
-                                                <td className="p-2.5">{li.service_description || "—"}</td>
-                                                <td className="p-2.5 tabular-nums">{li.service_code || "—"}</td>
-                                                <td className="p-2.5">{STREAM_LABEL[li.stream] || li.stream || "—"}</td>
-                                                <td className="p-2.5 text-right tabular-nums whitespace-nowrap">{formatQtyUnit(li) || "—"}</td>
-                                                <td className="p-2.5 text-right tabular-nums">{li.unit_rate ? aud(li.unit_rate) : "—"}</td>
+                                                <td className="p-2.5 tabular-nums whitespace-nowrap">{formatDate(li.date) || ", "}</td>
+                                                <td className="p-2.5">{li.service_description || ", "}</td>
+                                                <td className="p-2.5 tabular-nums">{li.service_code || ", "}</td>
+                                                <td className="p-2.5">{STREAM_LABEL[li.stream] || li.stream || ", "}</td>
+                                                <td className="p-2.5 text-right tabular-nums whitespace-nowrap">{formatQtyUnit(li) || ", "}</td>
+                                                <td className="p-2.5 text-right tabular-nums">{li.unit_rate ? aud(li.unit_rate) : ", "}</td>
                                                 <td className={`p-2.5 text-right tabular-nums ${cancelled ? "line-through" : ""}`}>{aud(li.gross)}</td>
                                                 <td className="p-2.5 text-right tabular-nums">{aud(li.participant_contribution)}</td>
                                                 <td className="p-2.5 text-right tabular-nums">{aud(li.government_paid)}</td>
@@ -732,7 +732,7 @@ function BalancePanel({ extracted, summary, audit }) {
     if (known < 2) return null;
 
     const fmt = (v) => {
-        if (v == null || v === "") return "—";
+        if (v == null || v === "") return ", ";
         const n = typeof v === "string" ? parseFloat(v.replace(/[$,]/g, "")) : v;
         if (isNaN(n)) return String(v);
         return new Intl.NumberFormat("en-AU", { style: "currency", currency: "AUD", minimumFractionDigits: 2 }).format(n);

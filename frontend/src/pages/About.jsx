@@ -37,9 +37,9 @@ const PLUM = "#5F4E76";
 const TERRA = "#B23A2E";
 
 const GOV_SOURCES = [
-    { id: "mac-support-at-home", label: "My Aged Care — Support at Home", url: "https://www.myagedcare.gov.au/support-at-home" },
-    { id: "health-support-at-home", label: "Department of Health, Disability and Ageing — Support at Home", url: "https://www.health.gov.au/our-work/support-at-home" },
-    { id: "aged-care-act", label: "Aged Care Act 2024 (C2024A00096) — Federal Register of Legislation", url: "https://www.legislation.gov.au/C2024A00096" },
+    { id: "mac-support-at-home", label: "My Aged Care, Support at Home", url: "https://www.myagedcare.gov.au/support-at-home" },
+    { id: "health-support-at-home", label: "Department of Health, Disability and Ageing, Support at Home", url: "https://www.health.gov.au/our-work/support-at-home" },
+    { id: "aged-care-act", label: "Aged Care Act 2024 (C2024A00096), Federal Register of Legislation", url: "https://www.legislation.gov.au/C2024A00096" },
     { id: "my-aged-care", label: "My Aged Care (official Australian Government site)", url: "https://www.myagedcare.gov.au" },
 ];
 

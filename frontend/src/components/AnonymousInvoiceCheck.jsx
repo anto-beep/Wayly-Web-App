@@ -1,5 +1,5 @@
 /**
- * AnonymousInvoiceCheck.jsx — CONV-1 v2 Workstream B.
+ * AnonymousInvoiceCheck.jsx, CONV-1 v2 Workstream B.
  *
  * The signed-out Invoice Check. A visitor runs one real check on their own
  * invoice with no account and no card, and sees the COMPLETE result rendered
@@ -106,7 +106,7 @@ export default function AnonymousInvoiceCheck({ onSeeExample }) {
         if (loading) return;
         setError(null); setGuard(null); setCooldown(null); setStatementRedirect(false);
         if (!sample && mode === "paste" && !pasted.trim()) { setError("Paste the text from your invoice first."); return; }
-        if (!sample && mode === "upload" && !file) { setError("Add your invoice — upload a file or take a photo."); return; }
+        if (!sample && mode === "upload" && !file) { setError("Add your invoice, upload a file or take a photo."); return; }
         setLoading(true);
         try {
             conv1.anonCheckStarted({ input_method: sample ? "sample" : mode });
@@ -145,7 +145,7 @@ export default function AnonymousInvoiceCheck({ onSeeExample }) {
         } catch (e) {
             const detail = e?.response?.data?.detail;
             if (e?.response?.status === 429 && detail?.error === "cooldown_active") { setCooldown(detail); return; }
-            if (e?.response?.status === 503) { setError(detail?.message || "Instant checks are paused right now — start a free trial to check your invoice."); return; }
+            if (e?.response?.status === 503) { setError(detail?.message || "Instant checks are paused right now, start a free trial to check your invoice."); return; }
             setError(extractErrorMessage(e) || "We couldn't read that. Try a clearer copy, or paste the text instead.");
         } finally {
             setLoading(false);
@@ -195,12 +195,12 @@ export default function AnonymousInvoiceCheck({ onSeeExample }) {
                 </h2>
                 <p className="mt-2 text-sm text-muted-k leading-relaxed">
                     Upload it, photograph it, or paste it. We&apos;ll read every line and show you exactly what&apos;s worth
-                    raising — the whole result, free, before you decide anything.
+                    raising, the whole result, free, before you decide anything.
                 </p>
 
                 {!result && !statementRedirect && (
                     <>
-                        {/* B3: input methods — upload, camera, paste */}
+                        {/* B3: input methods, upload, camera, paste */}
                         <input ref={fileRef} type="file" accept={_ACCEPT} onChange={onPick} className="hidden" data-testid="anon-file-input" />
                         <input ref={cameraRef} type="file" accept="image/*" capture="environment" onChange={onPick} className="hidden" data-testid="anon-camera-input" />
 
@@ -276,7 +276,7 @@ export default function AnonymousInvoiceCheck({ onSeeExample }) {
                             )}
                         </div>
 
-                        {/* B4: reduced, optional situation step — never blocks the run */}
+                        {/* B4: reduced, optional situation step, never blocks the run */}
                         <div className="mt-5 rounded-xl border border-kindred bg-surface-2/60">
                             <button
                                 type="button"
@@ -285,7 +285,7 @@ export default function AnonymousInvoiceCheck({ onSeeExample }) {
                                 className="w-full flex items-center justify-between gap-2 px-4 py-3 text-left"
                             >
                                 <span className="text-sm font-medium text-primary-k">
-                                    Tell us your situation <span className="font-normal text-muted-k">(optional — sharpens the result)</span>
+                                    Tell us your situation <span className="font-normal text-muted-k">(optional, sharpens the result)</span>
                                 </span>
                                 {showSit ? <ChevronUp className="h-4 w-4 text-muted-k" /> : <ChevronDown className="h-4 w-4 text-muted-k" />}
                             </button>
@@ -318,7 +318,7 @@ export default function AnonymousInvoiceCheck({ onSeeExample }) {
                             )}
                         </div>
 
-                        {/* D2: honest allowance, stated up front — BEFORE the run button */}
+                        {/* D2: honest allowance, stated up front, BEFORE the run button */}
                         <FreeAllowanceBadge tool="INVOICE_CHECKER" noun="invoice check" nounPlural="invoice checks" refreshKey={result ? 1 : 0} />
 
                         <button
@@ -333,7 +333,7 @@ export default function AnonymousInvoiceCheck({ onSeeExample }) {
                         </button>
 
 
-                        {/* B privacy line — what happens to the upload (spec §7.3, H5) */}
+                        {/* B privacy line, what happens to the upload (spec §7.3, H5) */}
                         <p className="mt-3 text-xs text-muted-k leading-relaxed" data-testid="anon-privacy-line">
                             Your invoice is processed in Australia to produce your result, then the file is deleted. We keep only the
                             result, held for 7 days so you can come back to it. No account, no card.
@@ -388,7 +388,7 @@ export default function AnonymousInvoiceCheck({ onSeeExample }) {
                         <div className="rounded-2xl border border-sage/40 bg-sage/10 p-4 flex items-center justify-between gap-3" data-testid="anon-saved-banner">
                             <div className="flex items-center gap-2 text-primary-k">
                                 <Save className="h-4 w-4 text-sage" />
-                                <span className="text-sm">Saved to your account — reopen it any time.</span>
+                                <span className="text-sm">Saved to your account, reopen it any time.</span>
                             </div>
                             <Link to="/app/saved-checks" data-testid="anon-saved-link" className="text-sm font-semibold text-primary-k underline whitespace-nowrap">Your saved checks</Link>
                         </div>
@@ -441,7 +441,7 @@ export default function AnonymousInvoiceCheck({ onSeeExample }) {
                         ) : (
                             <div className="flex items-center gap-2 text-primary-k" data-testid="anon-email-sent">
                                 <Mail className="h-5 w-5 text-sage" />
-                                <span className="text-sm">Sent. Check your inbox — the full result and a link back are on their way.</span>
+                                <span className="text-sm">Sent. Check your inbox, the full result and a link back are on their way.</span>
                             </div>
                         )}
                     </div>
@@ -452,26 +452,26 @@ export default function AnonymousInvoiceCheck({ onSeeExample }) {
                             <div className="font-heading text-lg text-primary-k">Keep going with a free Wayly account</div>
                         </div>
                         <p className="mt-1.5 text-sm text-muted-k leading-relaxed">
-                            Your result is saved here for 7 days. Create a free account — no card — to save it for good, draft the
+                            Your result is saved here for 7 days. Create a free account, no card, to save it for good, draft the
                             email to your provider, reconcile it against your statement, and check another invoice.
                         </p>
                         <div className="mt-4 grid sm:grid-cols-2 gap-3">
-                            <Link to={signupHref} data-testid="anon-cta-draft-letter" className="inline-flex items-center justify-center gap-2 bg-primary-k text-white rounded-lg px-4 py-3 text-sm font-medium hover:bg-[#091D33]">
+                            <Link to={signupHref} data-testid="anon-cta-draft-letter" className="inline-flex items-center justify-center gap-2 bg-primary-k text-white rounded-xl px-5 py-3.5 text-sm font-semibold shadow-md hover:bg-[#091D33] hover:shadow-lg hover:-translate-y-0.5 transition-all">
                                 <Mail className="h-4 w-4" /> Draft the email to my provider
                             </Link>
-                            <Link to={signupHref} data-testid="anon-cta-save" className="inline-flex items-center justify-center gap-2 border border-primary-k/30 bg-surface text-primary-k rounded-lg px-4 py-3 text-sm font-medium hover:bg-surface-2">
+                            <Link to={signupHref} data-testid="anon-cta-save" className="inline-flex items-center justify-center gap-2 border-2 border-primary-k/40 bg-surface text-primary-k rounded-xl px-5 py-3.5 text-sm font-semibold shadow-sm hover:border-primary-k hover:bg-surface-2 hover:shadow-md hover:-translate-y-0.5 transition-all">
                                 <Save className="h-4 w-4" /> Save this result
                             </Link>
-                            <Link to={signupHref} data-testid="anon-cta-reconcile" className="inline-flex items-center justify-center gap-2 border border-primary-k/30 bg-surface text-primary-k rounded-lg px-4 py-3 text-sm font-medium hover:bg-surface-2">
+                            <Link to={signupHref} data-testid="anon-cta-reconcile" className="inline-flex items-center justify-center gap-2 border-2 border-primary-k/40 bg-surface text-primary-k rounded-xl px-5 py-3.5 text-sm font-semibold shadow-sm hover:border-primary-k hover:bg-surface-2 hover:shadow-md hover:-translate-y-0.5 transition-all">
                                 <ReceiptText className="h-4 w-4" /> Reconcile with my statement
                             </Link>
-                            <Link to={signupHref} data-testid="anon-cta-another" className="inline-flex items-center justify-center gap-2 border border-primary-k/30 bg-surface text-primary-k rounded-lg px-4 py-3 text-sm font-medium hover:bg-surface-2">
+                            <Link to={signupHref} data-testid="anon-cta-another" className="inline-flex items-center justify-center gap-2 border-2 border-primary-k/40 bg-surface text-primary-k rounded-xl px-5 py-3.5 text-sm font-semibold shadow-sm hover:border-primary-k hover:bg-surface-2 hover:shadow-md hover:-translate-y-0.5 transition-all">
                                 <ArrowRight className="h-4 w-4" /> Check another invoice
                             </Link>
                         </div>
                     </div>
 
-                    {/* H4: Did this help? — optional, nothing is gated on it */}
+                    {/* H4: Did this help?, optional, nothing is gated on it */}
                     <div className="rounded-2xl border border-kindred bg-surface p-6" data-testid="anon-feedback">
                         {!fbSent ? (
                             <>
@@ -494,7 +494,7 @@ export default function AnonymousInvoiceCheck({ onSeeExample }) {
                                 </div>
                             </>
                         ) : (
-                            <div className="text-sm text-primary-k" data-testid="anon-feedback-thanks">Thank you — that helps us make Wayly better.</div>
+                            <div className="text-sm text-primary-k" data-testid="anon-feedback-thanks">Thank you, that helps us make Wayly better.</div>
                         )}
                     </div>
                 </div>

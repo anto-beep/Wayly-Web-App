@@ -404,9 +404,9 @@ export function AdminStatements() {
     return <SimpleTable endpoint="/admin/statements" testid="admin-statements" exportPath="/api/admin/export/statements.csv"
         searchPlaceholder="Search by period or file…"
         columns={[
-            { key: "period_label", label: "Period", render: (r) => r.period_label || "—" },
-            { key: "filename", label: "File", render: (r) => <span className="admin-mono" style={{ fontSize: 12 }}>{r.filename || "—"}</span> },
-            { key: "household_id", label: "Household", render: (r) => <span className="admin-mono" style={{ fontSize: 12, color: "var(--admin-muted)" }}>{(r.household_id || "—").slice(0, 8)}</span> },
+            { key: "period_label", label: "Period", render: (r) => r.period_label || ", " },
+            { key: "filename", label: "File", render: (r) => <span className="admin-mono" style={{ fontSize: 12 }}>{r.filename || ", "}</span> },
+            { key: "household_id", label: "Household", render: (r) => <span className="admin-mono" style={{ fontSize: 12, color: "var(--admin-muted)" }}>{(r.household_id || ", ").slice(0, 8)}</span> },
             { key: "anomaly_count", label: "Anomalies", render: (r) => r.anomaly_count ?? (r.anomalies?.length ?? 0), tdStyle: { textAlign: "right" }, thStyle: { textAlign: "right" } },
             { key: "uploaded_at", label: "Uploaded", render: (r) => <span className="admin-mono" style={{ fontSize: 12, color: "var(--admin-muted)" }}>{fmtDate(r.uploaded_at)}</span> },
         ]}

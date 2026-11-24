@@ -43,7 +43,7 @@ const FLAG_LABEL = {
     none_reconciled: "No data",
 };
 
-// A small labelled split bar — "who pays" style, white text on coloured panels.
+// A small labelled split bar, "who pays" style, white text on coloured panels.
 function SplitBar({ leftLabel, leftValue, leftPct, rightLabel, rightValue }) {
     const l = Math.max(0, Math.min(100, leftPct));
     return (
@@ -64,7 +64,7 @@ function SplitBar({ leftLabel, leftValue, leftPct, rightLabel, rightValue }) {
     );
 }
 
-// Flagship hero — the lifetime cap gauge + plain-English headline + paid/remaining bars.
+// Flagship hero, the lifetime cap gauge + plain-English headline + paid/remaining bars.
 function LifetimeCapHero({ cap, onRefresh, refreshing }) {
     const usedPct = cap.total_cap ? Math.min(100, (cap.used_to_date / cap.total_cap) * 100) : 0;
     const remainingPct = 100 - usedPct;
@@ -157,7 +157,7 @@ function YearsAtPaceCard({ cap }) {
     );
 }
 
-// Annual projection — big number + who-pays split + supporting chips, all on a teal panel.
+// Annual projection, big number + who-pays split + supporting chips, all on a teal panel.
 function AnnualProjectionCard({ ap }) {
     const conf = ap.annual_estimate_range?.confidence || "low";
     const showConfidence = (ap.annual_estimate || 0) > 0;

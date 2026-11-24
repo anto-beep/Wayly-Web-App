@@ -24,7 +24,7 @@ function isAuthenticated() {
  * recurring broken paths and ship redirects in seo_routes.py when patterns
  * emerge.
  *
- * Logged-in users (or anyone on an /app path — e.g. a stale notification link
+ * Logged-in users (or anyone on an /app path, e.g. a stale notification link
  * to a deleted statement) get a calm in-app message with a one-tap route back
  * to the dashboard instead of the public marketing 404.
  */
@@ -51,7 +51,7 @@ export default function NotFound() {
                     <h1 className="font-heading text-2xl text-[#0E2A47]">This page isn't available</h1>
                     <p className="mt-3 text-sm leading-relaxed text-[#3F506B]">
                         The link you followed may have moved, or the item it pointed to is no longer here.
-                        Nothing's wrong with your account — let's get you back.
+                        Nothing's wrong with your account, let's get you back.
                     </p>
                     <div className="mt-6 flex flex-col gap-2">
                         <Link to="/app" data-testid="notfound-dashboard" className="inline-flex items-center justify-center gap-2 rounded-lg bg-[#0E2A47] hover:bg-[#091D33] text-white px-5 py-3 text-sm font-semibold">

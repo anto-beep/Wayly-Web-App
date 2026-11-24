@@ -7,7 +7,7 @@
  * in all environments.
  *
  * K2: every event carries source_page, device_category, persona (where known)
- * and plan (where relevant). No PII is ever sent — source_page is route
+ * and plan (where relevant). No PII is ever sent, source_page is route
  * sanitised so record ids never reach analytics.
  */
 
@@ -99,7 +99,7 @@ export function conv1Track(event, extra = {}) {
     toPostHog(event, params);
 }
 
-// Named helpers — one per K1 row — so call-sites read cleanly.
+// Named helpers, one per K1 row, so call-sites read cleanly.
 export const conv1 = {
     anonCheckStarted: (o) => conv1Track("anon_check_started", o),
     anonCheckCompleted: (o) => conv1Track("anon_check_completed", o),

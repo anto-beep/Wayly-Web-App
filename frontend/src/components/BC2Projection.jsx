@@ -1,5 +1,5 @@
 /**
- * BC2Projection — "Budget Runway" dashboard widget.
+ * BC2Projection, "Budget Runway" dashboard widget.
  * Plain-English, colour-blocked view of: how much of this quarter's budget is
  * used, how the lifetime cap is tracking, and a simple forecast of the next
  * three quarters. Built for older adults: big numbers, clear words, no jargon.
@@ -84,7 +84,7 @@ export default function BC2Projection({ participantId }) {
             </div>
 
             <div className="p-5 sm:p-6 space-y-4">
-                {/* This quarter — the hero number */}
+                {/* This quarter, the hero number */}
                 <div className="rounded-xl border border-primary-k/15 border-l-4 border-l-primary-k bg-[linear-gradient(135deg,rgba(14,77,82,0.07),rgba(107,143,113,0.05))] p-4 shadow-sm">
                     <div className="flex items-baseline justify-between gap-3 flex-wrap">
                         <span className="text-sm text-primary-k font-semibold">This quarter · {cur.quarter_label}</span>
@@ -112,7 +112,7 @@ export default function BC2Projection({ participantId }) {
                     )}
                 </div>
 
-                {/* Lifetime cap — soft clay */}
+                {/* Lifetime cap, soft clay */}
                 <div className="rounded-xl border border-clay/30 bg-clay/[0.08] p-4">
                     <div className="flex items-baseline justify-between gap-3 flex-wrap">
                         <span className="text-sm font-medium text-primary-k inline-flex items-center gap-1.5">

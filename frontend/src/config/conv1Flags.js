@@ -10,17 +10,17 @@
  */
 
 const FLAG_NAMES = [
-    "conv1_truth_pass",       // A — truth pass
-    "conv1_analytics",        // K — measurement
-    "conv1_anon_invoice_check", // B — anonymous invoice check
-    "conv1_result_capture",   // C — capture at moment of value
-    "conv1_free_tier",        // D — free account tier + metering
-    "conv1_trial_compliance", // E — trial redesign + reminders
-    "conv1_signup_reduced",   // F — four-field signup
-    "conv1_article_cta",      // G — contextual offers in resources
-    "conv1_trust_layer",      // H — trust & identity
-    "conv1_lifecycle_email",  // I — return triggers
-    "conv1_prompt",           // J — on-page prompt
+    "conv1_truth_pass",       // A, truth pass
+    "conv1_analytics",        // K, measurement
+    "conv1_anon_invoice_check", // B, anonymous invoice check
+    "conv1_result_capture",   // C, capture at moment of value
+    "conv1_free_tier",        // D, free account tier + metering
+    "conv1_trial_compliance", // E, trial redesign + reminders
+    "conv1_signup_reduced",   // F, four-field signup
+    "conv1_article_cta",      // G, contextual offers in resources
+    "conv1_trust_layer",      // H, trust & identity
+    "conv1_lifecycle_email",  // I, return triggers
+    "conv1_prompt",           // J, on-page prompt
 ];
 
 function offSet() {

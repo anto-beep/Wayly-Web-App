@@ -17,7 +17,7 @@ export default function OverchargeAlerts({ onViewProvider }) {
         let cancelled = false;
         api.get("/invoices/overcharge-alerts")
             .then(({ data }) => { if (!cancelled) setAlerts(data?.alerts || []); })
-            .catch(() => { /* silent — non-blocking */ });
+            .catch(() => { /* silent, non-blocking */ });
         return () => { cancelled = true; };
     }, []);
 

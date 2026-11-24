@@ -3,14 +3,14 @@ import { ChevronDown, AlertOctagon, AlertTriangle, Info, Lightbulb, PenLine, Fil
 import { cleanTitle, plainBody, humanize } from "@/lib/plainText";
 
 /**
- * FlagCard — the single, shared flag/issue card used by the Statement Decoder
+ * FlagCard, the single, shared flag/issue card used by the Statement Decoder
  * anomalies, the Invoice Checker issues and Statement Detail, so they read
  * identically.
  *
  * COLLAPSED BY DEFAULT: a clean, properly-capitalised title, a severity chip
  * and (if present) a dollar-impact pill. Tapping expands a tight plain-English
  * explanation (long date lists condensed to "N dates"), one "What to do" step,
- * and — when onDraftLetter is provided — a "Draft a letter about this" button.
+ * and, when onDraftLetter is provided, a "Draft a letter about this" button.
  * Raw signal bullets (pension status, affected streams, program refs) are NOT
  * shown; they were confusing filler.
  *

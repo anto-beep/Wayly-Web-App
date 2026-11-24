@@ -213,7 +213,7 @@ export default function CarePlanReviewer() {
             return;
         }
         if (list.length > 1) {
-            setFileError("Only one support plan can be attached at a time — we kept the first file.");
+            setFileError("Only one support plan can be attached at a time, we kept the first file.");
         }
         setFiles([f]);
     };
@@ -251,7 +251,7 @@ export default function CarePlanReviewer() {
                 if (data?.status === "done") return data.result;
                 if (data?.status === "error") throw new Error(data.error || "Review failed.");
             } catch (e) {
-                // A job that reported status "error" is a real failure — surface it.
+                // A job that reported status "error" is a real failure, surface it.
                 if (e?.message && !e?.response && !/timeout|network/i.test(e.message) && !e?.code) throw e;
                 // Otherwise (timeout / network blip) keep polling; bail only if it persists.
                 consecutiveErrors += 1;
@@ -530,7 +530,7 @@ export default function CarePlanReviewer() {
                             ) : (
                                 <>
                                     <Upload className={`h-12 w-12 mx-auto text-primary-k transition-transform ${dragActive ? "scale-110" : ""}`} />
-                                    <div className="font-heading text-xl text-primary-k mt-3">{loading ? "Review in progress — attaching is locked" : "Upload your care plan here"}</div>
+                                    <div className="font-heading text-xl text-primary-k mt-3">{loading ? "Review in progress, attaching is locked" : "Upload your care plan here"}</div>
                                     {!loading && <div className="text-sm text-muted-k mt-1">or click to browse files</div>}
                                     <div className="text-xs text-muted-k mt-3">PDF · Word · TXT · JPG · PNG · HEIC · WEBP · one document at a time</div>
                                 </>
@@ -624,7 +624,7 @@ export default function CarePlanReviewer() {
                     </div>
                 )}
 
-                {/* UPLOAD-GUARD-1 verdict — STRICT full-screen block */}
+                {/* UPLOAD-GUARD-1 verdict, STRICT full-screen block */}
                 {guard && (
                     <div className="mt-6">
                         <UploadGuardNotice strict verdict={guard} onChooseAnother={() => { setFiles([]); setGuard(null); setText(""); }} />
@@ -680,7 +680,7 @@ export default function CarePlanReviewer() {
                             )}
                         </div>
 
-                        {/* Plan overview — colourful, a bit more detail */}
+                        {/* Plan overview, colourful, a bit more detail */}
                         {(fileResult.plan_summary || (fileResult.findings || []).length >= 0) && (
                             <div className="panel-solid-teal rounded-2xl p-6" data-testid="cp-plan-summary">
                                 <div className="flex items-start justify-between gap-3 flex-wrap">
@@ -743,7 +743,7 @@ export default function CarePlanReviewer() {
                             </div>
                         )}
 
-                        {/* Findings — urgent first, colour-coded, white text */}
+                        {/* Findings, urgent first, colour-coded, white text */}
                         <div className="rounded-2xl bg-surface border border-kindred p-6" data-testid="cp-file-findings">
                             <div className="flex items-center justify-between gap-3 flex-wrap">
                                 <div>
@@ -866,7 +866,7 @@ export default function CarePlanReviewer() {
                             participant={activeParticipant}
                         />
 
-                        {/* Verification checks — after findings, redesigned */}
+                        {/* Verification checks, after findings, redesigned */}
                         {fileResult.verification_panel?.checks?.length > 0 && (
                             <div className="rounded-2xl bg-surface border border-kindred p-6" data-testid="cp-verification-panel">
                                 <div className="overline">Safety checks we ran</div>

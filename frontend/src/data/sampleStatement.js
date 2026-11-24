@@ -1,6 +1,6 @@
 // Canonical "Try it with an example statement" sample for the free decoder.
 // KEEP BYTE-FOR-BYTE IN SYNC with _OFFICIAL_SAMPLE_STATEMENT in
-// backend/server.py — the example-decode free/unlimited exemption matches on it
+// backend/server.py, the example-decode free/unlimited exemption matches on it
 // (the backend collapses all whitespace before comparing, so column spacing is
 // not significant, but the words and figures must match).
 export const SAMPLE_STATEMENT = `Sunrise Home Care Pty Ltd

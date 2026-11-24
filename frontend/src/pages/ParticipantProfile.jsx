@@ -32,9 +32,9 @@ import {
 
 const AUD0 = (v) => (v != null && isFinite(v)
     ? new Intl.NumberFormat("en-AU", { style: "currency", currency: "AUD", maximumFractionDigits: 0 }).format(v)
-    : "—");
+    : ", ");
 
-// Financial position hero — the standout data-viz panel. A budget gauge plus
+// Financial position hero, the standout data-viz panel. A budget gauge plus
 // plain-English bars turn the raw figures into something a caregiver can read
 // at a glance. Whole panel links through to the full contribution position.
 function FinancialCard({ financial, personaFramingParticipantName, participantId }) {
@@ -44,7 +44,7 @@ function FinancialCard({ financial, personaFramingParticipantName, participantId
     const hasData = budget != null || spent != null;
     const pct = budget > 0 ? Math.min(100, Math.round(((spent || 0) / budget) * 100)) : 0;
     const remaining = budget != null ? Math.max(0, budget - (spent || 0)) : null;
-    const lastStmt = financial?.last_statement_date ? formatDate(financial.last_statement_date) : "—";
+    const lastStmt = financial?.last_statement_date ? formatDate(financial.last_statement_date) : ", ";
     return (
         <section
             data-testid="core1-financial-card"
@@ -138,7 +138,7 @@ const humanizeStatus = (s) => {
 };
 
 // Drop a trailing raw status token from a summary line (e.g.
-// "Invoice from …, check_before_paying") — the status pill already shows it.
+// "Invoice from …, check_before_paying"), the status pill already shows it.
 const stripTrailingStatus = (summary, status) => {
     if (!summary || !status) return summary || "";
     const esc = String(status).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
@@ -222,7 +222,7 @@ const EVENT_ICON = {
     household_membership_granted: Users,
 };
 
-// Only the events that genuinely matter on a glanceable timeline — keeps it
+// Only the events that genuinely matter on a glanceable timeline, keeps it
 // short and easy to scan (applies everywhere TimelineList is used).
 const MAJOR_TIMELINE_EVENTS = new Set([
     "statement_decoded",

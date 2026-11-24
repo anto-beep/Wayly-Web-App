@@ -2,7 +2,7 @@ import React from "react";
 
 // Public "How to use" walkthrough videos for the AI tools. These are hosted as
 // public customer-assets URLs (not bundled in the repo, ~20-57 MB each) and are
-// shown to everyone — signed in or not — mirroring the mobile walkthrough.
+// shown to everyone, signed in or not, mirroring the mobile walkthrough.
 const TOOL_VIDEOS = {
     "classification-self-check": {
         url: "https://customer-assets-eiarnc6j.emergentagent.net/job_8d74dc1c-0092-4bc2-8a55-b38254dd7592/artifacts/4fa3799b3cb708b6_Classification%20Self%20Check%20Tutorial_Final%20Video.mp4",

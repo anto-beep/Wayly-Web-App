@@ -11,7 +11,7 @@ const extractMsg = (e, f = "Error") => {
 };
 
 function fmtDate(iso) {
-    if (!iso) return "—";
+    if (!iso) return ", ";
     try {
         return new Date(iso).toLocaleString("en-AU", {
             day: "numeric", month: "short", year: "numeric", hour: "numeric", minute: "2-digit",
@@ -155,13 +155,13 @@ export default function AdminSupportInbox() {
                         ) : rows.map((r, i) => (
                             <tr key={`${r.source}-${r.id || r.created_at || i}`} data-testid={`inbox-row-${r.id}`}>
                                 <td><SourceBadge source={r.source} /></td>
-                                <td className="admin-mono" style={{ fontSize: 12 }}>{r.reference || "—"}</td>
+                                <td className="admin-mono" style={{ fontSize: 12 }}>{r.reference || ", "}</td>
                                 <td style={{ maxWidth: 260 }}>
                                     <div style={{ fontWeight: 600, fontSize: 13 }}>{r.title}</div>
                                     {r.detail && <div style={{ fontSize: 12, color: "var(--admin-muted)" }}>{r.detail}</div>}
                                 </td>
                                 <td style={{ fontSize: 13 }}>
-                                    <div>{r.requester_name || "—"}</div>
+                                    <div>{r.requester_name || ", "}</div>
                                     <div style={{ fontSize: 12, color: "var(--admin-muted)" }}>{r.requester_email || ""}</div>
                                 </td>
                                 <td><span style={{ fontSize: 12, fontWeight: 600 }}>{BUCKET_LABEL[r.status_bucket] || r.status}</span></td>

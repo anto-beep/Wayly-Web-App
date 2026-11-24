@@ -4,7 +4,7 @@ import { Megaphone, Loader2 } from "lucide-react";
 
 // Authenticated in-app toggle for Wayly marketing emails. Shares the same
 // backend consent record as the web signup checkbox, the email-link
-// preferences page and the mobile app — change it anywhere, it applies
+// preferences page and the mobile app, change it anywhere, it applies
 // everywhere.
 export default function MarketingEmailToggle() {
     const [optedIn, setOptedIn] = useState(false);

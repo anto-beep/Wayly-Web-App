@@ -12,7 +12,7 @@ const extractMsg = (e, f = "Error") => {
     return d?.message || f;
 };
 function fmtDate(iso) {
-    if (!iso) return "—";
+    if (!iso) return ", ";
     try { return new Date(iso).toLocaleString("en-AU", { day: "numeric", month: "short", year: "numeric", hour: "numeric", minute: "2-digit" }); }
     catch { return String(iso); }
 }
@@ -188,7 +188,7 @@ function Reporting() {
         ["Published", m.published_articles], ["Pending approval", m.pending_approval],
         ["Approved (unpublished)", m.approved_unpublished], ["Outdated", m.outdated_articles],
         ["Searches (30d)", m.searches_30d], ["Unanswered (30d)", m.unanswered_searches_30d],
-        ["Helpful % (30d)", m.feedback_helpful_pct_30d != null ? `${m.feedback_helpful_pct_30d}%` : "—"],
+        ["Helpful % (30d)", m.feedback_helpful_pct_30d != null ? `${m.feedback_helpful_pct_30d}%` : ", "],
         ["Not-helpful (30d)", m.feedback_not_helpful_30d],
     ];
     return (
@@ -203,7 +203,7 @@ function Reporting() {
             </div>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
                 <div className="admin-card" style={{ padding: 16 }}>
-                    <h3 style={{ margin: "0 0 10px", fontSize: 14 }}>Knowledge gaps — top unanswered searches (30d)</h3>
+                    <h3 style={{ margin: "0 0 10px", fontSize: 14 }}>Knowledge gaps, top unanswered searches (30d)</h3>
                     {(m.knowledge_gaps || []).length === 0 ? <p style={{ fontSize: 13, color: "var(--admin-muted)" }}>No unanswered searches.</p> :
                         (m.knowledge_gaps || []).map((g, i) => (
                             <div key={i} style={{ display: "flex", justifyContent: "space-between", fontSize: 13, padding: "4px 0", borderBottom: "1px solid var(--admin-border)" }}>
@@ -272,7 +272,7 @@ function FeedbackInbox() {
                                     <tr key={f.id} data-testid={`help-fb-row-${f.id}`}>
                                         <td style={{ fontSize: 12 }}>{f.article_slug}</td>
                                         <td><span style={{ fontWeight: 700, color: f.helpful ? "#2f7d4a" : "#A5512B" }}>{f.helpful ? "Helpful" : "Not helpful"}</span></td>
-                                        <td style={{ fontSize: 13, maxWidth: 420 }}>{f.comment || <span style={{ color: "var(--admin-muted)" }}>—</span>}</td>
+                                        <td style={{ fontSize: 13, maxWidth: 420 }}>{f.comment || <span style={{ color: "var(--admin-muted)" }}>, </span>}</td>
                                         <td className="admin-mono" style={{ fontSize: 11, whiteSpace: "nowrap" }}>{fmtDate(f.ts)}</td>
                                     </tr>
                                 ))}

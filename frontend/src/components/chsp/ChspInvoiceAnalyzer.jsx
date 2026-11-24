@@ -22,7 +22,7 @@ import OverchargeLetterModal from "@/components/chsp/OverchargeLetterModal";
 
 const AUD = (v) =>
     v == null || v === "" || isNaN(Number(v))
-        ? "—"
+        ? ", "
         : `$${Number(v).toLocaleString("en-AU", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
 const CAT_COLOR = {
@@ -42,7 +42,7 @@ const MONTH_LABEL = (ym) => {
 };
 
 function VarianceBadge({ status, delta }) {
-    if (!status) return <span className="text-[11px] text-muted-k">—</span>;
+    if (!status) return <span className="text-[11px] text-muted-k">, </span>;
     return (
         <span className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${VAR_TONE[status] || VAR_TONE.within}`}>
             {status === "within" ? <CheckCircle2 className="w-3 h-3" /> : <AlertTriangle className="w-3 h-3" />}
@@ -118,7 +118,7 @@ function TrendsChart({ trends }) {
     return (
         <div className="rounded-xl bg-white/70 border border-primary-k/10 p-4" data-testid="chsp-analyzer-trends">
             <span className="inline-flex items-center gap-2 text-sm font-medium text-primary-k"><TrendingUp className="w-4 h-4" /> Your Monthly Contribution</span>
-            <p className="text-[11px] text-muted-k mt-0.5">Across your saved invoices — watch for costs creeping up.</p>
+            <p className="text-[11px] text-muted-k mt-0.5">Across your saved invoices, watch for costs creeping up.</p>
             <div className="mt-4 flex items-end gap-3 h-36">
                 {trends.map((t) => {
                     const h = Math.max(6, Math.round((Number(t.contribution || 0) / max) * 100));
@@ -217,8 +217,8 @@ function AnalysisView({ analysis, onSave, saving, savedMode, onDraftLetter, onDo
                                             </div>
                                         </div>
                                     </td>
-                                    <td className="px-4 py-2.5 text-muted-k text-xs">{li.dates || "—"}</td>
-                                    <td className="px-4 py-2.5 text-right tabular-nums text-primary-k">{li.units != null ? `${li.units}${li.unit_label ? ` ${li.unit_label}` : ""}` : "—"}</td>
+                                    <td className="px-4 py-2.5 text-muted-k text-xs">{li.dates || ", "}</td>
+                                    <td className="px-4 py-2.5 text-right tabular-nums text-primary-k">{li.units != null ? `${li.units}${li.unit_label ? ` ${li.unit_label}` : ""}` : ", "}</td>
                                     <td className="px-4 py-2.5 text-right tabular-nums text-primary-k">{AUD(li.unit_rate)}</td>
                                     <td className="px-4 py-2.5 text-right tabular-nums font-medium text-primary-k">{AUD(li.amount)}</td>
                                     <td className="px-4 py-2.5 text-right">
@@ -528,16 +528,16 @@ export default function ChspInvoiceAnalyzer() {
                                         className="hover:bg-primary-k/[0.04] cursor-pointer">
                                         <td className="px-4 py-2.5">
                                             <div className="text-primary-k">{r.provider_name || "Provider"}</div>
-                                            <div className="text-[11px] text-muted-k">{r.invoice_reference || "—"}</div>
+                                            <div className="text-[11px] text-muted-k">{r.invoice_reference || ", "}</div>
                                         </td>
-                                        <td className="px-4 py-2.5 text-xs text-muted-k">{r.period_start ? `${r.period_start}${r.period_end ? ` – ${r.period_end}` : ""}` : "—"}</td>
+                                        <td className="px-4 py-2.5 text-xs text-muted-k">{r.period_start ? `${r.period_start}${r.period_end ? ` – ${r.period_end}` : ""}` : ", "}</td>
                                         <td className="px-4 py-2.5 text-right tabular-nums text-primary-k">{AUD(r.grand_total)}</td>
                                         <td className="px-4 py-2.5 text-right tabular-nums text-[#A5512B]">{AUD(r.client_contribution)}</td>
                                         <td className="px-4 py-2.5 text-center text-primary-k">{r.line_count ?? (r.line_items?.length || 0)}</td>
                                         <td className="px-4 py-2.5 text-center">
                                             {r.flags_count > 0
                                                 ? <span className="inline-flex items-center gap-1 rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-[10px] font-semibold text-amber-800">{r.flags_count}</span>
-                                                : <span className="text-[11px] text-muted-k">—</span>}
+                                                : <span className="text-[11px] text-muted-k">, </span>}
                                         </td>
                                         <td className="px-4 py-2.5 text-right text-xs text-muted-k">{formatDate(r.created_at) || ""}</td>
                                         <td className="px-4 py-2.5">

@@ -71,8 +71,8 @@ export default function Signup() {
         }
     }, [isRetiredFreePlan, nav]);
 
-    // CONV-1 F1–F3: the signup form is deliberately four fields — role, first
-    // name, email, password — so people start their trial in seconds. Last
+    // CONV-1 F1–F3: the signup form is deliberately four fields, role, first
+    // name, email, password, so people start their trial in seconds. Last
     // name, the care-recipient's details, a second participant and a mobile
     // number are all collected later in onboarding / Settings, where there's
     // room to explain why each one helps.
@@ -116,7 +116,7 @@ export default function Signup() {
             }, { deferUser: chosenPlan === "solo" || chosenPlan === "family" });
             track.signup({ plan: chosenPlan });
             track.identify(u);
-            // GA4 sign_up — fires only here, after the account is CONFIRMED
+            // GA4 sign_up, fires only here, after the account is CONFIRMED
             // created by /auth/signup (never on click/submit). Deduped by user id.
             try { ga4Track.signUp(u?.id, { signup_method: "email", plan_type: chosenPlan }); } catch (_) { /* analytics best-effort */ }
             // PERSONA-1 §C: set the viewer persona at signup so the account is
@@ -406,7 +406,7 @@ export default function Signup() {
                                     data-testid="signup-free-account-button"
                                     className="mt-4 w-full rounded-md border-2 border-primary-k bg-surface py-3 text-base font-semibold text-primary-k hover:bg-surface-2 transition-colors inline-flex items-center justify-center gap-2"
                                 >
-                                    Create a free account — no card
+                                    Create a free account, no card
                                     <ArrowRight className="h-4 w-4" />
                                 </Link>
                                 <p className="mt-2 text-xs text-muted-k text-center" data-testid="signup-free-note">

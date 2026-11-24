@@ -2,7 +2,7 @@ import React from "react";
 import { Copy, Download } from "lucide-react";
 import ToolSampleShell from "@/components/tool-samples/ToolSampleShell";
 
-// Worked example for the Reassessment Letter Drafter — a real drafted letter
+// Worked example for the Reassessment Letter Drafter, a real drafted letter
 // (captured from POST /api/public/reassessment-letter) for the Sam Burke case.
 const LETTER = `Dear My Aged Care Assessment Team,
 
@@ -31,9 +31,9 @@ export default function ReassessmentSampleResult() {
             testid="reassessment-sample-output"
             titleLead="See the Letter Wayly"
             titleAccent="Drafts For You"
-            description="A worked example built from a few plain answers about what has changed. This is exactly what the drafter hands you: a ready-to-send letter in the right tone, citing the current framework, with clear placeholders for the details only you can fill in — copy it or download it and send."
+            description="A worked example built from a few plain answers about what has changed. This is exactly what the drafter hands you: a ready-to-send letter in the right tone, citing the current framework, with clear placeholders for the details only you can fill in, copy it or download it and send."
             ctaTitle="Draft Your Own Letter In A Minute"
-            ctaBody="Answer a few questions about what's changed and Wayly writes the reassessment request for you — grounded in the current rules, ready to copy, download or email."
+            ctaBody="Answer a few questions about what's changed and Wayly writes the reassessment request for you, grounded in the current rules, ready to copy, download or email."
         >
             <div className="rounded-2xl border border-kindred bg-surface overflow-hidden">
                 <div className="flex items-center justify-between gap-3 border-b border-kindred bg-surface-2 px-5 py-3">

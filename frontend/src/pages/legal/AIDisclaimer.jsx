@@ -27,10 +27,10 @@ export default function AIDisclaimer() {
             <h2>Limitations of AI Outputs</h2>
             <p>While Wayly strives for accuracy, AI-generated outputs have inherent limitations. Our AI tools may:</p>
             <ul>
-                <li>Produce incorrect, misleading or incomplete information — outputs should always be reviewed for factual accuracy.</li>
+                <li>Produce incorrect, misleading or incomplete information, outputs should always be reviewed for factual accuracy.</li>
                 <li>Reflect biases present in their training data.</li>
                 <li>Rely on program rules that have changed since our last update (outdated information).</li>
-                <li>Lack genuine real-world understanding — they operate on patterns in data, not human reasoning.</li>
+                <li>Lack genuine real-world understanding, they operate on patterns in data, not human reasoning.</li>
             </ul>
             <p>Specific to Support at Home, our AI may also:</p>
             <ul>

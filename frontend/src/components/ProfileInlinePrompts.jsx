@@ -66,7 +66,7 @@ export default function ProfileInlinePrompts({ where, onParticipantUpdated }) {
     const userKey = user ? (user.id || user.email || "u") : null;
     const throttleKey = userKey ? `wayly_prompts_seen_${userKey}_${where}` : null;
     // Once a caregiver actively closes a prompt, don't nag them again for a
-    // couple of months (they've made a clear choice) — it shouldn't reappear
+    // couple of months (they've made a clear choice), it shouldn't reappear
     // every time the tool is opened.
     const dismissKey = userKey ? `wayly_prompts_dismissed_${userKey}_${where}` : null;
 

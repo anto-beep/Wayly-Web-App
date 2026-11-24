@@ -10,15 +10,15 @@ import { useAuth } from "@/context/AuthContext";
 // insight donuts, metadata strip, Wayly Summary, issue register, charges table)
 // fed with fixed example results, so the sample matches the live output exactly.
 // No API/LLM call is made, no invoiceId is passed (so the download / compare /
-// letter actions stay off). Authenticated users never see this — their page is
+// letter actions stay off). Authenticated users never see this, their page is
 // unchanged.
 //
 // TWO tabs let a visitor flip between the two outcomes the tool produces:
-//   1. "Genuine overcharge" (DEFAULT) — the Sam Burke · Blueberry Care · October
+//   1. "Genuine overcharge" (DEFAULT), the Sam Burke · Blueberry Care · October
 //      2026 invoice run with the supporting records cross-referenced. Mirrors the
 //      REAL engine output: $1,019.06 billed, ten things worth raising and one
 //      note, $466.66 potentially owed back, $552.40 net payable.
-//   2. "Clean invoice" — an invoice that is fine to pay, $0 refund, with a single
+//   2. "Clean invoice", an invoice that is fine to pay, $0 refund, with a single
 //      informational note about the lifetime contribution cap.
 // Every figure, line item, narrative and suggested question below is copied from
 // the real result so the preview never promises findings the tool did not raise.
@@ -40,7 +40,7 @@ const SAMPLE_CLEAN_RESULT = {
         refund_total: 0,
         summary_md: SAMPLE_CLEAN_SUMMARY,
         lines: [
-            { line_id: "L1", service_date: null, service_type: "Everyday living — cleaning and gardening", service_category: "everyday_living", units_or_hours: null, unit_price: null, gross_cost: 193.40, gst_amount: null, contribution_amount: 193.40 },
+            { line_id: "L1", service_date: null, service_type: "Everyday living, cleaning and gardening", service_category: "everyday_living", units_or_hours: null, unit_price: null, gross_cost: 193.40, gst_amount: null, contribution_amount: 193.40 },
             { line_id: "L2", service_date: null, service_type: "Personal care", service_category: "personal_care", units_or_hours: null, unit_price: null, gross_cost: 89.06, gst_amount: null, contribution_amount: 89.06 },
             { line_id: "L3", service_date: null, service_type: "Meal preparation", service_category: "everyday_living", units_or_hours: null, unit_price: null, gross_cost: 60.00, gst_amount: null, contribution_amount: 60.00 },
             { line_id: "L4", service_date: null, service_type: "Transport and social support", service_category: "transport", units_or_hours: null, unit_price: null, gross_cost: 33.78, gst_amount: null, contribution_amount: 33.78 },
@@ -54,7 +54,7 @@ const SAMPLE_CLEAN_RESULT = {
                 tier: 1,
                 severity: "info",
                 title: "About your lifetime contribution cap",
-                description: "You have a lifetime limit on what you will pay towards your Support at Home care under the aged care rules. The government has not yet set the final figure, so we cannot show you how close you are to it at the moment. There is nothing to do right now — it is just good to know.",
+                description: "You have a lifetime limit on what you will pay towards your Support at Home care under the aged care rules. The government has not yet set the final figure, so we cannot show you how close you are to it at the moment. There is nothing to do right now, it is just good to know.",
                 financial_impact: { amount: 0 },
                 line_ids: [],
             },
@@ -62,11 +62,11 @@ const SAMPLE_CLEAN_RESULT = {
     },
 };
 
-const SAMPLE_OVERCHARGE_SUMMARY = `This invoice from Blueberry Care Pty Ltd is for $1,019.06 and covers Sam Burke's Support at Home services through October 2026. Most of the care — the registered-nurse visits, personal care and everyday living help — lines up with the care plan. But after reading every line and cross-checking it against the service agreement and care diary, we found ten things worth raising before you pay, adding up to about $466.66 you may be owed back.
+const SAMPLE_OVERCHARGE_SUMMARY = `This invoice from Blueberry Care Pty Ltd is for $1,019.06 and covers Sam Burke's Support at Home services through October 2026. Most of the care, the registered-nurse visits, personal care and everyday living help, lines up with the care plan. But after reading every line and cross-checking it against the service agreement and care diary, we found ten things worth raising before you pay, adding up to about $466.66 you may be owed back.
 
-The biggest one: personal care has been fully government-funded since 1 October 2026, yet a contribution is still showing on eleven personal-care lines ($186.05). There is also a separate travel charge of $60.76 and a $22.00 monthly administration fee — neither is allowed under Support at Home. Two services were billed that should not have been: a respite visit on 17 October that was cancelled with notice ($42.75), and a social-support visit on 20 October while Sam was in hospital ($19.50). Meal preparation and one domestic-assistance line were charged above the rates in the service agreement, a gardening line has a maths error, one domestic-assistance line looks duplicated, and the invoice total is $20.00 higher than the individual lines add up to.
+The biggest one: personal care has been fully government-funded since 1 October 2026, yet a contribution is still showing on eleven personal-care lines ($186.05). There is also a separate travel charge of $60.76 and a $22.00 monthly administration fee, neither is allowed under Support at Home. Two services were billed that should not have been: a respite visit on 17 October that was cancelled with notice ($42.75), and a social-support visit on 20 October while Sam was in hospital ($19.50). Meal preparation and one domestic-assistance line were charged above the rates in the service agreement, a gardening line has a maths error, one domestic-assistance line looks duplicated, and the invoice total is $20.00 higher than the individual lines add up to.
 
-None of this means the provider has done anything deliberate — these are exactly the kinds of things worth a friendly question. Raise them with Blueberry Care before paying, and Wayly can draft the email for you.`;
+None of this means the provider has done anything deliberate, these are exactly the kinds of things worth a friendly question. Raise them with Blueberry Care before paying, and Wayly can draft the email for you.`;
 
 const OC = (sd, type, cat, hrs, price, gross, contrib, id) => ({
     line_id: id, service_date: sd, service_type: type, service_category: cat,
@@ -178,7 +178,7 @@ const SAMPLE_OVERCHARGE_RESULT = {
             {
                 check_id: "C11", tier: 3, severity: "medium",
                 title: "Duplicate line",
-                description: "Two domestic-assistance lines on 15 October look identical — same amount, same service, same date.",
+                description: "Two domestic-assistance lines on 15 October look identical, same amount, same service, same date.",
                 suggested_question: "Two lines on this invoice look identical (same amount, same service, same date). Can you check whether one is a duplicate?",
                 financial_impact: { amount: 64.6, basis: "one copy of the duplicated line's contribution" },
                 line_ids: ["L14", "L15"],
@@ -194,7 +194,7 @@ const SAMPLE_OVERCHARGE_RESULT = {
             {
                 check_id: "C13", tier: 3, severity: "medium",
                 title: "The invoice total is higher than the lines add up to",
-                description: "The amount payable is $1,019.06, but the individual contribution amounts on the invoice add up to $999.06 — a $20.00 difference.",
+                description: "The amount payable is $1,019.06, but the individual contribution amounts on the invoice add up to $999.06, a $20.00 difference.",
                 suggested_question: "The amount payable is $1,019.06, but the individual contribution amounts on the invoice add up to $999.06. Can you check the $20.00 difference?",
                 financial_impact: { amount: 20.0, basis: "the gap between the printed total and the lines" },
                 line_ids: [],
@@ -217,7 +217,7 @@ const TABS = [
         sub: "$466.66 to claim back",
         Icon: ShieldAlert,
         result: SAMPLE_OVERCHARGE_RESULT,
-        blurb: "Here is an example October invoice, built from the billing patterns Wayly sees most often (Blueberry Care is not a real provider), run through Wayly with the service agreement and care diary cross-referenced. The tool read all 31 lines and surfaced eleven findings, ten of them worth raising before you pay — personal care billed after it became free, a prohibited admin fee, a cancelled visit, rates above the agreement and more — adding up to $466.66 you may be owed back.",
+        blurb: "Here is an example October invoice, built from the billing patterns Wayly sees most often (Blueberry Care is not a real provider), run through Wayly with the service agreement and care diary cross-referenced. The tool read all 31 lines and surfaced eleven findings, ten of them worth raising before you pay, personal care billed after it became free, a prohibited admin fee, a cancelled visit, rates above the agreement and more, adding up to $466.66 you may be owed back.",
     },
     {
         key: "clean",
@@ -225,7 +225,7 @@ const TABS = [
         sub: "Fine to pay",
         Icon: CheckCircle2,
         result: SAMPLE_CLEAN_RESULT,
-        blurb: "And here is an invoice that checks out. Every line matches the care plan and the services were received or scheduled, so there is nothing to dispute — just a plain-English read of what you are paying for and a quick note about the lifetime contribution cap.",
+        blurb: "And here is an invoice that checks out. Every line matches the care plan and the services were received or scheduled, so there is nothing to dispute, just a plain-English read of what you are paying for and a quick note about the lifetime contribution cap.",
     },
 ];
 
@@ -263,7 +263,7 @@ function SampleTabs({ active, setActive }) {
 export default function InvoiceSampleResult() {
     const { user } = useAuth();
     const [active, setActive] = useState("overcharge");
-    // Marketing sample — show only to unauthenticated visitors, not logged-in users.
+    // Marketing sample, show only to unauthenticated visitors, not logged-in users.
     if (user) return null;
     const tab = TABS.find((t) => t.key === active) || TABS[0];
     return (
@@ -281,7 +281,7 @@ export default function InvoiceSampleResult() {
                 </h2>
                 <p className="mt-3 text-muted-k leading-relaxed">
                     Flip between an example invoice with genuine-style overcharges and one that is fine to pay. Either way you get the
-                    same output a live check gives you — the money at a glance, every line read in plain English, and a clear
+                    same output a live check gives you, the money at a glance, every line read in plain English, and a clear
                     verdict on whether to pay or ask a question first. No upload needed to look.
                 </p>
 

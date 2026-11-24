@@ -148,7 +148,7 @@ export default function AdminEnquiries() {
                         ) : rows.map((r) => (
                             <tr key={r.id || `${r.email}-${r.created_at}`} data-testid={`admin-enquiry-row-${r.id || ""}`}>
                                 <td className="admin-mono" style={{ fontSize: 11, whiteSpace: "nowrap" }}>{fmtDate(r.created_at)}</td>
-                                <td style={{ fontWeight: 600 }}>{r.name || "—"}</td>
+                                <td style={{ fontWeight: 600 }}>{r.name || ", "}</td>
                                 <td style={{ fontSize: 13 }}>
                                     {r.email && (
                                         <div>
@@ -165,7 +165,7 @@ export default function AdminEnquiries() {
                                 </td>
                                 <td>
                                     <div style={{ fontSize: 12, fontWeight: 700, textTransform: "capitalize" }}>{r.intent || "general"}</div>
-                                    <div style={{ fontSize: 12, color: "var(--admin-muted)" }}>{ROLE_LABELS[r.role] || r.role || "—"}</div>
+                                    <div style={{ fontSize: 12, color: "var(--admin-muted)" }}>{ROLE_LABELS[r.role] || r.role || ", "}</div>
                                 </td>
                                 <td style={{ maxWidth: 360, fontSize: 13 }}>
                                     {DETAIL_FIELDS.filter(([k]) => r[k]).map(([k, label]) => (

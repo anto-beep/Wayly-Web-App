@@ -53,10 +53,10 @@ const GROUPS = [
     { key: "escalate", title: "Report A Problem Or Escalate", desc: "Raise a service problem, an unresponsive care manager, or go to a regulator.", accent: "terracotta", icon: MessageSquare, archetypes: ["complaint", "escalation"] },
     { key: "notify",   title: "Notify Of A Change",         desc: "Tell them about a provider change, hardship, or updated details.",        accent: "sage",       icon: Mail,          archetypes: ["notification"] },
     { key: "reply",    title: "Reply To A Message",         desc: "Draft a considered response to something you received.",                  accent: "teal",       icon: MessageSquare, archetypes: ["response_draft"] },
-    { key: "safety",   title: "A Safety Concern",           desc: "Worried about someone's safety? Start here — we guide you to call first.", accent: "clay",       icon: ShieldAlert,   archetypes: ["guided_pathway"] },
+    { key: "safety",   title: "A Safety Concern",           desc: "Worried about someone's safety? Start here, we guide you to call first.", accent: "clay",       icon: ShieldAlert,   archetypes: ["guided_pathway"] },
 ];
 
-// "Start a blank letter" — letters are not limited to the life-scenarios above.
+// "Start a blank letter", letters are not limited to the life-scenarios above.
 // Each choice maps to a representative situation so the same create flow runs.
 const BLANK_TYPES = [
     { label: "Request a Change",            situationId: 6,  icon: FileText },
@@ -280,7 +280,7 @@ export default function LettersFollowUps() {
 
                 {!loading && (
                     <>
-                        {/* Start a blank letter — letters are not limited to scenarios. */}
+                        {/* Start a blank letter, letters are not limited to scenarios. */}
                         <BlankLetterPanel
                             situations={situations}
                             busySituationId={busySituationId}
@@ -411,7 +411,7 @@ function BlankLetterPanel({ situations, busySituationId, onPick }) {
                 <div className="min-w-0">
                     <h2 className="font-heading text-xl text-primary-k tracking-tight">Start a blank letter</h2>
                     <p className="mt-1 text-sm text-muted-k leading-relaxed">
-                        Know what you need? Pick a letter type and write it your way — you choose the recipient and the details.
+                        Know what you need? Pick a letter type and write it your way, you choose the recipient and the details.
                     </p>
                 </div>
             </div>
@@ -468,7 +468,7 @@ function SituationCard({ situation, accent, busy, onClick }) {
                         <div className="mt-1 text-xs text-muted-k inline-flex items-center gap-1.5">
                             {isElderAbuse ? (
                                 <>
-                                    <Phone className="h-3 w-3" /> Phone first — no auto-generated letter
+                                    <Phone className="h-3 w-3" /> Phone first, no auto-generated letter
                                 </>
                             ) : situation.archetype === "response_draft" ? (
                                 <>

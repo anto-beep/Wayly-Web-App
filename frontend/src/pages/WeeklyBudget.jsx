@@ -1,9 +1,9 @@
 /**
- * WeeklyBudget — the FUNDTRACK-1 "weekly screen". Order locked by spec:
+ * WeeklyBudget, the FUNDTRACK-1 "weekly screen". Order locked by spec:
  * the dashboard ladder card (unchanged), then the booked care behind G visit by
  * visit, then the three actions: Add a charge, What if I add care?, Something
  * changed. Below that: what's been used, what a statement has replaced, and any
- * pending visits. Lives inside the app — no new nav tool.
+ * pending visits. Lives inside the app, no new nav tool.
  */
 import React, { useCallback, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
@@ -124,7 +124,7 @@ export default function WeeklyBudget() {
                                             <span className="block text-xs text-muted-k">{fmtDate(b.date)} · {b.stream}{b.unpriced ? " · unpriced" : ""}</span>
                                         </span>
                                         <div className="flex items-center gap-3 shrink-0">
-                                            <span className="text-sm font-semibold text-primary-k tabular-nums">{b.unpriced ? "—" : AUD(b.amount)}</span>
+                                            <span className="text-sm font-semibold text-primary-k tabular-nums">{b.unpriced ? ", " : AUD(b.amount)}</span>
                                             <button onClick={() => setChangeVisit(b)} data-testid={`weekly-change-${b.id}`} className="text-xs text-primary-k underline">Something changed</button>
                                         </div>
                                     </li>
@@ -140,7 +140,7 @@ export default function WeeklyBudget() {
                         <ActionCard testid="weekly-something-changed" Icon={RefreshCw} title="Something changed" hint="A visit was missed or different" onClick={() => setChangeVisit(data.booked?.[0] || { blank: true })} tone="gold" />
                     </div>
 
-                    {/* what you've recorded — sortable/filterable table with edit + delete */}
+                    {/* what you've recorded, sortable/filterable table with edit + delete */}
                     {(data.used || []).length > 0 && (
                         <UsedEntriesTable items={data.used} onChanged={load} pid={pid} savedServices={data.saved_services || []} />
                     )}
@@ -165,7 +165,7 @@ export default function WeeklyBudget() {
                     {(data.pending || []).length > 0 && (
                         <div className="rounded-2xl border border-clay/30 bg-clay/[0.05] p-4" data-testid="weekly-pending">
                             <h2 className="font-heading text-base text-primary-k mb-1 inline-flex items-center gap-2"><Clock className="w-4 h-4 text-clay" /> Possible pending visits</h2>
-                            <p className="text-xs text-muted-k mb-2">Booked visits whose date has passed but aren't confirmed yet. We haven't counted these in what's left — confirm or change them.</p>
+                            <p className="text-xs text-muted-k mb-2">Booked visits whose date has passed but aren't confirmed yet. We haven't counted these in what's left, confirm or change them.</p>
                             <ul className="space-y-2">
                                 {data.pending.map((p) => (
                                     <li key={p.id} className="flex items-center justify-between gap-3 rounded-lg border border-clay/20 bg-white px-3 py-2" data-testid={`weekly-pending-${p.id}`}>
@@ -228,7 +228,7 @@ function VisitChangeDialog({ pid, visit, onClose, onSaved }) {
                 amount: (needsAmount || isExtra) ? (amount === "" ? null : Number(amount)) : null,
                 scope: "just_this",
             });
-            toast.success("Noted — the figures have been updated. Check your latest balance.");
+            toast.success("Noted, the figures have been updated. Check your latest balance.");
             onSaved?.();
         } catch (e) { toast.error(e?.response?.data?.detail || "Could not record that."); }
         finally { setBusy(false); }
@@ -306,7 +306,7 @@ function UsedEntriesTable({ items, onChanged, pid, savedServices = [] }) {
 
     const del = async (id) => {
         setBusyId(id);
-        try { await api.delete(`/fundtrack/charges/${id}`); toast.success("Entry deleted. Your budget's been updated — check your latest balance."); setConfirmId(null); onChanged?.(); }
+        try { await api.delete(`/fundtrack/charges/${id}`); toast.success("Entry deleted. Your budget's been updated, check your latest balance."); setConfirmId(null); onChanged?.(); }
         catch (e) { toast.error(e?.response?.data?.detail || "Could not delete that entry."); }
         finally { setBusyId(null); }
     };
@@ -410,12 +410,12 @@ function EditEntryDialog({ entry, pid, savedServices = [], onClose, onSaved }) {
                     source: "entered", service_name: serviceName.trim(), stream,
                     date: date || todayISO(), amount: amount === "" ? null : Number(amount),
                 });
-                toast.success("Entry added. Your budget's been updated — check your latest balance.");
+                toast.success("Entry added. Your budget's been updated, check your latest balance.");
             } else {
                 await api.patch(`/fundtrack/charges/${entry.id}`, {
                     service_name: serviceName.trim(), date, amount: amount === "" ? null : Number(amount),
                 });
-                toast.success("Entry updated. Your budget's been updated — check your latest balance.");
+                toast.success("Entry updated. Your budget's been updated, check your latest balance.");
             }
             onSaved?.();
         } catch (e) { toast.error(e?.response?.data?.detail || "Could not save that entry."); }

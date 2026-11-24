@@ -4,7 +4,7 @@ import { ChevronRight } from "lucide-react";
 
 function aud(n) {
     const v = Number(n);
-    return isFinite(v) ? `$${v.toLocaleString("en-AU", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : "—";
+    return isFinite(v) ? `$${v.toLocaleString("en-AU", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : ", ";
 }
 function impact(f) {
     // Only a backend-computed, traceable financial_impact counts as a refund.
@@ -40,7 +40,7 @@ const scrollTo = (sel) => {
 };
 
 /**
- * InvoiceInsightGraphics — glanceable, image-free graphics for a saved invoice,
+ * InvoiceInsightGraphics, glanceable, image-free graphics for a saved invoice,
  * mirroring StatementInsightGraphics. "Where your money stands" (net payable vs
  * potential refund) and "What we found" (severity breakdown). Every data point
  * is tappable and jumps to the issue register.

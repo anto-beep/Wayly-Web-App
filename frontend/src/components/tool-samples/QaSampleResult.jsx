@@ -2,14 +2,14 @@ import React from "react";
 import { MessageSquare, Sparkles } from "lucide-react";
 import ToolSampleShell from "@/components/tool-samples/ToolSampleShell";
 
-// Worked example for Aged Care Q&A — a real question + the real assistant
+// Worked example for Aged Care Q&A, a real question + the real assistant
 // reply (captured from POST /api/public/aged-care-chat).
 const QUESTION = "My mum is on a full pension and just moved to Support at Home. Do we have to pay for her personal care and nursing visits?";
 const REPLY_PARAS = [
     "From **1 October 2026**, personal care under Support at Home is **fully government-funded** (the participant contribution is $0). That change applies automatically, no reassessment needed. Nursing also sits in the Clinical Supports category, so if she has available funds allocated to that category, there's no participant contribution for nursing either.",
     "**Before 1 October 2026**, personal care fell under Independence and attracted the **5% participant contribution** for full pensioners. If you're seeing invoices dated before that, the 5% is correct.",
     "**Other contributions remain unchanged**: the **5% Independence contribution** still applies to things like gardening, transport, and home modifications. The **20% Everyday Living contribution** still applies to social activities, meal services, and similar supports.",
-    "**Next step:** If you're seeing personal care charges on a statement dated on or after 1 October 2026, contact the provider — they may not have updated their pricing yet.",
+    "**Next step:** If you're seeing personal care charges on a statement dated on or after 1 October 2026, contact the provider, they may not have updated their pricing yet.",
 ];
 
 function Rich({ text }) {
@@ -34,9 +34,9 @@ export default function QaSampleResult() {
             testid="qa-sample-output"
             titleLead="See the Kind of Answer"
             titleAccent="You'll Get"
-            description="A worked example of a real question and answer. Ask anything about Support at Home — fees, contributions, what changed and when — and get a clear, plain-English answer grounded in the current rules, with a next step you can act on."
+            description="A worked example of a real question and answer. Ask anything about Support at Home, fees, contributions, what changed and when, and get a clear, plain-English answer grounded in the current rules, with a next step you can act on."
             ctaTitle="Ask Your Own Question"
-            ctaBody="Sign in and the assistant answers with your household context — your plan, your classification and your statements — so the answer is specific to your situation."
+            ctaBody="Sign in and the assistant answers with your household context, your plan, your classification and your statements, so the answer is specific to your situation."
         >
             <div className="rounded-2xl border border-kindred bg-surface p-5 sm:p-6">
                 <div className="flex justify-end">

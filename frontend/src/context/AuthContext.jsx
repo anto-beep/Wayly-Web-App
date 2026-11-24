@@ -136,7 +136,7 @@ export function AuthProvider({ children }) {
         setUser(data.user);
         if (data?.user?.id) setSentryUser(data.user.id);
         try { track.login({ method: "google" }); track.identify(data.user); } catch (_) { /* analytics best-effort */ }
-        // GA4 sign_up for Google — only when this is a BRAND-NEW account.
+        // GA4 sign_up for Google, only when this is a BRAND-NEW account.
         // /auth/google is find-or-create, so we treat a just-created account
         // (created_at within the last 2 minutes) as a signup; returning-user
         // logins never count. Deduped by user id.
@@ -193,7 +193,7 @@ export function AuthProvider({ children }) {
             document.documentElement.setAttribute("data-theme", "light");
             // Reset any in-memory appearance state (ThemeProvider override,
             // AccessibilityWidget prefs) so a same-tab logout returns to light
-            // immediately — clearing localStorage alone never touches React
+            // immediately, clearing localStorage alone never touches React
             // state, so the old dark pref would otherwise re-apply on re-render.
             window.dispatchEvent(new Event("wayly:appearance-reset"));
         } catch (_) { /* best-effort */ }

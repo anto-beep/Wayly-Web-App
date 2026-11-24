@@ -3,7 +3,7 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 
 /**
- * MarkdownText — renders assistant/AI text as formatted markdown so **bold**,
+ * MarkdownText, renders assistant/AI text as formatted markdown so **bold**,
  * bullet/numbered lists and headings display properly instead of leaking raw
  * asterisks. Tight spacing so it sits well inside chat bubbles.
  */

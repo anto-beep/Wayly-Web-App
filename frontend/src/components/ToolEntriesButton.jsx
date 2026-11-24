@@ -1,5 +1,5 @@
 /**
- * ToolEntriesButton — a clear, consistent button on each AI Tool page that
+ * ToolEntriesButton, a clear, consistent button on each AI Tool page that
  * takes the user to where their saved entries for that tool live:
  *   Statement Decoder  -> Statements
  *   Invoice Checker    -> Invoices

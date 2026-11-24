@@ -11,7 +11,7 @@ import { useAuth } from "@/context/AuthContext";
 // real decode uses (Wayly Summary → insight donuts → DecoderResultView) fed
 // with a fixed example result, so the sample matches the live output exactly:
 // same summary length/style, the three brand-coloured streams, the who-paid
-// split, fee breakdown and anomaly cards. No API/LLM call is made — the Wayly
+// split, fee breakdown and anomaly cards. No API/LLM call is made, the Wayly
 // Summary runs in static mode (autoLoad=false) with the example text.
 //
 // Example household: a Level 4 participant on Support at Home, October 2026,
@@ -77,7 +77,7 @@ const SAMPLE_RESULT = {
 
 export default function DecoderSampleResult() {
     const { user } = useAuth();
-    // Marketing sample — show only to unauthenticated visitors, not logged-in users.
+    // Marketing sample, show only to unauthenticated visitors, not logged-in users.
     if (user) return null;
     return (
         <section className="mt-10" data-testid="decoder-sample-output" aria-label="Example decoded statement">

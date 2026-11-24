@@ -1,4 +1,4 @@
-// plainText — turn AI/technical flag copy into plain, non-technical language
+// plainText, turn AI/technical flag copy into plain, non-technical language
 // that anyone can follow. Two goals across every tool:
 //   1) dates always read DD/MM/YYYY
 //   2) no developer/system jargon (JSON, arrays, field names, internal codes)
@@ -96,7 +96,7 @@ export function condenseDates(input) {
 }
 
 // A clean, short, properly-capitalised heading from a headline sentence. The
-// backend headlines are already whole sentences — we only humanise them, drop
+// backend headlines are already whole sentences, we only humanise them, drop
 // any trailing parenthetical/second clause, strip the full stop and capitalise.
 export function cleanTitle(input, max = 96) {
     let h = condenseDates(humanize(input || "")).trim();

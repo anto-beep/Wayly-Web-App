@@ -236,7 +236,7 @@ function ProjectDetail({ project, participantId, onClose, onRefresh }) {
             const modNames = (mods || []).filter(Boolean).map((m) => m.modification_name).join(", ");
             const detailBits = [needTxt, itemNames ? `Equipment: ${itemNames}.` : "", modNames ? `Home modifications: ${modNames}.` : ""].filter(Boolean).join(" ");
             const findings = [{
-                title: `Assistive technology and home modification request — ${project.title}`,
+                title: `Assistive technology and home modification request, ${project.title}`,
                 detail: detailBits || `A request relating to the ${PROJECT_TYPES[project.project_type]?.label || "AT/HM"} project "${project.title}".`,
                 suggested_question: "Please confirm the next step to progress this under Support at Home, including any OT assessment and funding approval.",
                 addressee_primary: "provider",

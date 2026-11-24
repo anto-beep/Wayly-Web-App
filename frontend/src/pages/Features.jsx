@@ -127,7 +127,7 @@ function CompareRow({ label, value, pct, tone = "#F0B267" }) {
     );
 }
 
-// The hero "at a glance" visual card — a stylised decode summary.
+// The hero "at a glance" visual card, a stylised decode summary.
 function GlanceCard() {
     return (
         <div className="relative">

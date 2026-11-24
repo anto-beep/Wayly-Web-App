@@ -413,7 +413,7 @@ export default function StatementsList() {
                                                         <div className="text-muted-k">{uploadedLabel(s.uploaded_at)}</div>
                                                         <div className="text-primary-k text-right font-mono tabular-nums">{formatAUD2(gross)}</div>
                                                         <div className={`text-right font-mono tabular-nums ${closing == null ? "text-muted-k" : "text-primary-k"}`}>
-                                                            {closing == null ? "—" : formatAUD2(closing)}
+                                                            {closing == null ? ", " : formatAUD2(closing)}
                                                         </div>
                                                         <div>
                                                             <StatementStatusBadge

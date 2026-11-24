@@ -467,7 +467,7 @@ function useSyncHtmlToAdminTheme(theme) {
         return () => {
             if (obs) obs.disconnect();
             // Restore the CONSUMER theme (mirrors ThemeProvider: stored pref,
-            // else light — the consumer app ignores OS dark unless chosen).
+            // else light, the consumer app ignores OS dark unless chosen).
             let pref = null;
             try { pref = window.localStorage.getItem("wayly:app:appearance"); } catch { /* ignore */ }
             const consumerEff = pref === "dark" ? "dark" : "light";

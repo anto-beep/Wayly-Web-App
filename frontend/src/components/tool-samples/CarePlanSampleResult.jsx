@@ -2,10 +2,10 @@ import React from "react";
 import { AlertTriangle, Info, CheckCircle2, FileText } from "lucide-react";
 import ToolSampleShell from "@/components/tool-samples/ToolSampleShell";
 
-// Worked example for the Support Plan Reviewer — real AI output
+// Worked example for the Support Plan Reviewer, real AI output
 // (captured from POST /api/public/care-plans/review-files-async) for the
 // Sam Burke sample support plan (Classification 6, Blueberry Care).
-const SUMMARY = "This is a Support at Home support plan for Sam Burke, who is on Classification 6, managed by Blueberry Care Pty Ltd, working against a quarterly budget of $12,365.48. Wayly read the plan and checked it against the Support at Home rules, the Statement of Rights and the budget for this classification. The plan meets the core compliance checks — here are seven things worth raising with the provider before the next review.";
+const SUMMARY = "This is a Support at Home support plan for Sam Burke, who is on Classification 6, managed by Blueberry Care Pty Ltd, working against a quarterly budget of $12,365.48. Wayly read the plan and checked it against the Support at Home rules, the Statement of Rights and the budget for this classification. The plan meets the core compliance checks, here are seven things worth raising with the provider before the next review.";
 
 const FINDINGS = [
     {
@@ -70,7 +70,7 @@ export default function CarePlanSampleResult() {
             testid="careplan-sample-output"
             titleLead="See What a Support Plan Review"
             titleAccent="Turns Up"
-            description="A worked example from a real Classification 6 support plan. This is exactly what the reviewer shows you: a plain-English read of the plan, then every point worth raising — rates above the midpoint, gaps against the plan's own goals, and mandatory items missing — each with the exact question to ask and the rule it sits under."
+            description="A worked example from a real Classification 6 support plan. This is exactly what the reviewer shows you: a plain-English read of the plan, then every point worth raising, rates above the midpoint, gaps against the plan's own goals, and mandatory items missing, each with the exact question to ask and the rule it sits under."
             ctaTitle="Review Your Own Support Plan"
             ctaBody="Upload your Support at Home plan and Wayly checks it against the rules, the Statement of Rights and the budget for the classification, then drafts the questions to raise with your provider."
         >
@@ -107,7 +107,7 @@ export default function CarePlanSampleResult() {
             </div>
 
             <div className="flex items-center gap-2 text-sm text-sage">
-                <CheckCircle2 className="h-4 w-4" /> Core compliance checks passed — budget, care management cap and classification all line up.
+                <CheckCircle2 className="h-4 w-4" /> Core compliance checks passed, budget, care management cap and classification all line up.
             </div>
         </ToolSampleShell>
     );

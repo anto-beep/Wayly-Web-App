@@ -155,7 +155,7 @@ export function titleCaseHeading(input) {
     return tokens
         .map((tok, i) => {
             const out = _capHeadingToken(tok, i === 0 || i === last || afterBreak);
-            afterBreak = /[:?!—–]$/.test(tok);
+            afterBreak = /[:?!, –]$/.test(tok);
             return out;
         })
         .join(" ");

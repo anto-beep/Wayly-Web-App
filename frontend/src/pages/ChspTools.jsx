@@ -215,7 +215,7 @@ function WS1FeeCheck({ services }) {
             setLineOptions(Array.isArray(data.line_options) ? data.line_options : []);
             setParseInfo({ plain_summary: data.plain_summary, next_steps: data.next_steps || [] });
             const n = (data.line_options || []).length;
-            toast.success(n > 1 ? `We read ${n} service lines — pick one to check.` : "We read your invoice and filled in what we could.");
+            toast.success(n > 1 ? `We read ${n} service lines, pick one to check.` : "We read your invoice and filled in what we could.");
         } catch (err) {
             toast.error(err?.response?.data?.detail || "Could not read that invoice.");
         } finally { setParsing(false); }
@@ -317,7 +317,7 @@ function WS1FeeCheck({ services }) {
             {lineOptions.length > 1 && (
                 <div className="rounded-xl bg-white/70 border border-primary-k/10 p-4 space-y-2" data-testid="chsp-ws1-line-picker">
                     <p className="text-sm font-medium text-primary-k flex items-center gap-1.5">
-                        <ListChecks className="w-4 h-4" /> This invoice has {lineOptions.length} service lines — pick one to check
+                        <ListChecks className="w-4 h-4" /> This invoice has {lineOptions.length} service lines, pick one to check
                     </p>
                     <div className="grid gap-2">
                         {lineOptions.map((o, i) => (
@@ -925,7 +925,7 @@ function TransitionWalkthrough() {
                         <p className="mt-1">Compared with CHSP, Support at Home <strong>can cost more</strong>, is <strong>means tested</strong>, and can involve <strong>waitlists</strong>. For many people, CHSP remains the right program.</p>
                     </div>
                 </div>
-                <p className="text-xs text-muted-k">Tick each idea you feel comfortable with. Nothing is submitted yet — this is just for your own confidence.</p>
+                <p className="text-xs text-muted-k">Tick each idea you feel comfortable with. Nothing is submitted yet, this is just for your own confidence.</p>
                 {CONSIDERATIONS.map(c => (
                     <TWTile key={c.key} tone="teal" checked={!!considerations[c.key]} onClick={() => toggleConsideration(c.key)} testid={`tw-consideration-${c.key}`} label={c.label} />
                 ))}
@@ -963,7 +963,7 @@ function TransitionWalkthrough() {
                         <h2 className="font-heading text-2xl">Transition Walkthrough</h2>
                     </div>
                 </div>
-                <p className="text-sm text-white/80 mt-2">A calm, three-step self-check. There&apos;s no pressure — many people stay on CHSP.</p>
+                <p className="text-sm text-white/80 mt-2">A calm, three-step self-check. There&apos;s no pressure, many people stay on CHSP.</p>
             </div>
 
             {/* Visual stepper */}
@@ -1066,7 +1066,7 @@ export default function ChspTools() {
             <ChspProfileCard profile={profile} onCreate={load}/>
             {profile && (
                 <>
-                    {/* Is CHSP still the right fit? — surfaced up top, not buried at the bottom. */}
+                    {/* Is CHSP still the right fit?, surfaced up top, not buried at the bottom. */}
                     <div className="rounded-2xl border border-[#0E4D52]/20 bg-[#E7F1F1] p-5 space-y-3" data-testid="chsp-fit-self-check">
                         <div className="flex items-start gap-3">
                             <div className="p-2 rounded-full bg-[#0E4D52]/10"><Home className="w-5 h-5 text-[#0E4D52]" /></div>

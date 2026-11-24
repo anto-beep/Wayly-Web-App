@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
 
 /**
- * GoogleAds — Google Ads conversion tag + cookie consent for wayly.com.au.
+ * GoogleAds, Google Ads conversion tag + cookie consent for wayly.com.au.
  *
  * - Consent-mode DEFAULTS live in public/index.html (ad_* denied) and load
  *   before this component, so Google never reads/writes ad cookies until the
@@ -12,13 +12,13 @@ import { useLocation } from "react-router-dom";
  * - A first-visit cookie banner lets the visitor Accept all, keep Only
  *   necessary, or Choose. The choice is remembered in localStorage.
  * - We never pass user data (statement contents, amounts, names, levels,
- *   service details) to any event — only the base config fires here.
+ *   service details) to any event, only the base config fires here.
  */
 
 const GA_ADS_ID = "AW-18544177324";
 const CONSENT_KEY = "wayly_cookie_consent";
 
-// Signed-in app / dashboard shells — the Google tag must NOT load here.
+// Signed-in app / dashboard shells, the Google tag must NOT load here.
 const APP_PREFIXES = ["/app", "/onboarding", "/journey", "/admin", "/settings", "/billing"];
 
 function isAppRoute(pathname) {
@@ -92,7 +92,7 @@ function injectMetaPixel() {
             s.parentNode.insertBefore(t, s);
         }
     }
-    // Consent OFF until the visitor accepts advertising — revoke BEFORE init.
+    // Consent OFF until the visitor accepts advertising, revoke BEFORE init.
     window.fbq("consent", "revoke");
     // Disable automatic configuration so PageView etc. log as STANDARD events.
     window.fbq("set", "autoConfig", false, META_PIXEL_ID);
@@ -109,7 +109,7 @@ function grantMetaConsent() {
 // Same rules as the Google tag + Meta Pixel: public pages only, consent-first.
 // Consent default is set to DENIED before anything loads; the bat.js tag is
 // only injected once the visitor grants advertising consent, so it never loads
-// or fires otherwise. No custom events — enableAutoSpaTracking registers SPA
+// or fires otherwise. No custom events, enableAutoSpaTracking registers SPA
 // page views (the /welcome page view is the conversion). We never pass tool
 // inputs, amounts, names, emails or service details to Microsoft.
 const UET_TAG_ID = "343283166";
@@ -209,7 +209,7 @@ export default function GoogleAds() {
                         <div className="flex items-center justify-between gap-4">
                             <div>
                                 <p className="text-sm font-medium text-primary-k">Essential &amp; analytics</p>
-                                <p className="text-xs text-muted-k">Always on — needed to run Wayly.</p>
+                                <p className="text-xs text-muted-k">Always on, needed to run Wayly.</p>
                             </div>
                             <span className="text-xs font-medium text-muted-k">Always on</span>
                         </div>

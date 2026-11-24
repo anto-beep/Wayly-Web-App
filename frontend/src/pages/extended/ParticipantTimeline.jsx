@@ -91,7 +91,7 @@ function iconFor(item) {
     return Sparkles;
 }
 
-// Brand tint per category — drives the coloured dot on the timeline spine.
+// Brand tint per category, drives the coloured dot on the timeline spine.
 function tintFor(item) {
     const sig = signatureFor(item).toLowerCase();
     if (sig.includes("statement"))                          return "#0E4D52";
@@ -371,7 +371,7 @@ function EventCard({ item }) {
                 className="rounded-2xl border border-kindred overflow-hidden"
                 style={{ backgroundColor: `${tint}0D`, borderLeftWidth: 3, borderLeftColor: tint }}
             >
-                {/* Collapsed header — always visible, tap to expand. */}
+                {/* Collapsed header, always visible, tap to expand. */}
                 <button
                     type="button"
                     onClick={() => setOpen((v) => !v)}
@@ -387,7 +387,7 @@ function EventCard({ item }) {
                         <ChevronDown className={`h-4 w-4 text-muted-k transition-transform ${open ? "rotate-180" : ""}`} aria-hidden="true" />
                     </span>
                 </button>
-                {/* Expanded body — plain-English meaning + optional next step. */}
+                {/* Expanded body, plain-English meaning + optional next step. */}
                 {open && (
                     <div className="px-4 pb-4 -mt-1" data-testid="timeline-event-body">
                         <p className="text-sm text-primary-k/70 leading-relaxed">

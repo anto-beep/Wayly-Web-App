@@ -3,14 +3,14 @@ import { useNavigate } from "react-router-dom";
 import { AlertTriangle, FileWarning, ArrowRight, ShieldAlert } from "lucide-react";
 
 /**
- * UPLOAD-GUARD-1 (v1) — renders the server's block / wrong-tool / confirm
+ * UPLOAD-GUARD-1 (v1), renders the server's block / wrong-tool / confirm
  * verdict identically to mobile.
  *
  * Two modes:
  *  - default: inline notice. `onContinue` powers the confirm tier (re-submit
  *    with override); used by the Invoice Checker.
  *  - strict:  a prominent, full-width block used by the Statement Decoder and
- *    Care Plan Reviewer. There is NO "continue anyway" — the document must be
+ *    Care Plan Reviewer. There is NO "continue anyway", the document must be
  *    clearly the right type before any numbers are shown.
  */
 export default function UploadGuardNotice({ verdict, onContinue, onChooseAnother, busy, strict = false }) {

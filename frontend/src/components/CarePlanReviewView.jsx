@@ -18,8 +18,8 @@ function cpSeverityMeta(f) {
 const _money = (v) => Number(v).toLocaleString("en-AU", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
 /**
- * Read-only presentation of a care-plan review — the Wayly Summary, the
- * "What we found" findings, and the Safety checks panel — shared by the tool
+ * Read-only presentation of a care-plan review, the Wayly Summary, the
+ * "What we found" findings, and the Safety checks panel, shared by the tool
  * result screen and the saved Care Plans entry so both look the same.
  */
 export default function CarePlanReviewView({
@@ -75,7 +75,7 @@ export default function CarePlanReviewView({
                 {planSummary && <p className="mt-3 text-sm text-white/95 leading-relaxed">{planSummary}</p>}
             </div>
 
-            {/* Findings — urgent first, colour-coded */}
+            {/* Findings, urgent first, colour-coded */}
             <div className="rounded-2xl bg-surface border border-kindred p-6" data-testid="cp-file-findings">
                 <div>
                     <div className="overline">What we found</div>

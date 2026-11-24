@@ -746,7 +746,7 @@ export default function InvoiceCheckerTool() {
                                 <div className="flex-1 text-sm text-[#5A4A1C]">
                                     <p className="font-semibold">{result.duplicate_warning.message}</p>
                                     <p className="mt-0.5 text-[#7A6A3C]">
-                                        We&apos;ve still checked this one — but you may have already looked at
+                                        We&apos;ve still checked this one, but you may have already looked at
                                         {result.duplicate_warning.provider_name ? ` ${result.duplicate_warning.provider_name}` : " this provider"}
                                         {result.duplicate_warning.invoice_date ? ` dated ${result.duplicate_warning.invoice_date}` : ""}.
                                     </p>
@@ -762,7 +762,7 @@ export default function InvoiceCheckerTool() {
                                 </div>
                             </div>
                         )}
-                        {/* Shared result body — identical layout + graphics to the saved Invoice page */}
+                        {/* Shared result body, identical layout + graphics to the saved Invoice page */}
                         <InvoiceResultBody
                             result={result}
                             invoiceId={result.invoice_id}

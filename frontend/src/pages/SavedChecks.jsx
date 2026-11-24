@@ -7,7 +7,7 @@ import SeoHead from "@/seo/SeoHead";
 import { api } from "@/lib/api";
 
 /**
- * SavedChecks — CONV-1 D: a free member's kept invoice checks + statement
+ * SavedChecks, CONV-1 D: a free member's kept invoice checks + statement
  * decodes, household-independent, reopenable any time.
  */
 export default function SavedChecks() {

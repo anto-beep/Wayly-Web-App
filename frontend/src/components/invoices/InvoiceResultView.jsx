@@ -7,13 +7,13 @@ import InvoiceInsightGraphics from "@/components/InvoiceInsightGraphics";
 import { toast } from "sonner";
 
 /**
- * InvoiceResultBanner — mirrors the Statement Decoder summary banner so the
+ * InvoiceResultBanner, mirrors the Statement Decoder summary banner so the
  * two tools feel like one product. Renders period / provider / total /
  * refund-owed / disputed-lines / net-payable in a dark teal card.
  */
 function aud(n) {
     const v = Number(n);
-    if (!isFinite(v)) return "—";
+    if (!isFinite(v)) return ", ";
     return `$${v.toLocaleString("en-AU", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
 
@@ -122,7 +122,7 @@ export function InvoiceResultBanner({ result }) {
 }
 
 /**
- * InvoiceIssueRegister — the "Issue Register" section, mirrors the Statement
+ * InvoiceIssueRegister, the "Issue Register" section, mirrors the Statement
  * Decoder anomaly panel. Groups findings by severity, exposes the answer
  * key layout: refs, categories, financial impact, and recommended action.
  */
@@ -266,7 +266,7 @@ export function InvoiceIssueRegister({ findings, onDraftFinding }) {
 }
 
 /**
- * WaylySummaryCard — the plain-English "Wayly Summary" card shown on both the
+ * WaylySummaryCard, the plain-English "Wayly Summary" card shown on both the
  * fresh-run result and the saved invoice page so they read identically.
  */
 export function WaylySummaryCard({ summary }) {
@@ -285,7 +285,7 @@ export function WaylySummaryCard({ summary }) {
 }
 
 /**
- * InvoiceResultBody — the ONE shared result layout used by BOTH the fresh-run
+ * InvoiceResultBody, the ONE shared result layout used by BOTH the fresh-run
  * Invoice Checker output and the saved Invoice Detail page, so they look
  * identical from layout to graphics. Order: summary banner, insight graphics
  * (donuts), metadata strip, download/compare bar, Wayly Summary, draft-all
@@ -323,7 +323,7 @@ export function InvoiceResultBody({ result, invoiceId, comparing, onCompare, onD
 }
 
 /**
- * InvoiceMetadataStrip — small provider/period/reference row that appears
+ * InvoiceMetadataStrip, small provider/period/reference row that appears
  * under the summary banner, mirroring how the Statement Decoder header
  * shows key metadata.
  */
@@ -365,7 +365,7 @@ function _catLabel(c) {
 }
 
 /**
- * InvoiceChargesTable — the "what's been charged" breakdown, mirroring the
+ * InvoiceChargesTable, the "what's been charged" breakdown, mirroring the
  * Statement Decoder line-item table. Collapsed by default. Renders every
  * extracted invoice line with qty, unit price, gross, GST, and contribution.
  */
@@ -401,13 +401,13 @@ export function InvoiceChargesTable({ result, defaultOpen = false }) {
                                         {isDisputed && <AlertTriangle className="h-3.5 w-3.5 text-terracotta flex-shrink-0" />}
                                         <span className="truncate">{ln.service_type || ln.raw_text?.slice(0, 40) || "Service"}</span>
                                     </span>
-                                    <span className="flex-none text-primary-k font-semibold tabular-nums text-sm">{ln.gross_cost != null ? aud(ln.gross_cost) : "—"}</span>
+                                    <span className="flex-none text-primary-k font-semibold tabular-nums text-sm">{ln.gross_cost != null ? aud(ln.gross_cost) : ", "}</span>
                                 </div>
                                 <div className="mt-1.5 flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-k">
-                                    <span className="tabular-nums">{formatDate(ln.service_date) || "—"}</span>
+                                    <span className="tabular-nums">{formatDate(ln.service_date) || ", "}</span>
                                     <span>{_catLabel(ln.service_category)}</span>
-                                    {ln.units_or_hours != null && <span className="tabular-nums">{ln.units_or_hours} × {ln.unit_price != null ? aud(ln.unit_price) : "—"}</span>}
-                                    <span>You paid <span className="text-primary-k tabular-nums">{ln.contribution_amount != null ? aud(ln.contribution_amount) : "—"}</span></span>
+                                    {ln.units_or_hours != null && <span className="tabular-nums">{ln.units_or_hours} × {ln.unit_price != null ? aud(ln.unit_price) : ", "}</span>}
+                                    <span>You paid <span className="text-primary-k tabular-nums">{ln.contribution_amount != null ? aud(ln.contribution_amount) : ", "}</span></span>
                                 </div>
                             </div>
                         );
@@ -433,7 +433,7 @@ export function InvoiceChargesTable({ result, defaultOpen = false }) {
                                 const isDisputed = ln.line_id && disputed.has(ln.line_id);
                                 return (
                                     <tr key={ln.line_id || i} className={isDisputed ? "bg-terracotta/5 text-primary-k" : "text-primary-k"}>
-                                        <td className="p-2.5 tabular-nums whitespace-nowrap">{formatDate(ln.service_date) || "—"}</td>
+                                        <td className="p-2.5 tabular-nums whitespace-nowrap">{formatDate(ln.service_date) || ", "}</td>
                                         <td className="p-2.5">
                                             <span className="inline-flex items-center gap-1.5">
                                                 {isDisputed && <AlertTriangle className="h-3 w-3 text-terracotta flex-shrink-0" />}
@@ -441,11 +441,11 @@ export function InvoiceChargesTable({ result, defaultOpen = false }) {
                                             </span>
                                         </td>
                                         <td className="p-2.5">{_catLabel(ln.service_category)}</td>
-                                        <td className="p-2.5 text-right tabular-nums">{ln.units_or_hours ?? "—"}</td>
-                                        <td className="p-2.5 text-right tabular-nums">{ln.unit_price != null ? aud(ln.unit_price) : "—"}</td>
-                                        <td className="p-2.5 text-right tabular-nums font-medium">{ln.gross_cost != null ? aud(ln.gross_cost) : "—"}</td>
-                                        <td className="p-2.5 text-right tabular-nums">{ln.gst_amount != null ? aud(ln.gst_amount) : "—"}</td>
-                                        <td className="p-2.5 text-right tabular-nums">{ln.contribution_amount != null ? aud(ln.contribution_amount) : "—"}</td>
+                                        <td className="p-2.5 text-right tabular-nums">{ln.units_or_hours ?? ", "}</td>
+                                        <td className="p-2.5 text-right tabular-nums">{ln.unit_price != null ? aud(ln.unit_price) : ", "}</td>
+                                        <td className="p-2.5 text-right tabular-nums font-medium">{ln.gross_cost != null ? aud(ln.gross_cost) : ", "}</td>
+                                        <td className="p-2.5 text-right tabular-nums">{ln.gst_amount != null ? aud(ln.gst_amount) : ", "}</td>
+                                        <td className="p-2.5 text-right tabular-nums">{ln.contribution_amount != null ? aud(ln.contribution_amount) : ", "}</td>
                                     </tr>
                                 );
                             })}
@@ -459,7 +459,7 @@ export function InvoiceChargesTable({ result, defaultOpen = false }) {
 }
 
 /**
- * InvoiceDownloadBar — mirrors the Statement Decoder download bar. Lets the
+ * InvoiceDownloadBar, mirrors the Statement Decoder download bar. Lets the
  * user download the original file, the Wayly check-report PDF, a CSV of the
  * decoded invoice, and open a side-by-side compare (original vs decoded).
  */
@@ -538,7 +538,7 @@ export function InvoiceDownloadBar({ invoiceId, onCompare, comparing }) {
 }
 
 /**
- * InvoiceCompareView — side-by-side original file (left) vs decoded charges
+ * InvoiceCompareView, side-by-side original file (left) vs decoded charges
  * table (right), mirroring the Statement Compare screen.
  */
 export function InvoiceCompareView({ invoiceId, result }) {

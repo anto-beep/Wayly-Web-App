@@ -3,7 +3,7 @@ import { api } from "@/lib/api";
 /**
  * Start a paid Stripe Checkout to reactivate / subscribe. Sends the user
  * STRAIGHT to Stripe's hosted checkout (no internal billing detour) with
- * trial_days:0 — reactivation is an immediate paid purchase, not a new trial.
+ * trial_days:0, reactivation is an immediate paid purchase, not a new trial.
  * Returns true once the redirect has kicked off.
  */
 export async function startReactivateCheckout(plan) {
@@ -17,7 +17,7 @@ export async function startReactivateCheckout(plan) {
         window.location.href = data.url;
         return true;
     }
-    // Never fail silently — surface to the caller so it can show an error
+    // Never fail silently, surface to the caller so it can show an error
     // toast instead of leaving the button stuck in a "busy" no-op state.
     throw new Error("Checkout did not return a redirect URL.");
 }

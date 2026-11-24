@@ -80,7 +80,7 @@ export default function AdminGrowthPipeline() {
     useEffect(() => { load(); }, [load]);
 
     const aiPitch = async (id) => {
-        try { const r = await adminApi.post(`/admin/pipeline/publicity/${id}/ai-pitch`, {}); toast.success("Pitch drafted — review before approval"); window.alert(`Subject: ${r.data.subject || ""}\n\n${r.data.pitch_body || ""}`); load(); }
+        try { const r = await adminApi.post(`/admin/pipeline/publicity/${id}/ai-pitch`, {}); toast.success("Pitch drafted, review before approval"); window.alert(`Subject: ${r.data.subject || ""}\n\n${r.data.pitch_body || ""}`); load(); }
         catch (e) { toast.error(extractMsg(e)); }
     };
     const submitPub = async (id) => {
@@ -135,7 +135,7 @@ export default function AdminGrowthPipeline() {
                                     : pub.opportunities.map((p) => (
                                         <tr key={p.id} data-testid={`publicity-row-${p.id}`}>
                                             <td style={{ fontWeight: 600, fontSize: 13 }}>{p.outlet}<div style={{ fontSize: 11, color: "var(--admin-muted)" }}>{p.reference}</div></td>
-                                            <td style={{ fontSize: 12 }}>{p.topic || "—"}</td>
+                                            <td style={{ fontSize: 12 }}>{p.topic || ", "}</td>
                                             <td style={{ fontSize: 12 }}>{(p.status || "").replace(/_/g, " ")}</td>
                                             <td style={{ fontSize: 12 }}>{p.priority}</td>
                                             <td style={{ textAlign: "right", whiteSpace: "nowrap" }}>
@@ -160,7 +160,7 @@ export default function AdminGrowthPipeline() {
                                     : partners.partnerships.map((p) => (
                                         <tr key={p.id} data-testid={`partnership-row-${p.id}`}>
                                             <td style={{ fontWeight: 600, fontSize: 13 }}>{p.organisation}</td>
-                                            <td style={{ fontSize: 12 }}>{p.partnership_type || "—"}</td>
+                                            <td style={{ fontSize: 12 }}>{p.partnership_type || ", "}</td>
                                             <td style={{ fontSize: 12 }}>{(p.status || "").replace(/_/g, " ")}</td>
                                             <td style={{ fontSize: 12 }}>{p.priority}</td>
                                             <td>{p.independence_flag ? <span style={{ fontSize: 11, fontWeight: 700, color: "#B42318" }}>Review needed</span> : <span style={{ fontSize: 11, color: "#2f7d4a" }}>OK</span>}</td>
@@ -183,7 +183,7 @@ export default function AdminGrowthPipeline() {
                                             <td style={{ fontWeight: 600, fontSize: 13 }}>{e.title}<div style={{ fontSize: 11, color: "var(--admin-muted)" }}>{e.hypothesis}</div></td>
                                             <td style={{ fontSize: 12 }}>{e.primary_metric}</td>
                                             <td style={{ fontSize: 12 }}>{e.status}</td>
-                                            <td style={{ fontSize: 12 }}>{e.sample_size ?? "—"}</td>
+                                            <td style={{ fontSize: 12 }}>{e.sample_size ?? ", "}</td>
                                         </tr>
                                     ))}
                         </tbody>

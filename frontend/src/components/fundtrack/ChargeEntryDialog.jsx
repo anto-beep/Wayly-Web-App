@@ -1,5 +1,5 @@
 /**
- * ChargeEntryDialog — FUNDTRACK-1 charge entry, a primary action with three
+ * ChargeEntryDialog, FUNDTRACK-1 charge entry, a primary action with three
  * paths (locked decision #3): "from your usual care", "scan it" (through the
  * existing Invoice Checker extraction), and "type it" (what / when / how much).
  * No mandatory fields; an amount may be left blank (records an unpriced visit).
@@ -38,7 +38,7 @@ export default function ChargeEntryDialog({ pid, savedServices = [], initialTab 
 
     const confirmMsg = (payload) => {
         const amt = payload.amount == null || payload.amount === "" ? "unpriced" : AUD(payload.amount);
-        return `Charge added: ${payload.service_name} · ${amt}. Your budget's been updated — check your latest balance.`;
+        return `Charge added: ${payload.service_name} · ${amt}. Your budget's been updated, check your latest balance.`;
     };
 
     const post = async (payload) => {
@@ -53,7 +53,7 @@ export default function ChargeEntryDialog({ pid, savedServices = [], initialTab 
         } finally { setBusy(false); }
     };
 
-    // Picking a usual service no longer saves instantly — it pre-fills the
+    // Picking a usual service no longer saves instantly, it pre-fills the
     // editable "type" step (date + amount) so the user can adjust then add.
     const pickSaved = (svc) => {
         setName(svc.service_name || "");
@@ -116,7 +116,7 @@ export default function ChargeEntryDialog({ pid, savedServices = [], initialTab 
                 });
                 last = data;
             }
-            toast.success(`Added ${rows.length} charge${rows.length === 1 ? "" : "s"} from your invoice. Your budget's been updated — check your latest balance.`);
+            toast.success(`Added ${rows.length} charge${rows.length === 1 ? "" : "s"} from your invoice. Your budget's been updated, check your latest balance.`);
             onSaved?.(last);
             onClose?.();
         } catch (e) {
@@ -167,7 +167,7 @@ export default function ChargeEntryDialog({ pid, savedServices = [], initialTab 
                                 ))}
                             </ul>
                         )}
-                        <p className="mt-3 rounded-lg bg-gold/10 border border-gold/30 px-3 py-2 text-xs font-medium text-primary-k">We'll fill in today's date and the last amount — you can adjust the date and price before you add.</p>
+                        <p className="mt-3 rounded-lg bg-gold/10 border border-gold/30 px-3 py-2 text-xs font-medium text-primary-k">We'll fill in today's date and the last amount, you can adjust the date and price before you add.</p>
                     </div>
                 )}
 
@@ -185,7 +185,7 @@ export default function ChargeEntryDialog({ pid, savedServices = [], initialTab 
                             <select value={stream} onChange={(e) => setStream(e.target.value)} data-testid="charge-type-stream" className="mt-1 w-full rounded-lg border border-primary-k/15 px-3 py-2 text-sm bg-white">
                                 {STREAMS.map((s) => <option key={s} value={s}>{s}</option>)}
                             </select></label>
-                        <p className="text-[11px] text-muted-k">Leave the amount blank to record an unpriced visit — it still counts, and you can add the amount later.</p>
+                        <p className="text-[11px] text-muted-k">Leave the amount blank to record an unpriced visit, it still counts, and you can add the amount later.</p>
                         <div className="flex justify-end gap-2 pt-1">
                             <button onClick={onClose} className="text-sm text-primary-k px-4 py-2 rounded-md hover:bg-primary-k/5">Cancel</button>
                             <Button onClick={submitType} disabled={busy} data-testid="charge-type-save">{busy ? <Loader2 className="w-4 h-4 animate-spin" /> : "Add charge"}</Button>

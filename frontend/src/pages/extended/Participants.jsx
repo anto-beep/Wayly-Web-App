@@ -214,7 +214,7 @@ export default function ParticipantsPage() {
                 } else {
                     toast.info("Add-on checkout cancelled.");
                 }
-            } catch { /* silent — nothing to roll back */ }
+            } catch { /* silent, nothing to roll back */ }
             // Clean the URL so refresh doesn't re-run the rollback.
             const url = new URL(window.location.href);
             url.searchParams.delete("cancelled");
@@ -264,7 +264,7 @@ export default function ParticipantsPage() {
                 toast.success(`Added ${wanted} to your Family plan.`);
                 await loadAll();
                 await refresh();
-            } catch { /* silent — user can add manually */ }
+            } catch { /* silent, user can add manually */ }
         })();
     }, [loading, active, loadAll, refresh]);
 
@@ -320,7 +320,7 @@ export default function ParticipantsPage() {
                             origin_url: window.location.origin,
                         });
                         if (co?.url) { window.location.href = co.url; return; }
-                        toast.info("Extra participant added — finish payment from Plan & Billing.");
+                        toast.info("Extra participant added, finish payment from Plan & Billing.");
                     } else {
                         toast.success("Extra participant added · $24.50 per fortnight charged to your saved card.");
                     }

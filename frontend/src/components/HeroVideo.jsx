@@ -1,8 +1,8 @@
 /**
- * HeroVideo — homepage hero product video ("Aged Care, Made Clear").
+ * HeroVideo, homepage hero product video ("Aged Care, Made Clear").
  *
  * The source file is exactly 1920x1080 (16:9), so the frame is set to that exact
- * ratio with object-fit: contain over a warm #FBF8F3 background — no black bars,
+ * ratio with object-fit: contain over a warm #FBF8F3 background, no black bars,
  * no letterboxing, no dark flash while loading.
  *
  * Behaviour:
@@ -13,7 +13,7 @@
  *  - A visible play/pause control (native controls) satisfies WCAG 2.2.2; a labelled
  *    "Turn sound on" button unmutes.
  *  - At the end, shows the branded poster card with a "Watch again" button.
- *  - Captions track is wired for accessibility (muted autoplay) — supply the .vtt.
+ *  - Captions track is wired for accessibility (muted autoplay), supply the .vtt.
  *
  * PostHog events: video_autoplay_started, video_unmuted, video_paused, video_completed.
  */
@@ -132,7 +132,7 @@ export default function HeroVideo() {
                     Sorry, your browser does not support embedded videos.
                 </video>
 
-                {/* Turn sound on / Mute — visible while playing */}
+                {/* Turn sound on / Mute, visible while playing */}
                 {phase === "playing" && (
                     <button
                         type="button"

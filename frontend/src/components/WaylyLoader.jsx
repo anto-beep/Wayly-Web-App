@@ -1,7 +1,7 @@
 import React from "react";
 
 /**
- * WaylyLoader — the sleek, on-brand loading animation. The Wayly "W" mark
+ * WaylyLoader, the sleek, on-brand loading animation. The Wayly "W" mark
  * draws itself with a soft breathing glow, replacing plain spinners on the
  * app-open and sign-in moments. Reduced-motion safe (falls back to a static
  * mark via the .wayly-loader-* rules in index.css).

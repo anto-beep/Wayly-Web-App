@@ -893,7 +893,7 @@ export function CrossToolImportPanel({ entryId, onImport }) {
 
 // =====================================================================
 // =====================================================================
-// Client-side required-field gate — the letter must NOT generate until the
+// Client-side required-field gate, the letter must NOT generate until the
 // required intake fields for the situation are filled (dropdowns off "Choose",
 // text fields non-empty). Returns friendly labels of what is still missing.
 // =====================================================================

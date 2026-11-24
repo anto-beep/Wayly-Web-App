@@ -1,5 +1,5 @@
 /**
- * BudgetLadderCard — FUNDTRACK-1 canonical figure ladder (locked decision #2).
+ * BudgetLadderCard, FUNDTRACK-1 canonical figure ladder (locked decision #2).
  *
  * Renders the eight figures A..H exactly as the shared server-side engine
  * computed them, with ONE label per key (from ladder.labels) so the dashboard,
@@ -127,7 +127,7 @@ export default function BudgetLadderCard({ ladder }) {
             <div className="px-5 py-3 border-t border-kindred flex items-center justify-between gap-2">
                 <span className="inline-flex items-center gap-1.5 text-xs font-semibold rounded-full bg-primary-k/[0.07] px-3 py-1.5 text-primary-k" data-testid="ladder-confidence">
                     <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: conf.level === "high" ? "#4E6E54" : conf.level === "medium" ? "#C2683D" : "#B4472B" }} />
-                    Confidence: {conf.level ? conf.level.charAt(0).toUpperCase() + conf.level.slice(1) : "—"}
+                    Confidence: {conf.level ? conf.level.charAt(0).toUpperCase() + conf.level.slice(1) : ", "}
                 </span>
                 {(conf.inputs || []).length > 0 && (
                     <button onClick={() => setConfOpen((v) => !v)} data-testid="ladder-confidence-toggle" className="text-xs text-primary-k inline-flex items-center gap-1 hover:underline">

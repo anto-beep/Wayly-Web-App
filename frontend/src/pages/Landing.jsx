@@ -132,7 +132,7 @@ export default function Landing() {
                     </p>
                 </div>
 
-                {/* Persona on-ramp — two clear cards */}
+                {/* Persona on-ramp, two clear cards */}
                 <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 gap-5" data-testid="persona-onramp">
                     {PERSONAS.map((p) => {
                         const Icon = p.icon;
@@ -166,7 +166,7 @@ export default function Landing() {
                     })}
                 </div>
 
-                {/* Had a Home Care Package? — prominent bridge callout */}
+                {/* Had a Home Care Package?, prominent bridge callout */}
                 <Link
                     to="/home-care-packages"
                     data-testid="persona-hcp-link"
@@ -183,7 +183,7 @@ export default function Landing() {
                 </Link>
             </section>
 
-            {/* TRY THE DECODER — free, no signup, in its own breathing space */}
+            {/* TRY THE DECODER, free, no signup, in its own breathing space */}
             <section className="mx-auto max-w-7xl px-6 pt-4 pb-10 sm:pb-14" data-testid="try-decoder-section">
                 <div className="text-center mb-6">
                     <span className="overline">Free to try</span>
@@ -307,7 +307,7 @@ export default function Landing() {
                 </div>
             </section>
 
-            {/* REPORTS HUB STRIP — colourful, plain-English report library */}
+            {/* REPORTS HUB STRIP, colourful, plain-English report library */}
             <section className="border-t border-kindred bg-surface-2" data-testid="reports-strip">
                 <div className="mx-auto max-w-7xl px-6 py-16">
                     <div>
@@ -417,7 +417,7 @@ export default function Landing() {
                                 cadence: "per fortnight",
                                 href: "/signup?plan=solo",
                                 cta: "Get started",
-                                bullets: ["For 1 person — one Participant, one Caregiver seat", "All nine Wayly tools included", "Statement Decoder + anomaly flagging", "Budget, contribution and lifetime-cap tracking", "Ask Wayly, grounded in the Aged Care Act 2024", "Your data stays in Australia"],
+                                bullets: ["For 1 person, one Participant, one Caregiver seat", "All nine Wayly tools included", "Statement Decoder + anomaly flagging", "Budget, contribution and lifetime-cap tracking", "Ask Wayly, grounded in the Aged Care Act 2024", "Your data stays in Australia"],
                             },
                             {
                                 key: "family",
@@ -428,7 +428,7 @@ export default function Landing() {
                                 cta: "Get started",
                                 badge: "Most families choose this",
                                 featured: true,
-                                bullets: ["For 2 people — two full Participants included", "Three Caregiver seats, share with siblings", "Everything in Solo, for two people", "One shared, always-current source of truth", "Ideal for couples or two parents", "Best value per person"],
+                                bullets: ["For 2 people, two full Participants included", "Three Caregiver seats, share with siblings", "Everything in Solo, for two people", "One shared, always-current source of truth", "Ideal for couples or two parents", "Best value per person"],
                             },
                         ].map((t) => (
                             <RevealOnScroll key={t.key}>

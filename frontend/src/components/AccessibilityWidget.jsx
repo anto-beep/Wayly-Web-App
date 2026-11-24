@@ -79,7 +79,7 @@ export default function AccessibilityWidget() {
     }, [prefs]);
 
     // Logout (AuthContext) broadcasts this so the in-memory dark pref drops
-    // back to light in the same tab — otherwise the widget keeps re-applying
+    // back to light in the same tab, otherwise the widget keeps re-applying
     // dark after the user signs out.
     useEffect(() => {
         const onReset = () => setPrefs((p) => ({ ...p, dark: false }));

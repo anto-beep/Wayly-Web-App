@@ -1,5 +1,5 @@
 /**
- * Overcharge Letter modal — turns a flagged invoice line or a material Fee Check
+ * Overcharge Letter modal, turns a flagged invoice line or a material Fee Check
  * into a ready-to-send, editable query letter to the provider.
  */
 import React, { useEffect, useState } from "react";

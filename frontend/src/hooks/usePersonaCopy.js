@@ -1,5 +1,5 @@
 /**
- * usePersonaCopy — persona-aware wording driven by the signed-in user's role
+ * usePersonaCopy, persona-aware wording driven by the signed-in user's role
  * chosen at signup:
  *   - "participant"  → the user receives care; speak TO them ("you", "your")
  *   - "caregiver" / "family_member" → the user helps someone; speak ABOUT the

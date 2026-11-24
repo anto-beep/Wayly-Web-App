@@ -2,7 +2,7 @@ import React from "react";
 import { Sparkles } from "lucide-react";
 import ToolSampleShell, { aud } from "@/components/tool-samples/ToolSampleShell";
 
-// Worked example for the Classification Self-Check — real output
+// Worked example for the Classification Self-Check, real output
 // (captured from POST /api/public/csc/run) for a higher-needs profile.
 const C = {
     primary: 6,
@@ -31,9 +31,9 @@ export default function ClassificationSampleResult() {
             testid="classification-sample-output"
             titleLead="See the Funding Level Your"
             titleAccent="Answers Point To"
-            description="A worked example from a higher-needs set of answers. This is exactly what the Self-Check shows you: your indicative band on the 1–8 scale, the yearly, quarterly and weekly funding it carries, and the answers that drove the result — in plain English, no clinical jargon."
+            description="A worked example from a higher-needs set of answers. This is exactly what the Self-Check shows you: your indicative band on the 1–8 scale, the yearly, quarterly and weekly funding it carries, and the answers that drove the result, in plain English, no clinical jargon."
             ctaTitle="Check Your Own Likely Classification"
-            ctaBody="Answer 16 short questions about everyday tasks and Wayly maps them to an indicative Support at Home band and budget — a starting point before your real assessment."
+            ctaBody="Answer 16 short questions about everyday tasks and Wayly maps them to an indicative Support at Home band and budget, a starting point before your real assessment."
         >
             <div className="rounded-3xl section-teal p-7 sm:p-9 shadow-sm">
                 <div className="flex flex-wrap items-center gap-3 mb-5">
@@ -88,7 +88,7 @@ export default function ClassificationSampleResult() {
                     <span className="font-heading text-lg text-primary-k">Wayly Summary</span>
                 </div>
                 <p className="text-sm text-primary-k leading-relaxed">
-                    Based on the answers, this looks like someone who needs <strong>very high support</strong> — help with almost everything, close supervision and regular clinical care. That points to around <strong>{weekLow}–{weekHigh} a week</strong> in Support at Home funding, most of it paid by the government. Because a few answers were left as &quot;not sure&quot;, the band is shown as a range. The strongest drivers were:
+                    Based on the answers, this looks like someone who needs <strong>very high support</strong>, help with almost everything, close supervision and regular clinical care. That points to around <strong>{weekLow}–{weekHigh} a week</strong> in Support at Home funding, most of it paid by the government. Because a few answers were left as &quot;not sure&quot;, the band is shown as a range. The strongest drivers were:
                 </p>
                 <ul className="mt-3 space-y-1.5">
                     {DRIVERS.map((d) => (

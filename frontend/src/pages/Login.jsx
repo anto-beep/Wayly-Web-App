@@ -198,7 +198,7 @@ export default function Login() {
                     <WaylyLoader size={110} label="Signing you in…" testId="login-loader" />
                 </div>
             )}
-            {/* Soft, slow-drifting orbs — calm ambient depth behind the card. */}
+            {/* Soft, slow-drifting orbs, calm ambient depth behind the card. */}
             <div aria-hidden className="pointer-events-none absolute -top-24 -left-24 h-80 w-80 rounded-full bg-[var(--wayly-teal-600)]/10 blur-3xl wayly-breathe" />
             <div aria-hidden className="pointer-events-none absolute -bottom-32 -right-16 h-96 w-96 rounded-full bg-[var(--wayly-sage-400)]/10 blur-3xl wayly-float-slow" />
             <div className="w-full max-w-md relative wayly-fade-up">

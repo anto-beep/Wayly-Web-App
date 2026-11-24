@@ -98,9 +98,9 @@ function AiDraftModal({ item, onClose, onApplied }) {
                 </div>
                 {busy ? <div style={{ color: "var(--admin-muted)", padding: 20 }}>Drafting with approved Help Centre knowledge…</div> : draft && (
                     <>
-                        {!draft.has_sufficient_knowledge && <div style={{ background: "rgba(165,81,43,0.08)", border: "1px solid #A5512B", borderRadius: 6, padding: "8px 10px", marginBottom: 10, fontSize: 12 }} data-testid="content-ai-lowknowledge">Limited approved knowledge matched — keep claims general and verify before publishing.</div>}
+                        {!draft.has_sufficient_knowledge && <div style={{ background: "rgba(165,81,43,0.08)", border: "1px solid #A5512B", borderRadius: 6, padding: "8px 10px", marginBottom: 10, fontSize: 12 }} data-testid="content-ai-lowknowledge">Limited approved knowledge matched, keep claims general and verify before publishing.</div>}
                         <div style={{ fontSize: 12, color: "var(--admin-muted)" }}>SEO title</div>
-                        <div style={{ fontWeight: 600, marginBottom: 8 }}>{draft.seo_title || "—"}</div>
+                        <div style={{ fontWeight: 600, marginBottom: 8 }}>{draft.seo_title || ", "}</div>
                         <div style={{ fontSize: 12, color: "var(--admin-muted)" }}>Draft body</div>
                         <pre style={{ padding: 10, background: "#F4F1EA", color: "#0E4D52", borderRadius: 6, whiteSpace: "pre-wrap", fontSize: 12 }} data-testid="content-ai-body">{draft.body}</pre>
                         {draft.review_notes && <p style={{ fontSize: 12 }}><strong>Review notes:</strong> {draft.review_notes}</p>}
@@ -193,7 +193,7 @@ export default function AdminGrowthEngine() {
                                             <td style={{ fontSize: 12 }}>{(c.channel || "").replace(/_/g, " ")}</td>
                                             <td><span style={{ fontSize: 11, fontWeight: 700, color: CONTENT_STATUS_COLOR[c.status] || "#0E4D52" }}>{(c.status || "").replace(/_/g, " ")}</span></td>
                                             <td style={{ fontSize: 11, color: "var(--admin-muted)" }}>{(c.publish_status || "").replace(/_/g, " ")}</td>
-                                            <td style={{ fontSize: 11 }}>{c.scheduled_date || "—"}</td>
+                                            <td style={{ fontSize: 11 }}>{c.scheduled_date || ", "}</td>
                                             <td style={{ textAlign: "right", whiteSpace: "nowrap" }}>
                                                 <button className="admin-btn" data-testid={`content-ai-${c.id}`} onClick={() => setAiItem(c)} style={{ padding: "3px 8px", marginRight: 4 }}><Sparkles size={12} /></button>
                                                 <button className="admin-btn" data-testid={`content-submit-${c.id}`} onClick={() => submitContent(c.id)} style={{ padding: "3px 8px", marginRight: 4 }}>Submit</button>

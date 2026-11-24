@@ -315,12 +315,12 @@ function buildPayload(form) {
 /* ---------- form body ---------- */
 
 const WIZARD_STEPS = [
-    { id: "situation", title: "Your Situation", desc: "Where you are in the Support at Home journey — this sets which rules apply to you.", Icon: Compass, accent: "#0E4D52", soft: "#E9F2F1" },
+    { id: "situation", title: "Your Situation", desc: "Where you are in the Support at Home journey, this sets which rules apply to you.", Icon: Compass, accent: "#0E4D52", soft: "#E9F2F1" },
     { id: "money", title: "Your Money", desc: "Your pension, household and finances shape how much you contribute.", Icon: Wallet, accent: "#A5512B", soft: "#F7ECE3" },
     { id: "mix", title: "Service Mix", desc: "How your support splits across clinical, independence and everyday care.", Icon: SlidersHorizontal, accent: "#4E6E54", soft: "#ECF1EA" },
 ];
 
-// Soft, brand-tinted decorative motif behind each step header — light and premium.
+// Soft, brand-tinted decorative motif behind each step header, light and premium.
 function StepArt({ accent, variant }) {
     return (
         <svg className="pointer-events-none absolute -top-10 -right-6 h-44 w-44 opacity-[0.12]" viewBox="0 0 200 200" aria-hidden="true">

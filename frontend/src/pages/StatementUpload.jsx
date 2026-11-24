@@ -75,7 +75,7 @@ export default function StatementUpload() {
             if (!jobId) {
                 throw new Error("No job_id returned");
             }
-            // Server accepted the file — decoding has actually begun.
+            // Server accepted the file, decoding has actually begun.
             _started = true;
             try { ga4Track.decoderStarted(idemKey, { input_method: "upload", is_sample: false, surface: "app", authenticated: true }); } catch (_) { /* analytics best-effort */ }
             // Poll every 2s for up to 5 minutes (covers chunked extract + audit + buffer).

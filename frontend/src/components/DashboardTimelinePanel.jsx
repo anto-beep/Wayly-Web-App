@@ -11,7 +11,7 @@ import { useParticipants } from "@/context/ParticipantsContext";
  * Recent activity panel for the caregiver dashboard.
  *
  * Reads the unified CORE-1 timeline (same source as the full timeline page and
- * mobile), so it only ever shows high-level, plain-English events — no raw
+ * mobile), so it only ever shows high-level, plain-English events, no raw
  * enum labels or technical state changes. Renders a compact, colour-coded
  * connected timeline of the 6 most recent items.
  */
@@ -27,7 +27,7 @@ const ICONS = {
     calendar_entry: CalendarIcon, visit: CalendarIcon,
 };
 
-// Brand tint per event category — colours the dot + left accent.
+// Brand tint per event category, colours the dot + left accent.
 const TINT = {
     statement_decoded: "#0E4D52", statement_uploaded: "#0E4D52",
     invoice_checked: "#A5512B", invoice_uploaded: "#A5512B",

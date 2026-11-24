@@ -373,8 +373,8 @@ export default function InvoicesList() {
                                                         </span>
                                                     </div>
                                                     <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-k">
-                                                        <span className="tabular-nums text-primary-k">{total ? formatAUD2(total) : "—"}</span>
-                                                        <span className="tabular-nums">{inv.invoice_date ? new Date(inv.invoice_date).toLocaleDateString("en-AU", { day: "2-digit", month: "short", year: "numeric" }) : "—"}</span>
+                                                        <span className="tabular-nums text-primary-k">{total ? formatAUD2(total) : ", "}</span>
+                                                        <span className="tabular-nums">{inv.invoice_date ? new Date(inv.invoice_date).toLocaleDateString("en-AU", { day: "2-digit", month: "short", year: "numeric" }) : ", "}</span>
                                                         {findingCount(inv) > 0 && (
                                                             <span className="inline-flex items-center gap-1 rounded-full bg-gold-100 text-gold-800 px-2 py-0.5 font-semibold">
                                                                 {findingCount(inv)} finding{findingCount(inv) === 1 ? "" : "s"}
@@ -389,17 +389,17 @@ export default function InvoicesList() {
                                                     style={{ gridTemplateColumns: "1.1fr 1.3fr 0.9fr 0.9fr 0.8fr 0.8fr" }}
                                                 >
                                                     <span className="text-primary-k font-medium tabular-nums">
-                                                        {inv.invoice_date ? new Date(inv.invoice_date).toLocaleDateString("en-AU", { day: "2-digit", month: "short", year: "numeric" }) : "—"}
+                                                        {inv.invoice_date ? new Date(inv.invoice_date).toLocaleDateString("en-AU", { day: "2-digit", month: "short", year: "numeric" }) : ", "}
                                                     </span>
                                                     <span className="text-primary-k truncate">
                                                         <FileText className="h-3.5 w-3.5 inline mr-1.5 text-primary-k/60" />
                                                         {inv.provider_name || <span className="text-muted-k">Unknown provider</span>}
                                                     </span>
                                                     <span className="text-muted-k tabular-nums">
-                                                        {inv.created_at ? new Date(inv.created_at).toLocaleDateString("en-AU", { day: "2-digit", month: "short" }) : "—"}
+                                                        {inv.created_at ? new Date(inv.created_at).toLocaleDateString("en-AU", { day: "2-digit", month: "short" }) : ", "}
                                                     </span>
                                                     <span className="text-right text-primary-k tabular-nums">
-                                                        {total ? formatAUD2(total) : "—"}
+                                                        {total ? formatAUD2(total) : ", "}
                                                     </span>
                                                     <span className="text-right">
                                                         {findingCount(inv) > 0 ? (

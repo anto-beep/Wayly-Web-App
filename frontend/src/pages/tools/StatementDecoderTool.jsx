@@ -42,7 +42,7 @@ import { AutomatedDecisionDisclosure, isEnabled } from "@/uxf";
 import { TOOL_COUNT } from "@/config/toolRegistry";
 
 // "How to use the Statement Decoder" walkthrough video (public asset, plays for
-// everyone — authenticated or not — on both web and mobile).
+// everyone, authenticated or not, on both web and mobile).
 const HOW_TO_VIDEO_URL = "https://customer-assets-eiarnc6j.emergentagent.net/job_8d74dc1c-0092-4bc2-8a55-b38254dd7592/artifacts/fb62f81a34118d7b_How%20to%20Use%20Statement%20Decoder%20Final_Video.mp4";
 
 // Clearly-fictional sample used by the "Try it with an example statement"
@@ -248,7 +248,7 @@ export default function StatementDecoderTool() {
                 } catch (_) { /* analytics best-effort */ }
                 return;
             }
-            // Server accepted the statement — decoding has actually begun.
+            // Server accepted the statement, decoding has actually begun.
             _started = true;
             try { ga4Track.decoderStarted(_runId, { input_method: _inputMethod, is_sample: _isSample, surface: "tool", authenticated: !!user }); } catch (_) { /* analytics best-effort */ }
             // Poll for job completion, the decode pipeline takes ~45-70s.
@@ -354,7 +354,7 @@ export default function StatementDecoderTool() {
                                     {usage.remaining > 0
                                         ? "Start a free trial to unlock unlimited decodes and every Wayly tool."
                                         : (usage.reset_at && usage.days_until_next_use > 0
-                                            ? `Your next free decode opens in ${usage.days_until_next_use} day${usage.days_until_next_use === 1 ? "" : "s"} — or start a plan to keep going now.`
+                                            ? `Your next free decode opens in ${usage.days_until_next_use} day${usage.days_until_next_use === 1 ? "" : "s"}, or start a plan to keep going now.`
                                             : "Start a plan to keep decoding right away.")}
                                 </div>
                             </div>
@@ -536,7 +536,7 @@ export default function StatementDecoderTool() {
                         <div ref={resultRef} className="mt-6 animate-fade-up scroll-mt-20" data-testid="decoder-result">
                             {savedToAccount && (
                                 <div className="mb-5 flex items-center justify-between gap-3 rounded-2xl border border-sage/40 bg-sage/10 px-4 py-3" data-testid="decoder-saved-banner">
-                                    <span className="text-sm text-primary-k">Saved to your account — reopen it any time.</span>
+                                    <span className="text-sm text-primary-k">Saved to your account, reopen it any time.</span>
                                     <Link to="/app/saved-checks" data-testid="decoder-saved-link" className="text-sm font-semibold text-primary-k underline whitespace-nowrap">Your saved checks</Link>
                                 </div>
                             )}

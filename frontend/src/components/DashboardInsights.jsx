@@ -4,12 +4,12 @@ import { Wallet, ShieldCheck, AlertTriangle, AlertCircle, Info, Inbox } from "lu
 import { formatAUD2 } from "@/lib/api";
 
 /**
- * DashboardInsights — two plain-English visuals for the caregiver dashboard.
+ * DashboardInsights, two plain-English visuals for the caregiver dashboard.
  *
- *   1. "Where the money goes" — a stacked monthly bar: how much was billed each
+ *   1. "Where the money goes", a stacked monthly bar: how much was billed each
  *      month, split into what the government funded vs what YOU paid (co-payment).
  *      Answers "how much am I actually paying, and is it going up?".
- *   2. "Statement checks" — how many things Wayly flagged on each statement and
+ *   2. "Statement checks", how many things Wayly flagged on each statement and
  *      how many still need your attention, in plain language.
  *
  * Both use month-word + year labels (e.g. "Apr '26"), clear titles + headline
@@ -20,11 +20,11 @@ const GRIDLINE_COUNT = 4;
 
 // Distinct, meaningful palette
 const C = {
-    funded: "#0E4D52",   // teal ink — government funded
-    copay: "#C2683D",    // warm clay — your co-payment (out of pocket)
-    attention: "#C0392B", // terracotta — needs your attention
-    watch: "#D98A3D",    // amber — worth a look
-    ok: "#4E6E54",       // sage — all good / FYI
+    funded: "#0E4D52",   // teal ink, government funded
+    copay: "#C2683D",    // warm clay, your co-payment (out of pocket)
+    attention: "#C0392B", // terracotta, needs your attention
+    watch: "#D98A3D",    // amber, worth a look
+    ok: "#4E6E54",       // sage, all good / FYI
     grid: "rgba(14,77,82,0.14)",
 };
 
@@ -131,7 +131,7 @@ function SpendingChart({ series, hasData }) {
                                             <div
                                                 className="w-full max-w-[60px] relative rounded-t-xl overflow-hidden flex flex-col-reverse shadow-sm group-transition-shadow"
                                                 style={{ height: `${heightPct}%`, minHeight: "10px" }}
-                                                title={`${p.label}: ${formatAUD2(p.gross)} billed — ${formatAUD2(p.copay)} your co-payment, ${formatAUD2(funded)} government funded`}
+                                                title={`${p.label}: ${formatAUD2(p.gross)} billed, ${formatAUD2(p.copay)} your co-payment, ${formatAUD2(funded)} government funded`}
                                             >
                                                 {p.copay > 0 && <div style={{ flex: p.copay, background: C.copay }} />}
                                                 <div style={{ flex: Math.max(funded, p.gross === 0 ? 1 : 0.0001), background: C.funded }} />
@@ -286,8 +286,8 @@ function ChecksChart({ data, hasData }) {
                     {totalAlerts > 0
                         ? <><strong style={{ color: C.attention }}>{totalAlerts}</strong> item{totalAlerts === 1 ? "" : "s"} need your attention{totalWarns > 0 ? `, plus ${totalWarns} worth a look` : ""}. Tap a statement to review.</>
                         : totalWarns + totalInfos > 0
-                            ? <>Nothing urgent — {totalWarns > 0 ? `${totalWarns} worth a look` : ""}{totalWarns > 0 && totalInfos > 0 ? " and " : ""}{totalInfos > 0 ? `${totalInfos} for your information` : ""}. Tap a statement to review.</>
-                            : <>No issues flagged across these statements — everything looks in order.</>}
+                            ? <>Nothing urgent, {totalWarns > 0 ? `${totalWarns} worth a look` : ""}{totalWarns > 0 && totalInfos > 0 ? " and " : ""}{totalInfos > 0 ? `${totalInfos} for your information` : ""}. Tap a statement to review.</>
+                            : <>No issues flagged across these statements, everything looks in order.</>}
                 </p>
             )}
         </div>
@@ -342,7 +342,7 @@ function buildAnomalyStrip(statements) {
 }
 
 // Month-word + 2-digit year, e.g. "Apr '26". Handles month-word labels,
-// numeric DD/MM/YYYY (AU) ranges, and ISO upload dates — never a raw fragment.
+// numeric DD/MM/YYYY (AU) ranges, and ISO upload dates, never a raw fragment.
 function monthYearLabel(s) {
     const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
     const label = String(s.period_label || "");

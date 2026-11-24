@@ -83,7 +83,7 @@ export default function StatementDecoderEmbed({ compact = false }) {
                 } catch (_) { /* analytics best-effort */ }
                 return;
             }
-            // Server accepted the statement — decoding has actually begun.
+            // Server accepted the statement, decoding has actually begun.
             _started = true;
             try { ga4Track.decoderStarted(_runId, { input_method: _inputMethod, is_sample: isExample, surface: "embed", authenticated: false }); } catch (_) { /* analytics best-effort */ }
             const deadline = Date.now() + 180_000;
@@ -103,7 +103,7 @@ export default function StatementDecoderEmbed({ compact = false }) {
             }
             if (!final) throw new Error("Decode timed out, try a shorter statement.");
             setResult(final);
-            // GA4 decoder_completed — fires only on a real generated result.
+            // GA4 decoder_completed, fires only on a real generated result.
             try {
                 ga4Track.decoderCompleted(_runId, {
                     input_method: isExample ? "sample" : (decoderInputMethod(final?.input_method) || _inputMethod),

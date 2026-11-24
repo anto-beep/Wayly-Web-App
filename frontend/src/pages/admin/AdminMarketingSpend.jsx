@@ -12,7 +12,7 @@ const extractMsg = (e, f = "Error") => {
 };
 const aud = (n) => `A$${Number(n || 0).toLocaleString("en-AU", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 function fmtDate(iso) {
-    if (!iso) return "—";
+    if (!iso) return ", ";
     try { return new Date(iso).toLocaleDateString("en-AU", { day: "numeric", month: "short", year: "numeric" }); }
     catch { return String(iso); }
 }
@@ -117,7 +117,7 @@ function ExpenseModal({ open, onClose, onSaved, categories, campaigns, editing }
                     </Field>
                     <Field label="Campaign">
                         <select className="admin-input" data-testid="exp-campaign" value={form.campaign_id} onChange={set("campaign_id")}>
-                            <option value="">— none —</option>
+                            <option value="">,  none , </option>
                             {campaigns.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
                         </select>
                     </Field>
@@ -155,7 +155,7 @@ function ExpenseModal({ open, onClose, onSaved, categories, campaigns, editing }
                     <Field label="Published article / newsletter URL"><input className="admin-input" value={form.published_url} onChange={set("published_url")} /></Field>
                 </div>
                 <div style={{ marginTop: 14, borderTop: "1px solid var(--admin-border)", paddingTop: 10 }}>
-                    <div style={{ fontSize: 12, fontWeight: 700, color: "#0E4D52", marginBottom: 8 }}>Financial detail (distinct lenses — never summed together)</div>
+                    <div style={{ fontSize: 12, fontWeight: 700, color: "#0E4D52", marginBottom: 8 }}>Financial detail (distinct lenses, never summed together)</div>
                     <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12 }}>
                         <Field label="Committed (AUD)"><input type="number" className="admin-input" data-testid="exp-committed" value={form.committed_amount_aud} onChange={set("committed_amount_aud")} /></Field>
                         <Field label="Incurred (AUD)"><input type="number" className="admin-input" data-testid="exp-incurred" value={form.incurred_amount_aud} onChange={set("incurred_amount_aud")} /></Field>
@@ -288,7 +288,7 @@ function CampaignFinancialsModal({ campaignId, onClose, onChanged }) {
         <div className="admin-cmdk-overlay" onClick={onClose} data-testid="campaign-financials-modal">
             <div className="admin-card" onClick={(e) => e.stopPropagation()} style={{ width: 640, maxWidth: "95vw", maxHeight: "90vh", overflowY: "auto", padding: 20 }}>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
-                    <h2 style={{ margin: 0, fontSize: 18 }}>{fin.campaign.name} — financials</h2>
+                    <h2 style={{ margin: 0, fontSize: 18 }}>{fin.campaign.name}, financials</h2>
                     <button className="admin-btn" onClick={onClose}><X size={16} /></button>
                 </div>
                 <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(130px,1fr))", gap: 10, marginBottom: 14 }}>
@@ -450,7 +450,7 @@ export default function AdminMarketingSpend() {
                                         <td className="admin-mono" style={{ fontSize: 12 }}>{e.expense_id}</td>
                                         <td style={{ fontWeight: 600, fontSize: 13 }}>{e.activity_name}<div style={{ fontSize: 11, color: "var(--admin-muted)" }}>{e.channel}</div></td>
                                         <td style={{ fontSize: 12 }}>{e.category_name}</td>
-                                        <td style={{ fontSize: 12 }}>{e.vendor || "—"}</td>
+                                        <td style={{ fontSize: 12 }}>{e.vendor || ", "}</td>
                                         <td style={{ textAlign: "right", fontWeight: 600, fontSize: 13 }}>{aud(e.cost_inc_gst)}</td>
                                         <td><span style={{ fontSize: 11, fontWeight: 700, color: STATUS_COLOR[e.status] || "#0E4D52", textTransform: "capitalize" }}>{e.status}</span></td>
                                         <td><span style={{ fontSize: 11, fontWeight: 700, color: PAY_COLOR[e.payment_status] || "#6b6b6b" }}>{(e.payment_status || "").replace("_", " ")}</span></td>
@@ -488,7 +488,7 @@ export default function AdminMarketingSpend() {
                                 ) : campaigns.map((c) => (
                                     <tr key={c.id} data-testid={`campaign-row-${c.id}`}>
                                         <td style={{ fontWeight: 600 }}>{c.name}</td>
-                                        <td style={{ textAlign: "right" }}>{c.planned_budget_aud != null ? aud(c.planned_budget_aud) : "—"}</td>
+                                        <td style={{ textAlign: "right" }}>{c.planned_budget_aud != null ? aud(c.planned_budget_aud) : ", "}</td>
                                         <td style={{ textAlign: "right", fontWeight: 700 }}>{aud(c.total_investment_aud)}</td>
                                         <td style={{ textAlign: "right", color: "#2f7d4a" }}>{aud(c.paid_aud)}</td>
                                         <td style={{ textAlign: "right", color: "#A5512B" }}>{aud(c.committed_aud)}</td>

@@ -5,7 +5,7 @@
  * the authenticated user's plan is inactive (view-only). Use this around any
  * composer / form / action surface where typing or uploading would otherwise
  * be possible. The CTA takes the user STRAIGHT to Stripe Checkout to make a
- * real payment — it never dead-ends on the internal billing page.
+ * real payment, it never dead-ends on the internal billing page.
  *
  * Reactivation lets the user SWITCH plan (Solo or Family), not just resume the
  * old one. There is never a free trial on reactivation (enforced server-side).
@@ -29,7 +29,7 @@ const PLANS = [
 export default function ReadOnlyLock({
     children,
     label = "Reactivate to add or change anything",
-    sub = "Your plan is inactive. You can still view everything you've already saved. Reactivating is an immediate paid plan — no free trial — and you can switch plan now.",
+    sub = "Your plan is inactive. You can still view everything you've already saved. Reactivating is an immediate paid plan, no free trial, and you can switch plan now.",
     className = "",
     testId = "read-only-lock",
 }) {

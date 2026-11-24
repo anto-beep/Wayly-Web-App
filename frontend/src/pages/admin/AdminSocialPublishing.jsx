@@ -62,9 +62,9 @@ function CanvaPanel({ campaigns, onIngested }) {
                 design_id: sel.id, type, campaign_id: campaign, target_platform: platform,
                 content_topic: sel.title || "",
             });
-            toast.message(`Export started (${type.toUpperCase()}) — importing…`);
+            toast.message(`Export started (${type.toUpperCase()}), importing…`);
             const done = await pollExport(r.data.export_id);
-            toast.success(`Imported ${done.asset_ids?.length || 0} asset(s) as DRAFT — approve them in Marketing Assets`);
+            toast.success(`Imported ${done.asset_ids?.length || 0} asset(s) as DRAFT, approve them in Marketing Assets`);
             onIngested?.();
         } catch (e) { toast.error(e?.response?.data?.detail || e.message || "Export failed"); }
         finally { setBusy(false); }
@@ -153,7 +153,7 @@ function RecoveryPanel({ onDone }) {
         finally { setBusy(false); }
     };
     const run = async (live) => {
-        if (live && !window.confirm("Attach media to ALL linked drafts in your real Buffer account? (stays as drafts — not scheduled)")) return;
+        if (live && !window.confirm("Attach media to ALL linked drafts in your real Buffer account? (stays as drafts, not scheduled)")) return;
         setBusy(true);
         try {
             const r = await adminApi.post("/mkt/buffer/recover/execute", { dry_run: !live });
@@ -252,7 +252,7 @@ export default function AdminSocialPublishing() {
         const p = new URLSearchParams(window.location.search).get("canva");
         if (!p) return;
         if (p === "connected") toast.success("Canva connected");
-        else if (p === "expired") toast.error("Canva connect expired — try again");
+        else if (p === "expired") toast.error("Canva connect expired, try again");
         else if (p === "error") toast.error("Canva connection failed");
         window.history.replaceState({}, "", window.location.pathname);
     }, []);
@@ -279,8 +279,8 @@ export default function AdminSocialPublishing() {
                 buffer_post_id: selected.id, campaign_id: planCampaign, due_at_local: planDue || null,
                 dry_run: !live, idempotency_key: live ? `${selected.id}:${planCampaign}:${planDue || "nodate"}` : null,
             });
-            if (live) { toast.success(`Live: ${r.data.result} — ${r.data?.verify?.asset_count ?? plan.asset_count} asset(s) on the draft`); setSelected(null); setPlan(null); await loadAll(); }
-            else toast.success("Dry-run OK — media validated, payload ready. No write made.");
+            if (live) { toast.success(`Live: ${r.data.result}, ${r.data?.verify?.asset_count ?? plan.asset_count} asset(s) on the draft`); setSelected(null); setPlan(null); await loadAll(); }
+            else toast.success("Dry-run OK, media validated, payload ready. No write made.");
         } catch (e) { toast.error(e?.response?.data?.detail || "Attach failed"); }
         finally { setBusy(false); }
     };
@@ -379,7 +379,7 @@ export default function AdminSocialPublishing() {
                             <option value="">Select campaign…</option>
                             {campaigns.map((c) => <option key={c.campaign_id} value={c.campaign_id}>{c.name} ({c.asset_count})</option>)}
                         </select>
-                        <label className="admin-label" style={{ marginTop: 10 }}>Schedule (Australia/Sydney) — blank = attach as draft</label>
+                        <label className="admin-label" style={{ marginTop: 10 }}>Schedule (Australia/Sydney), blank = attach as draft</label>
                         <input className="admin-input" type="datetime-local" value={planDue} onChange={(e) => { setPlanDue(e.target.value); setPlan(null); }} data-testid="buffer-plan-due" />
                         <button className="admin-btn admin-btn-primary" style={{ marginTop: 12, width: "100%" }} onClick={buildPlan} disabled={busy} data-testid="buffer-build-plan">{busy ? "Working…" : "Build plan"}</button>
 
@@ -421,10 +421,10 @@ export default function AdminSocialPublishing() {
                             {jobs.map((j) => (
                                 <tr key={j.id}>
                                     <td>{new Date(j.created_at).toLocaleString()}</td>
-                                    <td>{j.campaign_id || "—"}</td>
+                                    <td>{j.campaign_id || ", "}</td>
                                     <td style={{ textTransform: "capitalize" }}>{j.platform}</td>
                                     <td>{j.verified_asset_count ?? j.asset_count}</td>
-                                    <td>{j.due_at_utc ? new Date(j.due_at_utc).toLocaleString() : "—"}</td>
+                                    <td>{j.due_at_utc ? new Date(j.due_at_utc).toLocaleString() : ", "}</td>
                                     <td style={{ color: j.result === "success" ? "#1e7e34" : "#b42318" }}>{j.result}{j.error_message ? `: ${j.error_message}` : ""}</td>
                                 </tr>
                             ))}

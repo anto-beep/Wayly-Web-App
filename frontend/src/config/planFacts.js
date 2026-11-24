@@ -1,5 +1,5 @@
 /**
- * CONV-1 · Canonical plan facts — the single source of truth for the few
+ * CONV-1 · Canonical plan facts, the single source of truth for the few
  * offer details that must never drift across /signup, /pricing, the Landing
  * page and the paywall: trial terms, Caregiver seat counts and the support
  * commitment. Feature bullet lists remain per-surface for now; these settled

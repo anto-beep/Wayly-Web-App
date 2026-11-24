@@ -95,7 +95,7 @@ export default function StatementDetail() {
     if (loading) return <div className="text-muted-k">Loading…</div>;
     if (!stmt) return <div className="text-muted-k">Statement not found.</div>;
 
-    // Draft a real, pre-filled letter from a single saved-statement anomaly —
+    // Draft a real, pre-filled letter from a single saved-statement anomaly , 
     // same behaviour as the fresh decode output.
     const draftLetterFromAnomaly = async (a) => {
         const { data } = await api.post("/care-plans/letter-from-finding", {

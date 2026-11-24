@@ -4,7 +4,7 @@ import { toast } from "sonner";
 import { api } from "@/lib/api";
 import { CheckCircle2, ChevronDown, ArrowRight, ShieldCheck } from "lucide-react";
 
-// Circular progress ring — teal track, clay progress, big readable % in the middle.
+// Circular progress ring, teal track, clay progress, big readable % in the middle.
 function Ring({ pct }) {
     const r = 34;
     const c = 2 * Math.PI * r;

@@ -9,7 +9,7 @@ import {
 } from "lucide-react";
 
 /* =========================================================================
-   Short-Term Pathways (STP-1) — Guided Journeys
+   Short-Term Pathways (STP-1), Guided Journeys
    Interactive checker for the Restorative Care + End-of-Life pathways.
    Light-first visual system: soft tinted surfaces, readable dark text,
    colour used only as accents. Backend: POST /public/short-term-pathways/check
@@ -57,7 +57,7 @@ export default function ShortTermPathways() {
                 const facts = (p.key_facts || [])
                     .map((k) => `${k.label}: ${k.value_aud != null ? formatAUD(k.value_aud) : k.value_text}`)
                     .join("; ");
-                const detail = [p.eligibility_note || p.tagline, facts ? `Key details — ${facts}.` : ""]
+                const detail = [p.eligibility_note || p.tagline, facts ? `Key details, ${facts}.` : ""]
                     .filter(Boolean).join(" ");
                 return {
                     title: `Request the ${p.title}`,
@@ -318,7 +318,7 @@ function PathwayCard({ p }) {
                     </div>
                 )}
 
-                {/* Who it is for — compact lead */}
+                {/* Who it is for, compact lead */}
                 <div className="flex items-start gap-3 rounded-xl bg-surface-2 p-4">
                     <UserRound className="h-4 w-4 mt-0.5 flex-shrink-0" style={{ color: accent.color }} />
                     <p className="text-sm text-primary-k leading-relaxed">

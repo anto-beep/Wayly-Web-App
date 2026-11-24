@@ -6,12 +6,12 @@ import conv1 from "@/lib/conv1";
 import { resolveOffer, OFFERS } from "@/components/ArticleOfferBlock";
 
 /**
- * OnPagePrompt — CONV-1 v2 Workstream J.
+ * OnPagePrompt, CONV-1 v2 Workstream J.
  *
  * A single, gentle, topic-matched prompt that appears once the reader has
  * genuinely engaged (≈60% scroll) on an article or glossary page. Rules:
  *   • once per 30 days per visitor (localStorage timestamp)
- *   • never on small phones (<480px) — the inline offer block covers those
+ *   • never on small phones (<480px), the inline offer block covers those
  *   • no dark patterns: a clear dismiss (X + backdrop + Esc), easy to ignore
  *   • topic-matched to the single most relevant FREE tool
  * Fires prompt_shown / prompt_converted / prompt_dismissed. Flag: conv1_prompt.

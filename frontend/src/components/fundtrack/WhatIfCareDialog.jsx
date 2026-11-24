@@ -1,5 +1,5 @@
 /**
- * WhatIfCareDialog — FUNDTRACK-1 "What if I add care?" (locked decision #3).
+ * WhatIfCareDialog, FUNDTRACK-1 "What if I add care?" (locked decision #3).
  * Inputs: service, date, frequency (once / every week until a date). Outputs:
  * number of visits, total budget impact at the full service price, participant
  * share, the REVISED spare (H), and any quarter boundary crossed. "Book this
@@ -123,11 +123,11 @@ export default function WhatIfCareDialog({ pid, savedServices = [], onClose, onS
                                 {result.quarter_boundary_crossed && (
                                     <p className="mt-3 text-xs text-primary-k/80 inline-flex items-start gap-1.5" data-testid="whatif-boundary">
                                         <AlertTriangle className="w-4 h-4 text-clay mt-0.5 flex-none" />
-                                        {result.visits_next_quarter} of these visits fall in next quarter and use next quarter's funding — shown as unconfirmed until that quarter starts.
+                                        {result.visits_next_quarter} of these visits fall in next quarter and use next quarter's funding, shown as unconfirmed until that quarter starts.
                                     </p>
                                 )}
                                 {over ? (
-                                    <p className="mt-3 text-sm font-medium text-terracotta">This would take the spare below zero. It may push the quarter into overspend — check prices or talk to the provider first.</p>
+                                    <p className="mt-3 text-sm font-medium text-terracotta">This would take the spare below zero. It may push the quarter into overspend, check prices or talk to the provider first.</p>
                                 ) : (
                                     <p className="mt-3 text-sm text-sage inline-flex items-center gap-1.5"><CheckCircle2 className="w-4 h-4" /> This fits within what's left this quarter.</p>
                                 )}

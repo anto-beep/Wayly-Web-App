@@ -2,7 +2,7 @@ import React from "react";
 import { HelpCircle } from "lucide-react";
 import ToolSampleShell, { aud2 } from "@/components/tool-samples/ToolSampleShell";
 
-// Worked example for the Provider Price Checker — real output
+// Worked example for the Provider Price Checker, real output
 // (captured from POST /api/public/price-check-v2) for domestic assistance
 // charged above the Department of Health indicative range.
 const R = {

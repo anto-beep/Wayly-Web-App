@@ -7,7 +7,7 @@ import { CheckCircle2, MailWarning, ShieldCheck } from "lucide-react";
 import SeoHead from "@/seo/SeoHead";
 
 /**
- * CONV-1 F4 — magic-link landing. Reads ?token=…, exchanges it for a session
+ * CONV-1 F4, magic-link landing. Reads ?token=…, exchanges it for a session
  * via AuthContext.completeMagicLink, then routes into the app. Handles the
  * expired/invalid token and the 2FA-required edge case gracefully.
  */
@@ -94,7 +94,7 @@ export default function MagicLinkLanding() {
                             <h1 className="font-heading text-2xl text-primary-k tracking-tight">Link expired</h1>
                             <p className="mt-2 text-sm text-muted-k leading-relaxed">
                                 This sign-in link is invalid or has already been used. Sign-in links last 15 minutes and
-                                work once — request a fresh one and we&apos;ll email it straight away.
+                                work once, request a fresh one and we&apos;ll email it straight away.
                             </p>
                             <Link
                                 to="/login"

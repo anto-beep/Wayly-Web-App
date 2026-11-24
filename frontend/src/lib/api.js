@@ -18,7 +18,7 @@ export function setReadOnlyMode(flag) { _readOnlyMode = !!flag; }
 const _READ_ONLY_ALLOW_PREFIXES = [
     "/auth/",
     "/billing/",
-    "/payments/", // reactivation / checkout — view-only users must be able to subscribe
+    "/payments/", // reactivation / checkout, view-only users must be able to subscribe
     "/stripe/",
     "/users/me",
     "/admin/",

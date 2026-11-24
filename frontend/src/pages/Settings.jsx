@@ -363,7 +363,7 @@ function BillingTab() {
         finally { setBusy(false); }
     };
     const changePlan = async (plan) => {
-        // Family-to-Solo gating: locked in BILLING-UI-1 v5 §4.3 — Solo supports
+        // Family-to-Solo gating: locked in BILLING-UI-1 v5 §4.3, Solo supports
         // exactly one participant. Block direct switch if 2+ participants exist.
         if (plan === "solo" && (user?.plan === "family") && account) {
             const activeCount = account?.summary?.participants_active ?? (account?.participants || []).filter((p) => p.status === "ACTIVE").length;
@@ -443,7 +443,7 @@ function BillingTab() {
         } finally { setBusy(false); }
     };
     const cancel = () => {
-        // BILLING-UI-1 v5 §4.5 — honest, no retention hedge. We now also ask an
+        // BILLING-UI-1 v5 §4.5, honest, no retention hedge. We now also ask an
         // OPTIONAL reason (skippable) before the cancel goes through.
         setCancelReason("");
         setCancelDetail("");
@@ -496,7 +496,7 @@ function BillingTab() {
             // no live subscription) → don't dead-end. Send them to reactivate
             // with a real payment instead of showing "start a subscription first".
             if (/no stripe customer/i.test(msg) || /start a subscription/i.test(msg)) {
-                toast.info("Let's get your plan active first — opening secure checkout.");
+                toast.info("Let's get your plan active first, opening secure checkout.");
                 await startReactivateCheckout(currentPlan);
                 return;
             }
@@ -505,7 +505,7 @@ function BillingTab() {
     };
     const currentPlan = PLANS[user?.plan] ? user.plan : "solo";
     const activeSub = sub && sub.status && sub.status !== "none";
-    // Fortnightly totals — recompute participant + add-on view (was monthly).
+    // Fortnightly totals, recompute participant + add-on view (was monthly).
     const acctSummary = account?.summary || {};
     const participantsActive = acctSummary.participants_active ?? (account?.participants || []).filter((p) => p.status === "ACTIVE").length;
     // Trust the plan definition, not the backend `participants_included`
@@ -519,7 +519,7 @@ function BillingTab() {
     const addonSubtotalFortnight = addonCount * ADDON_PRICE_FORTNIGHT;
     const fortnightTotal = basePriceFortnight + addonSubtotalFortnight;
     // Inactive-plan detection (items 3 & 4): a trial that has ended or a
-    // cancelled/expired sub means there is NO active plan — so nothing should
+    // cancelled/expired sub means there is NO active plan, so nothing should
     // read as "current", and a past end-date must say "ended", not "ends".
     const subStatusLc = (user?.subscription_status || "").toLowerCase();
     const isExpired = subStatusLc === "expired" || subStatusLc === "cancelled" || subStatusLc === "canceled";
@@ -541,7 +541,7 @@ function BillingTab() {
                     <Skeleton variant="grid" count={3} />
                 </div>
             ) : (<>
-                {/* Over-limit banner — Solo user with >1 active participant.
+                {/* Over-limit banner, Solo user with >1 active participant.
                     Guides them to switch to Family or reduce participants. */}
                 {isOverPlanLimit && (
                     <div className="bg-terracotta/10 border border-terracotta/40 rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center gap-3 justify-between" data-testid="over-limit-banner">
@@ -566,7 +566,7 @@ function BillingTab() {
                         </div>
                     </div>
                 )}
-                {/* Cancellation modal — optional, skippable reason (item 5) */}
+                {/* Cancellation modal, optional, skippable reason (item 5) */}
                 {cancelOpen && (
                     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40" data-testid="cancel-modal" onClick={() => { if (!busy) setCancelOpen(false); }}>
                         <div className="bg-surface rounded-2xl p-6 max-w-md w-full shadow-xl border border-kindred" onClick={(e) => e.stopPropagation()}>
@@ -640,7 +640,7 @@ function BillingTab() {
                                 <div className="font-heading text-2xl text-primary-k" data-testid="current-plan-name">No active plan</div>
                                 <p className="text-sm text-muted-k mt-1">
                                     {sub?.current_period_end && (periodEnded || isExpired)
-                                        ? <>Your plan ended on {formatDate(sub.current_period_end)}. Choose a plan below to reactivate — you keep access to all your data.</>
+                                        ? <>Your plan ended on {formatDate(sub.current_period_end)}. Choose a plan below to reactivate, you keep access to all your data.</>
                                         : <>You don&apos;t have an active plan. Choose a plan below to get started.</>}
                                 </p>
                             </div>
@@ -718,7 +718,7 @@ function BillingTab() {
                     </div>
                 </div>
 
-                {/* What You Are Paying For — live view */}
+                {/* What You Are Paying For, live view */}
                 {hasActivePlan && account?.summary && (
                     <div className="bg-surface border border-kindred rounded-2xl p-6" data-testid="billing-participants-card">
                         <div className="flex items-start justify-between flex-wrap gap-4">
@@ -775,7 +775,7 @@ function BillingTab() {
                     </div>
                 )}
 
-                {/* Plan Options (Solo / Family) — Free tier removed per BILLING-UI-1 v5 §1 */}
+                {/* Plan Options (Solo / Family), Free tier removed per BILLING-UI-1 v5 §1 */}
                 <div className="grid md:grid-cols-2 gap-4">
                     {["solo", "family"].map((p) => {
                         const isCurrent = hasActivePlan && p === currentPlan;
@@ -873,18 +873,18 @@ function BillingTab() {
                                 <tbody>
                                     {invoices.map((inv) => (
                                         <tr key={inv.id} className="border-b border-kindred/60" data-testid={`billing-history-row-${inv.id}`}>
-                                            <td className="py-2.5 pr-3 text-primary-k tabular-nums">{inv.created ? formatDate(new Date(inv.created * 1000).toISOString()) : "—"}</td>
+                                            <td className="py-2.5 pr-3 text-primary-k tabular-nums">{inv.created ? formatDate(new Date(inv.created * 1000).toISOString()) : ", "}</td>
                                             <td className="py-2.5 pr-3 text-muted-k">{inv.description || "Subscription"}</td>
                                             <td className="py-2.5 pr-3 text-primary-k tabular-nums">${Number((inv.amount_paid || inv.amount_due || 0) / 100).toFixed(2)}</td>
                                             <td className="py-2.5 pr-3">
-                                                <span className={`text-xs uppercase tracking-wider ${inv.status === "paid" ? "text-sage" : inv.status === "open" || inv.status === "uncollectible" ? "text-terracotta" : "text-muted-k"}`}>{inv.status || "—"}</span>
+                                                <span className={`text-xs uppercase tracking-wider ${inv.status === "paid" ? "text-sage" : inv.status === "open" || inv.status === "uncollectible" ? "text-terracotta" : "text-muted-k"}`}>{inv.status || ", "}</span>
                                             </td>
                                             <td className="py-2.5">
                                                 {inv.invoice_pdf ? (
                                                     <a href={inv.invoice_pdf} target="_blank" rel="noopener noreferrer" className="text-primary-k underline hover:no-underline" data-testid={`billing-history-pdf-${inv.id}`}>
                                                         Download
                                                     </a>
-                                                ) : "—"}
+                                                ) : ", "}
                                             </td>
                                         </tr>
                                     ))}

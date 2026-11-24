@@ -282,7 +282,7 @@ export default function HandoverPack() {
                     )}
                 </div>
 
-                {/* Emergency plan — always included, required */}
+                {/* Emergency plan, always included, required */}
                 <SectionCard tone={{ bg: "#FBF0EA", border: "#A5512B33", chip: "#A5512B" }} Icon={ShieldAlert} title="If Something Goes Wrong, Do This First" testId="handover-section-emergency">
                     <Field label="The most important thing a backup carer should know" required>
                         <textarea className={taCls} value={form.emergency_priorities} data-testid="handover-emergency"

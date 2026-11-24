@@ -62,7 +62,7 @@ export default function InviteAccept() {
     if (pending) return (
         <Shell>
             <div className="h-12 w-12 rounded-full bg-sage/15 flex items-center justify-center mb-4"><CheckCircle2 className="h-6 w-6 text-sage" /></div>
-            <h1 className="font-heading text-2xl text-primary-k" data-testid="invite-pending">You're all set — just waiting on approval</h1>
+            <h1 className="font-heading text-2xl text-primary-k" data-testid="invite-pending">You're all set, just waiting on approval</h1>
             <p className="text-sm text-muted-k mt-2">Your account is ready. {state.invite.inviter_name} needs to approve your access before you can see {state.invite.household_name}'s Family Wall. We'll email you the moment they do.</p>
             <button onClick={() => nav("/app")} className="mt-6 bg-primary-k text-white rounded-md px-5 py-2.5 text-sm">Continue</button>
         </Shell>

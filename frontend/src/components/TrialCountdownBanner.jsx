@@ -60,12 +60,12 @@ export default function TrialCountdownBanner({ className = "" }) {
             <div className="flex-1 text-sm leading-relaxed">
                 {cancelled ? (
                     isGrace
-                        ? <>Your trial ends tomorrow. Access ends then — you won&apos;t be charged.</>
-                        : <>Trial: <strong>{dayLabel} remaining</strong>. Access ends when your trial ends — you won&apos;t be charged.</>
+                        ? <>Your trial ends tomorrow. Access ends then, you won&apos;t be charged.</>
+                        : <>Trial: <strong>{dayLabel} remaining</strong>. Access ends when your trial ends, you won&apos;t be charged.</>
                 ) : (
                     isGrace
-                        ? <>Your trial ends tomorrow. Your plan starts automatically — cancel any time before then and you won&apos;t be charged.</>
-                        : <>Trial: <strong>{dayLabel} remaining</strong>, then your plan starts automatically. Cancel any time before then — you won&apos;t be charged.</>
+                        ? <>Your trial ends tomorrow. Your plan starts automatically, cancel any time before then and you won&apos;t be charged.</>
+                        : <>Trial: <strong>{dayLabel} remaining</strong>, then your plan starts automatically. Cancel any time before then, you won&apos;t be charged.</>
                 )}
             </div>
             <Link

@@ -1,5 +1,5 @@
 /**
- * SupportContactCard.jsx — CONV-1 v2 Workstream H2.
+ * SupportContactCard.jsx, CONV-1 v2 Workstream H2.
  *
  * Publishes the real Wayly support contact for a scam-wary cohort: a named
  * phone number, the email, the response commitment (a real person in Australia

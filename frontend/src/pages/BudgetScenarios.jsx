@@ -1,10 +1,10 @@
 /**
- * BSC-1 · Budget Scenarios — "Will the money last?"
+ * BSC-1 · Budget Scenarios, "Will the money last?"
  *
  * Question-led, forward-looking scenario tool. All figures come from the
  * shared /bsc1 engine (server-side Decimal); this screen renders results
  * only. Replaces the old slider-based BC-2 what-if screen. No duplicate
- * overall-budget — that lives on the dashboard.
+ * overall-budget, that lives on the dashboard.
  */
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
@@ -345,7 +345,7 @@ export default function BudgetScenarios() {
                                     <Input type="number" value={pacePct} onChange={(e) => setPacePct(e.target.value)} placeholder="0" data-testid="bsc1-pace" className="mt-1" /></label>
                                 <label className="block"><span className="text-xs text-muted-k">Carry-forward in</span>
                                     <Input type="number" value={carryIn} onChange={(e) => setCarryIn(e.target.value)} placeholder="0" data-testid="bsc1-carry" className="mt-1" /></label>
-                                <p className="text-[11px] text-muted-k sm:col-span-3">Indexation is set by government and applied automatically — it isn&apos;t something you adjust here.</p>
+                                <p className="text-[11px] text-muted-k sm:col-span-3">Indexation is set by government and applied automatically, it isn&apos;t something you adjust here.</p>
                             </div>
                         )}
                     </div>

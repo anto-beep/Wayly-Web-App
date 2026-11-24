@@ -60,7 +60,7 @@ export default function ToolsMegaMenu({ active, setActive, onClose, onMouseEnter
                                     <span className="text-[15px] font-semibold tracking-tight">{featured.name}</span>
                                     <span className="text-[10px] font-bold uppercase tracking-wider rounded-full px-2 py-0.5 mega-free-badge">Free</span>
                                 </span>
-                                <span className="block text-[13px] text-white/85 leading-snug mt-0.5">No signup — try it now in about 60 seconds.</span>
+                                <span className="block text-[13px] text-white/85 leading-snug mt-0.5">No signup, try it now in about 60 seconds.</span>
                             </span>
                             <ArrowRight className="h-5 w-5 text-white flex-none transition-transform group-hover:translate-x-1" />
                         </Link>

@@ -27,7 +27,7 @@ const localizer = dateFnsLocalizer({
     locales,
 });
 
-// Expanded taxonomy — the calendar is now a full day-planner, not only a
+// Expanded taxonomy, the calendar is now a full day-planner, not only a
 // clinical-appointment log. Each entry has a distinct, calm colour.
 const KIND_OPTIONS = [
     { value: "appointment", label: "Appointment", color: "#0E4D52" },
@@ -224,7 +224,7 @@ export default function VisitCalendar() {
             testid="visits-page"
             overline="Calendar"
             title="Calendar & Appointments"
-            description="Everything in one place — appointments, home visits, telehealth, reminders and personal entries. Click any day to add something, or click an entry to view, edit, cancel or archive it."
+            description="Everything in one place, appointments, home visits, telehealth, reminders and personal entries. Click any day to add something, or click an entry to view, edit, cancel or archive it."
             actions={isExpired ? null : <button type="button" data-testid="visits-add-btn" onClick={() => openNew()} className="inline-flex items-center gap-2 bg-primary-k text-white rounded-full px-5 py-2.5 text-sm font-medium hover:bg-[#091D33] transition-colors"><Plus className="h-4 w-4" /> Add entry</button>}
         >
             <style>{CAL_CSS}</style>
@@ -261,7 +261,7 @@ export default function VisitCalendar() {
                 />
             </div>
 
-            {/* Create / edit form — tinted so it stands out from the white calendar (#4) */}
+            {/* Create / edit form, tinted so it stands out from the white calendar (#4) */}
             {(creating || editing) && draft && !isExpired && (
                 <DraftForm
                     draft={draft}
@@ -272,7 +272,7 @@ export default function VisitCalendar() {
                 />
             )}
 
-            {/* Selected event details — tinted panel (#4) */}
+            {/* Selected event details, tinted panel (#4) */}
             {selected && !editing && !creating && (
                 <aside data-testid="visits-detail" className="rounded-2xl border border-[#D9E4DE] bg-gradient-to-br from-[#EEF5F1] to-[#F4EFE6] p-6 space-y-3 shadow-sm">
                     <div className="flex items-start justify-between gap-3">

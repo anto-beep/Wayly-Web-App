@@ -14,7 +14,7 @@ import {
 } from "@/components/ui/dialog";
 
 /**
- * LF-1 mailbox — every letter drafted, sent, or received, with follow-up
+ * LF-1 mailbox, every letter drafted, sent, or received, with follow-up
  * tracking, search, status filters, and inline delete.
  */
 
@@ -148,7 +148,7 @@ export default function CorrespondenceLog() {
                     Your mailbox
                 </h1>
                 <p className="mt-3 text-lg text-muted-k max-w-2xl leading-relaxed">
-                    Every letter you have drafted, sent, or received — in one place. Track follow-ups, escalate on time, and keep a case file for each situation.
+                    Every letter you have drafted, sent, or received, in one place. Track follow-ups, escalate on time, and keep a case file for each situation.
                 </p>
             </section>
 

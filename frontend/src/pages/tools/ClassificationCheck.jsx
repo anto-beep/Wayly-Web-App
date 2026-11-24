@@ -134,7 +134,7 @@ function QuestionCard({ index, question, persona, value, onChange }) {
                     );
                 })}
             </div>
-            {/* Fixed-height hint slot — content changes but height does not */}
+            {/* Fixed-height hint slot, content changes but height does not */}
             <div className="mt-2 min-h-[1.5rem] text-xs text-muted-k leading-snug" aria-live="polite" data-testid={`csc-q-${question.id}-anchor`}>
                 {activeAnchor || ""}
             </div>
@@ -188,7 +188,7 @@ function ProfileHeader({ result, current, bands }) {
             )}
             <p className="mt-3 text-base text-white/85 leading-relaxed max-w-2xl">{plain}</p>
 
-            {/* Visual band scale (1 to 8) — where the answers land at a glance */}
+            {/* Visual band scale (1 to 8), where the answers land at a glance */}
             <div className="mt-7" data-testid="csc-band-scale">
                 <div className="flex items-center justify-between text-[10px] uppercase tracking-[0.16em] text-white/55 mb-2">
                     <span>Lower needs</span>
@@ -250,7 +250,7 @@ function ProfileHeader({ result, current, bands }) {
                 })()}
             </div>
 
-            {/* Budget, big and clear — colour-accented so each timeframe reads apart */}
+            {/* Budget, big and clear, colour-accented so each timeframe reads apart */}
             <div className="mt-6 grid gap-3 sm:grid-cols-3">
                 <div className="rounded-2xl bg-white/12 p-4 border-l-4 border-gold">
                     <div className="flex items-center gap-1.5 text-xs uppercase tracking-wider text-white/70">
@@ -284,7 +284,7 @@ function ProfileHeader({ result, current, bands }) {
     );
 }
 
-// Plain-English "Wayly Summary" — translates the band + budget into everyday
+// Plain-English "Wayly Summary", translates the band + budget into everyday
 // terms (weekly figure, who pays) so the numbers actually mean something.
 function WaylySummary({ result, bands, persona }) {
     const c = result.classification;
@@ -567,7 +567,7 @@ function ResultActions({ result, onRerun }) {
         <div className="rounded-2xl border border-kindred bg-surface p-5" data-testid="csc-actions">
             <div className="text-xs uppercase tracking-[0.18em] text-muted-k font-semibold mb-3">What next?</div>
             <div className="grid gap-3 sm:grid-cols-3">
-                {/* Save as PDF — teal */}
+                {/* Save as PDF, teal */}
                 <button
                     onClick={downloadPdf}
                     disabled={pdfLoading}
@@ -577,7 +577,7 @@ function ResultActions({ result, onRerun }) {
                     {pdfLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
                     Save as PDF
                 </button>
-                {/* Email to Self — gold */}
+                {/* Email to Self, gold */}
                 <button
                     onClick={emailToSelf}
                     disabled={emailLoading || emailSent}
@@ -587,7 +587,7 @@ function ResultActions({ result, onRerun }) {
                     {emailLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Mail className="h-4 w-4" />}
                     {emailSent ? "Emailed" : "Email to self"}
                 </button>
-                {/* Run again — sage */}
+                {/* Run again, sage */}
                 <button
                     onClick={onRerun}
                     data-testid="csc-rerun"
@@ -646,7 +646,7 @@ function SaveCheckCard({ runId, onSaved }) {
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     onKeyDown={(e) => { if (e.key === "Enter") save(); }}
-                    placeholder="e.g. Mum — June 2026"
+                    placeholder="e.g. Mum, June 2026"
                     maxLength={120}
                     data-testid="csc-save-name"
                     className="flex-1 rounded-lg border border-kindred bg-surface px-3 py-2.5 text-sm focus:outline-none focus:ring-2 ring-primary-k"
@@ -730,7 +730,7 @@ function SavedChecksPanel({ checks, onReopen, onRerun, onDelete, busyId }) {
 }
 
 // ============================================================================
-// Wizard scaffolding — 3 guided steps (mirrors the Contribution Estimator).
+// Wizard scaffolding, 3 guided steps (mirrors the Contribution Estimator).
 // The 16 questions are grouped by theme; each step has its own brand accent,
 // icon and light inline-SVG motif.
 // ============================================================================
@@ -1181,7 +1181,7 @@ export default function ClassificationCheck() {
                                 <Info className="h-4 w-4 text-clay-k flex-none" />
                                 {answered === 0
                                     ? "Answer all 16 questions to see your result."
-                                    : `Almost there — ${CSC_QUESTIONS.length - answered} question${CSC_QUESTIONS.length - answered === 1 ? "" : "s"} still to answer. Use Back to find any you missed.`}
+                                    : `Almost there, ${CSC_QUESTIONS.length - answered} question${CSC_QUESTIONS.length - answered === 1 ? "" : "s"} still to answer. Use Back to find any you missed.`}
                             </div>
                         )}
                         {error && <div className="relative mt-2 text-sm text-clay-k text-center" data-testid="csc-error">{error}</div>}

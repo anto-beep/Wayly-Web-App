@@ -32,9 +32,9 @@ function sevCounts(stmt) {
 }
 
 /**
- * Two glanceable donut cards — "Where the money went" (government vs you) and
+ * Two glanceable donut cards, "Where the money went" (government vs you) and
  * "What we found" (severity breakdown). Every data point is now tappable: the
- * donut and each legend row jump to (and reveal) the underlying data — the
+ * donut and each legend row jump to (and reveal) the underlying data, the
  * anomaly/flag list for "What we found", the breakdown for the money split.
  * Shared by the saved statement page and the fresh Statement Decoder run.
  */

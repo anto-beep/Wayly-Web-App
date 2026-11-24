@@ -90,7 +90,7 @@ export default function AdminMarketingAssets() {
             const r = await adminApi.post("/mkt/assets/bulk-upload", fd);
             const { created_count, errors } = r.data;
             toast.success(`Uploaded ${created_count} asset${created_count === 1 ? "" : "s"}`);
-            if (errors?.length) toast.warning(`${errors.length} file(s) skipped — check types/paths`);
+            if (errors?.length) toast.warning(`${errors.length} file(s) skipped, check types/paths`);
             setUFiles([]); setUTopic("");
             await load();
         } catch (e) {
@@ -123,7 +123,7 @@ export default function AdminMarketingAssets() {
             const link = document.createElement("a");
             link.href = url; link.download = `wayly-marketing-manifest.${kind}`;
             link.click(); URL.revokeObjectURL(url);
-        } catch { toast.error("Only approved assets are in the manifest — approve some first"); }
+        } catch { toast.error("Only approved assets are in the manifest, approve some first"); }
     };
 
     return (
@@ -332,7 +332,7 @@ function CampaignModal({ onClose, onCreated }) {
                 <label className="admin-label">Campaign ID (unique)</label>
                 <input className="admin-input" value={cid} onChange={(e) => setCid(e.target.value)} placeholder="nov-launch-week-1" style={{ marginBottom: 10 }} data-testid="mkt-campaign-id" />
                 <label className="admin-label">Name</label>
-                <input className="admin-input" value={name} onChange={(e) => setName(e.target.value)} placeholder="November Launch — Week 1" style={{ marginBottom: 10 }} data-testid="mkt-campaign-name" />
+                <input className="admin-input" value={name} onChange={(e) => setName(e.target.value)} placeholder="November Launch, Week 1" style={{ marginBottom: 10 }} data-testid="mkt-campaign-name" />
                 <label className="admin-label">Topic</label>
                 <input className="admin-input" value={topic} onChange={(e) => setTopic(e.target.value)} style={{ marginBottom: 16 }} data-testid="mkt-campaign-topic" />
                 <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>

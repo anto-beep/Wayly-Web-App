@@ -624,7 +624,7 @@ export function AdminSupportDetail() {
             const r = await adminApi.post(`/admin/support/tickets/${ticketId}/ai-draft`);
             setAi(r.data);
             if (!r.data?.has_sufficient_knowledge) {
-                toast.warning("Limited approved knowledge matched — review the draft carefully before sending.");
+                toast.warning("Limited approved knowledge matched, review the draft carefully before sending.");
             }
         } catch (e) { toast.error(extractMsg(e, "Could not generate an AI draft.")); }
         finally { setAiBusy(false); }
@@ -825,7 +825,7 @@ export function AdminSupportDetail() {
                         )}
                     </section>
 
-                    {/* AI draft & suggestions (Phase 3A.3 — admin-triggered, never auto-sent) */}
+                    {/* AI draft & suggestions (Phase 3A.3, admin-triggered, never auto-sent) */}
                     <section className="admin-card" style={{ marginBottom: 16, borderLeft: "3px solid #1565B8" }} data-testid="admin-support-ai">
                         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, flexWrap: "wrap" }}>
                             <h3 style={{ fontSize: 13, fontWeight: 600, margin: 0, display: "flex", alignItems: "center", gap: 6 }}>
@@ -839,7 +839,7 @@ export function AdminSupportDetail() {
                             </div>
                         </div>
                         <p style={{ fontSize: 11, color: "var(--admin-muted)", marginTop: 6 }}>
-                            Grounded only in approved Help Centre knowledge. Review and edit before sending — nothing is sent to the customer automatically.
+                            Grounded only in approved Help Centre knowledge. Review and edit before sending, nothing is sent to the customer automatically.
                         </p>
                         {ai && (
                             <div style={{ marginTop: 10 }} data-testid="admin-support-ai-result">
@@ -852,7 +852,7 @@ export function AdminSupportDetail() {
                                 )}
                                 {!ai.has_sufficient_knowledge && (
                                     <div style={{ background: "rgba(165,81,43,0.08)", border: "1px solid #A5512B", borderRadius: 6, padding: "8px 10px", marginBottom: 10, fontSize: 12 }} data-testid="admin-support-ai-lowknowledge">
-                                        No sufficiently matching approved knowledge was found. This is a safe holding draft — verify before sending or investigate manually.
+                                        No sufficiently matching approved knowledge was found. This is a safe holding draft, verify before sending or investigate manually.
                                     </div>
                                 )}
                                 <div style={{ fontSize: 12, color: "var(--admin-muted)", marginBottom: 4 }}>Suggested reply draft:</div>
@@ -888,7 +888,7 @@ export function AdminSupportDetail() {
                                     <div style={{ marginTop: 8, fontSize: 12 }} data-testid="admin-support-ai-related">
                                         <strong>Possible duplicates / related:</strong>
                                         <ul style={{ margin: "4px 0 0", paddingLeft: 18 }}>
-                                            {ai.duplicate_or_related.map((d, i) => <li key={i}>{d.reference}{d.why ? ` — ${d.why}` : ""}</li>)}
+                                            {ai.duplicate_or_related.map((d, i) => <li key={i}>{d.reference}{d.why ? `, ${d.why}` : ""}</li>)}
                                         </ul>
                                     </div>
                                 )}
@@ -902,7 +902,7 @@ export function AdminSupportDetail() {
                                 )}
                                 {ai.metrics && (
                                     <p style={{ fontSize: 10, color: "var(--admin-muted)", marginTop: 10 }}>
-                                        {ai.model} · {ai.metrics.latency_ms} ms · ~{ai.metrics.estimated_tokens} tokens · est. ${ai.metrics.estimated_cost_usd} (AI-generated — verify before sending).
+                                        {ai.model} · {ai.metrics.latency_ms} ms · ~{ai.metrics.estimated_tokens} tokens · est. ${ai.metrics.estimated_cost_usd} (AI-generated, verify before sending).
                                     </p>
                                 )}
                             </div>

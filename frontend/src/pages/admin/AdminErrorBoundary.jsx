@@ -25,7 +25,7 @@ class Boundary extends React.Component {
                 <div className="admin-card" style={{ padding: 28, maxWidth: 620 }} data-testid="admin-screen-error">
                     <h2 style={{ fontSize: 18, fontWeight: 700, marginBottom: 8 }}>This screen hit an error</h2>
                     <p style={{ color: "var(--admin-muted)", fontSize: 14, marginBottom: 16 }}>
-                        Something on this page failed to load. The rest of the admin still works — use the sidebar to continue, or retry.
+                        Something on this page failed to load. The rest of the admin still works, use the sidebar to continue, or retry.
                     </p>
                     <pre style={{ background: "var(--admin-bg-subtle, rgba(0,0,0,0.04))", padding: 12, borderRadius: 8, fontSize: 12, color: "var(--admin-critical)", overflow: "auto", marginBottom: 16 }}>
                         {String(this.state.error?.message || this.state.error)}

@@ -1,9 +1,9 @@
 /**
- * FreeAllowanceBadge.jsx — CONV-1 v2 Workstream D2.
+ * FreeAllowanceBadge.jsx, CONV-1 v2 Workstream D2.
  *
  * Shows a free visitor / free-tier user where they stand BEFORE they spend a
  * use, in plain words ("This is 1 of your 2 free price checks"). Honest
- * scarcity, stated up front — never a counter hidden until the allowance is
+ * scarcity, stated up front, never a counter hidden until the allowance is
  * spent. Reads the public /api/free-tool/usage endpoint.
  */
 import React, { useEffect, useState } from "react";
@@ -31,7 +31,7 @@ export default function FreeAllowanceBadge({ tool, noun = "check", nounPlural = 
 
     let text;
     if (remaining <= 0) {
-        text = `You've used your free ${limit === 1 ? noun : `${limit} ${nounPlural}`}${days ? ` — another is free in ${days} day${days === 1 ? "" : "s"}` : ""}. Start a free trial to use it as often as you need.`;
+        text = `You've used your free ${limit === 1 ? noun : `${limit} ${nounPlural}`}${days ? `, another is free in ${days} day${days === 1 ? "" : "s"}` : ""}. Start a free trial to use it as often as you need.`;
     } else if (limit === 1) {
         text = `This is your 1 free ${noun}. No account needed.`;
     } else {

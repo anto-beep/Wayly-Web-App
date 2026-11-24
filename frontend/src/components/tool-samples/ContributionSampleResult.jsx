@@ -1,7 +1,7 @@
 import React from "react";
 import ToolSampleShell, { aud2 } from "@/components/tool-samples/ToolSampleShell";
 
-// Worked example for the Contribution Estimator — real output
+// Worked example for the Contribution Estimator, real output
 // (captured from POST /api/ce2/calculate) for Sam Burke: full pension,
 // single homeowner, Classification 6.
 const R = {

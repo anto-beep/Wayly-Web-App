@@ -37,7 +37,7 @@ export default function Contact() {
         first_name: "",
         last_name: "",
         email: "",
-        website: "", // honeypot — must stay empty for real people
+        website: "", // honeypot, must stay empty for real people
         phone: "",
         role: isDemo ? "advisor" : "family",
         context: "",

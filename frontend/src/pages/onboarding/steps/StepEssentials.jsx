@@ -23,7 +23,7 @@ export default function StepEssentials({ form, setForm, classifications, onSubmi
                     : "Wayly needs a few core details about the participant so its calculators and AI tools return accurate figures."}
             </p>
 
-            {/* Who is this for? — tailors the rest of onboarding. */}
+            {/* Who is this for?, tailors the rest of onboarding. */}
             <fieldset className="mt-6" data-testid="onboarding-whose-care">
                 <legend className="mb-2 w-full">
                     <span className="text-sm font-medium text-primary-k">Whose care are you setting up?</span>

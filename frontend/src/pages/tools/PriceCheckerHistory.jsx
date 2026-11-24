@@ -64,7 +64,7 @@ export default function PriceCheckerHistoryPage() {
         return Array.from(m.values());
     }, [checks]);
 
-    // One flat, newest-first list — the table body.
+    // One flat, newest-first list, the table body.
     const rows = useMemo(() => {
         if (!groups) return null;
         const out = [];
@@ -163,7 +163,7 @@ export default function PriceCheckerHistoryPage() {
                 {rows && rows.length === 0 && (
                     <div className="bg-surface border border-kindred rounded-2xl p-8 text-center" data-testid="ppc-history-empty">
                         <div className="font-heading text-2xl text-primary-k">No saved checks yet</div>
-                        <p className="mt-2 text-muted-k">Head to the Price Checker and tap &quot;Save this result&quot; after your first comparison — this table then builds up over time.</p>
+                        <p className="mt-2 text-muted-k">Head to the Price Checker and tap &quot;Save this result&quot; after your first comparison, this table then builds up over time.</p>
                         <button type="button" onClick={() => nav("/ai-tools/provider-price-checker")} className="mt-4 inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-primary-k text-white text-sm hover:bg-[#091D33]">
                             Open the Price Checker
                         </button>

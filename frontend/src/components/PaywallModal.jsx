@@ -2,7 +2,7 @@
  * PaywallModal, Wave 2 hard paywall.
  * Triggers on any 402 'trial_expired' from the backend (see api.js interceptor).
  * Dismissible (§ Jun 2026 refinement): closing reveals the inert data
- * underneath — the backend 402 write-block still fully applies, so dismissing
+ * underneath, the backend 402 write-block still fully applies, so dismissing
  * never grants access. Reappears on the next blocked write.
  */
 import React, { useEffect, useState, useCallback } from "react";
@@ -71,7 +71,7 @@ export default function PaywallModal() {
         return () => window.removeEventListener("wayly:trial-expired", handler);
     }, [handler]);
 
-    // Straight to Stripe Checkout — no internal billing detour. trial_days:0
+    // Straight to Stripe Checkout, no internal billing detour. trial_days:0
     // because a view-only user has already used their trial (reactivation).
     const onUpgrade = async (plan) => {
         if (busy) return;
@@ -130,7 +130,7 @@ export default function PaywallModal() {
                             Your Wayly plan is inactive
                         </h2>
                         <p className="mt-2 text-base text-muted-k leading-relaxed">
-                            Pick up right where you left off. Reactivate to unlock every tool again — your statements,
+                            Pick up right where you left off. Reactivate to unlock every tool again, your statements,
                             care plans and family profiles are all safe and waiting for you.
                         </p>
                     </div>

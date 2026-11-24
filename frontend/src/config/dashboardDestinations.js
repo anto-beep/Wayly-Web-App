@@ -8,7 +8,7 @@
  *   - the problem in their OWN words ("mum's bill looks wrong", "running low")
  *   - a whole sentence         ("can you help me understand this invoice please")
  * …and always land on the right tool / page. We do this with:
- *   1. per-destination `aliases` — the real tool names + common phrasings
+ *   1. per-destination `aliases`, the real tool names + common phrasings
  *   2. concept tagging + a synonym map that expands everyday words
  *   3. light stemming + phrase/substring scoring (OR-based, ranked)
  * If nothing matches, we always offer "Ask Wayly" so the user is never stuck.
@@ -344,7 +344,7 @@ const STOPWORDS = new Set([
     "your", "you", "mums", "mum", "dads", "dad", "their", "them", "his", "her", "she", "he",
 ]);
 
-/** Crude English stemmer — enough to fold plurals/verb endings together. */
+/** Crude English stemmer, enough to fold plurals/verb endings together. */
 function stem(w) {
     if (w.length <= 4) return w;
     if (w.endsWith("ing")) return w.slice(0, -3);
@@ -391,7 +391,7 @@ function editDistance(a, b) {
     return dp[m][n];
 }
 
-/** Fuzzy equality for whole words — tolerant of 1–2 character typos. */
+/** Fuzzy equality for whole words, tolerant of 1–2 character typos. */
 function fuzzyEq(a, b) {
     if (a === b) return true;
     const len = Math.max(a.length, b.length);
@@ -409,7 +409,7 @@ function anyFuzzy(t, words) {
 
 /**
  * Intent search. Returns a ranked list of destinations. Never returns an empty
- * array for a non-empty query — falls back to "Ask Wayly" so the user always
+ * array for a non-empty query, falls back to "Ask Wayly" so the user always
  * has a next step, even for long questions or words we don't recognise.
  */
 export function searchDestinations(query, limit = 8) {
@@ -437,7 +437,7 @@ export function searchDestinations(query, limit = 8) {
         const hayWords = hay.split(/\s+/).filter(Boolean);
         let score = 0;
 
-        // Phrase level — the strongest signal (typed a real name/function phrase).
+        // Phrase level, the strongest signal (typed a real name/function phrase).
         if (raw === label) score += 20;
         for (const a of aliasList) {
             if (!a) continue;
@@ -456,7 +456,7 @@ export function searchDestinations(query, limit = 8) {
             else if (anyFuzzy(t, hayWords)) score += 1;
         }
 
-        // Concept overlap — the semantic layer.
+        // Concept overlap, the semantic layer.
         for (const c of d.concepts || []) {
             if (activeConcepts.has(c)) score += 4;
         }

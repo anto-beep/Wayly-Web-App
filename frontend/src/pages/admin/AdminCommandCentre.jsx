@@ -13,7 +13,7 @@ const extractMsg = (e, f = "Error") => {
     if (typeof d === "string") return d;
     return f;
 };
-const aud = (n) => (n == null ? "—" : `A$${Number(n || 0).toLocaleString("en-AU", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`);
+const aud = (n) => (n == null ? ", " : `A$${Number(n || 0).toLocaleString("en-AU", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`);
 function fmtDate(iso) {
     if (!iso) return "no data yet";
     try { return new Date(iso).toLocaleString("en-AU", { day: "numeric", month: "short", hour: "numeric", minute: "2-digit" }); }
@@ -36,7 +36,7 @@ function Section({ icon: Icon, title, block, children, to, testid }) {
                 <div style={{ color: "var(--admin-muted)", fontSize: 13, padding: "10px 0" }}>No data entered yet.</div>
             ) : children}
             {block && <div style={{ fontSize: 11, color: "var(--admin-muted)", marginTop: 12, borderTop: "1px solid var(--admin-border)", paddingTop: 8 }}>
-                Source: {block?.source || "—"} · Updated {fmtDate(block?.last_updated)}
+                Source: {block?.source || ", "} · Updated {fmtDate(block?.last_updated)}
             </div>}
         </div>
     );
@@ -160,7 +160,7 @@ export default function AdminCommandCentre() {
                 <h1 style={{ fontSize: 28, fontWeight: 600, margin: 0 }}>Founder Command Centre</h1>
             </div>
             <p style={{ color: "var(--admin-muted)", marginTop: 0, fontSize: 13 }}>
-                Verified business metrics from stored Wayly records (Australia/Sydney). Figures are never fabricated — missing data shows as N/A.
+                Verified business metrics from stored Wayly records (Australia/Sydney). Figures are never fabricated, missing data shows as N/A.
             </p>
 
             {/* Needs Your Attention */}
@@ -217,7 +217,7 @@ export default function AdminCommandCentre() {
                         <Metric label="Open tickets" value={sup.open_tickets} />
                         <Metric label="New enquiries" value={sup.new_enquiries} />
                         <Metric label="SLA breached" value={sup.sla_breached} />
-                        <Metric label="Avg CSAT" value={sup.avg_csat ? `${sup.avg_csat.avg} (${sup.avg_csat.n})` : "—"} />
+                        <Metric label="Avg CSAT" value={sup.avg_csat ? `${sup.avg_csat.avg} (${sup.avg_csat.n})` : ", "} />
                     </div>
                 </Section>
                 <Section icon={Megaphone} title="Marketing Investment" block={b.marketing} to="/admin/marketing-spend">
@@ -306,7 +306,7 @@ export default function AdminCommandCentre() {
                     <div data-testid="cc-brief-result">
                         <div style={{ fontSize: 12, color: "var(--admin-muted)", marginBottom: 8 }}>
                             {briefing.period.label} · {briefing.period.timezone}
-                            {briefing.auto_generated && <span style={{ marginLeft: 8, fontSize: 11, color: "#2f7d4a", fontWeight: 600 }} data-testid="cc-brief-auto">● Auto-generated — waiting for you</span>}
+                            {briefing.auto_generated && <span style={{ marginLeft: 8, fontSize: 11, color: "#2f7d4a", fontWeight: 600 }} data-testid="cc-brief-auto">● Auto-generated, waiting for you</span>}
                         </div>
                         <div style={{ fontWeight: 700, fontSize: 13, marginBottom: 4 }}>Facts</div>
                         <div style={{ display: "flex", gap: 14, flexWrap: "wrap", marginBottom: 10 }}>

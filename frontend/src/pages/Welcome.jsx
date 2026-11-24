@@ -8,7 +8,7 @@ import { ga4Track } from "@/lib/ga4";
 import { conv1 } from "@/lib/conv1";
 
 /**
- * /welcome — one-time trial confirmation page.
+ * /welcome, one-time trial confirmation page.
  *
  * Reached ONLY via the post-trial-checkout redirect (BillingSuccess sets the
  * `wayly_welcome_entry` session token). Any other way of landing here (typed
@@ -34,7 +34,7 @@ export default function Welcome() {
     const nav = useNavigate();
     const [allowed] = useState(() => hasEntryToken());
 
-    // Meta Pixel StartTrial + GA4 trial_started — fire once, only on a
+    // Meta Pixel StartTrial + GA4 trial_started, fire once, only on a
     // legitimate welcome view (reached only after Stripe confirms the trial).
     useEffect(() => {
         if (allowed && !startTrialFired) {

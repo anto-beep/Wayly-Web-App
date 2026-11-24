@@ -124,7 +124,7 @@ function CrossToolProvenance({ generated }) {
  *   - ADM disclosure (shared component).
  */
 
-// Recipient Directory (saved provider contacts) — save a provider's name +
+// Recipient Directory (saved provider contacts), save a provider's name +
 // email once so every future letter to them is pre-addressed. Selecting one
 // writes recipient_specific on the entry, which build_cover_note() consumes.
 function RecipientDirectory({ entryId, currentSpecific, onApplied, providerName, providerEmail }) {
@@ -655,7 +655,7 @@ export default function CorrespondenceDetail() {
                             </div>
                         )}
 
-                        {/* Recipient Directory — pre-address future letters to this provider */}
+                        {/* Recipient Directory, pre-address future letters to this provider */}
                         {!isGuidedPathway && (
                             <RecipientDirectory
                                 entryId={entryId}

@@ -64,7 +64,7 @@ export default function HelpCentre() {
         <div className="min-h-screen bg-kindred">
             <SeoHead
                 title="Help Centre | Wayly"
-                description="Find answers about using Wayly — plans and billing, the Statement Decoder, Invoice Checker, Ask Wayly, your account and privacy, and the Support at Home program."
+                description="Find answers about using Wayly, plans and billing, the Statement Decoder, Invoice Checker, Ask Wayly, your account and privacy, and the Support at Home program."
                 path="/help"
                 jsonLd={jsonLd}
             />
@@ -76,7 +76,7 @@ export default function HelpCentre() {
                         How Can We Help?
                     </h1>
                     <p className="mt-4 text-lg text-muted-k max-w-2xl leading-relaxed">
-                        Answers to the things Wayly customers ask most — plans, billing, the tools, your account, and the Support at Home program.
+                        Answers to the things Wayly customers ask most, plans, billing, the tools, your account, and the Support at Home program.
                     </p>
 
                     {/* Search */}

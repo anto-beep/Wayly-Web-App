@@ -123,7 +123,7 @@ export default function FamilyCoordinator() {
                     <button type="submit" disabled={busy || !input.trim()} data-testid="fc-send" className="bg-primary-k text-white rounded-full p-3 hover:bg-[#091D33] disabled:opacity-60"><Send className="h-4 w-4" /></button>
                 </form>
 
-                {/* Report an issue — sits BELOW the chat bar, outside the answer frame */}
+                {/* Report an issue, sits BELOW the chat bar, outside the answer frame */}
                 {msgs.length > 0 && !busy && msgs[msgs.length - 1].role === "assistant" && (
                     <ReportIssueButton variant="inline" toolName="Aged Care Q&A" toolOutput={{ messages: msgs }} />
                 )}

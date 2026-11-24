@@ -1,5 +1,5 @@
 /**
- * FundtrackPanel — compact FUNDTRACK-1 capture strip for the Today dashboard
+ * FundtrackPanel, compact FUNDTRACK-1 capture strip for the Today dashboard
  * and Budget Scenarios. Shows the alerts and the primary actions (Add a charge,
  * What if I add care?, open the weekly view). Hosts the charge-entry + what-if
  * dialogs. Renders nothing when the feature is off for the household.
@@ -42,7 +42,7 @@ export default function FundtrackPanel({ participantId, onChanged }) {
 
     return (
         <section className="rounded-2xl border border-primary-k/15 overflow-hidden shadow-sm" data-testid="fundtrack-panel">
-            {/* prominent teal header — easy to spot, with a graphic badge */}
+            {/* prominent teal header, easy to spot, with a graphic badge */}
             <div className="panel-solid-teal relative bg-[linear-gradient(135deg,#0E4D52,#13646A)] px-5 py-4 text-white">
                 <div className="flex items-center justify-between gap-3 flex-wrap">
                     <div className="flex items-center gap-3 min-w-0">
@@ -77,7 +77,7 @@ export default function FundtrackPanel({ participantId, onChanged }) {
 
                 {data.booked_unpriced_count > 0 && (
                     <p className="text-[11px] text-muted-k" data-testid="fundtrack-unpriced-note">
-                        {data.booked_unpriced_count} unpriced visit{data.booked_unpriced_count === 1 ? "" : "s"} booked — add an amount to count {data.booked_unpriced_count === 1 ? "it" : "them"}.
+                        {data.booked_unpriced_count} unpriced visit{data.booked_unpriced_count === 1 ? "" : "s"} booked, add an amount to count {data.booked_unpriced_count === 1 ? "it" : "them"}.
                     </p>
                 )}
             </div>

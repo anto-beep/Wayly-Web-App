@@ -30,7 +30,7 @@ function saveSeenIds(ids) {
 }
 
 /**
- * Notifications bell — a single bell in the header that consolidates BOTH
+ * Notifications bell, a single bell in the header that consolidates BOTH
  * personal notifications AND aged-care legislative updates (formerly a second
  * bell). One combined unread count; the dropdown shows two clearly separated
  * sections so the header stays calm and uncluttered.
@@ -153,7 +153,7 @@ export default function NotificationsBell({ tone = "dark" }) {
     const markAllRead = async () => {
         try {
             await api.post("/notifications/read", { ids: [] });
-            // Clear the list entirely — read notifications drop off the bell.
+            // Clear the list entirely, read notifications drop off the bell.
             setItems([]);
             setUnread(0);
         } catch {/* ignore */}

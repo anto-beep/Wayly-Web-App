@@ -1,5 +1,5 @@
 /**
- * FundtrackAlerts — FUNDTRACK-1 alerts (forfeit risk, shortfall, statement
+ * FundtrackAlerts, FUNDTRACK-1 alerts (forfeit risk, shortfall, statement
  * overdue, possible billing difference). Rendered on the Today dashboard, the
  * weekly screen and Budget Scenarios. Copy comes from the server.
  */
