@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { api, formatAUD2, extractErrorMessage } from "@/lib/api";
 import { formatDate } from "@/lib/formatDate";
-import { ArrowLeft, ArrowRight, CheckCircle2, Download, FileDown, MessageCircle, Archive, History, RotateCcw, Trash2, GitCompare, Sparkles } from "lucide-react";
+import { ArrowLeft, Download, FileDown, MessageCircle, Archive, History, RotateCcw, Trash2, GitCompare } from "lucide-react";
 import { toast } from "sonner";
 import AIAccuracyBanner from "@/components/AIAccuracyBanner";
 import DecoderResultView from "@/components/DecoderResultView";
@@ -12,7 +12,6 @@ import StatementStatusBadge from "@/components/statements/StatementStatusBadge";
 import StatementAskWayly from "@/components/statements/StatementAskWayly";
 import StatementRightsPanel from "@/components/statements/StatementRightsPanel";
 import { periodCompact, periodExact, providerName, decodeStatus, flagsCount } from "@/lib/statementFields";
-import { useParticipants } from "@/context/ParticipantsContext";
 import FlagCard from "@/components/FlagCard";
 import SmartAISummary from "@/components/SmartAISummary";
 import { buildServiceContext } from "@/lib/summaryContext";
@@ -225,7 +224,6 @@ export default function StatementDetail() {
             <Link to="/app/statements" className="inline-flex items-center gap-1.5 text-sm text-muted-k hover:text-primary-k">
                 <ArrowLeft className="h-4 w-4" /> Back to Statements
             </Link>
-            <ReconcileWithPacingPrompt stmt={stmt} />
             <div className="flex items-start justify-between gap-4 flex-wrap">
                 <div>
                     <span className="overline">Statement</span>
@@ -549,120 +547,5 @@ export default function StatementDetail() {
 // detail page. Hidden if the statement has no line items or the
 // user has already reconciled/dismissed it locally.
 // ------------------------------------------------------------
-function ReconcileWithPacingPrompt({ stmt }) {
-    const { items: participants, activeId } = useParticipants();
-    const active = (participants || []).find((p) => p.id === activeId) || (participants || [])[0];
-    const [busy, setBusy] = useState(false);
-    const [state, setState] = useState("idle"); // idle | success | error
-    const [result, setResult] = useState(null);
-    const [dismissed, setDismissed] = useState(() => {
-        try { return localStorage.getItem(`wayly:qp1:recon:${stmt?.id}`) === "1"; } catch { return false; }
-    });
 
-    if (!stmt || dismissed) return null;
-    const hasLines = (stmt.line_items || []).length > 0;
-    if (!hasLines || !active) return null;
-
-    async function reconcile() {
-        setBusy(true);
-        setState("idle");
-        try {
-            const { data } = await api.post("/qp1/reconciliations/from-statement", {
-                participant_id: active.id,
-                statement_id: stmt.id,
-                create_adhoc_for_unmatched: true,
-            });
-            setResult(data);
-            setState("success");
-            try { localStorage.setItem(`wayly:qp1:recon:${stmt.id}`, "1"); } catch { /* noop */ }
-            toast.success(`Reconciled ${data.matched_count} lines · ${data.unmatched_count} logged as ad-hoc`);
-        } catch (e) {
-            setState("error");
-            toast.error(extractErrorMessage(e) || "Could not reconcile");
-        } finally {
-            setBusy(false);
-        }
-    }
-
-    function dismiss() {
-        try { localStorage.setItem(`wayly:qp1:recon:${stmt.id}`, "1"); } catch { /* noop */ }
-        setDismissed(true);
-    }
-
-    if (state === "success" && result) {
-        return (
-            <aside
-                className="rounded-2xl border border-sage/50 bg-sage/10 p-4 sm:p-5 flex items-start gap-4"
-                data-testid="statement-reconcile-success"
-            >
-                <span className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-sage text-white shrink-0">
-                    <CheckCircle2 className="h-5 w-5" />
-                </span>
-                <div className="flex-1 min-w-0">
-                    <div className="font-heading text-lg text-primary-k">Reconciled with your pacing</div>
-                    <p className="mt-1 text-sm text-primary-k/85">
-                        {result.matched_count} matched · {result.unmatched_count} logged as ad-hoc · {result.lines_considered} lines from this statement.
-                    </p>
-                    <Link
-                        to="/app/pacing"
-                        className="mt-2 inline-flex items-center gap-1 text-sm text-primary-k underline hover:no-underline"
-                        data-testid="statement-reconcile-goto-pacing"
-                    >
-                        Open Quarterly Pacing <ArrowRight className="h-3.5 w-3.5" />
-                    </Link>
-                </div>
-            </aside>
-        );
-    }
-
-    return (
-        <aside
-            className="relative overflow-hidden rounded-2xl border-2 border-wayly-clay-400/50 bg-gradient-to-br from-wayly-clay-50 via-white to-sage/10 p-5 sm:p-6 flex items-start gap-4 shadow-sm"
-            data-testid="statement-reconcile-prompt"
-        >
-            <span aria-hidden className="absolute inset-y-0 left-0 w-1 bg-wayly-clay-500" />
-            <span className="relative inline-flex h-11 w-11 items-center justify-center rounded-full bg-wayly-clay-500 text-white shrink-0 shadow-sm">
-                <Sparkles className="h-5 w-5" />
-            </span>
-            <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 flex-wrap">
-                    <span className="inline-flex items-center rounded-full bg-wayly-clay-500 text-white text-[10px] uppercase tracking-[0.14em] px-2 py-0.5 font-semibold">
-                        New, recommended
-                    </span>
-                    <span className="text-[11px] text-muted-k uppercase tracking-wider">
-                        {(stmt.line_items || []).length} lines ready
-                    </span>
-                </div>
-                <h2 className="mt-2 font-heading text-lg sm:text-xl text-primary-k tracking-tight">
-                    Reconcile this statement against Quarterly Pacing?
-                </h2>
-                <p className="mt-1.5 text-sm text-primary-k/85 leading-relaxed max-w-2xl">
-                    We'll match each decoded line to your ledger within a small tolerance and lift your pacing
-                    confidence. Non-matching lines get logged as ad-hoc so nothing disappears.
-                </p>
-                <div className="mt-3 flex items-center gap-3 flex-wrap">
-                    <button
-                        type="button"
-                        onClick={reconcile}
-                        disabled={busy}
-                        data-testid="statement-reconcile-btn"
-                        className="inline-flex items-center gap-2 rounded-full bg-wayly-clay-500 text-white px-5 py-2 text-sm font-semibold hover:bg-wayly-clay-600 shadow-md transition disabled:opacity-60"
-                    >
-                        {busy ? "Reconciling…" : "Reconcile now"}
-                        <ArrowRight className="h-3.5 w-3.5" />
-                    </button>
-                    <button
-                        type="button"
-                        onClick={dismiss}
-                        disabled={busy}
-                        className="text-sm text-muted-k hover:text-primary-k underline"
-                        data-testid="statement-reconcile-dismiss"
-                    >
-                        Not now
-                    </button>
-                </div>
-            </div>
-        </aside>
-    );
-}
 

@@ -8610,3 +8610,28 @@ User approved all three enhancements; Social OS becomes the SINGLE owner of Buff
 - Phase 4 publishing calendar/dashboard + implementation report.
 - Verified: all new backend logic via E2E (Canva wiring, PDF→thumbnail→document, manifest, recovery dry-run) + UI render. No live Canva export or live Buffer write performed by the agent.
 
+---
+
+# CONV-1 — Signed-Out Conversion & Trial Access (Phase 0 audit + Workstream A)
+
+Scope switched here at founder request: "implement CONV-1; I'll return to the Social OS (Canva+Buffer) after." Spec is a private upload; infra it assumes (Supabase/Bedrock/Cloudflare/react-snap) does NOT match this repo (FastAPI/Emergent + GA4 already wired via `src/lib/ga4.js`). Phase 0 audit confirmed the spec's claimed offer/marketing inaccuracies in live code.
+
+## Workstream A — "Truth pass" — DONE + TESTED (24 Nov 2026, iteration_418, 25/25 web assertions PASS)
+Founder decisions applied: retire Quarterly Pacing claims AND the in-app tool; KEEP other unverified claims (Anomaly Watch, Sunday digest, GP/specialist sharing, Family Wall, Reassessment letter) pending per-claim sign-off; soften Family support to "within one business day"; fix seats 5→3.
+- NEW `frontend/src/config/planFacts.js` = single source of truth for settled offer facts (TRIAL_DAYS, PLAN_PRICE, CAREGIVER_SEATS {solo:1,family:3}, PARTICIPANTS, SUPPORT_LINE, canonical `trialSentence(plan)`). Consumed by Signup + PaywallModal (seats) and Signup trial sentence.
+- Signup.jsx: removed "Quarterly Pacing dashboard" (Solo); Family seats→`CAREGIVER_SEATS.family` (3); Family support→`SUPPORT_LINE.family`; trial sentence→`trialSentence(form.plan)` (now ends "Cancel any time from Settings → Billing").
+- PaywallModal.jsx: Family "Up to 5 Caregiver seats"→`${CAREGIVER_SEATS.family} Caregiver seats`.
+- Pricing.jsx: removed rows "Care Plan Amendment Generator" and "Referral program (14-day extended trial)"; "Priority support" row now ticks the Solo column (C12).
+- InvoiceSampleResult.jsx (A6/A7): blurb reframed "real October invoice"→"example October invoice … (Blueberry Care is not a real provider)"; count reconciled to "eleven findings, ten of them worth raising"; intro "real invoice"→"example invoice". "Sample check · not a real person's data" badge kept.
+- App.js (A9): `/tools` and `/tools/*` → 301-style SPA redirect to `/ai-tools` (specific authed /tools/* app routes still match via RR ranking). PROD edge should also serve a real 301 for crawlers.
+- Quarterly Pacing retired from product surface: `/app/pacing` route now redirects to `/app`; lazy import removed; StatementDetail `ReconcileWithPacingPrompt` prompt+component removed (orphaned lucide/useParticipants imports cleaned); Features.jsx two pacing cards replaced with one real Budget & Lifetime Cap Calculator card; ToolExplainer budget-calculator mapping → `/ai-tools/budget-calculator`; seoArticles2026 pacing link → budget calculator. Orphaned files `pages/qp1/QuarterlyPacing.jsx` + `QP1DashboardTile.jsx` left unreferenced (dead code; `/api/qp1/*` backend untouched).
+
+### CONV-1 — NOT yet done / next
+- **Workstream F (approved, NEXT): signup form reduction + magic-link.** F1–F3: reduce the signup form to the four required fields (email, password, first name, role) and move optional fields (last name, care-recipient details, 2nd participant, mobile) into onboarding. F5: confirm the Google button renders/completes. F4 magic-link sign-in is an AUTH change → MUST route through integration_expert before coding; reuses existing email infra (the 6-digit EmailCodeVerify already sends mail), so no new provider expected.
+- **Per-claim review (founder):** confirm or move to "Coming soon" each KEPT unverified claim (Anomaly Watch, Sunday digest emails, GP/specialist sharing links, Family Wall, Reassessment letter generator).
+- Workstreams B–K (trial entitlement/paywall logic, edge/abuse controls, Workstream K event tracking) remain gated on founder sign-off and any external analytics/hosting decisions.
+- Non-blocking a11y nit: Pricing "Priority support" Solo cell is icon-only — add visually-hidden "Included" text when convenient.
+
+## Social OS (Canva + Buffer) — PAUSED until CONV-1 done
+All prior Social OS pending items above still stand; resume after CONV-1.
+

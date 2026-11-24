@@ -12,6 +12,7 @@ import { api, extractErrorMessage } from "@/lib/api";
 import { toast } from "sonner";
 import { Lock, ArrowRight, X, Check } from "lucide-react";
 import { TOOL_COUNT } from "@/config/toolRegistry";
+import { CAREGIVER_SEATS } from "@/config/planFacts";
 
 const PLAN_CARDS = [
     {
@@ -38,7 +39,7 @@ const PLAN_CARDS = [
         bullets: [
             "Everything in Solo",
             "2 Participants tracked",
-            "Up to 5 Caregiver seats",
+            `${CAREGIVER_SEATS.family} Caregiver seats`,
             "Sunday digest emails to the family",
         ],
         ring: "border-wayly-clay-500",

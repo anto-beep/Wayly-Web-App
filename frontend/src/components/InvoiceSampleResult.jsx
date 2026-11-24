@@ -217,7 +217,7 @@ const TABS = [
         sub: "$466.66 to claim back",
         Icon: ShieldAlert,
         result: SAMPLE_OVERCHARGE_RESULT,
-        blurb: "Here is a real October invoice from a care provider, run through Wayly with the service agreement and care diary cross-referenced. The tool read all 31 lines and caught ten things worth raising — personal care billed after it became free, a prohibited admin fee, a cancelled visit, rates above the agreement and more — adding up to $466.66 you may be owed back.",
+        blurb: "Here is an example October invoice, built from the billing patterns Wayly sees most often (Blueberry Care is not a real provider), run through Wayly with the service agreement and care diary cross-referenced. The tool read all 31 lines and surfaced eleven findings, ten of them worth raising before you pay — personal care billed after it became free, a prohibited admin fee, a cancelled visit, rates above the agreement and more — adding up to $466.66 you may be owed back.",
     },
     {
         key: "clean",
@@ -280,7 +280,7 @@ export default function InvoiceSampleResult() {
                     <span className="text-[#A5512B]">Hands You</span>
                 </h2>
                 <p className="mt-3 text-muted-k leading-relaxed">
-                    Flip between a real invoice with genuine overcharges and one that is fine to pay. Either way you get the
+                    Flip between an example invoice with genuine-style overcharges and one that is fine to pay. Either way you get the
                     same output a live check gives you — the money at a glance, every line read in plain English, and a clear
                     verdict on whether to pay or ask a question first. No upload needed to look.
                 </p>

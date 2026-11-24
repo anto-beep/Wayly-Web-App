@@ -353,8 +353,7 @@ export default function Features() {
 
                 <ToolGroup title="When the Statement Doesn't Add Up" description="Every dollar in and out, checked against medians and your budget the moment it lands." testId="features-group-money" startIndex={0} items={[
                     { icon: Receipt, title: "Invoice Checker", body: "Verify every line item against medians and budget the moment the invoice lands.", to: "/ai-tools/invoice-checker", plan: "Solo+" },
-                    { icon: BarChart3, title: "Financial Position Tracking", body: "Lifetime cap, quarterly burn, and contributions in one glanceable card.", to: "/app/pacing", plan: "Solo+" },
-                    { icon: Wallet, title: "Multi-Quarter Budgeting", body: "Project the next 3 quarters, save scenarios, and compare them side-by-side.", to: "/app/pacing", plan: "Solo+" },
+                    { icon: Wallet, title: "Budget & Lifetime Cap Calculator", body: "Annual budget, per-stream allocation and lifetime-cap projection in one view.", to: "/ai-tools/budget-calculator", plan: "Solo+" },
                 ]} />
 
                 <ToolGroup title="When You Need to Get the Care Right" description="Keep the plan, the price, and the whole care team on the same page." testId="features-group-care" startIndex={1} items={[

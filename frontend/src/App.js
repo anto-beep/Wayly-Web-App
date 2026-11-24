@@ -35,7 +35,7 @@ const Login = lazy(() => import("@/pages/Login"));
 const Signup = lazy(() => import("@/pages/Signup"));
 const Onboarding = lazy(() => import("@/pages/OnboardingRouter"));
 const Journey = lazy(() => import("@/pages/journey/Journey"));
-const QuarterlyPacing = lazy(() => import("@/pages/qp1/QuarterlyPacing"));
+
 const CaregiverDashboard = lazy(() => import("@/pages/CaregiverDashboard"));
 const StatementUpload = lazy(() => import("@/pages/StatementUpload"));
 const StatementsList = lazy(() => import("@/pages/StatementsList"));
@@ -461,6 +461,9 @@ function App() {
                     <Route path="/email/preferences" element={<EmailPreferences />} />
                     <Route path="/email/unsubscribe" element={<EmailPreferences />} />
                     <Route path="/for-advisors" element={<Navigate to="/" replace />} />
+                    {/* CONV-1 A9: retired /tools/* namespace redirects to canonical /ai-tools (SPA redirect; production edge should also serve a 301). Specific /tools/* app routes below still match via React Router ranking. */}
+                    <Route path="/tools" element={<Navigate to="/ai-tools" replace />} />
+                    <Route path="/tools/*" element={<Navigate to="/ai-tools" replace />} />
                     <Route path="/for-gps" element={<ForGPs />} />
                     <Route path="/resources" element={<ResourcesIndex />} />
                     <Route path="/resources/glossary" element={<Glossary />} />
@@ -532,7 +535,7 @@ function App() {
                     {/* Authenticated app */}
                     <Route path="/onboarding" element={<RequireAuth requireHousehold={false}><Onboarding /></RequireAuth>} />
                     <Route path="/journey" element={<RequireAuth requireHousehold={false}><Journey /></RequireAuth>} />
-                    <Route path="/app/pacing" element={<RequireAuth><Layout><QuarterlyPacing /></Layout></RequireAuth>} />
+                    <Route path="/app/pacing" element={<Navigate to="/app" replace />} />
                     <Route path="/app" element={<RequireAuth><Layout><CaregiverDashboard /></Layout></RequireAuth>} />
                     <Route path="/app/statements" element={<RequireAuth><Layout><StatementsList /></Layout></RequireAuth>} />
                     <Route path="/app/statements/archived" element={<RequireAuth><Layout><ArchivedStatements /></Layout></RequireAuth>} />

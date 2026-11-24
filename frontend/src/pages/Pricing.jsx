@@ -86,7 +86,6 @@ const SECTIONS = [
             ["Contribution Estimator", true, true, true],
             ["Support Plan Reviewer", true, true, true],
             ["Aged Care Q&A", true, true, true],
-            ["Care Plan Amendment Generator", false, true, true],
             ["Ask Wayly (AI chat)", true, true, true],
         ],
     },
@@ -142,7 +141,6 @@ const SECTIONS = [
             ["Family message wall (photos + voice)", true, true, false],
             ["Participant view (simplified UI)", true, true, false],
             ["Voice input for Participants", true, true, false],
-            ["Referral program (14-day extended trial)", true, true, false],
             ["Offline mode (mobile)", true, true, true],
         ],
     },
@@ -151,7 +149,7 @@ const SECTIONS = [
         rows: [
             ["Help centre access", true, true, true],
             ["Email support", true, true, "Priority"],
-            ["Priority support", false, true, true],
+            ["Priority support", true, true, true],
         ],
     },
 ];

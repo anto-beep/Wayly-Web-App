@@ -1,0 +1,36 @@
+{
+  "summary": "CONV-1 Workstream A 'truth pass' verification on web (signed-out marketing copy + redirects + pacing retirement). All 25 assertions across the 5 requested areas PASS. Signup Solo card has no 'Quarterly Pacing dashboard'; Family card shows '3 Caregiver seats' and 'Priority support, reply within one business day' (no 'Up to 5' / 'same-day'); trial sentence matches the canonical form for both Family and Solo selections. Pricing table has no 'Care Plan Amendment Generator' row and no 'Referral program / 14-day extended trial' row; 'Priority support' row shows the Solo column as a tick (included). Invoice Checker signed-out sample output renders with the badge 'Sample check · not a real person's data', intro uses 'example invoice' (not 'real invoice'), and the overcharge blurb contains 'example October invoice', 'Blueberry Care is not a real provider', and 'eleven findings, ten of them worth raising'. /tools, /tools/statement-decoder, and an arbitrary /tools/<x> all client-side redirect to /ai-tools when signed out. Logged-in Sam: /app/pacing redirects to /app (no Quarterly Pacing screen), and the statement detail page no longer has the statement-reconcile-prompt element nor the 'Reconcile this statement against Quarterly Pacing?' copy.",
+  "platforms_tested": ["web"],
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "web": {
+      "ui_bugs": [],
+      "integration_issues": [],
+      "design_issues": []
+    },
+    "mobile": {
+      "ui_bugs": [],
+      "integration_issues": [],
+      "design_issues": [],
+      "react_native_issues": []
+    }
+  },
+  "parity_issues": [],
+  "test_report_links": [
+    "/app/test_reports/iter418_conv1_truthpass.py"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "planFacts.js is the SSOT for seats/support/trial. Good — consider also centralising plan prices used in the pricing table copy (currently prose) so future price changes do not drift between Signup trial sentence and Pricing hero.",
+    "Pricing 'Priority support' Solo cell uses an icon only (no accessible text). Consider adding visually-hidden text like 'Included' for screen readers.",
+    "Legacy /tools/* client-side redirect works for public paths; two /tools/* paths (price-checker/history, letters-and-follow-ups/log) remain authed → /login bounce when signed out — matches the brief, noted as expected."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "N/A (not tested per request)", "frontend": "100%"},
+  "test_credentials": "samburke@test.com / CarTest123$ (login verified, lands on /app)",
+  "seed_data_creation": "none",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "CONV-1 Workstream A copy changes fully verified on web. Backend not touched. 25/25 assertions pass across /signup, /pricing, /ai-tools/invoice-checker, legacy /tools redirects, and the Quarterly Pacing retirement (route redirect + statement detail reconcile prompt removed). Canonical trial sentence lives in /app/frontend/src/config/planFacts.js::trialSentence(plan). If future work touches plan/billing copy, assert against planFacts constants.",
+  "rca of the issue": "N/A — all 25 assertions pass."
+}

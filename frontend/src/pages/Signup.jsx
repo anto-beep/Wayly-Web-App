@@ -16,6 +16,7 @@ import { ga4Track } from "@/lib/ga4";
 import { SEO } from "@/seo/pageConfig";
 import { CAREGIVER_RELATIONSHIPS } from "./onboarding/constants";
 import { TOOL_COUNT } from "@/config/toolRegistry";
+import { trialSentence, CAREGIVER_SEATS, SUPPORT_LINE } from "@/config/planFacts";
 
 const PLANS = [
     {
@@ -28,7 +29,6 @@ const PLANS = [
             `All ${TOOL_COUNT} AI tools, unlimited`,
             "Statement Decoder & Invoice Checker",
             "Anomaly Watch & budget tracker",
-            "Quarterly Pacing dashboard",
             "Support Plan Reviewer & Letters tool",
             "Document Vault with secure storage",
             "1 Caregiver seat, 1 Participant tracked",
@@ -45,13 +45,13 @@ const PLANS = [
         bullets: [
             `Everything in Solo · all ${TOOL_COUNT} AI tools`,
             "Track two parents on one plan",
-            "Up to 5 Caregiver seats",
+            `${CAREGIVER_SEATS.family} Caregiver seats`,
             "Sunday digest emails to the whole family",
             "GP & specialist role-based sharing links",
             "Family Wall for shared updates & notes",
             "Reassessment letter generator",
             "Invoice + statement history vault",
-            "Priority support with same-day response",
+            SUPPORT_LINE.family,
         ],
     },
 ];
@@ -320,7 +320,7 @@ export default function Signup() {
                                 Start your 7-day free trial
                             </h1>
                             <p className="mt-1.5 text-xs text-muted-k leading-relaxed">
-                                {`Free for 7 days, then ${_trialPlanAmount}/fortnight (${_trialPlanLabel}) unless cancelled. Card required at signup. Cancel any time.`}
+                                {trialSentence(form.plan)}
                             </p>
 
                             <div className="mt-4 auth-google">

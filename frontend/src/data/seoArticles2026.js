@@ -1800,7 +1800,7 @@ The stream split is one of the most confusing parts of the reform. Wayly's [Cont
 
 For a Classification 4 quarterly budget of $7,424, the rollover cap is about $742. If your parent racks up $2,000 of unspent funds in Q1 because of a hospital stay, roughly $1,258 of that will be forfeited when Q2 starts. This is a real change from HCP, where unspent Home Care Package balances could grow indefinitely (and, in fact, sat as a $1.4 billion national float when the reform was designed).
 
-The practical takeaway: if you see a big unspent balance mid-quarter, use it. Book that overdue home modification, extra hours of respite, or the podiatrist visit that has been delayed. This is exactly why Wayly built the [Quarterly Pacing dashboard](/ai-tools/quarterly-pacing), so families see the balance before it forfeits, not after.`,
+The practical takeaway: if you see a big unspent balance mid-quarter, use it. Book that overdue home modification, extra hours of respite, or the podiatrist visit that has been delayed. This is exactly why Wayly's [Budget & Lifetime Cap Calculator](/ai-tools/budget-calculator) shows families the balance before it forfeits, not after.`,
             },
             {
                 heading: "What the No Worse Off principle actually protects",

@@ -20,7 +20,7 @@ import { useAuth } from "@/context/AuthContext";
  */
 const AUTHENTICATED_ROUTES = {
     "statement-decoder": "/app/statements/upload",
-    "budget-calculator": "/app/pacing",
+    "budget-calculator": "/ai-tools/budget-calculator",
     "classification-self-check": "/app/csc/stream-mix-and-iat",
     "provider-price-checker": "/app/tools/provider-price-checker/compare",
     "reassessment-letter": "/ai-tools/reassessment-letter",
