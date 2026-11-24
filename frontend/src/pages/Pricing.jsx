@@ -44,12 +44,11 @@ const TIERS = [
         name: "Family",
         price: "$49.50",
         cadence: "per fortnight",
-        tagline: "For families sharing the load.",
+        tagline: "For managing more than one Support at Home budget.",
         cta: "Get started",
         href: "/signup?plan=family",
         featured: true,
         badge: "Recommended",
-        reasonToChoose: "Best if more than one person helps with the care.",
         highlights: [
             "Everything in Solo",
             "Two full Participants: shared care plan, statements, invoices, decisions",
