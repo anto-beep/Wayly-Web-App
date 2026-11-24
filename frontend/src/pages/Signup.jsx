@@ -93,8 +93,9 @@ export default function Signup() {
     const [verifyStage, setVerifyStage] = useState(false);
     const [checkoutBusy, setCheckoutBusy] = useState(false);
 
-    const submit = async (e) => {
+    const submit = async (e, planOverride) => {
         e.preventDefault();
+        const chosenPlan = planOverride || form.plan;
         const firstName = form.first_name.trim();
         const pw = evaluatePassword(form.password, { email: form.email, name: firstName });
         if (!pw.valid) {
@@ -110,14 +111,14 @@ export default function Signup() {
                 email: form.email,
                 password: form.password,
                 role: form.role,
-                plan: form.plan,
+                plan: chosenPlan,
                 marketing_consent: form.marketing_consent,
-            }, { deferUser: true });
-            track.signup({ plan: form.plan });
+            }, { deferUser: chosenPlan === "solo" || chosenPlan === "family" });
+            track.signup({ plan: chosenPlan });
             track.identify(u);
             // GA4 sign_up — fires only here, after the account is CONFIRMED
             // created by /auth/signup (never on click/submit). Deduped by user id.
-            try { ga4Track.signUp(u?.id, { signup_method: "email", plan_type: form.plan }); } catch (_) { /* analytics best-effort */ }
+            try { ga4Track.signUp(u?.id, { signup_method: "email", plan_type: chosenPlan }); } catch (_) { /* analytics best-effort */ }
             // PERSONA-1 §C: set the viewer persona at signup so the account is
             // persona-correct from day zero. The care-recipient's name is now
             // captured in onboarding, so we only seed is_self here. Best-effort:
@@ -139,10 +140,12 @@ export default function Signup() {
 
             // Paid plans → route through Stripe Checkout so the card is captured
             // up front (7-day trial, charged on day 8). Gated behind the optional
-            // 6-digit email verification step.
-            if (form.plan === "solo" || form.plan === "family") {
+            // 6-digit email verification step. CONV-1 D1: a free account skips the
+            // card entirely and goes straight into the app.
+            if (chosenPlan === "solo" || chosenPlan === "family") {
                 setVerifyStage(true);
             } else {
+                try { conv1.freeAccountCreated({ plan: "free", persona: form.role }); } catch (_) { /* best-effort */ }
                 toast.success(`Welcome, ${u.name.split(" ")[0]}`);
                 nav("/app");
             }
@@ -391,6 +394,19 @@ export default function Signup() {
                                     {submitting && <Loader2 className="h-4 w-4 animate-spin" />}
                                     {submitting ? "Working…" : `Start 7-day free ${PLANS.find((p) => p.v === form.plan)?.title || "Family"} trial`}
                                 </button>
+                                {/* CONV-1 D1: no-card free account — skips checkout entirely */}
+                                <button
+                                    type="button"
+                                    onClick={(e) => submit(e, "free")}
+                                    disabled={submitting}
+                                    data-testid="signup-free-account-button"
+                                    className="w-full mt-2 text-sm text-primary-k underline hover:no-underline disabled:opacity-60"
+                                >
+                                    Or create a free account — no card needed
+                                </button>
+                                <p className="mt-1 text-[11px] text-muted-k text-center" data-testid="signup-free-note">
+                                    Free includes one invoice check and one statement decode every few months. Upgrade any time.
+                                </p>
                             </form>
                             <p className="mt-4 text-sm text-muted-k">
                                 Already have one? <Link to="/login" data-testid="login-link" className="text-primary-k underline">Sign in</Link>

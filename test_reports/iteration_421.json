@@ -1,0 +1,49 @@
+{
+  "summary": "CONV-1 v2 Workstreams D (Free Tier) + G (Article Offers) tested e2e on web + shared FastAPI backend. Backend: 12/12 pytest assertions pass — access_state resolves correctly for all 4 fixtures (trial/view_only/free x2); /api/support/tickets POST returns 402 upgrade_required (free_tier=true, /pricing) for free users and 402 trial_expired (/settings/billing) for view_only; GET endpoints are NOT 402 for free users; /api/free-tool/usage returns limit=1 for INVOICE_CHECKER and limit=2 for PROVIDER_PRICE_CHECKER with allowed/remaining/used_count/days_until_next_use; a free user hitting a _require_paid_plan tool gets 402 upgrade_required. Frontend: /signup renders the signup-free-account-button + signup-free-note; a fresh free signup with a strong random password succeeds, free_account_created conv1:dry-run event fires, user is routed to /app with no checkout step. Anonymous Invoice Checker renders free-allowance-invoice_checker badge with the 'This is your 1 free invoice check. No account needed.' copy. Article offers render topic-matched data-offer values on both structured and prose articles: complaints -> ask_wayly, CHSP -> free_account, AT-HM -> free_account, fees/contributions -> contribution_estimator, Billing & statements (statement) -> statement_decoder, changing provider (end only) -> price_checker. article_cta_clicked fires with slug, placement=inline/end, and offer on click, and the CTA navigates to the mapped href.",
+  "platforms_tested": ["web"],
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "web": {
+      "ui_bugs": [
+        {"component": "AnonymousInvoiceCheck", "issue": "FreeAllowanceBadge renders AFTER the anon-run-btn (DOM order mt-5 button → badge). Spec D2 says the badge should appear 'before the run button' so the user sees the allowance BEFORE committing. Visually confirmed: badge_top=974 vs button_top=906 at 1920x1080. Move the <FreeAllowanceBadge/> JSX above the <button data-testid='anon-run-btn'> block. Reference: /app/frontend/src/components/AnonymousInvoiceCheck.jsx:305-317", "selector": "[data-testid='free-allowance-invoice_checker']", "priority": "LOW"},
+        {"component": "Articles (structured)", "issue": "Structured SEO articles with fewer than 3 sections lose the inline offer because offerAfter is forced to -1 when secs.length < 3. Example: /resources/articles/switching-support-at-home-provider-practical-playbook renders the end offer (price_checker) but article-offer-inline is MISSING. Spec G1/G2 says BOTH an inline AND an end offer must render on every article. Either drop the length>=3 guard (always inject after section 0 or ceil*0.6-1 clamped to >=0) or render the inline offer unconditionally after the sections block. Reference: /app/frontend/src/pages/resources/Articles.jsx:585", "selector": "[data-testid='article-offer-inline']", "priority": "MEDIUM"}
+      ],
+      "integration_issues": [
+        {"flow": "Free signup → /app", "issue": "Free-signup succeeds (free_account_created event fires, Welcome toast renders, URL briefly becomes /app) but then bounces to /login. Likely the /app onboarding/household gate redirects a fresh free user back to /login. Session was created (toast proves it), so this is a routing/gate issue for free-tier accounts rather than an auth failure. Recommend treating access_state='free' as a legitimate state on /app and routing the free user to the onboarding/dashboard without logging them out.", "affected_selectors": ["[data-testid='signup-free-account-button']"]}
+      ],
+      "design_issues": []
+    }
+  },
+  "parity_issues": [],
+  "test_report_links": [
+    "/app/backend/tests/test_conv1_v2_free_tier_iter421.py",
+    "/app/test_reports/pytest/conv1_v2_iter421.xml",
+    "/app/test_reports/iter421_anon_badge.jpeg",
+    "/app/test_reports/iter421_after_signup.jpeg"
+  ],
+  "action_items": [
+    "(LOW) Move FreeAllowanceBadge JSX in AnonymousInvoiceCheck.jsx above the anon-run-btn block so D2 copy is seen BEFORE the run commits.",
+    "(MEDIUM) In /app/frontend/src/pages/resources/Articles.jsx line 585, drop the `secs.length >= 3` guard (or clamp to 0) so every structured SEO article still gets the ~60% inline offer. Verified failure on /resources/articles/switching-support-at-home-provider-practical-playbook.",
+    "(MEDIUM) Investigate why a fresh free account lands on /login after /app — likely the /app household/onboarding gate doesn't accept access_state='free'. Should route to the free dashboard instead."
+  ],
+  "critical_code_review_comments": [
+    "_compute_access_state (server.py:3810) is the single source of truth and correctly routes paid-lapsed → view_only via has_paid_ever, never-paid lapsed → free. Good separation.",
+    "The _enforce_read_only_for_unpaid middleware (server.py:8939) cleanly branches on state=='free' vs 'view_only' and exempts /api/invoices/upload for free writes; this is the right place for D gating.",
+    "check_free_tool_usage per-tool limits are expressed as _tool_limits={'PROVIDER_PRICE_CHECKER': 2}; limit field is included in the response, so FreeAllowanceBadge renders the right text without a second config.",
+    "ArticleOfferBlock.OFFER_BY_CATEGORY covers all required categories; resolveOffer splits billing by statement vs invoice correctly.",
+    "conv1.js dry-run path is console.debug-only in preview — no GA4 leakage."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_conv1_v2_free_tier_iter421.py (created)"
+  ],
+  "success_rate": {"backend": "100% (12/12)", "frontend": "~90% (two minor UI defects: inline offer gated on >=3 sections; allowance badge positioned after run button)"},
+  "test_credentials": "Used fixtures from /app/memory/test_credentials.md: trialactive@example.com, viewonly@test.com, trial30909@example.com, cancelled.vo@example.com. Created a disposable TEST_conv1_free_<random>@example.com free account for the signup flow — no cleanup performed (benign free account, not used elsewhere).",
+  "seed_data_creation": "Created one disposable free account TEST_conv1_free_<rand>@example.com via the /signup free path. No backend writes landed because the view_only/free POSTs returned 402 as expected (ticket rows NOT created).",
+  "retest_needed": false,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "Backend pytest at /app/backend/tests/test_conv1_v2_free_tier_iter421.py is a reusable regression suite (12 tests: access_state matrix, 402 free/view_only branching on /api/support/tickets, free GET not 402, trial can write, free user blocked from paid tool, per-tool allowance limits, usage schema). It auto-loads REACT_APP_BACKEND_URL from /app/frontend/.env. The topic→offer matrix verified on web: complaints→ask_wayly, CHSP→free_account, AT-HM→free_account, fees→contribution_estimator, statement SEO→statement_decoder, switching (end)→price_checker. Structured articles with <3 sections currently LOSE the inline offer — regression test this after fix.",
+  "rca of the issue": "G1 inline-offer defect RCA: In /app/frontend/src/pages/resources/Articles.jsx the structured renderer computes `const offerAfter = secs.length >= 3 ? Math.ceil(secs.length * 0.6) - 1 : -1;`. For a structured article with 1 or 2 sections (e.g. the 'switching-support-at-home-provider-practical-playbook' playbook) offerAfter is forced to -1, so the inline <ArticleOfferBlock variant='inline'/> injected by `idx === offerAfter` never mounts. The end offer still mounts unconditionally at line 664, which is why we saw end=price_checker but inline=None on that article. Fix: either `Math.max(0, Math.ceil(secs.length * 0.6) - 1)` (always inject) or move the inline block out of the sections loop and render it unconditionally (e.g. before the StepFlow) the way the prose renderer at line 400 does."
+}

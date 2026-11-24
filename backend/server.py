@@ -3799,16 +3799,25 @@ def _trial_end_dt(*vals):
     return None
 
 
+def _downgrade_state(user: dict) -> str:
+    """CONV-1 D3/L5: an account with no current entitlement downgrades to the
+    FREE tier (metered, not locked) UNLESS it was a paying customer, in which
+    case it stays view-only so the reactivate-your-subscription paywall shows.
+    `has_paid_ever` is stamped True the first time a real charge succeeds."""
+    return "view_only" if user.get("has_paid_ever") else "free"
+
+
 def _compute_access_state(user: dict, sub: Optional[dict] = None) -> str:
-    """Canonical access state for a user: "active" | "trial" | "view_only".
+    """Canonical access state for a user: "active" | "trial" | "free" | "view_only".
 
     - Admins ALWAYS get "active" (never restricted).
     - Stripe subscription status is the source of truth: active → "active",
-      trialing → "trial", cancelled/past_due/unpaid/expired → "view_only".
+      trialing → "trial", cancelled/past_due/unpaid/expired → free or view_only.
     - When no subscription record exists yet (legacy/seed accounts) we fall
       back to the plan field + the trial window.
 
-    "active" and "trial" grant full access; "view_only" is read-only.
+    "active" and "trial" grant full access; "free" grants the metered D2 tier;
+    "view_only" is read-only (a lapsed paid subscription).
     """
     if not user:
         return "view_only"
@@ -3824,17 +3833,17 @@ def _compute_access_state(user: dict, sub: Optional[dict] = None) -> str:
     if sub_status == "trialing":
         # A trial only grants access while the trial window is still open.
         # Guard against a stale "trialing" status left behind after the
-        # window elapsed (e.g. a missed webhook) → drop to view-only.
+        # window elapsed (e.g. a missed webhook) → downgrade to free (D3).
         te = _trial_end_dt(
             (sub or {}).get("trial_ends_at"),
             (sub or {}).get("trial_end"),
             user.get("trial_ends_at"),
         )
         if te is not None and te <= datetime.now(timezone.utc):
-            return "view_only"
+            return _downgrade_state(user)
         return "trial"
     if sub_status in _VIEW_ONLY_SUB_STATUSES:
-        return "view_only"
+        return _downgrade_state(user)
     # Unknown / no subscription status → legacy fallback on plan + trial window.
     plan = (user.get("plan") or "free").lower()
     if plan in PAID_PLANS:
@@ -3852,7 +3861,7 @@ def _compute_access_state(user: dict, sub: Optional[dict] = None) -> str:
         return "active"
     if _trial_active(user):
         return "trial"
-    return "view_only"
+    return _downgrade_state(user)
 
 
 async def _user_from_request(request: Request) -> Optional[dict]:
@@ -3896,10 +3905,21 @@ async def _require_paid_plan(request: Request, response: Response, tool_label: s
             status_code=401,
             detail={"error": "unauthenticated", "message": "Sign in required.", "redirect": "/signup"},
         )
-    if user.get("is_admin") or _compute_access_state(user) != "view_only":
+    if user.get("is_admin") or _compute_access_state(user) in ("active", "trial"):
         return user
-    # View-only (cancelled/expired/payment-failed). Return 402 so the
-    # frontend interceptor mounts the hard paywall modal (§4.4/§4.6).
+    # Free-tier or view-only (cancelled/expired/payment-failed). Return 402 so
+    # the frontend interceptor mounts the paywall/upgrade modal (§4.4/§4.6).
+    _state = _compute_access_state(user)
+    if _state == "free":
+        raise HTTPException(
+            status_code=402,
+            detail={
+                "error": "upgrade_required",
+                "message": f"{tool_label} is a paid feature. Start a 7-day free trial to unlock it.",
+                "upgrade_url": "/pricing",
+                "free_tier": True,
+            },
+        )
     raise HTTPException(
         status_code=402,
         detail={
@@ -7496,7 +7516,7 @@ async def billing_status(session_id: str, user_id: str = Depends(get_current_use
         now = datetime.now(timezone.utc)
         trial_ends_at = (now + timedelta(days=trial_days)).isoformat() if trial_days else None
         period_end = (now + timedelta(days=30)).isoformat()
-        await db.users.update_one({"id": user_id}, {"$set": {"plan": plan, "plan_period_end": period_end}})
+        await db.users.update_one({"id": user_id}, {"$set": {"plan": plan, "plan_period_end": period_end, "has_paid_ever": True}})
         await db.payment_transactions.update_one(
             {"session_id": session_id},
             {"$set": {"payment_status": "paid", "paid_at": now_iso()}},
@@ -7773,7 +7793,7 @@ async def stripe_webhook(request: Request):
                         handler_result = "paid_handler_error"
                         handler_error = str(e)[:300]
                 else:
-                    await db.users.update_one({"id": tx["user_id"]}, {"$set": {"plan": tx["plan"]}})
+                    await db.users.update_one({"id": tx["user_id"]}, {"$set": {"plan": tx["plan"], "has_paid_ever": True}})
                     handler_result = "paid:legacy_plan"
                 await db.payment_transactions.update_one(
                     {"session_id": ev.session_id},
@@ -8186,6 +8206,10 @@ try:
         user_dep=_user_from_request,
         require_household=_require_household,
         resolve_active_participant=_resolve_active_participant,
+        compute_access_state=_compute_access_state,
+        check_free_tool_usage=check_free_tool_usage,
+        record_free_tool_usage_raw=record_free_tool_usage_raw,
+        client_ip=_client_ip,
     ))
 except Exception as _e:
     import logging as _logging
@@ -8897,6 +8921,12 @@ _READ_ONLY_EXEMPT_PREFIXES = (
     "/api/public/",         # public unauthed surfaces (already gated)
     "/api/support/tickets", # gated separately below, first ticket allowed?
 )
+# CONV-1 D: write endpoints a FREE-tier user may use (the metered tools). Their
+# own per-tool allowance (D2) enforces the count inside the route; everything
+# else returns a 402 upgrade prompt for free users.
+_FREE_WRITE_PREFIXES = (
+    "/api/invoices/upload",   # Invoice Checker, metered 1 per 120 days
+)
 # Support tickets are explicitly blocked for read-only users per spec ,
 # add no exemption for the create endpoint. (The middleware path-prefix
 # match needs the trailing slash to differentiate the list from create:
@@ -8935,11 +8965,29 @@ async def _enforce_read_only_for_unpaid(request, call_next):
         sub = await db.subscriptions.find_one({"user_id": user.get("id")}, {"_id": 0})
     except Exception:
         sub = None
-    if _compute_access_state(user, sub) != "view_only":
+    state = _compute_access_state(user, sub)
+    if state in ("active", "trial"):
         return await call_next(request)
+    # CONV-1 D: FREE-tier users may write to the metered tool endpoints; the
+    # route's own per-tool allowance enforces the count. All other writes get a
+    # soft upgrade prompt rather than the reactivate-your-subscription paywall.
+    if state == "free":
+        if any(path.startswith(p) for p in _FREE_WRITE_PREFIXES):
+            return await call_next(request)
+        return JSONResponse(
+            status_code=402,
+            content={
+                "detail": {
+                    "error": "upgrade_required",
+                    "message": "That's a paid feature. Start a 7-day free trial to unlock it.",
+                    "upgrade_url": "/pricing",
+                    "free_tier": True,
+                }
+            },
+        )
 
-    # View-only account (cancelled trial, cancelled/ended paid subscription,
-    # or unresolved payment failure) → block writes. Reads still pass.
+    # View-only account (cancelled / ended PAID subscription, or unresolved
+    # payment failure) → block writes. Reads still pass.
     return JSONResponse(
         status_code=402,
         content={
@@ -9465,6 +9513,28 @@ async def _scenario_alerts_scheduler():
             await _aio.sleep(3600)  # one hour
     from lib.jobs import run_async as _run_async
     _run_async(_loop(), name="scenario_alerts_loop", max_attempts=1)
+
+
+@app.on_event("startup")
+async def _has_paid_ever_backfill():
+    """CONV-1 D3: stamp `has_paid_ever=True` on accounts that completed at least
+    one successful paid charge, so a lapsed PAID subscription stays view-only
+    while an expired TRIAL downgrades to the free tier. Idempotent + backgrounded
+    (only touches users missing the flag that have a paid transaction)."""
+    import asyncio as _aio
+    async def _run():
+        try:
+            paid_uids = await db.payment_transactions.distinct(
+                "user_id", {"payment_status": "paid"},
+            )
+            if paid_uids:
+                await db.users.update_many(
+                    {"id": {"$in": paid_uids}, "has_paid_ever": {"$ne": True}},
+                    {"$set": {"has_paid_ever": True}},
+                )
+        except Exception as e:
+            logger.warning("has_paid_ever backfill failed: %s", e)
+    _aio.create_task(_run())
 
 
 @app.on_event("startup")

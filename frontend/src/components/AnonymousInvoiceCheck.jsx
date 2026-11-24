@@ -20,6 +20,7 @@ import { conv1 } from "@/lib/conv1";
 import { InvoiceResultBody } from "@/components/invoices/InvoiceResultView";
 import FilePreviewPanel from "@/components/FilePreviewPanel";
 import UploadGuardNotice from "@/components/UploadGuardNotice";
+import FreeAllowanceBadge from "@/components/FreeAllowanceBadge";
 
 const _ACCEPT = ".pdf,.doc,.docx,.jpg,.jpeg,.png,.heic,.heif,.webp";
 
@@ -301,6 +302,9 @@ export default function AnonymousInvoiceCheck({ onSeeExample }) {
                             )}
                         </div>
 
+                        {/* D2: honest allowance, stated up front — BEFORE the run button */}
+                        <FreeAllowanceBadge tool="INVOICE_CHECKER" noun="invoice check" nounPlural="invoice checks" refreshKey={result ? 1 : 0} />
+
                         <button
                             type="button"
                             onClick={() => run()}
@@ -311,6 +315,7 @@ export default function AnonymousInvoiceCheck({ onSeeExample }) {
                             {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <ArrowRight className="h-4 w-4" />}
                             {loading ? "Reading your invoice…" : "Check my invoice"}
                         </button>
+
 
                         {/* B privacy line — what happens to the upload (spec §7.3, H5) */}
                         <p className="mt-3 text-xs text-muted-k leading-relaxed" data-testid="anon-privacy-line">

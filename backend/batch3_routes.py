@@ -708,25 +708,35 @@ async def check_free_tool_usage(request: Request, tool: str = "STATEMENT_DECODER
         }
 
     # Find the most recent use inside the rolling window (if any).
-    latest = await _db.free_tool_usage.find_one(q, sort=[("used_at", -1)], projection={"_id": 0, "used_at": 1})
-    last_used_at = (latest or {}).get("used_at")
-    if last_used_at:
+    # CONV-1 D2: allowances are per-tool — Provider Price Checker gets 2 (a
+    # comparison needs two), everything else gets 1 per 120-day window.
+    _tool_limits = {"PROVIDER_PRICE_CHECKER": 2}
+    limit = _tool_limits.get(tool, 1)
+    uses = [
+        d async for d in _db.free_tool_usage.find(
+            q, projection={"_id": 0, "used_at": 1},
+        ).sort("used_at", 1)
+    ]
+    count = len(uses)
+    last_used_at = uses[-1]["used_at"] if uses else None
+    if count < limit:
+        days_until_next, reset_at = 0, now.isoformat()
+    else:
+        # The earliest use rolls off first; that frees the next slot.
         try:
-            ts = datetime.fromisoformat(str(last_used_at).replace("Z", "+00:00"))
+            ts = datetime.fromisoformat(str(uses[0]["used_at"]).replace("Z", "+00:00"))
             if ts.tzinfo is None:
                 ts = ts.replace(tzinfo=timezone.utc)
-            elapsed_days = (now - ts).days
-            days_until_next = max(0, 120 - elapsed_days)
+            days_until_next = max(0, 120 - (now - ts).days)
             reset_at = (ts + _td(days=120)).isoformat()
         except Exception:
             days_until_next, reset_at = 0, now.isoformat()
-    else:
-        days_until_next, reset_at = 0, now.isoformat()
 
     return {
-        "allowed": days_until_next == 0,
-        "used_count": 1 if last_used_at else 0,
-        "remaining": 0 if last_used_at else 1,
+        "allowed": count < limit,
+        "used_count": count,
+        "remaining": max(0, limit - count),
+        "limit": limit,
         "days_until_next_use": days_until_next,
         "last_used_at": last_used_at,
         "reset_at": reset_at,

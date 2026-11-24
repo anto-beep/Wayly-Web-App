@@ -112,6 +112,10 @@ def build_invoices_router(
     user_dep: Callable,
     require_household: Optional[Callable] = None,
     resolve_active_participant: Optional[Callable] = None,
+    compute_access_state: Optional[Callable] = None,
+    check_free_tool_usage: Optional[Callable] = None,
+    record_free_tool_usage_raw: Optional[Callable] = None,
+    client_ip: Optional[Callable] = None,
 ) -> APIRouter:
     """Return an APIRouter with all INV-1 routes wired to the given DB
     handle and auth dependencies from server.py."""
@@ -178,6 +182,25 @@ def build_invoices_router(
         user_id = user.get("id") or user.get("user_id")
         if not user_id:
             raise HTTPException(status_code=401, detail="Authentication required")
+
+        # CONV-1 D2: a FREE-tier user gets 1 Invoice Check per 120 days. Paid /
+        # trial users are unlimited. The allowance is checked here and recorded
+        # only AFTER the check succeeds (below), so a failed read never burns it.
+        _is_free_user = bool(compute_access_state and compute_access_state(user) == "free")
+        if _is_free_user and check_free_tool_usage:
+            _usage = await check_free_tool_usage(request, tool="INVOICE_CHECKER", user_id=user_id)
+            if not _usage["allowed"]:
+                _days = int(_usage.get("days_until_next_use") or 0)
+                raise HTTPException(status_code=429, detail={
+                    "error": "cooldown_active",
+                    "message": (
+                        f"You've used your free invoice check. You can run another in "
+                        f"{_days} day{'' if _days == 1 else 's'}, or start a 7-day free trial to check as many as you need."
+                    ),
+                    "days_until_next_use": _days,
+                    "reset_at": _usage.get("reset_at"),
+                    "window_days": 120,
+                })
 
         # Read the upload. Enforce size cap early.
         raw = await file.read()
@@ -510,6 +533,18 @@ def build_invoices_router(
             dup = None
 
         await db.invoices.insert_one(doc)
+
+        # CONV-1 D2: consume the free-tier allowance now the check succeeded.
+        if _is_free_user and record_free_tool_usage_raw:
+            try:
+                await record_free_tool_usage_raw(
+                    tool="INVOICE_CHECKER", user_id=user_id,
+                    fingerprint=None,
+                    ip=(client_ip(request) if client_ip else None),
+                    result_id=invoice_id,
+                )
+            except Exception as e:      # pragma: no cover - defensive
+                logger.warning("free invoice usage record failed: %s", e)
 
         return {
             "invoice_id": invoice_id,

@@ -9,6 +9,7 @@ import { ARTICLES as STATIC_ARTICLES } from "@/data/resources";
 import { SEO_ARTICLES_2026 } from "@/data/seoArticles2026";
 import { SEO_TOOL_ARTICLES } from "@/data/seoToolArticles";
 import { ARTICLE_PILLAR_MAP } from "@/data/articlePillars";
+import ArticleOfferBlock from "@/components/ArticleOfferBlock";
 import { ArrowLeft, ArrowRight, ShieldAlert, BookOpen, ExternalLink, ChevronDown, Twitter, Linkedin, Mail, Link2, Sparkles, Search, X } from "lucide-react";
 
 import SeoHead, { articleLd, breadcrumbLd, canonicalFor } from "@/seo/SeoHead";
@@ -395,6 +396,9 @@ export function ArticleDetail() {
                     <ReactMarkdown remarkPlugins={[remarkGfm]}>{article.body_md || ""}</ReactMarkdown>
                 </div>
 
+                {/* CONV-1 G1: inline topic-matched offer after the body. */}
+                <ArticleOfferBlock slug={slug} category={deriveCategory(article)} title={article.title} variant="inline" />
+
                 {citation && citation.length > 0 && (
                     <div className="mt-12 pt-6 border-t border-kindred" data-testid="article-citations">
                         <h2 className="font-heading text-xl text-primary-k inline-flex items-center gap-2"><BookOpen className="h-5 w-5" /> Sources</h2>
@@ -409,6 +413,9 @@ export function ArticleDetail() {
                         </ul>
                     </div>
                 )}
+
+                {/* CONV-1 G2: topic-matched offer at the foot of the article. */}
+                <ArticleOfferBlock slug={slug} category={deriveCategory(article)} title={article.title} variant="end" />
             </article>
             <Footer />
         </div>
@@ -572,20 +579,34 @@ function StructuredArticle({ article, slug }) {
                 )}
 
                 {/* Sections */}
-                {(article.sections || []).map((s) => {
-                    const sid = slugify(s.heading);
-                    const vis = ARTICLE_SECTION_VISUALS[slug]?.[sid];
-                    return (
-                        <section key={s.heading} className="mt-10" data-testid={`section-${sid}`}>
-                            <h2 id={sid} className="font-heading text-2xl text-primary-k tracking-tight">{titleCaseHeading(s.heading)}</h2>
-                            <ProseBlock>{s.body_md}</ProseBlock>
-                            {vis?.image && <SectionFigure src={vis.image.src} alt={vis.image.alt} caption={vis.image.caption} />}
-                            {vis?.chart && <BarCompare title={vis.chart.title} note={vis.chart.note} items={vis.chart.items} />}
-                            {vis?.pullquote && <PullQuote value={vis.pullquote.value} label={vis.pullquote.label} />}
-                            {vis?.stats && <FigureStats title={vis.stats.title} items={vis.stats.items} />}
-                        </section>
-                    );
-                })}
+                {(() => {
+                    const secs = article.sections || [];
+                    // CONV-1 G1: inline offer at ~60% scroll depth. Short
+                    // articles (<3 sections) still get one after the first
+                    // section so every article carries both placements.
+                    const offerAfter = secs.length >= 3
+                        ? Math.ceil(secs.length * 0.6) - 1
+                        : (secs.length >= 1 ? 0 : -1);
+                    return secs.map((s, idx) => {
+                        const sid = slugify(s.heading);
+                        const vis = ARTICLE_SECTION_VISUALS[slug]?.[sid];
+                        return (
+                            <React.Fragment key={s.heading}>
+                                <section className="mt-10" data-testid={`section-${sid}`}>
+                                    <h2 id={sid} className="font-heading text-2xl text-primary-k tracking-tight">{titleCaseHeading(s.heading)}</h2>
+                                    <ProseBlock>{s.body_md}</ProseBlock>
+                                    {vis?.image && <SectionFigure src={vis.image.src} alt={vis.image.alt} caption={vis.image.caption} />}
+                                    {vis?.chart && <BarCompare title={vis.chart.title} note={vis.chart.note} items={vis.chart.items} />}
+                                    {vis?.pullquote && <PullQuote value={vis.pullquote.value} label={vis.pullquote.label} />}
+                                    {vis?.stats && <FigureStats title={vis.stats.title} items={vis.stats.items} />}
+                                </section>
+                                {idx === offerAfter && (
+                                    <ArticleOfferBlock slug={slug} category={deriveCategory(article)} title={article.title} variant="inline" />
+                                )}
+                            </React.Fragment>
+                        );
+                    });
+                })()}
 
                 {/* Branded step flow (articles with a how-to) */}
                 {article.howto?.steps?.length > 0 && (
@@ -642,6 +663,9 @@ function StructuredArticle({ article, slug }) {
                 )}
 
                 <ShareButtons title={article.title} onCopyLink={handleCopyLink} className="mt-10" />
+
+                {/* CONV-1 G2: topic-matched offer at the foot of the article. */}
+                <ArticleOfferBlock slug={slug} category={deriveCategory(article)} title={article.title} variant="end" />
 
                 {/* Last reviewed footer, Phase 3 E-E-A-T trust signal for YMYL content. */}
                 {(article.updated_at || article.published_at) && (
