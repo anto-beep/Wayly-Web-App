@@ -13,6 +13,7 @@ import EmailCodeVerify from "@/components/EmailCodeVerify";
 import SeoHead from "@/seo/SeoHead";
 import { track } from "@/lib/analytics";
 import { ga4Track } from "@/lib/ga4";
+import { conv1 } from "@/lib/conv1";
 import { SEO } from "@/seo/pageConfig";
 import { TOOL_COUNT } from "@/config/toolRegistry";
 import { trialSentence, CAREGIVER_SEATS, SUPPORT_LINE } from "@/config/planFacts";
@@ -55,6 +56,9 @@ const PLANS = [
     },
 ];
 
+// CONV-1 K1: signup_started fires once, on the first interaction with the form.
+let signupStartedFired = false;
+
 export default function Signup() {
     const { signup } = useAuth();
     const nav = useNavigate();
@@ -74,7 +78,7 @@ export default function Signup() {
     // room to explain why each one helps.
     const [form, setForm] = useState({
         first_name: "",
-        email: "",
+        email: /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(params.get("email") || "") ? params.get("email") : "",
         password: "",
         role: ["caregiver", "participant"].includes(params.get("role")) ? params.get("role") : "caregiver",
         plan: params.get("plan") && ["solo", "family"].includes(params.get("plan")) ? params.get("plan") : "family",
@@ -161,6 +165,8 @@ export default function Signup() {
                 trial_days: 7,
             });
             track.trialStart({ plan: form.plan });
+            // CONV-1 K1: card entry surface (Stripe Checkout) about to display.
+            try { conv1.cardStepReached({ plan: form.plan }); } catch (_) { /* best-effort */ }
             // Brand-new 7-day trial: remember so that after Stripe confirms we
             // can send this new user to /welcome exactly once (BillingSuccess).
             try { localStorage.setItem("wayly_trial_welcome", "1"); } catch (_) { /* no-op */ }
@@ -178,7 +184,16 @@ export default function Signup() {
         }
     };
 
-    const update = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }));
+    const fireSignupStarted = () => {
+        if (signupStartedFired) return;
+        signupStartedFired = true;
+        try { conv1.signupStarted({ plan: form.plan, persona: form.role }); } catch (_) { /* best-effort */ }
+    };
+
+    const update = (k) => (e) => {
+        fireSignupStarted();
+        setForm((f) => ({ ...f, [k]: e.target.value }));
+    };
 
     const _trialPlanLabel = form.plan === "family" ? "Family" : "Solo";
     const _trialPlanAmount = form.plan === "family" ? "A$49.50" : "A$24.50";
@@ -281,7 +296,7 @@ export default function Signup() {
                                                 key={o.v}
                                                 type="button"
                                                 data-testid={`signup-role-${o.v}`}
-                                                onClick={() => setForm((f) => ({ ...f, role: o.v }))}
+                                                onClick={() => { fireSignupStarted(); setForm((f) => ({ ...f, role: o.v })); }}
                                                 className={`text-left rounded-lg border p-3 transition-colors ${
                                                     form.role === o.v
                                                         ? "border-primary-k bg-surface-2 ring-2 ring-primary-k/20 auth-selected"
@@ -401,7 +416,7 @@ export default function Signup() {
                                         <button
                                             key={p.v}
                                             type="button"
-                                            onClick={() => setForm((f) => ({ ...f, plan: p.v }))}
+                                            onClick={() => { fireSignupStarted(); try { conv1.planSelected(p.v); } catch (_) { /* best-effort */ } setForm((f) => ({ ...f, plan: p.v })); }}
                                             data-testid={`signup-plan-${p.v}`}
                                             aria-pressed={selected}
                                             className={`w-full text-left rounded-xl border-2 p-4 transition-colors duration-200 relative ${

@@ -27,6 +27,8 @@ import HcpBridgeLine from "@/components/HcpBridgeLine";
 import ToolWalkthroughVideo from "@/components/ToolWalkthroughVideo";
 import ToolGate from "@/components/ToolGate";
 import InvoiceSampleResult from "@/components/InvoiceSampleResult";
+import AnonymousInvoiceCheck from "@/components/AnonymousInvoiceCheck";
+import { isConv1FlagOn } from "@/config/conv1Flags";
 import ToolExplainer from "@/components/ToolExplainer";
 import ContextualHelp from "@/components/ContextualHelp";
 import ToolRelatedLinks from "@/components/ToolRelatedLinks";
@@ -438,6 +440,35 @@ export default function InvoiceCheckerTool() {
     }
 
     if (access === "blocked") {
+        // CONV-1 WS-B: upload-first anonymous check (B2). The visitor can run a
+        // real check on their own invoice above the sample, with the sample now
+        // demoted to a secondary "see an example" below. Falls back to the
+        // brochure when the flag is off.
+        if (isConv1FlagOn("conv1_anon_invoice_check")) {
+            const scrollToExample = () => {
+                document.getElementById("example-check")?.scrollIntoView({ behavior: "smooth" });
+            };
+            return (
+                <div className="min-h-screen bg-kindred">
+                    <SeoHead {...SEO.toolInvoiceChecker} jsonLd={_toolJsonLd(SEO.toolInvoiceChecker)} />
+                    <MarketingHeader />
+                    <ToolHero toolKey="invoice-checker" wide />
+                    <HcpBridgeLine className="mt-4" />
+                    <div className="mt-6">
+                        <AnonymousInvoiceCheck onSeeExample={scrollToExample} />
+                    </div>
+                    <div id="example-check" className="scroll-mt-20">
+                        <InvoiceSampleResult />
+                    </div>
+                    <ToolWalkthroughVideo slug="invoice-checker" />
+                    <section className="max-w-5xl mx-auto px-4 sm:px-8">
+                        <ToolExplainer toolKey="invoice-checker" />
+                    </section>
+                    <ToolRelatedLinks slug="invoice-checker" />
+                    <Footer />
+                </div>
+            );
+        }
         return (
             <div className="min-h-screen bg-kindred">
                 <SeoHead {...SEO.toolInvoiceChecker} jsonLd={_toolJsonLd(SEO.toolInvoiceChecker)} />
@@ -576,8 +607,8 @@ export default function InvoiceCheckerTool() {
                         </button>
                     )}
 
-                    <p className="mt-4 text-xs text-muted-k">
-                        We accept PDF, DOC/DOCX, TXT, CSV, JPG, PNG, HEIC, and WEBP files. Your invoice is stored securely in Australia and you can delete it any time.
+                    <p className="mt-4 text-xs text-muted-k" data-testid="inv1-data-handling">
+                        We accept PDF, DOC/DOCX, TXT, CSV, JPG, PNG, HEIC, and WEBP files. Your invoice is processed and stored securely in Australia, never shared, and never used to train anything. You can delete it any time.
                     </p>
                 </div>
 

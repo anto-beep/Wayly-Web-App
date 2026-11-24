@@ -1,0 +1,42 @@
+{
+  "summary": "CONV-1 v2 Workstreams B (anonymous invoice check), C (capture + consent), K (dry-run analytics) tested end-to-end on web. Backend: 12/12 pytest tests pass. Frontend: anon component renders ABOVE sample block with every required testid, sample run produces the full result ($1,019.06 billed / $361.91 refund / 7 findings) via shared InvoiceResultBody, email capture + unticked consent works, all four account CTAs prefill /signup?email=... after email is typed, and conv1:dry-run events (anon_check_started, anon_check_completed, signup_started, plan_selected) all fire with 0 JS errors. Parity verified: text-paste run returns identical totals to the sample. Upload_guard returns decision='block' for off-topic text.",
+  "platforms_tested": ["web"],
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "web": {
+      "ui_bugs": [],
+      "integration_issues": [
+        {"flow": "anon-email-submit (C1)", "issue": "Cookie consent banner floats over the bottom of the viewport and can intercept clicks on the Email-me-this-result button on first load. Dismissing the banner (or scrolling the capture card into view) fixes it. Recommend lifting the z-index of the capture card above the cookie banner, or auto-scrolling result into view enough to clear the banner.", "affected_selectors": ["[data-testid='anon-email-submit']"]}
+      ],
+      "design_issues": []
+    }
+  },
+  "parity_issues": [],
+  "test_report_links": [
+    "/app/backend/tests/test_conv1_anon_invoice_iter420.py",
+    "/app/test_reports/pytest/conv1_anon_iter420.xml",
+    "/app/test_reports/iter420_anon_result.jpeg",
+    "/app/test_reports/iter420_signup.jpeg"
+  ],
+  "action_items": [
+    "(Optional) Raise z-index of anon-email-capture or increase result scroll offset so the cookie banner does not overlap the email-submit button on first load."
+  ],
+  "critical_code_review_comments": [
+    "routes/anon_invoice.py is cleanly structured (~500 lines, under the file-size threshold) and delegates to lib.inv1 so parity with the signed-in route is preserved.",
+    "AnonymousInvoiceCheck.jsx correctly implements B2/B3/B4/B5/B6/B7/B8 with full testid coverage; consent is a SEPARATE unticked checkbox and the result is still emailed when unticked (spec compliant).",
+    "conv1.js dry-run path logs via console.debug only (not production) — safe."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_conv1_anon_invoice_iter420.py (created)"
+  ],
+  "success_rate": {"backend": "100%", "frontend": "100%"},
+  "test_credentials": "None needed — signed-out flow.",
+  "seed_data_creation": "Two anon_captures rows inserted with TEST_conv1_* email hashes (for consent=false and consent=true). These are ephemeral capture rows tied to short-lived tokens; no cleanup required.",
+  "retest_needed": false,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "Backend pytest suite at /app/backend/tests/test_conv1_anon_invoice_iter420.py is reusable as regression. Sample run reference totals: invoice_total=1019.06, refund_total=361.91, findings=7 (fixture /app/backend/tests/inv1/fixtures/samburke_inv2_text.txt). Preview backend IP is on FREE_TOOL_UNLIMITED_IPS so 120-day cooldown does not trigger — do not treat non-429 as a failure. Resend email is MOCKED (no live key) so the C1 send returns {ok: ...} but the capture row + consent event are still stored and HTTP is 200.",
+  "rca of the issue": "No blocking bug. Minor UX observation: the floating cookie consent banner can overlap the anon-email-submit button on initial load. Playwright reproduced this on first attempt (click succeeded but sent email flow timed out waiting for anon-email-sent); dismissing the banner or scrolling the capture card into view made the submit succeed on retry. In production this will happen only until the user clicks Accept/Only necessary on the cookie banner."
+}

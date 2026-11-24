@@ -8191,6 +8191,22 @@ except Exception as _e:
     import logging as _logging
     _logging.getLogger("wayly").warning(f"routes.invoices failed to load: {_e}")
 
+# CONV-1 v2 WS-B · Anonymous Invoice Check (public, no account, 1 per 120 days)
+try:
+    from routes.anon_invoice import build_anon_invoice_router
+    api.include_router(build_anon_invoice_router(
+        db=db,
+        user_dep=_user_from_request,
+        check_free_tool_usage=check_free_tool_usage,
+        record_free_tool_usage_raw=record_free_tool_usage_raw,
+        client_ip=_client_ip,
+        is_unlimited_ip=_is_unlimited_ip,
+        burst_check=_check_rate_limit,
+    ))
+except Exception as _e:
+    import logging as _logging
+    _logging.getLogger("wayly").warning(f"routes.anon_invoice failed to load: {_e}")
+
 # In-app nudges, dismissible dashboard prompts (Family second-participant, etc.)
 try:
     from routes.nudges import build_nudges_router

@@ -5,6 +5,7 @@ import SeoHead from "@/seo/SeoHead";
 import MarketingHeader from "@/components/MarketingHeader";
 import { fbqTrack } from "@/lib/metaPixel";
 import { ga4Track } from "@/lib/ga4";
+import { conv1 } from "@/lib/conv1";
 
 /**
  * /welcome — one-time trial confirmation page.
@@ -54,6 +55,8 @@ export default function Welcome() {
                     }
                 } catch (_) { /* ignore */ }
                 ga4Track.trialStarted(trialId, { plan_type: plan || undefined });
+                // CONV-1 K1: mirror trial_started into the CONV-1 funnel taxonomy.
+                try { conv1.trialStarted({ plan: plan || undefined }); } catch (_) { /* best-effort */ }
             } catch (_) { /* analytics best-effort */ }
         }
     }, [allowed]);

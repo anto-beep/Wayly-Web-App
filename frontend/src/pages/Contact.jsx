@@ -10,6 +10,8 @@ import { api } from "@/lib/api";
 import SeoHead from "@/seo/SeoHead";
 import { SEO } from "@/seo/pageConfig";
 import { Orb } from "@/components/BrandVisuals";
+import SupportContactCard from "@/components/SupportContactCard";
+import { isConv1FlagOn } from "@/config/conv1Flags";
 const ROLES = [
     { v: "family", label: "Family Caregiver" },
     { v: "participant", label: "Participant" },
@@ -298,6 +300,7 @@ export default function Contact() {
                 </div>
 
                 <aside className="space-y-3" data-testid="contact-info-cards">
+                    {isConv1FlagOn("conv1_trust_layer") && <SupportContactCard />}
                     <div className="relative overflow-hidden bg-surface border border-kindred rounded-2xl p-5 transition-colors">
                         <span className="absolute left-0 top-0 h-1.5 w-full opacity-80 bg-[#0E4D52]" />
                         <div className="h-10 w-10 rounded-xl bg-[#0E4D52] flex items-center justify-center shadow-sm"><Mail className="h-5 w-5 text-white" /></div>
