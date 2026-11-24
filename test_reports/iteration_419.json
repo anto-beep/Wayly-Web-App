@@ -1,0 +1,36 @@
+{
+  "summary": "CONV-1 Workstream F web e2e: signup form reduction, magic-link login + landing, and trial-banner copy. 4 of 5 checks PASS; the trial-banner visibility check is blocked by a stale fixture (not a code bug). Backend magic-link contract re-verified via curl.",
+  "platforms_tested": ["web"],
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "web": {
+      "ui_bugs": [],
+      "integration_issues": [],
+      "design_issues": []
+    }
+  },
+  "parity_issues": [],
+  "test_report_links": [],
+  "action_items": [
+    "Refresh the trialactive@example.com seed fixture: trial_ends_at is 2026-11-18T05:41:50Z (already expired as of 2026-11-24) and household_id is null. This makes access_state resolve to view_only and routes the user to /onboarding, so the TrialCountdownBanner cannot render on /app. Reseed with trial_ends_at = now+5d AND attach a household so the user actually lands on /app.",
+    "(Optional) Also seed a dedicated trial+household fixture so the banner flow has a stable positive test subject (e.g. 'trialbanner@example.com' with subscription_status=trialing, trial_ends_at=now+5d, household_id set)."
+  ],
+  "critical_code_review_comments": [
+    "TrialCountdownBanner copy (TrialCountdownBanner.jsx:60-69) correctly includes both 'cancel any time' and \"you won't be charged\" in both the trialing-not-cancelled and trialing-cancelled branches (plus the final-24h variants). Copy requirement met in source.",
+    "Banner is gated on subscription_status === 'trialing' && trial_ends_at > now AND lives inside Layout.jsx (line 331). Onboarding routes don't render Layout, so a trialing user with no household will never see the banner. Not a bug — just worth flagging because the only provided trial fixture is in that exact state.",
+    "Signup.jsx now stores only {role, first_name, email, password, marketing_opted_in} client-side; previously-rendered fields for last_name/caregiver_fields/second-participant/mobile are fully removed. Verified both by DOM audit (testids ABSENT) and by source."
+  ],
+  "updated_files": [],
+  "success_rate": {
+    "backend": "100%",
+    "frontend": "80% (4/5; trial-banner visibility unverifiable due to stale fixture)"
+  },
+  "seed_data_creation": "Used signup email fformtest+<random>@gmail.com (TEST signup; stops at verify stage — no household/subscription created).",
+  "retest_needed": false,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "Backend magic-link endpoints (/api/auth/magic-link/request, /api/auth/magic-link/verify) are proven: known email → {ok, debug_token}; unknown email → {ok} with NO debug_token; verify → {token, refresh_token, user}; reused token → 400. 60s per-account cooldown is real; use a fresh account or wait. Signup form on /signup is reduced to the 4 approved testids plus marketing consent; plan picker still visible. Magic-link landing (/auth/magic-link?token=...) shows 'Signing you in…' then redirects to /app on success; reuse shows [data-testid=magic-link-error]. Trial banner code is correct; test fixture (trialactive@example.com) has expired trial_ends_at and no household and cannot reach /app.",
+  "rca of the issue": "Trial banner visibility test failed because trialactive@example.com's trial_ends_at (2026-11-18) is in the past relative to today (2026-11-24) and the user has household_id=null. /auth/me reports access_state=view_only, router sends user to /onboarding (no Layout, no banner), and even if the user reached /app, TrialCountdownBanner.jsx line 42 returns null when remainingMs <= 0. Fix: re-run the trial-fixture seeder so trial_ends_at is in the future AND the user has a household."
+}

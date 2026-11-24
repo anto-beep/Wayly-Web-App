@@ -33,6 +33,7 @@ import GtmRouteTracker from "@/components/analytics/GtmRouteTracker";
 // from 5.7s to 2.1s on the homepage.
 const Login = lazy(() => import("@/pages/Login"));
 const Signup = lazy(() => import("@/pages/Signup"));
+const MagicLinkLanding = lazy(() => import("@/pages/MagicLinkLanding"));
 const Onboarding = lazy(() => import("@/pages/OnboardingRouter"));
 const Journey = lazy(() => import("@/pages/journey/Journey"));
 
@@ -423,6 +424,7 @@ function App() {
                 <Routes>
                     {/* Auth callback (also reachable via direct route) */}
                     <Route path="/auth/callback" element={<AuthCallback />} />
+                    <Route path="/auth/magic-link" element={<MagicLinkLanding />} />
 
                     {/* Public marketing pages, accessible to everyone, logged in or not.
                         Wrapped in MarketingLayout so every public page gets a soft

@@ -151,6 +151,24 @@ export function AuthProvider({ children }) {
         return data.user;
     };
 
+    // CONV-1 F4: complete a passwordless sign-in. Mirrors `login` for the
+    // token/user handling + MFA contract so the magic-link landing page can
+    // reuse all the same session wiring.
+    const completeMagicLink = async (token) => {
+        const { data } = await api.post("/auth/magic-link/verify", { token });
+        if (data?.requires_mfa && data?.temp_token) {
+            return { requires_mfa: true, temp_token: data.temp_token };
+        }
+        setAuthToken(data.token);
+        setRefreshToken(data.refresh_token || null);
+        setUser(data.user);
+        _syncReadOnly(data.user);
+        if (data?.user?.id) setSentryUser(data.user.id);
+        try { track.login({ method: "magic-link" }); track.identify(data.user); } catch (_) { /* analytics best-effort */ }
+        await refreshHousehold();
+        return data.user;
+    };
+
     const logout = async () => {
         try { await api.post("/auth/logout"); } catch { /* ignore */ }
         try { track.logout(); track.reset(); } catch (_) { /* analytics best-effort */ }
@@ -189,7 +207,7 @@ export function AuthProvider({ children }) {
 
     return (
         <AuthContext.Provider
-            value={{ user, household, loading, login, verifyMfa, signup, logout, refreshHousehold, refreshUser, setUser, completeGoogleAuth }}
+            value={{ user, household, loading, login, verifyMfa, signup, logout, refreshHousehold, refreshUser, setUser, completeGoogleAuth, completeMagicLink }}
         >
             {children}
         </AuthContext.Provider>

@@ -576,6 +576,149 @@ async def login(payload: LoginRequest, request: Request):
     }
 
 
+# ----------------- auth: magic-link (passwordless sign-in for returning users) -----------------
+# CONV-1 F4. A single-use, 15-minute, hashed sign-in link emailed on request.
+# Mirrors /auth/login for the MFA + account-lock + UserPublic contract so the
+# web AuthContext consumes the response identically. Non-production surfaces a
+# debug_link so the flow is testable without a live inbox — never in prod.
+_MAGIC_LINK_TTL_MIN = 15
+_MAGIC_COOLDOWN_S = 60
+_magic_last_send_at: dict[str, datetime] = {}
+
+
+def _hash_magic_token(tok: str) -> str:
+    import hashlib
+    return hashlib.sha256((tok or "").strip().encode("utf-8")).hexdigest()
+
+
+def _magic_link_email_html(name: str, link: str) -> str:
+    from wayly_email_branding import wrap_email_html, COLORS, BODY_FONT
+    safe_name = (name or "there").split("@")[0]
+    inner = f"""
+      <h1 style="margin:0 0 14px 0;color:{COLORS["teal"]};font-family:{BODY_FONT};font-size:26px;line-height:1.25;font-weight:700;letter-spacing:-.01em;">
+        Here's your sign-in link, {safe_name}.
+      </h1>
+      <p style="margin:0 0 4px 0;color:{COLORS["text"]};font-size:15px;line-height:1.65;">
+        Tap the button below to sign in to Wayly — no password needed.
+      </p>
+      <div style="margin:24px 0;text-align:center;">
+        <a href="{link}" style="display:inline-block;font-family:{BODY_FONT};font-size:16px;font-weight:700;color:#ffffff;background:{COLORS["teal"]};border-radius:12px;padding:14px 28px;text-decoration:none;">Sign in to Wayly</a>
+      </div>
+      <p style="margin:8px 0 0 0;color:{COLORS["muted"]};font-size:13px;line-height:1.6;">
+        This link expires in {_MAGIC_LINK_TTL_MIN} minutes and works once. If the button doesn't open, copy and paste this link into your browser:<br/>
+        <span style="word-break:break-all;color:{COLORS["teal"]};">{link}</span>
+      </p>
+      <p style="margin:20px 0 0 0;color:{COLORS["muted"]};font-size:12px;line-height:1.55;border-top:1px solid {COLORS["border"]};padding-top:18px;opacity:.9;">
+        Didn't ask to sign in? You can safely ignore this email — your account stays secure.
+      </p>
+    """
+    return wrap_email_html(
+        title="Your Wayly sign-in link",
+        eyebrow="Sign in to Wayly",
+        inner_html=inner,
+        footer_note="You received this because someone requested a sign-in link for this Wayly account.",
+    )
+
+
+class MagicLinkRequestBody(BaseModel):
+    email: EmailStr
+
+
+class MagicLinkVerifyBody(BaseModel):
+    token: str = Field(min_length=10, max_length=256)
+
+
+@api.post("/auth/magic-link/request")
+async def magic_link_request(body: MagicLinkRequestBody, request: Request):
+    """Email a one-time sign-in link. Anti-enumeration: always returns ok."""
+    email = str(body.email).strip().lower()
+    resp = {"ok": True}
+    user = await db.users.find_one({"email": email}, {"_id": 0})
+    if not user:
+        return resp
+    now = datetime.now(timezone.utc)
+    last = _magic_last_send_at.get(user["id"])
+    if last and (now - last).total_seconds() < _MAGIC_COOLDOWN_S:
+        return resp
+    token = _secrets_mod.token_urlsafe(32)
+    await db.magic_link_tokens.delete_many({"user_id": user["id"]})
+    await db.magic_link_tokens.insert_one({
+        "id": new_id(),
+        "user_id": user["id"],
+        "email": email,
+        "token_hash": _hash_magic_token(token),
+        "created_at": now_iso(),
+        "expires_at": now + timedelta(minutes=_MAGIC_LINK_TTL_MIN),
+        "consumed": False,
+    })
+    link = f"{_trusted_frontend_url().rstrip('/')}/auth/magic-link?token={token}"
+    try:
+        html = _magic_link_email_html(user.get("name") or email, link)
+        await email_service.send_email(to=email, subject="Your Wayly sign-in link", html=html)
+    except Exception as e:
+        logger.warning("magic link email failed user=%s: %s", user.get("id"), e)
+    _magic_last_send_at[user["id"]] = now
+    if not _IS_PROD:
+        resp["debug_link"] = link
+        resp["debug_token"] = token
+    return resp
+
+
+@api.post("/auth/magic-link/verify")
+async def magic_link_verify(body: MagicLinkVerifyBody, request: Request):
+    """Exchange a valid sign-in link token for a session (mirrors /auth/login)."""
+    generic = HTTPException(status_code=400, detail="This sign-in link is invalid or has expired. Request a new one.")
+    th = _hash_magic_token(body.token)
+    row = await db.magic_link_tokens.find_one({"token_hash": th, "consumed": False}, {"_id": 0})
+    if not row:
+        raise generic
+    exp = row.get("expires_at")
+    if isinstance(exp, str):
+        try:
+            exp = datetime.fromisoformat(exp.replace("Z", "+00:00"))
+        except Exception:
+            exp = None
+    if isinstance(exp, datetime) and exp.tzinfo is None:
+        exp = exp.replace(tzinfo=timezone.utc)
+    now = datetime.now(timezone.utc)
+    if not exp or now > exp:
+        await db.magic_link_tokens.delete_many({"user_id": row["user_id"]})
+        raise generic
+    user = await db.users.find_one({"id": row["user_id"]}, {"_id": 0})
+    if not user:
+        raise generic
+    # Account-lockout parity with /auth/login.
+    locked, until = await is_user_locked(user["id"])
+    if locked:
+        if until.tzinfo is None:
+            until = until.replace(tzinfo=timezone.utc)
+        retry_after, msg = _format_lockout(until)
+        raise HTTPException(status_code=423, detail={
+            "code": "account_locked",
+            "locked_until": until.astimezone(timezone.utc).isoformat(),
+            "retry_after_seconds": retry_after,
+            "message": msg,
+        }, headers={"Retry-After": str(max(1, retry_after))})
+    # Single-use: consume the token now.
+    await db.magic_link_tokens.delete_many({"user_id": user["id"]})
+    # Receiving the link proves email ownership — satisfy verification.
+    if not user.get("email_verified"):
+        await db.users.update_one({"id": user["id"]}, {"$set": {"email_verified": True, "email_verified_at": now_iso()}})
+        user["email_verified"] = True
+    await clear_login_failures(user["id"])
+    # MFA parity: a link must never bypass TOTP.
+    if user.get("totp_enabled") and user.get("totp_secret"):
+        return {"requires_mfa": True, "temp_token": create_mfa_challenge_token(user["id"])}
+    access, _jti, _exp = create_access_token(user["id"])
+    refresh, _rjti, _rexp = create_refresh_token(user["id"])
+    _obs.log_auth_login_success(user["id"], _rl._client_ip(request))
+    return {
+        "token": access,
+        "refresh_token": refresh,
+        "user": (await _user_public_with_sub(user)).model_dump(),
+    }
+
+
 @api.get("/auth/me", response_model=UserPublic)
 async def me(user_id: str = Depends(get_current_user_id)):
     u = await _get_user(user_id)

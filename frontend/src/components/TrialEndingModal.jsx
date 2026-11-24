@@ -108,7 +108,7 @@ export default function TrialEndingModal() {
                         <li>All {TOOL_COUNT} AI tools, budget calc, reassessment letters, family coordinator</li>
                         <li>Stream-by-stream budget burn + lifetime cap tracker</li>
                         <li>Anomaly alerts on every statement</li>
-                        {user.plan === "family" && <li>Up to 5 family seats + weekly digest</li>}
+                        {user.plan === "family" && <li>3 family seats + weekly digest</li>}
                     </ul>
                     <div className="rounded-lg bg-surface-2 border border-kindred/40 p-3">
                         <p className="text-xs text-muted-k">After your trial</p>

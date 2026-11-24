@@ -64,8 +64,8 @@ export default function TrialCountdownBanner({ className = "" }) {
                         : <>Trial: <strong>{dayLabel} remaining</strong>. Access ends when your trial ends — you won&apos;t be charged.</>
                 ) : (
                     isGrace
-                        ? <>Your trial ends tomorrow. Your plan starts automatically, no action needed.</>
-                        : <>Trial: <strong>{dayLabel} remaining</strong>. Your plan starts automatically when the trial ends.</>
+                        ? <>Your trial ends tomorrow. Your plan starts automatically — cancel any time before then and you won&apos;t be charged.</>
+                        : <>Trial: <strong>{dayLabel} remaining</strong>, then your plan starts automatically. Cancel any time before then — you won&apos;t be charged.</>
                 )}
             </div>
             <Link

@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
-import { Check, Loader2, Briefcase, Eye, EyeOff, Users, MailCheck } from "lucide-react";
+import { Check, Loader2, Eye, EyeOff, MailCheck } from "lucide-react";
 import WaylyLogo from "@/components/WaylyLogo";
 import { toast } from "sonner";
 import { api, extractErrorMessage } from "@/lib/api";
@@ -14,7 +14,6 @@ import SeoHead from "@/seo/SeoHead";
 import { track } from "@/lib/analytics";
 import { ga4Track } from "@/lib/ga4";
 import { SEO } from "@/seo/pageConfig";
-import { CAREGIVER_RELATIONSHIPS } from "./onboarding/constants";
 import { TOOL_COUNT } from "@/config/toolRegistry";
 import { trialSentence, CAREGIVER_SEATS, SUPPORT_LINE } from "@/config/planFacts";
 
@@ -67,25 +66,21 @@ export default function Signup() {
             nav("/signup", { replace: true });
         }
     }, [isRetiredFreePlan, nav]);
+
+    // CONV-1 F1–F3: the signup form is deliberately four fields — role, first
+    // name, email, password — so people start their trial in seconds. Last
+    // name, the care-recipient's details, a second participant and a mobile
+    // number are all collected later in onboarding / Settings, where there's
+    // room to explain why each one helps.
     const [form, setForm] = useState({
         first_name: "",
-        last_name: "",
-        name: "",  // kept in sync with `${first_name} ${last_name}` for the backend signup call
         email: "",
-        mobile: "",
         password: "",
         role: ["caregiver", "participant"].includes(params.get("role")) ? params.get("role") : "caregiver",
-        // PERSONA-1 §C, persona details captured on signup so the account
-        // is persona-correct from day zero.
-        care_recipient_first_name: "",
-        care_recipient_last_name: "",
-        care_recipient_pronouns: "unknown",
-        caregiver_relationship: "",
         plan: params.get("plan") && ["solo", "family"].includes(params.get("plan")) ? params.get("plan") : "family",
         // Business OS Phase 1: optional marketing consent, unchecked by default.
         marketing_consent: false,
     });
-    const [mobileError, setMobileError] = useState("");
     const [submitting, setSubmitting] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
     // After account creation we show a 6-digit email-code step BEFORE payment.
@@ -93,119 +88,55 @@ export default function Signup() {
     // Stripe Checkout. Mirrors the mobile code flow.
     const [verifyStage, setVerifyStage] = useState(false);
     const [checkoutBusy, setCheckoutBusy] = useState(false);
-    // Family plan, inline second-participant intent. Streamlines onboarding
-    // by letting the caregiver flag now that they'll add a 2nd person, so
-    // step 4 of onboarding can auto-steer them (both email and Google flows).
-    const [addSecondParticipant, setAddSecondParticipant] = useState(false);
-    const [secondParticipant, setSecondParticipant] = useState({
-        first_name: "",
-        relationship: "",
-    });
-
-    // If the user switches away from Family, clear the second-participant intent
-    // so nothing lingers into onboarding.
-    useEffect(() => {
-        if (form.plan !== "family") {
-            setAddSecondParticipant(false);
-        }
-    }, [form.plan]);
-
-    // Persist the second-participant intent to localStorage so BOTH email and
-    // Google signup flows can pick it up during onboarding. The onboarding
-    // flow reads and clears this key after the second participant is saved.
-    const persistSecondParticipantIntent = () => {
-        try {
-            if (form.plan === "family" && addSecondParticipant && secondParticipant.first_name.trim()) {
-                localStorage.setItem("wayly_second_participant_intent", JSON.stringify({
-                    first_name: secondParticipant.first_name.trim(),
-                    relationship: (secondParticipant.relationship || "").trim() || null,
-                }));
-            } else {
-                localStorage.removeItem("wayly_second_participant_intent");
-            }
-        } catch { /* localStorage disabled, non-fatal */ }
-    };
 
     const submit = async (e) => {
         e.preventDefault();
-        // Mobile is optional now, but if provided must match AU format.
-        const mobileClean = (form.mobile || "").replace(/\s+/g, "");
-        if (mobileClean) {
-            const auMobileRe = /^(\+614\d{8}|04\d{8})$/;
-            if (!auMobileRe.test(mobileClean)) {
-                setMobileError("Enter an Australian mobile (04XXXXXXXX or +614XXXXXXXX), or leave blank.");
-                return;
-            }
-        }
-        setMobileError("");
-        const fullName = `${form.first_name.trim()} ${form.last_name.trim()}`.trim();
-        const pw = evaluatePassword(form.password, { email: form.email, name: fullName });
+        const firstName = form.first_name.trim();
+        const pw = evaluatePassword(form.password, { email: form.email, name: firstName });
         if (!pw.valid) {
             toast.error(pw.containsIdentity ? "Password shouldn't include your name or email" : "Password needs 8+ chars with upper, lower, number, and symbol");
             return;
         }
         setSubmitting(true);
-        // Family plan: persist inline second-participant intent so onboarding
-        // (whether reached via email or Google) can steer accordingly.
-        persistSecondParticipantIntent();
         try {
             const u = await signup({
-                ...form,
-                name: fullName,
-                mobile: mobileClean,
+                first_name: firstName,
+                last_name: "",
+                name: firstName,
+                email: form.email,
+                password: form.password,
+                role: form.role,
+                plan: form.plan,
+                marketing_consent: form.marketing_consent,
             }, { deferUser: true });
             track.signup({ plan: form.plan });
             track.identify(u);
             // GA4 sign_up — fires only here, after the account is CONFIRMED
             // created by /auth/signup (never on click/submit). Deduped by user id.
             try { ga4Track.signUp(u?.id, { signup_method: "email", plan_type: form.plan }); } catch (_) { /* analytics best-effort */ }
-            // PERSONA-1 §C, persist the persona choice on signup so the
-            // account is persona-correct from day zero. Best-effort: any
-            // failure here shouldn't block trial start.
+            // PERSONA-1 §C: set the viewer persona at signup so the account is
+            // persona-correct from day zero. The care-recipient's name is now
+            // captured in onboarding, so we only seed is_self here. Best-effort:
+            // any failure shouldn't block the trial.
             try {
                 const isParticipant = form.role === "participant";
                 await api.put("/persona", {
                     viewer_persona: form.role,
                     is_authorised_representative: false,
-                    care_recipient: isParticipant
-                        ? { is_self: true, first_name: form.first_name || null, last_name: form.last_name || null, pronouns: "unknown", relationship_to_account: null }
-                        : {
-                            is_self: false,
-                            first_name: (form.care_recipient_first_name || "").trim() || null,
-                            last_name: (form.care_recipient_last_name || "").trim() || null,
-                            pronouns: form.care_recipient_pronouns || "unknown",
-                            relationship_to_account: form.caregiver_relationship || null,
-                        },
+                    care_recipient: {
+                        is_self: isParticipant,
+                        first_name: isParticipant ? (firstName || null) : null,
+                        last_name: null,
+                        pronouns: "unknown",
+                        relationship_to_account: null,
+                    },
                 });
-            } catch (_) { /* non-fatal, user can complete this in Settings later */ }
+            } catch (_) { /* non-fatal, user completes this in onboarding */ }
 
-            // Pre-create the SECOND participant (Caren-style stub) from the
-            // "Add one more person" signup toggle, so it's in the account
-            // BEFORE the user disappears into Stripe Checkout / onboarding.
-            // Applies to BOTH role=participant + Family and role=caregiver
-            // + Family. The primary participant is created by the user's own
-            // onboarding a step later; the stub is marked is_primary=false
-            // so the primary slot stays open for them.
-            if (form.plan === "family" && addSecondParticipant && secondParticipant.first_name.trim()) {
-                try {
-                    await api.post("/v2/participants", {
-                        first_name: secondParticipant.first_name.trim(),
-                        last_name: "",
-                        statement_format: "unknown",
-                        is_primary: false,
-                    });
-                } catch (_) { /* non-fatal: the second-participant intent in
-                                 localStorage is a backup so the user can
-                                 finish setup from All Done. */ }
-            }
-            // Paid plans → route through Stripe Checkout so the card is
-            // captured up front. Stripe's 7-day trial (subscription_data.trial_period_days)
-            // means the card is validated but not charged until day 8. This
-            // replaces the old no-card /billing/start-trial path so new
-            // signups always have payment on file.
+            // Paid plans → route through Stripe Checkout so the card is captured
+            // up front (7-day trial, charged on day 8). Gated behind the optional
+            // 6-digit email verification step.
             if (form.plan === "solo" || form.plan === "family") {
-                // Gate payment behind the optional 6-digit email verification
-                // step instead of jumping straight to Stripe Checkout.
                 setVerifyStage(true);
             } else {
                 toast.success(`Welcome, ${u.name.split(" ")[0]}`);
@@ -312,7 +243,7 @@ export default function Signup() {
                 </Link>
 
                 <div className="grid lg:grid-cols-12 gap-6 lg:gap-8">
-                    {/* PERSONA + ACCOUNT (7 of 12 cols) */}
+                    {/* ACCOUNT (7 of 12 cols) */}
                     <div className="lg:col-span-7 order-2 lg:order-1">
                         <div className="bg-surface border border-kindred rounded-2xl p-5 lg:p-6 auth-card">
                             <span className="overline">Your details</span>
@@ -328,7 +259,6 @@ export default function Signup() {
                                     testid="signup-google"
                                     planIntent={form.plan}
                                     label="Sign up with Google"
-                                    onBeforeClick={persistSecondParticipantIntent}
                                 />
                             </div>
 
@@ -365,166 +295,18 @@ export default function Signup() {
                                     </div>
                                 </fieldset>
 
-                                {form.role === "caregiver" && (
-                                    <div
-                                        className="rounded-lg border border-kindred bg-surface-2 p-3 space-y-3"
-                                        data-testid="signup-caregiver-fields"
-                                    >
-                                        <p className="text-xs text-muted-k">
-                                            About the person you help. All optional, takes 30 seconds now, saves editing later.
-                                        </p>
-                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                            <label className="block">
-                                                <FieldLabelText optional>Their first name</FieldLabelText>
-                                                <input
-                                                    value={form.care_recipient_first_name}
-                                                    onChange={update("care_recipient_first_name")}
-                                                    placeholder="e.g. Louisa"
-                                                    data-testid="signup-cr-first-name"
-                                                    className="mt-1 w-full rounded-md border border-kindred bg-surface px-3 py-2 text-sm focus:outline-none focus:ring-2 ring-primary-k"
-                                                />
-                                            </label>
-                                            <label className="block">
-                                                <FieldLabelText optional>Their last name</FieldLabelText>
-                                                <input
-                                                    value={form.care_recipient_last_name}
-                                                    onChange={update("care_recipient_last_name")}
-                                                    placeholder="e.g. Davids"
-                                                    data-testid="signup-cr-last-name"
-                                                    className="mt-1 w-full rounded-md border border-kindred bg-surface px-3 py-2 text-sm focus:outline-none focus:ring-2 ring-primary-k"
-                                                />
-                                            </label>
-                                        </div>
-                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                            <label className="block">
-                                                <FieldLabelText optional>Your relationship</FieldLabelText>
-                                                <select
-                                                    value={form.caregiver_relationship}
-                                                    onChange={update("caregiver_relationship")}
-                                                    data-testid="signup-cr-relationship"
-                                                    className="mt-1 w-full rounded-md border border-kindred bg-surface px-3 py-2 text-sm focus:outline-none focus:ring-2 ring-primary-k"
-                                                >
-                                                    <option value="">Select…</option>
-                                                    {CAREGIVER_RELATIONSHIPS.map((r) => (
-                                                        <option key={r.v} value={r.v}>{r.label}</option>
-                                                    ))}
-                                                </select>
-                                            </label>
-                                        </div>
-                                        <label className="block">
-                                            <FieldLabelText optional>Their pronouns</FieldLabelText>
-                                            <select
-                                                value={form.care_recipient_pronouns}
-                                                onChange={update("care_recipient_pronouns")}
-                                                data-testid="signup-cr-pronouns"
-                                                className="mt-1 w-full rounded-md border border-kindred bg-surface px-3 py-2 text-sm focus:outline-none focus:ring-2 ring-primary-k"
-                                            >
-                                                <option value="unknown">Prefer not to say</option>
-                                                <option value="she_her">She / her</option>
-                                                <option value="he_him">He / him</option>
-                                                <option value="they_them">They / them</option>
-                                            </select>
-                                        </label>
-                                    </div>
-                                )}
-
-                                {/* Family plan, inline second-participant intent.
-                                    Available for BOTH caregiver + participant roles when Family
-                                    plan is selected. For caregivers, "the second person" is a
-                                    second person they care for. For participants, "the second
-                                    person" is another participant (spouse, sibling, or the
-                                    caregiver themselves) they want on the plan. Either way, the
-                                    Family plan covers two people, and the second onboarding
-                                    picks up where this one leaves off. */}
-                                {form.plan === "family" && (
-                                    <div
-                                        className="rounded-lg border-2 border-gold/50 bg-gradient-to-br from-gold/15 to-gold/5 p-3 space-y-3"
-                                        data-testid="signup-second-participant-block"
-                                    >
-                                        <label className="flex items-start gap-3 cursor-pointer">
-                                            <input
-                                                type="checkbox"
-                                                checked={addSecondParticipant}
-                                                onChange={(e) => setAddSecondParticipant(e.target.checked)}
-                                                data-testid="signup-second-participant-toggle"
-                                                className="mt-1 h-4 w-4 rounded border-kindred text-primary-k focus:ring-primary-k"
-                                            />
-                                            <span className="flex-1">
-                                                <span className="flex items-center gap-1.5 text-sm font-medium text-primary-k">
-                                                    <Users className="h-4 w-4" aria-hidden="true" />
-                                                    {form.role === "participant"
-                                                        ? "Add one more person to my plan"
-                                                        : "I'm caring for two people"}
-                                                </span>
-                                                <span className="block text-xs text-primary-k/80 mt-0.5 leading-relaxed">
-                                                    {form.role === "participant"
-                                                        ? "Your Family plan covers you and one more person at no extra cost. Add their name now and we'll walk through their profile after yours."
-                                                        : "Your Family plan covers a second Participant at no extra cost. Add their name now and we'll pick up where you leave off in onboarding."}
-                                                </span>
-                                            </span>
-                                        </label>
-
-                                        {addSecondParticipant && (
-                                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pl-7" data-testid="signup-second-participant-fields">
-                                                <label className="block">
-                                                    <FieldLabelText required>Their first name</FieldLabelText>
-                                                    <input
-                                                        value={secondParticipant.first_name}
-                                                        onChange={(e) => setSecondParticipant((s) => ({ ...s, first_name: e.target.value }))}
-                                                        required={addSecondParticipant}
-                                                        placeholder={form.role === "participant" ? "e.g. Margaret" : "e.g. Arthur"}
-                                                        data-testid="signup-second-participant-first-name"
-                                                        className="mt-1 w-full rounded-md border border-kindred bg-surface px-3 py-2 text-sm focus:outline-none focus:ring-2 ring-primary-k"
-                                                    />
-                                                </label>
-                                                <label className="block">
-                                                    <FieldLabelText optional>{form.role === "participant" ? "Their relationship to you" : "Your relationship"}</FieldLabelText>
-                                                    <select
-                                                        value={secondParticipant.relationship}
-                                                        onChange={(e) => setSecondParticipant((s) => ({ ...s, relationship: e.target.value }))}
-                                                        data-testid="signup-second-participant-relationship"
-                                                        className="mt-1 w-full rounded-md border border-kindred bg-surface px-3 py-2 text-sm focus:outline-none focus:ring-2 ring-primary-k"
-                                                    >
-                                                        <option value="">Select…</option>
-                                                        {CAREGIVER_RELATIONSHIPS.map((r) => (
-                                                            <option key={r.v} value={r.v}>{r.label}</option>
-                                                        ))}
-                                                    </select>
-                                                </label>
-                                                <p className="text-xs text-muted-k sm:col-span-2 -mt-1">
-                                                    {form.role === "participant"
-                                                        ? `You'll set up the rest of ${secondParticipant.first_name?.trim() || "their"} details right after your own onboarding finishes.`
-                                                        : `You'll set up the rest of ${secondParticipant.first_name?.trim() || "their"} details right after ${form.care_recipient_first_name?.trim() || "the first Participant"}'s onboarding finishes.`}
-                                                </p>
-                                            </div>
-                                        )}
-                                    </div>
-                                )}
-
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                    <label className="block">
-                                        <FieldLabelText required>First name</FieldLabelText>
-                                        <input
-                                            value={form.first_name}
-                                            onChange={update("first_name")}
-                                            required
-                                            aria-required="true"
-                                            data-testid="signup-first-name-input"
-                                            className="mt-1 w-full rounded-md border border-kindred bg-surface px-3 py-2 text-sm focus:outline-none focus:ring-2 ring-primary-k"
-                                        />
-                                    </label>
-                                    <label className="block">
-                                        <FieldLabelText required>Last name</FieldLabelText>
-                                        <input
-                                            value={form.last_name}
-                                            onChange={update("last_name")}
-                                            required
-                                            aria-required="true"
-                                            data-testid="signup-last-name-input"
-                                            className="mt-1 w-full rounded-md border border-kindred bg-surface px-3 py-2 text-sm focus:outline-none focus:ring-2 ring-primary-k"
-                                        />
-                                    </label>
-                                </div>
+                                <label className="block">
+                                    <FieldLabelText required>First name</FieldLabelText>
+                                    <input
+                                        value={form.first_name}
+                                        onChange={update("first_name")}
+                                        required
+                                        aria-required="true"
+                                        autoComplete="given-name"
+                                        data-testid="signup-first-name-input"
+                                        className="mt-1 w-full rounded-md border border-kindred bg-surface px-3 py-2 text-sm focus:outline-none focus:ring-2 ring-primary-k"
+                                    />
+                                </label>
 
                                 <label className="block">
                                     <FieldLabelText required>Email</FieldLabelText>
@@ -534,6 +316,7 @@ export default function Signup() {
                                         onChange={update("email")}
                                         required
                                         aria-required="true"
+                                        autoComplete="email"
                                         data-testid="signup-email-input"
                                         className="mt-1 w-full rounded-md border border-kindred bg-surface px-3 py-2 text-sm focus:outline-none focus:ring-2 ring-primary-k"
                                     />
@@ -549,6 +332,7 @@ export default function Signup() {
                                             required
                                             aria-required="true"
                                             minLength={8}
+                                            autoComplete="new-password"
                                             data-testid="signup-password-input"
                                             className="w-full rounded-md border border-kindred bg-surface px-3 py-2 pr-11 text-sm focus:outline-none focus:ring-2 ring-primary-k"
                                         />
@@ -563,27 +347,12 @@ export default function Signup() {
                                             {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                                         </button>
                                     </div>
-                                    <PasswordStrength password={form.password} email={form.email} name={`${form.first_name} ${form.last_name}`.trim()} />
+                                    <PasswordStrength password={form.password} email={form.email} name={form.first_name.trim()} />
                                 </label>
 
-                                <details className="text-sm text-muted-k">
-                                    <summary className="cursor-pointer hover:text-primary-k">Add a mobile number (optional)</summary>
-                                    <input
-                                        type="tel"
-                                        value={form.mobile}
-                                        onChange={(e) => { setForm((f) => ({ ...f, mobile: e.target.value })); if (mobileError) setMobileError(""); }}
-                                        placeholder="04XXXXXXXX"
-                                        autoComplete="tel"
-                                        inputMode="tel"
-                                        data-testid="signup-mobile-input"
-                                        aria-invalid={mobileError ? "true" : "false"}
-                                        className="mt-2 w-full rounded-md border border-kindred bg-surface px-3 py-2 text-sm focus:outline-none focus:ring-2 ring-primary-k"
-                                    />
-                                    <p className="mt-1 text-xs text-muted-k">
-                                        Used only for account recovery + security alerts. No marketing texts.
-                                    </p>
-                                    {mobileError && <p data-testid="signup-mobile-error" className="mt-1 text-xs text-terracotta">{mobileError}</p>}
-                                </details>
+                                <p className="text-xs text-muted-k leading-relaxed" data-testid="signup-onboarding-note">
+                                    That&apos;s all we need to start. We&apos;ll set up who you care for and the finer details together, right after this.
+                                </p>
 
                                 <label className="mt-4 flex items-start gap-3 cursor-pointer select-none" data-testid="signup-marketing-consent-label">
                                     <input

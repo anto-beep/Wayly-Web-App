@@ -6,7 +6,7 @@ import { api, extractErrorMessage } from "@/lib/api";
 import GoogleSignInButton from "@/components/GoogleSignInButton";
 import WaylyLogo from "@/components/WaylyLogo";
 import WaylyLoader from "@/components/WaylyLoader";
-import { Eye, EyeOff, MailWarning, Loader2, CheckCircle2 } from "lucide-react";
+import { Eye, EyeOff, MailWarning, Loader2, CheckCircle2, Mail } from "lucide-react";
 import EmailCodeVerify from "@/components/EmailCodeVerify";
 
 import SeoHead from "@/seo/SeoHead";
@@ -75,6 +75,10 @@ export default function Login() {
     // { email, message }, shows an inline banner with a resend button.
     const [resending, setResending] = useState(false);
     const [resentAt, setResentAt] = useState(null);
+    // CONV-1 F4: passwordless "email me a sign-in link" flow.
+    const [magicBusy, setMagicBusy] = useState(false);
+    const [magicSent, setMagicSent] = useState(null); // email string once a link is sent
+    const [magicDebugLink, setMagicDebugLink] = useState(null); // preview-only convenience
 
     const routeAfterLogin = (u) => {
         nav("/app");
@@ -129,6 +133,25 @@ export default function Login() {
             toast.error(extractErrorMessage(err, "Could not resend verification email."));
         } finally {
             setResending(false);
+        }
+    };
+
+    const requestMagicLink = async () => {
+        const em = email.trim();
+        if (!em) {
+            toast.error("Enter your email first, then tap the sign-in link button.");
+            return;
+        }
+        setMagicBusy(true);
+        try {
+            const { data } = await api.post("/auth/magic-link/request", { email: em });
+            setMagicSent(em);
+            if (data?.debug_link) setMagicDebugLink(data.debug_link);
+            toast.success("If that email has an account, a sign-in link is on its way.");
+        } catch (err) {
+            toast.error(extractErrorMessage(err, "Could not send a sign-in link. Please try again."));
+        } finally {
+            setMagicBusy(false);
         }
     };
 
@@ -293,6 +316,54 @@ export default function Login() {
                                     {submitting ? "Signing in…" : "Sign in"}
                                 </button>
                             </form>
+
+                            <div className="mt-5">
+                                {!magicSent ? (
+                                    <button
+                                        type="button"
+                                        onClick={requestMagicLink}
+                                        disabled={magicBusy}
+                                        data-testid="login-magic-link-button"
+                                        className="w-full inline-flex items-center justify-center gap-2 rounded-md border border-kindred bg-surface px-3 py-2.5 text-sm font-medium text-primary-k hover:bg-surface-2 transition-colors disabled:opacity-60"
+                                    >
+                                        {magicBusy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Mail className="h-4 w-4" />}
+                                        {magicBusy ? "Sending a sign-in link…" : "Email me a sign-in link instead"}
+                                    </button>
+                                ) : (
+                                    <div
+                                        className="rounded-xl border border-sage/40 bg-sage/5 p-4"
+                                        data-testid="login-magic-link-sent"
+                                    >
+                                        <div className="flex items-start gap-3">
+                                            <CheckCircle2 className="h-5 w-5 text-sage shrink-0 mt-0.5" aria-hidden="true" />
+                                            <div className="flex-1 text-sm text-primary-k">
+                                                <p className="font-semibold">Check your inbox</p>
+                                                <p className="mt-1 text-primary-k/85 leading-relaxed">
+                                                    If <span className="font-semibold">{magicSent}</span> has a Wayly account, a sign-in link is on its way. It works once and expires in 15 minutes.
+                                                </p>
+                                                {magicDebugLink && (
+                                                    <a
+                                                        href={magicDebugLink}
+                                                        data-testid="login-magic-link-debug"
+                                                        className="mt-3 inline-block text-xs font-semibold text-primary-k underline break-all"
+                                                    >
+                                                        Open sign-in link (preview only)
+                                                    </a>
+                                                )}
+                                                <button
+                                                    type="button"
+                                                    onClick={() => { setMagicSent(null); setMagicDebugLink(null); }}
+                                                    data-testid="login-magic-link-reset"
+                                                    className="mt-3 block text-xs text-muted-k underline hover:text-primary-k"
+                                                >
+                                                    Use a different email
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+
                             <p className="mt-6 text-sm text-muted-k">
                                 No account?{" "}
                                 <Link to="/signup" data-testid="signup-link" className="text-primary-k underline">
