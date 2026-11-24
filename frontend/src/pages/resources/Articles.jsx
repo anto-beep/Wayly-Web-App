@@ -10,6 +10,7 @@ import { SEO_ARTICLES_2026 } from "@/data/seoArticles2026";
 import { SEO_TOOL_ARTICLES } from "@/data/seoToolArticles";
 import { ARTICLE_PILLAR_MAP } from "@/data/articlePillars";
 import ArticleOfferBlock from "@/components/ArticleOfferBlock";
+import OnPagePrompt from "@/components/OnPagePrompt";
 import { ArrowLeft, ArrowRight, ShieldAlert, BookOpen, ExternalLink, ChevronDown, Twitter, Linkedin, Mail, Link2, Sparkles, Search, X } from "lucide-react";
 
 import SeoHead, { articleLd, breadcrumbLd, canonicalFor } from "@/seo/SeoHead";
@@ -417,6 +418,7 @@ export function ArticleDetail() {
                 {/* CONV-1 G2: topic-matched offer at the foot of the article. */}
                 <ArticleOfferBlock slug={slug} category={deriveCategory(article)} title={article.title} variant="end" />
             </article>
+            <OnPagePrompt slug={slug} category={deriveCategory(article)} title={article.title} surface="article" />
             <Footer />
         </div>
     );
@@ -690,6 +692,7 @@ function StructuredArticle({ article, slug }) {
                 </div>
             </aside>
             </div>
+            <OnPagePrompt slug={slug} category={deriveCategory(article)} title={article.title} surface="article" />
             <Footer />
         </div>
     );

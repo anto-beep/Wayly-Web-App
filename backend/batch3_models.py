@@ -133,7 +133,10 @@ class FreeToolUsage(BaseModel):
     id: str = Field(default_factory=_new_id)
     user_id: Optional[str] = None
     fingerprint: Optional[str] = None
-    tool: Literal["STATEMENT_DECODER"] = "STATEMENT_DECODER"
+    tool: Literal[
+        "STATEMENT_DECODER", "INVOICE_CHECKER", "PROVIDER_PRICE_CHECKER",
+        "CONTRIBUTION_ESTIMATOR", "CLASSIFICATION_CHECK", "BUDGET_CALCULATOR",
+    ] = "STATEMENT_DECODER"
     used_at: str = Field(default_factory=_now_iso)
     period_month: str  # YYYY-MM
     ip_address: Optional[str] = None

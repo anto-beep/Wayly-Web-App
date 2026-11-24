@@ -34,7 +34,7 @@ const OFFER_BY_CATEGORY = {
     "Support at Home basics": "free_account",
 };
 
-const OFFERS = {
+export const OFFERS = {
     invoice_checker: {
         eyebrow: "Put this to work",
         title: "Check an aged-care invoice — free",
@@ -93,7 +93,7 @@ const OFFERS = {
     },
 };
 
-function resolveOffer(category, slug = "", title = "") {
+export function resolveOffer(category, slug = "", title = "") {
     const hay = `${slug} ${title}`.toLowerCase();
     // Billing category splits into invoice vs statement by intent.
     if (category === "Billing & statements") {
@@ -101,7 +101,15 @@ function resolveOffer(category, slug = "", title = "") {
             ? "statement_decoder"
             : "invoice_checker";
     }
-    return OFFER_BY_CATEGORY[category] || "free_account";
+    if (OFFER_BY_CATEGORY[category]) return OFFER_BY_CATEGORY[category];
+    // No known category (e.g. glossary terms) — infer a topic from the words.
+    if (hay.includes("invoice")) return "invoice_checker";
+    if (hay.includes("statement")) return "statement_decoder";
+    if (hay.includes("complain") || hay.includes("commission")) return "ask_wayly";
+    if (hay.includes("provider") || hay.includes("switch")) return "price_checker";
+    if (hay.includes("contribution") || hay.includes("fee") || hay.includes("means")) return "contribution_estimator";
+    if (hay.includes("classif") || hay.includes("level") || hay.includes("assess")) return "classification";
+    return "free_account";
 }
 
 export default function ArticleOfferBlock({ slug, category, title, variant = "end" }) {

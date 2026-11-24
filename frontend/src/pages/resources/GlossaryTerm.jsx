@@ -5,6 +5,7 @@ import MarketingHeader from "@/components/MarketingHeader";
 import Footer from "@/components/Footer";
 import { ArrowLeft, ArrowRight, BookOpen } from "lucide-react";
 import SeoHead, { breadcrumbLd, canonicalFor, SITE } from "@/seo/SeoHead";
+import OnPagePrompt from "@/components/OnPagePrompt";
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
@@ -144,6 +145,7 @@ export default function GlossaryTerm() {
                     </p>
                 </div>
             </article>
+            <OnPagePrompt slug={slug} category="" title={term.term} surface="glossary" />
             <Footer />
         </div>
     );

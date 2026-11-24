@@ -16,6 +16,7 @@ import PriceSampleResult from "@/components/tool-samples/PriceSampleResult";
 import { ScreenshotStatement } from "@/components/Screenshots";
 import useToolAccess from "@/hooks/useToolAccess";
 import { useAuth } from "@/context/AuthContext";
+import FreeAllowanceBadge from "@/components/FreeAllowanceBadge";
 import { useParticipants } from "@/context/ParticipantsContext";
 import { api, formatAUD2, extractErrorMessage } from "@/lib/api";
 import { track } from "@/lib/analytics";
@@ -92,6 +93,8 @@ const POSITION_TONE = {
 export default function PriceCheckerTool() {
     const access = useToolAccess();
     const { user } = useAuth();
+    // CONV-1 D2: a logged-in Free member runs the metered price checker in-app.
+    const isFreeTier = !!user && user.access_state === "free";
     const { active: activeParticipant } = useParticipants();
 
     // ---- Service dictionary (WS1) ----
@@ -271,7 +274,7 @@ export default function PriceCheckerTool() {
         </div>
     );
 
-    if (access === "blocked") return (
+    if (access === "blocked" && !isFreeTier) return (
         <div className="min-h-screen bg-kindred">
             <SeoHead {...SEO.toolPriceChecker} jsonLd={_toolJsonLd(SEO.toolPriceChecker)} />
             <MarketingHeader />
@@ -479,6 +482,9 @@ export default function PriceCheckerTool() {
                         </div>
                     )}
 
+                    {isFreeTier && (
+                        <FreeAllowanceBadge tool="PROVIDER_PRICE_CHECKER" noun="price check" nounPlural="price checks" refreshKey={result ? 1 : 0} />
+                    )}
                     <button
                         onClick={submit}
                         disabled={loading || !rate}

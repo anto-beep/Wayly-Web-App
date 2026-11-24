@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
-import { Check, Loader2, Eye, EyeOff, MailCheck } from "lucide-react";
+import { Check, Loader2, Eye, EyeOff, MailCheck, ArrowRight } from "lucide-react";
 import WaylyLogo from "@/components/WaylyLogo";
 import { toast } from "sonner";
 import { api, extractErrorMessage } from "@/lib/api";
@@ -394,18 +394,23 @@ export default function Signup() {
                                     {submitting && <Loader2 className="h-4 w-4 animate-spin" />}
                                     {submitting ? "Working…" : `Start 7-day free ${PLANS.find((p) => p.v === form.plan)?.title || "Family"} trial`}
                                 </button>
-                                {/* CONV-1 D1: no-card free account — skips checkout entirely */}
-                                <button
-                                    type="button"
-                                    onClick={(e) => submit(e, "free")}
-                                    disabled={submitting}
+                                {/* CONV-1 D1: free account is its OWN streamlined flow. This is a
+                                    clear secondary button that routes to the dedicated free sign-up page. */}
+                                <div className="mt-5 flex items-center gap-3" aria-hidden="true">
+                                    <span className="h-px flex-1 bg-kindred" />
+                                    <span className="text-[11px] uppercase tracking-wider text-muted-k">or</span>
+                                    <span className="h-px flex-1 bg-kindred" />
+                                </div>
+                                <Link
+                                    to="/signup/free"
                                     data-testid="signup-free-account-button"
-                                    className="w-full mt-2 text-sm text-primary-k underline hover:no-underline disabled:opacity-60"
+                                    className="mt-4 w-full rounded-md border-2 border-primary-k bg-surface py-3 text-base font-semibold text-primary-k hover:bg-surface-2 transition-colors inline-flex items-center justify-center gap-2"
                                 >
-                                    Or create a free account — no card needed
-                                </button>
-                                <p className="mt-1 text-[11px] text-muted-k text-center" data-testid="signup-free-note">
-                                    Free includes one invoice check and one statement decode every few months. Upgrade any time.
+                                    Create a free account — no card
+                                    <ArrowRight className="h-4 w-4" />
+                                </Link>
+                                <p className="mt-2 text-xs text-muted-k text-center" data-testid="signup-free-note">
+                                    One invoice check and one statement decode every few months, with your results saved. Upgrade any time.
                                 </p>
                             </form>
                             <p className="mt-4 text-sm text-muted-k">

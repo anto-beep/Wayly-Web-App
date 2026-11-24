@@ -15,6 +15,7 @@ import {
     AlertTriangle, Sparkles, Save, Mail, ReceiptText, ChevronDown, ChevronUp,
 } from "lucide-react";
 import { api, extractErrorMessage } from "@/lib/api";
+import { useAuth } from "@/context/AuthContext";
 import useScrollToResult from "@/hooks/useScrollToResult";
 import { conv1 } from "@/lib/conv1";
 import { InvoiceResultBody } from "@/components/invoices/InvoiceResultView";
@@ -50,6 +51,8 @@ function SitRow({ label, value, onChange, testid, options }) {
 }
 
 export default function AnonymousInvoiceCheck({ onSeeExample }) {
+    const { user } = useAuth();
+    const [savedToAccount, setSavedToAccount] = useState(false);
     const [mode, setMode] = useState("upload"); // upload | paste
     const [file, setFile] = useState(null);
     const [pasted, setPasted] = useState("");
@@ -126,6 +129,19 @@ export default function AnonymousInvoiceCheck({ onSeeExample }) {
                 input_method: sample ? "sample" : mode,
                 findings: (data?.reconciliation?.findings || []).length,
             });
+            // CONV-1 D: a logged-in Free member's check is kept in their account.
+            if (user && !sample && data?.token && data?.reconciliation) {
+                try {
+                    const n = (data.reconciliation.findings || []).length;
+                    await api.post("/me/free-results/save", {
+                        type: "invoice",
+                        token: data.token,
+                        title: data.reconciliation.provider_name || "Invoice check",
+                        subtitle: n ? `${n} finding${n === 1 ? "" : "s"} flagged` : null,
+                    });
+                    setSavedToAccount(true);
+                } catch (_) { /* saving is best-effort */ }
+            }
         } catch (e) {
             const detail = e?.response?.data?.detail;
             if (e?.response?.status === 429 && detail?.error === "cooldown_active") { setCooldown(detail); return; }
@@ -171,7 +187,7 @@ export default function AnonymousInvoiceCheck({ onSeeExample }) {
     };
 
     return (
-        <section className="mx-auto max-w-3xl px-6" data-testid="anon-invoice-check">
+        <section className="mx-auto max-w-5xl px-4 sm:px-8" data-testid="anon-invoice-check">
             <div className="bg-surface border border-kindred rounded-2xl p-6 sm:p-8 shadow-sm">
                 <span className="overline">Free · no account needed</span>
                 <h2 className="font-heading text-2xl sm:text-3xl text-primary-k mt-1 tracking-tight">
@@ -368,6 +384,15 @@ export default function AnonymousInvoiceCheck({ onSeeExample }) {
             {/* B5: the full result + B6: account-gated next steps */}
             {result?.reconciliation && (
                 <div ref={resultRef} className="mt-8 space-y-6 scroll-mt-20" data-testid="anon-result">
+                    {savedToAccount && (
+                        <div className="rounded-2xl border border-sage/40 bg-sage/10 p-4 flex items-center justify-between gap-3" data-testid="anon-saved-banner">
+                            <div className="flex items-center gap-2 text-primary-k">
+                                <Save className="h-4 w-4 text-sage" />
+                                <span className="text-sm">Saved to your account — reopen it any time.</span>
+                            </div>
+                            <Link to="/app/saved-checks" data-testid="anon-saved-link" className="text-sm font-semibold text-primary-k underline whitespace-nowrap">Your saved checks</Link>
+                        </div>
+                    )}
                     <InvoiceResultBody result={result} invoiceId={null} />
 
                     {/* C1: email me this result (transactional) + C4 consent */}

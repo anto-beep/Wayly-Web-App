@@ -261,7 +261,8 @@ def _build_v2_response(body: PublicPriceCheckV2Body) -> dict:
 # ---------------------------------------------------------------------------
 
 
-def build_ppc_v2_router(db, get_current_user_id, get_current_user_id_optional, require_paid_plan):
+def build_ppc_v2_router(db, get_current_user_id, get_current_user_id_optional, require_paid_plan,
+                        enforce_free_tool=None, record_free_tool=None):
     """Return an APIRouter with all PPC-1 v2 routes bound to the given DB
     handle + auth deps."""
 
@@ -300,8 +301,22 @@ def build_ppc_v2_router(db, get_current_user_id, get_current_user_id_optional, r
 
     @r.post("/public/price-check-v2")
     async def public_price_check_v2(body: PublicPriceCheckV2Body, request: Request, response: Response):
-        await require_paid_plan(request, response, "Provider Price Checker")
-        return _build_v2_response(body)
+        # CONV-1 D2: free accounts (and anon visitors) get 2 metered price
+        # checks per 120 days; paid/trial bypass; view-only is blocked.
+        gate = None
+        if enforce_free_tool is not None:
+            gate = await enforce_free_tool(request, response, tool="PROVIDER_PRICE_CHECKER", label="Provider Price Checker")
+        else:
+            await require_paid_plan(request, response, "Provider Price Checker")
+        resp = _build_v2_response(body)
+        if gate and gate.get("is_free_use"):
+            if record_free_tool is not None:
+                try:
+                    await record_free_tool(request, tool="PROVIDER_PRICE_CHECKER", user_id=gate.get("user_id"))
+                except Exception as _e:
+                    __import__("logging").getLogger("wayly").warning("ppc free record failed: %s", _e)
+            resp["free_use"] = True
+        return resp
 
     # ---------- Save + history (auth) ----------
 

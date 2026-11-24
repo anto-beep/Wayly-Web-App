@@ -4078,6 +4078,61 @@ async def _enforce_statement_decoder_limit(request: Request, response: Response)
     }
 
 
+async def _enforce_free_tool_limit(request: Request, response: Response, *, tool: str, label: str) -> dict:
+    """CONV-1 D2: generic metered-free-tool gate.
+
+    - Admin / Solo / Family / Adviser / active trial: unlimited bypass.
+    - Free accounts + unauthenticated visitors: the per-tool D2 allowance
+      (Provider Price Checker = 2, else 1) over a 120-day rolling window.
+    - View-only (lapsed paid): blocked with the reactivate paywall.
+
+    Returns {user, is_free_use, user_id}. The caller records the use via
+    record_free_tool_usage AFTER the run succeeds (so a failed run never burns
+    an allowance). Mirrors _enforce_statement_decoder_limit.
+    """
+    if _is_unlimited_ip(_client_ip(request)):
+        return {"user": await _user_from_request(request), "is_free_use": False}
+    await _rl.enforce(request, ("tools_unauth_ip", _rl._client_ip(request)))
+    user = await _user_from_request(request)
+    if user:
+        if user.get("is_admin"):
+            return {"user": user, "is_free_use": False}
+        state = _compute_access_state(user)
+        if state in ("active", "trial"):
+            return {"user": user, "is_free_use": False}
+        if state == "view_only":
+            raise HTTPException(
+                status_code=402,
+                detail={
+                    "error": "trial_expired",
+                    "message": "Your plan is inactive. Reactivate to continue.",
+                    "upgrade_url": "/settings/billing",
+                },
+            )
+    user_id = user["id"] if user else None
+    usage = await check_free_tool_usage(request, tool=tool, user_id=user_id)
+    if not usage["allowed"]:
+        days_left = int(usage.get("days_until_next_use") or 0)
+        day_word = "day" if days_left == 1 else "days"
+        raise HTTPException(
+            status_code=429,
+            detail={
+                "error": "cooldown_active",
+                "message": (
+                    f"You've used your free {label} checks. You can run another in "
+                    f"{days_left} {day_word}, or start a 7-day free trial to use it "
+                    f"as often as you need."
+                ),
+                "days_until_next_use": days_left,
+                "reset_at": usage["reset_at"],
+                "window_days": 120,
+            },
+        )
+    _check_rate_limit(_client_ip(request))
+    return {"user": user, "is_free_use": True, "user_id": user_id}
+
+
+
 class PublicTextBody(BaseModel):
     text: str = Field(min_length=10, max_length=40000)
     example: bool = False  # set by the "Try it with an example statement" runner
@@ -5877,7 +5932,7 @@ async def public_budget_calc(body: PublicBudgetBody, request: Request, response:
 
 @api.post("/public/price-check")
 async def public_price_check(body: PublicPriceBody, request: Request, response: Response):
-    await _require_paid_plan(request, response, "Provider Price Checker")
+    _pc_gate = await _enforce_free_tool_limit(request, response, tool="PROVIDER_PRICE_CHECKER", label="Provider Price Checker")
     bench = PRICE_BENCHMARKS.get(body.service, {"median": body.rate})
     median = bench["median"]
     lower = bench.get("lower")
@@ -5941,6 +5996,12 @@ async def public_price_check(body: PublicPriceBody, request: Request, response: 
             )
             suggested = None
 
+    if _pc_gate.get("is_free_use"):
+        try:
+            await record_free_tool_usage(request, tool="PROVIDER_PRICE_CHECKER", user_id=_pc_gate.get("user_id"))
+        except Exception as _e:
+            logger.warning("free price-check usage record failed: %s", _e)
+
     return {
         "service": body.service,
         "charged": body.rate,
@@ -5954,6 +6015,7 @@ async def public_price_check(body: PublicPriceBody, request: Request, response: 
         "verdict_label": label,
         "assessment": assessment,
         "suggested_action": suggested,
+        "free_use": bool(_pc_gate.get("is_free_use")),
         "source": source,
         "effective_from": effective_from,
         "caps_note": (
@@ -5964,6 +6026,159 @@ async def public_price_check(body: PublicPriceBody, request: Request, response: 
             "can order refunds."
         ),
     }
+
+
+# ---------------------------------------------------------------------------
+# CONV-1 D: Saved Free Results. A logged-in FREE member's invoice checks and
+# statement decodes are kept in their account (household-independent) so they
+# can reopen them any time. Invoice results reuse the tokenised anon store
+# (made persistent on save); statement results store their rendered payload.
+# ---------------------------------------------------------------------------
+class FreeResultSaveBody(BaseModel):
+    type: str = Field(pattern="^(invoice|statement)$")
+    token: Optional[str] = None          # invoice: the anon result token
+    result: Optional[dict] = None        # statement: the rendered decode payload
+    title: Optional[str] = None
+    subtitle: Optional[str] = None
+
+
+@api.post("/me/free-results/save")
+async def save_free_result(body: FreeResultSaveBody, request: Request):
+    user = await _user_from_request_required(request)
+    uid = user["id"]
+    now = now_iso()
+    if body.type == "invoice":
+        if not body.token:
+            raise HTTPException(status_code=400, detail="token required")
+        doc = await db.anon_invoice_checks.find_one({"token": body.token}, {"_id": 0, "token": 1})
+        if not doc:
+            raise HTTPException(status_code=404, detail="That result has expired. Run the check again to save it.")
+        # Attribute to the member + make it persistent (drop the 7-day TTL stamp).
+        await db.anon_invoice_checks.update_one(
+            {"token": body.token}, {"$set": {"user_id": uid}, "$unset": {"expire_at": ""}},
+        )
+        existing = await db.free_saved_results.find_one(
+            {"user_id": uid, "type": "invoice", "token": body.token}, {"_id": 0, "id": 1},
+        )
+        if existing:
+            return {"id": existing["id"], "already_saved": True}
+        rid = uuid.uuid4().hex
+        await db.free_saved_results.insert_one({
+            "id": rid, "user_id": uid, "type": "invoice", "token": body.token,
+            "title": (body.title or "Invoice check")[:160],
+            "subtitle": (body.subtitle or None), "created_at": now,
+        })
+        return {"id": rid}
+    # statement
+    if not body.result:
+        raise HTTPException(status_code=400, detail="result required")
+    rid = uuid.uuid4().hex
+    await db.free_saved_results.insert_one({
+        "id": rid, "user_id": uid, "type": "statement", "result": body.result,
+        "title": (body.title or "Statement decode")[:160],
+        "subtitle": (body.subtitle or None), "created_at": now,
+    })
+    return {"id": rid}
+
+
+@api.get("/me/free-results")
+async def list_free_results(request: Request):
+    user = await _user_from_request_required(request)
+    rows = [
+        r async for r in db.free_saved_results.find(
+            {"user_id": user["id"], "hidden": {"$ne": True}}, {"_id": 0, "result": 0},
+        ).sort("created_at", -1).limit(100)
+    ]
+    return {"results": rows}
+
+
+@api.get("/me/free-results/{rid}")
+async def get_free_result(rid: str, request: Request):
+    user = await _user_from_request_required(request)
+    row = await db.free_saved_results.find_one({"user_id": user["id"], "id": rid}, {"_id": 0})
+    if not row:
+        raise HTTPException(status_code=404, detail="not found")
+    return row
+
+
+@api.delete("/me/free-results/{rid}")
+async def delete_free_result(rid: str, request: Request):
+    user = await _user_from_request_required(request)
+    # Explicit user action, narrowly filtered to the caller's own bookmark.
+    # Soft-hide so nothing is destroyed, matching the app's no-hard-delete rule.
+    await db.free_saved_results.update_one(
+        {"user_id": user["id"], "id": rid}, {"$set": {"hidden": True}},
+    )
+    return {"ok": True}
+
+
+async def _run_winback_sweep(*, dry_run: bool = False, now=None) -> dict:
+    """CONV-1 I: one-time 30-day winback nudge to lapsed FREE members.
+
+    Finds free accounts created 30–37 days ago (a rolling 7-day catch window
+    for the daily job) that never converted and have not already been emailed,
+    and sends ONE 'start your trial' email with a /pricing CTA. Idempotent via
+    users.winback_sent_at. Respects marketing consent + suppression."""
+    from datetime import timedelta as _timedelta
+    from lib.email_governance import can_send_marketing, make_email_token
+    from wayly_email_branding import wrap_email_html, button_html
+    now = now or datetime.now(timezone.utc)
+    lo = (now - _timedelta(days=37)).isoformat()
+    hi = (now - _timedelta(days=30)).isoformat()
+    base = _trusted_frontend_url().rstrip("/")
+    summary = {"eligible": 0, "sent": 0, "skipped_not_free": 0, "skipped_consent": 0, "dry_run": dry_run}
+    cursor = db.users.find({
+        "has_paid_ever": {"$ne": True},
+        "winback_sent_at": {"$exists": False},
+        "created_at": {"$gte": lo, "$lte": hi},
+    }, {"_id": 0, "id": 1, "email": 1, "name": 1, "first_name": 1, "marketing_consent": 1, "email_verified": 1, "deleted_at": 1})
+    async for u in cursor:
+        summary["eligible"] += 1
+        sub = await db.subscriptions.find_one({"user_id": u["id"]}, {"_id": 0})
+        if _compute_access_state(u, sub) != "free":
+            summary["skipped_not_free"] += 1
+            if not dry_run:
+                await db.users.update_one({"id": u["id"]}, {"$set": {"winback_sent_at": now.isoformat(), "winback_result": "not_free"}})
+            continue
+        email = (u.get("email") or "").strip()
+        ok, reason = (await can_send_marketing(db, user=u, email=email)) if email else (False, "no_email")
+        if not ok:
+            summary["skipped_consent"] += 1
+            if not dry_run:
+                await db.users.update_one({"id": u["id"]}, {"$set": {"winback_sent_at": now.isoformat(), "winback_result": f"blocked:{reason}"}})
+            continue
+        if dry_run:
+            summary["sent"] += 1
+            continue
+        first = ((u.get("first_name") or (u.get("name") or "").split(" ")[0] or "there").strip()).replace("<", "").replace(">", "")
+        token = make_email_token(u["id"], email, "prefs")
+        unsub_url = f"{base}/api/email/unsubscribe?token={token}"
+        cta = f"{base}/pricing?src=winback"
+        inner = (
+            f"<p>Hi {first},</p>"
+            f"<p>Your free Wayly account is still here — and so are your saved checks. "
+            f"When you're ready to go further, a 7-day free trial unlocks every Wayly tool: "
+            f"unlimited invoice checks, statement decodes, price checks, letters and more.</p>"
+            f"{button_html(href=cta, label='Explore the 7-day trial')}"
+            f"<p style=\"font-size:13px;color:#4A5A75\">Card required to start the trial. "
+            f"Cancel any time before your first charge in Settings → Billing.</p>"
+        )
+        footer = (f"You're receiving this because you created a free Wayly account. Unsubscribe: {unsub_url}")
+        html = wrap_email_html(title="Your free Wayly tools are still here", inner_html=inner, eyebrow="Wayly", footer_note=footer)
+        try:
+            await email_service.send_email(to=email, subject="Ready to check more with Wayly?", html=html)
+            summary["sent"] += 1
+            await db.users.update_one({"id": u["id"]}, {"$set": {"winback_sent_at": now.isoformat(), "winback_result": "sent"}})
+        except Exception as e:
+            logger.warning("winback send failed for %s: %s", u.get("id"), e)
+    return summary
+
+
+@api.post("/admin/winback/run")
+async def admin_run_winback(dry_run: bool = True, _admin_id: str = Depends(get_current_admin_id)):
+    """Admin-only manual trigger for the CONV-1 I winback sweep (also runs daily
+    on a background cron). dry_run=true reports who WOULD be emailed."""
+    return await _run_winback_sweep(dry_run=dry_run)
 
 
 # ---- Tool 4: Classification self-check (12-question quiz) ----
@@ -8399,6 +8614,8 @@ try:
         get_current_user_id=get_current_user_id,
         get_current_user_id_optional=get_current_user_id_optional,
         require_paid_plan=_require_paid_plan,
+        enforce_free_tool=_enforce_free_tool_limit,
+        record_free_tool=record_free_tool_usage,
     ))
 except Exception as _e:
     import logging as _logging
@@ -8926,6 +9143,7 @@ _READ_ONLY_EXEMPT_PREFIXES = (
 # else returns a 402 upgrade prompt for free users.
 _FREE_WRITE_PREFIXES = (
     "/api/invoices/upload",   # Invoice Checker, metered 1 per 120 days
+    "/api/me/free-results",   # saving/removing a free member's saved checks
 )
 # Support tickets are explicitly blocked for read-only users per spec ,
 # add no exemption for the create endpoint. (The middleware path-prefix
@@ -9535,6 +9753,24 @@ async def _has_paid_ever_backfill():
         except Exception as e:
             logger.warning("has_paid_ever backfill failed: %s", e)
     _aio.create_task(_run())
+
+
+@app.on_event("startup")
+async def _winback_cron():
+    """CONV-1 I: run the 30-day free-member winback sweep daily. Backgrounded so
+    boot stays fast; the sweep itself is idempotent (winback_sent_at)."""
+    import asyncio as _aio
+    async def _loop():
+        await _aio.sleep(300)
+        while True:
+            try:
+                res = await _run_winback_sweep()
+                if res.get("sent"):
+                    logger.info("winback sweep: %s", res)
+            except Exception as e:
+                logger.warning("winback cron failed: %s", e)
+            await _aio.sleep(24 * 3600)
+    _aio.create_task(_loop())
 
 
 @app.on_event("startup")

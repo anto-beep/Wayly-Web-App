@@ -1,0 +1,45 @@
+{
+  "summary": "CONV-1 v2 batch (iter 422) — Free Price Checks, Saved Free Results, On-Page Prompt J, Free Signup page, visual edits, and Winback admin-gating — tested end-to-end on web + shared FastAPI backend. Backend: 12/13 pytest assertions pass (1 skipped on per-IP burst limit — not a product defect). Frontend: ALL critical flows pass. Price-check metering (2 free → 429 cooldown_active) verified on a fresh free account; /api/free-tool/usage returns limit=2/remaining=0/allowed=false after two uses. Saved free results CRUD works, bogus-token invoice save → 404, unauth → 401/403. /admin/winback/run rejects unauthenticated AND member-token callers. Access-state fixtures (trial/view_only/free x2) still resolve correctly. FREE support-ticket POST still returns 402 upgrade_required. UI: signup-free-account-button navigates to /signup/free; /signup/free renders form+perks+submit testids; free signup (strong non-HIBP pw) lands on /app with Welcome toast (previously bounced to /login — now fixed). FREE member on /ai-tools/provider-price-checker sees the tool form (pc-submit) with FreeAllowanceBadge ABOVE it (1086 vs 1147). Anonymous visitor on same route sees ToolGate paywall (pc-submit count=0). /ai-tools/invoice-checker anon-invoice-check card is 1024px wide (max-w-5xl) with free-allowance-invoice_checker badge ABOVE anon-run-btn (970 vs 1031). /app/saved-checks renders saved-checks-list with the TEST_conv1v2 statement saved by the backend test (Reopen button visible). OnPagePrompt appears at ~60% scroll on an article (/resources/articles/at-hm-...) with data-offer=free_account + cta/dismiss/no-thanks; after dismiss+reload localStorage wayly_onpage_prompt_at dedups so prompt is NOT visible; also NOT visible at 400px viewport (<480px). Prompt also appears on glossary term pages.",
+  "platforms_tested": ["web"],
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "web": {
+      "ui_bugs": [],
+      "integration_issues": [],
+      "design_issues": []
+    }
+  },
+  "parity_issues": [],
+  "test_report_links": [
+    "/app/backend/tests/test_conv1_v2_batch_iter422.py",
+    "/app/test_reports/pytest/conv1_v2_iter422.xml",
+    "/app/test_reports/iter422_signup_free.jpeg",
+    "/app/test_reports/iter422_free_signup_landed.jpeg",
+    "/app/test_reports/iter422_pc_free.jpeg",
+    "/app/test_reports/iter422_anon_invoice.jpeg",
+    "/app/test_reports/iter422_saved_checks.jpeg",
+    "/app/test_reports/iter422_pc_anon.jpeg",
+    "/app/test_reports/iter422_onpage_article.jpeg",
+    "/app/test_reports/iter422_onpage_glossary.jpeg"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "price_check_v2 route correctly delegates metering to shared _enforce_free_tool_limit (user_id-based for logged-in free, fingerprint+ip for anon); allowlisted IP bypass only fires when user_id is None so logged-in free users ARE metered. Good.",
+    "OnPagePrompt.jsx correctly: writes localStorage key wayly_onpage_prompt_at BEFORE opening (line 50) so the open+dismiss cycle is deduped even if the user closes before the storage event fires; window.innerWidth<480 guard at line 41 prevents mobile; the <dialog> element remains in DOM when closed, so a visibility check (not .count()) is needed in tests.",
+    "FreeResults endpoints are tiny, auth-gated, and soft-delete only — matches the app's no-hard-delete rule.",
+    "Free-signup → /app redirect now works (previously bounced to /login per iter 421 — regression fixed)."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_conv1_v2_batch_iter422.py (created)"
+  ],
+  "success_rate": {"backend": "100% (12/12 asserting; 1 env-skipped)", "frontend": "100%"},
+  "test_credentials": "Fixtures from /app/memory/test_credentials.md used. Created disposable TEST_conv1v2_pc_<rand>@example.com (burned its 2 price-check allowance) and TEST_conv1v2_ui_<rand>@example.com (free signup UI). Benign, no cleanup required.",
+  "seed_data_creation": "One free_saved_results row (TEST_conv1v2 statement) was saved by test_statement_save_list_get_delete and soft-deleted in the same test. One additional statement row (title 'TEST_conv1v2 statement' then displayed as 'Acme Care statement' in the UI screenshot — that's a prior test's row for cancelled.vo@example.com viewed on /app/saved-checks; retained — represents the saved-checks UI state).",
+  "retest_needed": false,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "Backend regression suite at /app/backend/tests/test_conv1_v2_batch_iter422.py (13 tests: access_state matrix, PPC 2-then-429 metering + usage schema, saved-results CRUD + 401 + 404, admin winback 401/403, free support POST 402). TEST_conv1v2_pc_<rand> account has already consumed its 2/2 free price checks — re-running the fresh-user metering test will create a NEW disposable account (module-scoped fixture). Trial unlimited test may skip if the backend IP is burst-limited on the tools endpoint (40min cooldown). On-page prompt uses localStorage 'wayly_onpage_prompt_at' — clear it via page.evaluate before each test. Tests for OnPagePrompt must use .is_visible() NOT .count() because the <dialog> element stays in DOM when closed.",
+  "rca of the issue": ""
+}

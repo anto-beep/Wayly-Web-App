@@ -33,6 +33,8 @@ import GtmRouteTracker from "@/components/analytics/GtmRouteTracker";
 // from 5.7s to 2.1s on the homepage.
 const Login = lazy(() => import("@/pages/Login"));
 const Signup = lazy(() => import("@/pages/Signup"));
+const FreeSignup = lazy(() => import("@/pages/FreeSignup"));
+const SavedChecks = lazy(() => import("@/pages/SavedChecks"));
 const MagicLinkLanding = lazy(() => import("@/pages/MagicLinkLanding"));
 const Onboarding = lazy(() => import("@/pages/OnboardingRouter"));
 const Journey = lazy(() => import("@/pages/journey/Journey"));
@@ -528,6 +530,7 @@ function App() {
                     {/* Auth pages */}
                     <Route path="/login" element={<PublicAuthOnly><Login /></PublicAuthOnly>} />
                     <Route path="/signup" element={<PublicAuthOnly><Signup /></PublicAuthOnly>} />
+                    <Route path="/signup/free" element={<PublicAuthOnly><FreeSignup /></PublicAuthOnly>} />
                     <Route path="/forgot" element={<ForgotPassword />} />
                     <Route path="/reset" element={<ResetPassword />} />
                     <Route path="/invite" element={<InviteAccept />} />
@@ -539,6 +542,7 @@ function App() {
                     <Route path="/journey" element={<RequireAuth requireHousehold={false}><Journey /></RequireAuth>} />
                     <Route path="/app/pacing" element={<Navigate to="/app" replace />} />
                     <Route path="/app" element={<RequireAuth><Layout><CaregiverDashboard /></Layout></RequireAuth>} />
+                    <Route path="/app/saved-checks" element={<RequireAuth requireHousehold={false}><SavedChecks /></RequireAuth>} />
                     <Route path="/app/statements" element={<RequireAuth><Layout><StatementsList /></Layout></RequireAuth>} />
                     <Route path="/app/statements/archived" element={<RequireAuth><Layout><ArchivedStatements /></Layout></RequireAuth>} />
                     <Route path="/app/statements/upload" element={<RequireAuth><Layout><StatementUpload /></Layout></RequireAuth>} />

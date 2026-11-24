@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from "react";
 import useScrollToResult from "@/hooks/useScrollToResult";
 import { trackToolComplete } from "@/lib/metaPixel";
 import { ga4Track, decoderInputMethod } from "@/lib/ga4";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import AboutBackLink from "@/components/AboutBackLink";
 import MarketingHeader from "@/components/MarketingHeader";
 import Footer from "@/components/Footer";
@@ -119,6 +119,19 @@ export default function StatementDecoderTool() {
     const fileRef = useRef(null);
     const navigate = useNavigate();
     const { active: activeParticipant } = useParticipants();
+    // CONV-1 D: a logged-in Free member's decode is kept in their account.
+    const isFreeTier = !!user && !isPaidUser;
+    const [savedToAccount, setSavedToAccount] = useState(false);
+    const [searchParams] = useSearchParams();
+    const restoreRef = useRef(false);
+    useEffect(() => {
+        const rid = searchParams.get("r");
+        if (!rid || restoreRef.current) return;
+        restoreRef.current = true;
+        api.get(`/me/free-results/${rid}`)
+            .then(({ data }) => { if (data?.result) { setResult(data.result); setActive(true); } })
+            .catch(() => { /* saved result gone / not yours */ });
+    }, [searchParams]);
 
     // Draft a real, pre-filled letter from a single decoder anomaly.
     const draftLetterFromAnomaly = async (a) => {
@@ -265,6 +278,17 @@ export default function StatementDecoderTool() {
             }
             // abuse_flag (if any) is now inside the polled result; setResult passes through.
             setResult(final);
+            if (isFreeTier && !_isSample && final && !final.abuse_flag) {
+                try {
+                    await api.post("/me/free-results/save", {
+                        type: "statement",
+                        result: final,
+                        title: final?.summary?.provider || final?.provider_name || "Statement decode",
+                        subtitle: null,
+                    });
+                    setSavedToAccount(true);
+                } catch (_) { /* saving is best-effort */ }
+            }
             try {
                 ga4Track.decoderCompleted(_runId, {
                     input_method: _isSample ? "sample" : (decoderInputMethod(final?.input_method) || _inputMethod),
@@ -510,6 +534,12 @@ export default function StatementDecoderTool() {
 
                     {result && (
                         <div ref={resultRef} className="mt-6 animate-fade-up scroll-mt-20" data-testid="decoder-result">
+                            {savedToAccount && (
+                                <div className="mb-5 flex items-center justify-between gap-3 rounded-2xl border border-sage/40 bg-sage/10 px-4 py-3" data-testid="decoder-saved-banner">
+                                    <span className="text-sm text-primary-k">Saved to your account — reopen it any time.</span>
+                                    <Link to="/app/saved-checks" data-testid="decoder-saved-link" className="text-sm font-semibold text-primary-k underline whitespace-nowrap">Your saved checks</Link>
+                                </div>
+                            )}
                             {result.identity_warning && (
                                 <div className="mb-5 flex items-start gap-3 rounded-2xl border-2 border-terracotta bg-terracotta/10 px-4 py-3.5" data-testid="decoder-identity-warning" role="alert">
                                     <AlertTriangle className="mt-0.5 h-5 w-5 text-terracotta flex-shrink-0" aria-hidden="true" />
