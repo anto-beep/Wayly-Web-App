@@ -190,8 +190,8 @@ export default function AnonymousInvoiceCheck({ onSeeExample }) {
         <section className="mx-auto max-w-[1720px] px-6" data-testid="anon-invoice-check">
             <div className="bg-surface border border-kindred rounded-2xl p-6 sm:p-8 shadow-sm">
                 <span className="overline">Free · no account needed</span>
-                <h2 className="font-heading text-2xl sm:text-3xl text-primary-k mt-1 tracking-tight">
-                    Check your aged-care invoice now
+                <h2 className="font-heading font-bold text-3xl sm:text-4xl lg:text-5xl text-primary-k mt-2 tracking-tight leading-[1.05]">
+                    Check Your Aged Care Invoice Now
                 </h2>
                 <p className="mt-2 text-sm text-muted-k leading-relaxed">
                     Upload it, photograph it, or paste it. We&apos;ll read every line and show you exactly what&apos;s worth
