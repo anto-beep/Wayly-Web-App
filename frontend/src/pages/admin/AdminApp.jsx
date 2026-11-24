@@ -5,7 +5,7 @@ import "./admin.css";
 import {
     LayoutDashboard, Users, CreditCard, Bot, Headphones, Megaphone, FileText,
     LineChart, Lock, Settings, UserCog, Search, Bell, LogOut, ShieldAlert,
-    Menu, Mail, Inbox, Gauge, LifeBuoy,
+    Menu, Mail, Inbox, Gauge, LifeBuoy, Send,
 } from "lucide-react";
 import { AdminAuthProvider, useAdminAuth, adminApi } from "./AdminAuthContext";
 import AdminLogin from "./AdminLogin";
@@ -23,6 +23,8 @@ const NAV = [
         items: [
             { to: "/admin/command-centre", label: "Command Centre", icon: Gauge, testid: "admin-nav-command-centre" },
             { to: "/admin/marketing-spend", label: "Marketing Spend", icon: Megaphone, testid: "admin-nav-marketing-spend" },
+            { to: "/admin/marketing-assets", label: "Marketing Assets", icon: FileText, testid: "admin-nav-marketing-assets" },
+            { to: "/admin/social-publishing", label: "Social Publishing", icon: Send, testid: "admin-nav-social-publishing" },
             { to: "/admin/growth-engine", label: "Growth Engine", icon: LineChart, testid: "admin-nav-growth-engine" },
             { to: "/admin/growth-pipeline", label: "Growth Pipeline", icon: LifeBuoy, testid: "admin-nav-growth-pipeline" },
         ],
@@ -327,6 +329,8 @@ import AdminCommandCentre from "./AdminCommandCentre";
 import AdminHelpCentre from "./AdminHelpCentre";
 import AdminGrowthEngine from "./AdminGrowthEngine";
 import AdminGrowthPipeline from "./AdminGrowthPipeline";
+import AdminMarketingAssets from "./AdminMarketingAssets";
+import AdminSocialPublishing from "./AdminSocialPublishing";
 
 function AdminRoutes() {
     return (
@@ -380,6 +384,8 @@ function AdminRoutes() {
                 <Route path="support-inbox" element={<AdminSupportInbox />} />
                 <Route path="command-centre" element={<AdminCommandCentre />} />
                 <Route path="marketing-spend" element={<AdminMarketingSpend />} />
+                <Route path="marketing-assets" element={<AdminMarketingAssets />} />
+                <Route path="social-publishing" element={<AdminSocialPublishing />} />
                 <Route path="help-centre" element={<AdminHelpCentre />} />
                 <Route path="growth-engine" element={<AdminGrowthEngine />} />
                 <Route path="growth-pipeline" element={<AdminGrowthPipeline />} />
@@ -401,7 +407,7 @@ function AdminRoutes() {
                         "blog", "glossary", "templates-library", "changelog",
                         "seo/indexnow", "support", "enquiries",
                         "support-inbox", "command-centre", "marketing-spend", "help-centre",
-                        "growth-engine", "growth-pipeline",
+                        "growth-engine", "growth-pipeline", "marketing-assets", "social-publishing",
                     ].includes(path) || P0P1_BUILT_PATHS.has(path)) return null;
                     return <Route key={it.to} path={path} element={<Placeholder label={it.label} />} />;
                 })}

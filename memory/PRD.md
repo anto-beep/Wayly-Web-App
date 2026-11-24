@@ -1,3 +1,14 @@
+**Just shipped (24 Nov 2026 — Social OS PHASE 1: Marketing Asset library + permanent public media + manifest; admin/web + shared backend; testing-agent iter417 PASS 15/15 + UI):**
+- Context: start of a 4-phase Canva→Buffer social automation. User choices: Phase 1 first → Buffer → Canva; Emergent managed storage; assets PRIVATE until approved; Buffer must only update existing drafts (never duplicate); real scheduling allowed once verified; user will connect Buffer + Canva accounts.
+- Backend `routes/mkt1.py` (mounted `/api/mkt`, admin-gated via `require_super_or_ops`) + `lib/mkt_storage.py` (Emergent object storage wrapper, keys namespaced under `wayly/social/{YYYY}/{MM}/{campaign}/` — ISOLATED from customer data). Endpoints: campaigns create/list; assets upload (single) + bulk-upload (multi + safe ZIP extraction with path-traversal/size/count limits); list (search + campaign/platform/type/approval filters + pagination); get; patch (topic/alt/order/platform/campaign/approval/publication); soft-delete; `manifest.json` + `manifest.csv` (APPROVED-only, admin-gated); stats; admin raw preview; and PUBLIC `GET /api/mkt/media/{asset_id}/{filename}` (no auth) that serves bytes with correct Content-Type + ETag ONLY when approval_status==approved (unapproved stay private). Asset model stores id, campaign_id, content_topic, filename, canva_design_id, asset_type, width/height/pages, file_size, sha256 checksum, carousel_order, target_platform, storage_path, alt_text, approval_status, version, publication_status, timestamps. Append-only `mkt_audit`.
+- Frontend admin page `AdminMarketingAssets.jsx` at `/admin/marketing-assets` (nav under Founder): stats, upload (single/bulk/zip), search+filters, asset grid with previews (approved via public URL, drafts via admin raw blob), detail drawer (edit, approve/reject, copy public URL, delete), New Campaign modal, JSON/CSV manifest download.
+- Media host base = `MKT_PUBLIC_BASE_URL` → `FRONTEND_URL` → `PUBLIC_APP_URL` (currently the preview host; auto-switches to prod on deploy, env-overridable). Public URL = `{base}/api/mkt/media/{id}/{filename}` — stable, no expiring token.
+- KNOWN ENV CONSTRAINT: the platform ingress forces `Cache-Control: no-store` on ALL `/api` responses, so the app's immutable cache header is stripped (ETag/304 still work at the app layer). True CDN caching + a dedicated media.wayly.com.au domain / R2 bucket is a deferred production/DNS step.
+- Verified: direct e2e + testing-agent iter417 (15/15 backend pytest `tests/test_mkt1_phase1_iter417.py` + web UI upload→private-404→approve→public-200 proven). Test data cleaned (library = 0 assets).
+
+ROADMAP (Social OS): Phase 2 = Canva Connect OAuth + Design Export (PNG/JPG/MP4/PDF, poll job, download before 24h expiry, save into the asset library) — playbook ready, needs CANVA_CLIENT_ID/SECRET + a registered redirect URI. Phase 3 = Buffer (GraphQL api.buffer.com): list channels (verify org 6a2173643e3610b5593de3f6 + FB/IG/LI channel ids), read existing drafts, campaign↔draft matching, `editPost` attach ordered media (by our public URLs) + alt text + schedule Australia/Sydney, read-back verify, idempotency/audit — needs BUFFER_API_TOKEN; Buffer attaches media by PUBLIC URL only (no upload). Phase 4 = publishing calendar, verification, failure recovery, Metricool-dedup migration. ChatGPT handoff = the approved-only manifest (already built).
+
+
 **Just shipped (23 Nov 2026 — WEB mobile-view responsive fixes: numbers & words no longer break mid-character; self-verified at 390px):**
 - User report: on wayly.com.au viewed in a phone browser, numbers/words wrapped mid-digit/mid-word ("$552 .40", "Indepen dence", "payabl e") and some cards didn't use full width.
 - ROOT CAUSE: global `index.css` rules `body { overflow-wrap: anywhere }` (line 125) + mobile `@media(max-width:1023px){ [class*="flex"]>*{min-width:0} ; h1..h6,p{overflow-wrap:anywhere;word-break:break-word} }` let any text break at any character when a flex/grid cell was squeezed.
@@ -8509,3 +8520,50 @@ Mirrored the web budget-hero colour treatment onto the mobile dashboard (app/(ta
 - **Mobile Add Entry** (app/weekly-budget.tsx): added an "Add" button (weekly-used-add) in the "What You Have Recorded This Quarter" card header that opens the existing (tested) ChargeEntrySheet (setSheet("charge")) → POST charge. Reused the proven flow rather than a new create sheet.
 - **Web date filter** (WeeklyBudget UsedEntriesTable): added From/To date inputs (weekly-used-filter-from / weekly-used-filter-to) alongside search + source filter; client-side filter on entry.date (YYYY-MM-DD slice). Empty-filter state message unchanged.
 - Re-seeded 4 demo charges for samburke (Personal care morning, Domestic assistance, Nursing visit, Physiotherapy) spread across Oct–Dec 2026 after automated delete-testing + a stray test charge cleanup had emptied the recorded list. Past-dated ones show under "Recorded", future-dated under "Booked".
+
+
+---
+
+## Social OS — Phase 3: Buffer integration (2026-06-24)
+
+**Goal:** attach approved marketing media to the founder's EXISTING Buffer drafts and schedule them (Australia/Sydney). Never creates new Buffer posts.
+
+### Backend (new)
+- `/app/backend/routes/mkt_buffer.py` → `build_mkt_buffer_router()` mounted at `/api/mkt/buffer/*` (registered in `server.py`). Admin-gated (`require_super_or_ops`). Reuses Phase 1 helpers from `routes/mkt1.py` (`db`, `_slug`, `_now`, `_public_url`, `_audit`, `PLATFORMS`).
+- Server-side Buffer **GraphQL** client (`https://api.buffer.com`, Bearer `BUFFER_API_TOKEN`). Schema verified live via introspection (editPost → union `PostActionPayload`; `AssetInput{image|video|document}`; `ShareMode`/`SchedulingType` enums; `PostInput{id:PostId!}`).
+- Endpoints:
+  - `GET /mkt/buffer/status` — verifies org + 3 channels against the allow-list (no write).
+  - `GET /mkt/buffer/drafts?status=draft|scheduled|sent` — lists existing posts on the connected channels.
+  - `POST /mkt/buffer/plan` — matches a campaign's APPROVED assets (carousel order) for the draft's platform, validates every public media URL is reachable, builds the exact `editPost` input. No write.
+  - `POST /mkt/buffer/attach` — `dry_run` default **true**. `dry_run:false` performs the live `editPost` (attach media + optional schedule), reads the post back to verify, records an idempotent job (`mkt_buffer_jobs`), and updates asset `publication_status`. Idempotency via `idempotency_key` + (post,assets,dueAt) dedupe. Never creates posts.
+  - `GET /mkt/buffer/jobs` — attach/schedule history.
+- Asset mapping: image → `{image:{url, metadata.altText}}`; video → `{video:{url}}`; PDF documents require a thumbnail (not yet supported → surfaced as a warning). Schedule converts naive Sydney local → UTC `dueAt` (`mode:customScheduled`, `schedulingType:automatic`, `saveToDraft:false`); no schedule → `saveToDraft:true` (attach only).
+- Config: `BUFFER_ORGANIZATION_ID` (default `6a21…e3f6`) + channel IDs (facebook/instagram/linkedin) env-overridable; all verified connected live.
+
+### Frontend web (new)
+- `/app/frontend/src/pages/admin/AdminSocialPublishing.jsx` — admin page at `/admin/social-publishing` (nav added under Founder; route + import wired in `AdminApp.jsx`). Connection status + channel badges, existing-drafts grid, planner drawer (campaign + Sydney schedule), media-validated plan preview with ordered thumbnails, **Dry-run** and **Attach (LIVE)** actions (LIVE behind confirm), and a job-history table.
+
+### Verification
+- Backend E2E `/tmp/buffer_e2e.py` (ephemeral) — 17/17 PASS: admin login+2FA, Buffer status (org + 3 channels connected & matching), 10 real drafts listed, seed+approve test asset → absolute HTTPS public URL fetchable with no auth (200), plan matches 1 asset + media_ok, exact Buffer input shape (image+altText, saveToDraft), Sydney→UTC schedule (09:00 Sydney Jul → 2026-06-30T23:00Z, customScheduled), dry-run attach, cleanup to 0.
+- Web smoke screenshot: page renders real Buffer data (connected, 3 channels ✓, 10 drafts).
+- **NOT exercised:** the live `editPost` write was deliberately not run by the agent to avoid mutating the founder's 10 real drafts. Live attach is wired per the verified schema and left for the founder to trigger from the UI (or a joint reversible test). Autonomous UI testing agent intentionally NOT run against the live-Buffer UI for the same reason.
+
+### Media hosting note
+- `routes/mkt1.py` `_public_url` uses `MKT_PUBLIC_BASE_URL || FRONTEND_URL || PUBLIC_APP_URL`. In preview `FRONTEND_URL` (loaded via `load_dotenv`) yields absolute preview URLs Buffer can fetch. **Production:** ensure `FRONTEND_URL`/`MKT_PUBLIC_BASE_URL` resolves to `https://wayly.com.au` after deploy so Buffer fetches production media URLs.
+
+## Social OS — Phase 2: Canva Connect (PREP — not yet implemented, 2026-06-24)
+Confirmed via official playbook; to build next:
+- **Exact callback URLs to register in the Canva Connect app** (register BOTH, verbatim, no trailing slash):
+  - Production: `https://wayly.com.au/api/mkt/canva/oauth/callback`
+  - Preview: `https://tool-showcase-wide--2w9s0vq0.preview.emergentagent.com/api/mkt/canva/oauth/callback`
+- OAuth: authorization-code + PKCE; authorize `https://www.canva.com/api/oauth/authorize`, token `https://api.canva.com/rest/v1/oauth/token`. `redirect_uri` must match the registered URL EXACTLY and be sent on both authorize + token exchange. Client secret + tokens + PKCE verifier stay server-side only.
+- Scopes: `design:content:read asset:read` (add `design:meta:read` only if listing designs).
+- Env to add in Phase 2: `CANVA_REDIRECT_URI` (preview value in preview env; prod value in production). Secrets `CANVA_CLIENT_ID`/`CANVA_CLIENT_SECRET` already stored.
+- Export flow: create export job (png/jpg/pdf/mp4; multi-page returns one URL per page), poll with backoff, download immediately (Canva URLs expire ~24h) into permanent marketing storage, then register as Marketing Assets.
+
+### Prioritised backlog
+- P0: Founder triggers first LIVE attach on a chosen draft (or a joint reversible test) to confirm the live `editPost` write end-to-end.
+- P1: Canva Phase 2 (OAuth + export → auto-ingest to Marketing Assets).
+- P1: LinkedIn PDF document attach (needs a generated thumbnail).
+- P2: Phase 4 — publishing calendar/dashboard (statuses), retries/rate-limit handling, Metricool commitment check before migration, implementation report.
+

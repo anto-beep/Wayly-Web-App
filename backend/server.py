@@ -8112,6 +8112,22 @@ except Exception as _e:
     import logging as _logging
     _logging.getLogger("wayly").warning(f"routes.marketing_spend failed to load: {_e}")
 
+# Social OS — Phase 1: Marketing Asset library + permanent public media (admin-only)
+try:
+    from routes.mkt1 import build_mkt1_router
+    api.include_router(build_mkt1_router())
+except Exception as _e:
+    import logging as _logging
+    _logging.getLogger("wayly").warning(f"routes.mkt1 failed to load: {_e}")
+
+# Social OS — Phase 3: Buffer integration (attach media + schedule existing drafts)
+try:
+    from routes.mkt_buffer import build_mkt_buffer_router
+    api.include_router(build_mkt_buffer_router())
+except Exception as _e:
+    import logging as _logging
+    _logging.getLogger("wayly").warning(f"routes.mkt_buffer failed to load: {_e}")
+
 # Milestone C — Founder Command Centre MVP (read-only aggregation)
 try:
     from routes.command_centre import build_command_centre_router
