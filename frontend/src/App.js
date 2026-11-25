@@ -94,6 +94,8 @@ const AIDisclaimerPage = lazy(() => import("@/pages/legal/AIDisclaimer"));
 const AIIntent = lazy(() => import("@/pages/legal/AIIntent"));
 const Accessibility = lazy(() => import("@/pages/legal/Accessibility"));
 const CookiesPage = lazy(() => import("@/pages/legal/Cookies"));
+const RefundPolicy = lazy(() => import("@/pages/legal/RefundPolicy"));
+const TrialTerms = lazy(() => import("@/pages/legal/TrialTerms"));
 const EmailPreferences = lazy(() => import("@/pages/EmailPreferences"));
 const AdminApp = lazy(() => import("@/pages/admin/AdminApp"));
 const MySupport = lazy(() => import("@/pages/MySupport"));
@@ -519,6 +521,8 @@ function App() {
                     <Route path="/legal/ai-intent" element={<AIIntent />} />
                     <Route path="/legal/accessibility" element={<Accessibility />} />
                     <Route path="/legal/cookies" element={<CookiesPage />} />
+                    <Route path="/legal/refund-policy" element={<RefundPolicy />} />
+                    <Route path="/legal/trial-terms" element={<TrialTerms />} />
 
                     {/* Resource sub-pages, redirect placeholders to the resources index for now */}
                     <Route path="/resources/blog" element={<StubRedirect to="/resources/articles" />} />

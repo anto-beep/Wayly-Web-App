@@ -17,6 +17,8 @@ import ToolGate from "@/components/ToolGate";
 import BudgetSampleResult from "@/components/tool-samples/BudgetSampleResult";
 import { ScreenshotBudget } from "@/components/Screenshots";
 import useToolAccess from "@/hooks/useToolAccess";
+import { useAuth } from "@/context/AuthContext";
+import FreeAllowanceBadge from "@/components/FreeAllowanceBadge";
 import { useParticipants } from "@/context/ParticipantsContext";
 import AIAccuracyBanner, { TOOL_DISCLAIMERS } from "@/components/AIAccuracyBanner";
 import ProfileInlinePrompts from "@/components/ProfileInlinePrompts";
@@ -64,6 +66,9 @@ const SUPPLEMENT_HELP_TEXT =
 
 export default function BudgetCalculatorTool() {
     const access = useToolAccess();
+    const { user } = useAuth();
+    // CONV-1 D2: a logged-in Free member runs the metered Budget Calculator in-app.
+    const isFreeTier = !!user && user.access_state === "free";
     const [classification, setClassification] = useState(4);
     const [isGrandfathered, setIsGrandfathered] = useState(false);
     const [currentBalance, setCurrentBalance] = useState(0);
@@ -198,7 +203,7 @@ export default function BudgetCalculatorTool() {
             </div>
         );
     }
-    if (access === "blocked") {
+    if (access === "blocked" && !isFreeTier) {
         return (
             <div className="min-h-screen bg-kindred">
                 <SeoHead {...SEO.toolBudgetCalculator} jsonLd={_toolJsonLd(SEO.toolBudgetCalculator)} />
@@ -367,6 +372,9 @@ export default function BudgetCalculatorTool() {
                         </div>
                     </div>
 
+                    {isFreeTier && (
+                        <FreeAllowanceBadge tool="BUDGET_CALCULATOR" noun="budget calculation" nounPlural="budget calculations" refreshKey={result ? 1 : 0} />
+                    )}
                     <button
                         onClick={() => calc()}
                         disabled={loading}

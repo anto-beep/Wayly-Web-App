@@ -3905,11 +3905,12 @@ async def _require_paid_plan(request: Request, response: Response, tool_label: s
             status_code=401,
             detail={"error": "unauthenticated", "message": "Sign in required.", "redirect": "/signup"},
         )
-    if user.get("is_admin") or _compute_access_state(user) in ("active", "trial"):
+    sub = await db.subscriptions.find_one({"user_id": user["id"]}, {"_id": 0}, sort=[("updated_at", -1)])
+    if user.get("is_admin") or _compute_access_state(user, sub) in ("active", "trial"):
         return user
     # Free-tier or view-only (cancelled/expired/payment-failed). Return 402 so
     # the frontend interceptor mounts the paywall/upgrade modal (§4.4/§4.6).
-    _state = _compute_access_state(user)
+    _state = _compute_access_state(user, sub)
     if _state == "free":
         raise HTTPException(
             status_code=402,
@@ -4092,12 +4093,12 @@ async def _enforce_free_tool_limit(request: Request, response: Response, *, tool
     """
     if _is_unlimited_ip(_client_ip(request)):
         return {"user": await _user_from_request(request), "is_free_use": False}
-    await _rl.enforce(request, ("tools_unauth_ip", _rl._client_ip(request)))
     user = await _user_from_request(request)
     if user:
         if user.get("is_admin"):
             return {"user": user, "is_free_use": False}
-        state = _compute_access_state(user)
+        sub = await db.subscriptions.find_one({"user_id": user["id"]}, {"_id": 0}, sort=[("updated_at", -1)])
+        state = _compute_access_state(user, sub)
         if state in ("active", "trial"):
             return {"user": user, "is_free_use": False}
         if state == "view_only":
@@ -4109,6 +4110,9 @@ async def _enforce_free_tool_limit(request: Request, response: Response, *, tool
                     "upgrade_url": "/settings/billing",
                 },
             )
+    # Free-tier or unauthenticated only: per-IP burst protection, then the D2 allowance.
+    # (Admin / active / trial returned above and are never burst-limited here.)
+    await _rl.enforce(request, ("tools_unauth_ip", _rl._client_ip(request)))
     user_id = user["id"] if user else None
     usage = await check_free_tool_usage(request, tool=tool, user_id=user_id)
     if not usage["allowed"]:
@@ -5779,7 +5783,12 @@ async def public_budget_calc(body: PublicBudgetBody, request: Request, response:
         ``applicable_supplements`` list adds these on top of the base
         annual figure.
     """
-    await _require_paid_plan(request, response, "Budget Calculator")
+    _bud_gate = await _enforce_free_tool_limit(request, response, tool="BUDGET_CALCULATOR", label="Budget Calculator")
+    if _bud_gate.get("is_free_use"):
+        try:
+            await record_free_tool_usage(request, tool="BUDGET_CALCULATOR", user_id=_bud_gate.get("user_id"))
+        except Exception as _e:
+            logger.warning("free budget-calc usage record failed: %s", _e)
 
     # BUD-1 v1 (Feb 2026, Phase 1 Rev A):
     # Grandfathered only affects (a) the lifetime cap value and (b) which
@@ -6189,7 +6198,12 @@ class PublicClassificationBody(BaseModel):
 
 @api.post("/public/classification-check")
 async def public_classification_check(body: PublicClassificationBody, request: Request, response: Response):
-    await _require_paid_plan(request, response, "Classification Self-Check")
+    _csc_gate = await _enforce_free_tool_limit(request, response, tool="CLASSIFICATION_CHECK", label="Classification Self-Check")
+    if _csc_gate.get("is_free_use"):
+        try:
+            await record_free_tool_usage(request, tool="CLASSIFICATION_CHECK", user_id=_csc_gate.get("user_id"))
+        except Exception as _e:
+            logger.warning("free classification usage record failed: %s", _e)
     if not all(0 <= a <= 4 for a in body.answers):
         raise HTTPException(status_code=400, detail="Each answer must be 0,4")
     score = sum(body.answers)  # 0..48
@@ -6410,7 +6424,12 @@ class PublicContributionBody(BaseModel):
 
 @api.post("/public/contribution-estimator")
 async def public_contribution_estimator(body: PublicContributionBody, request: Request, response: Response):
-    await _require_paid_plan(request, response, "Contribution Estimator")
+    _con_gate = await _enforce_free_tool_limit(request, response, tool="CONTRIBUTION_ESTIMATOR", label="Contribution Estimator")
+    if _con_gate.get("is_free_use"):
+        try:
+            await record_free_tool_usage(request, tool="CONTRIBUTION_ESTIMATOR", user_id=_con_gate.get("user_id"))
+        except Exception as _e:
+            logger.warning("free contribution usage record failed: %s", _e)
     total_pct = body.expected_mix_clinical_pct + body.expected_mix_independence_pct + body.expected_mix_everyday_pct
     if total_pct < 95 or total_pct > 105:
         raise HTTPException(status_code=400, detail="Service mix percentages should sum to 100")

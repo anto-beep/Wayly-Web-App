@@ -331,6 +331,12 @@ export default function Pricing() {
                         </div>
                     ))}
                 </div>
+                <p className="mt-6 text-center text-sm text-muted-k" data-testid="pricing-legal-links">
+                    Every plan starts with a 7-day free trial. Card required, cancel any time.{" "}
+                    <Link to="/legal/trial-terms" className="underline hover:text-primary-k">Free Trial Terms</Link>
+                    {" · "}
+                    <Link to="/legal/refund-policy" className="underline hover:text-primary-k">Refund Policy</Link>
+                </p>
             </section>
 
             {/* Add-on explainer */}

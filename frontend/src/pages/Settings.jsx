@@ -574,6 +574,11 @@ function BillingTab() {
                             <p className="text-sm text-muted-k mt-2">
                                 You&apos;ll keep full access until {periodEndLabel}. After that, your data is kept for 30 days in case you come back, then permanently deleted. You won&apos;t be charged again.
                             </p>
+                            <p className="text-xs text-muted-k mt-2" data-testid="cancel-modal-legal-links">
+                                See our <Link to="/legal/refund-policy" className="underline hover:text-primary-k">Refund Policy</Link>
+                                {" and "}
+                                <Link to="/legal/trial-terms" className="underline hover:text-primary-k">Free Trial Terms</Link>.
+                            </p>
                             <p className="text-sm font-medium text-primary-k mt-4">Mind telling us why? <span className="text-muted-k font-normal">(optional)</span></p>
                             <div className="mt-2 space-y-1.5" data-testid="cancel-reason-list">
                                 {CANCEL_REASONS.map((r) => {

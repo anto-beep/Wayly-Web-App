@@ -12,6 +12,8 @@ import ToolGate from "@/components/ToolGate";
 import ClassificationSampleResult from "@/components/tool-samples/ClassificationSampleResult";
 import { ScreenshotStatement } from "@/components/Screenshots";
 import useToolAccess from "@/hooks/useToolAccess";
+import { useAuth } from "@/context/AuthContext";
+import FreeAllowanceBadge from "@/components/FreeAllowanceBadge";
 import useScrollToResult from "@/hooks/useScrollToResult";
 import { trackToolComplete } from "@/lib/metaPixel";
 import { api, formatAUD } from "@/lib/api";
@@ -821,6 +823,9 @@ function CscWizardStepper({ step, setStep }) {
 export default function ClassificationCheck() {
     const { isDark } = useTheme();
     const access = useToolAccess();
+    const { user } = useAuth();
+    // CONV-1 D2: a logged-in Free member runs the metered Classification Self-Check in-app.
+    const isFreeTier = !!user && user.access_state === "free";
     const personaBundle = usePersona();
     const { active: activeParticipant } = useParticipants();
     // Persona resolution priority: ?persona= querystring (test/preview) →
@@ -881,7 +886,6 @@ export default function ClassificationCheck() {
     useEffect(() => {
         const pc = activeParticipant?.classification;
         if (pc && !current && !resumed) setCurrent(String(pc));
-        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [activeParticipant?.classification]);
 
     const answered = useMemo(() => Object.values(answers).filter((v) => v !== null).length, [answers]);
@@ -991,7 +995,7 @@ export default function ClassificationCheck() {
             <Footer />
         </div>
     );
-    if (access === "blocked") return (
+    if (access === "blocked" && !isFreeTier) return (
         <div className="min-h-screen bg-kindred">
             <SeoHead {...SEO.toolClassification} jsonLd={_toolJsonLd(SEO.toolClassification)} />
             <MarketingHeader />
@@ -1040,6 +1044,11 @@ export default function ClassificationCheck() {
                         <HcpBridgeLine className="mt-4" />
             <section className="mx-auto max-w-[1720px] px-6 pt-2 pb-4">
                 <p className="text-base text-primary-k font-medium leading-relaxed max-w-5xl">{intro}</p>
+                {isFreeTier && (
+                    <div className="mt-3 max-w-5xl">
+                        <FreeAllowanceBadge tool="CLASSIFICATION_CHECK" noun="classification check" nounPlural="classification checks" refreshKey={step} />
+                    </div>
+                )}
                 <div className="mt-4 flex flex-wrap items-center gap-2.5" data-testid="csc-meta-chips">
                     <span className="inline-flex items-center gap-1.5 rounded-full bg-surface-2 border border-kindred px-3 py-1.5 text-sm font-medium text-primary-k">
                         <Clock className="h-4 w-4 text-muted-k" /> About 5 minutes

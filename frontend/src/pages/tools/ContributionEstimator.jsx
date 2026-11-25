@@ -14,6 +14,8 @@ import ToolGate from "@/components/ToolGate";
 import ContributionSampleResult from "@/components/tool-samples/ContributionSampleResult";
 import { ScreenshotStatement } from "@/components/Screenshots";
 import useToolAccess from "@/hooks/useToolAccess";
+import { useAuth } from "@/context/AuthContext";
+import FreeAllowanceBadge from "@/components/FreeAllowanceBadge";
 import AIAccuracyBanner, { TOOL_DISCLAIMERS } from "@/components/AIAccuracyBanner";
 import { useParticipants } from "@/context/ParticipantsContext";
 import { useParticipantPrefill } from "@/hooks/useParticipantPrefill";
@@ -98,6 +100,9 @@ const _fmt = (n) => (n == null || Number.isNaN(n) ? "," : formatAUD2(n));
 
 export default function ContributionEstimator() {
     const access = useToolAccess();
+    const { user } = useAuth();
+    // CONV-1 D2: a logged-in Free member runs the metered Contribution Estimator in-app.
+    const isFreeTier = !!user && user.access_state === "free";
     const { active: activeParticipant } = useParticipants();
     const [form, setForm] = useState(() => defaultForm(activeParticipant));
     const [constants, setConstants] = useState(null);
@@ -204,7 +209,7 @@ export default function ContributionEstimator() {
             <Footer />
         </div>
     );
-    if (access === "blocked") return (
+    if (access === "blocked" && !isFreeTier) return (
         <div className="min-h-screen bg-kindred">
             <SeoHead {...SEO.toolContribution} jsonLd={_toolJsonLd(SEO.toolContribution)} />
             <MarketingHeader />
@@ -245,6 +250,7 @@ export default function ContributionEstimator() {
                     showHcpLevel={showHcpLevel}
                     showClassificationPicker={showClassificationPicker}
                     cscBadge={cscBadge}
+                    isFreeTier={isFreeTier}
                     onSubmit={submit} loading={loading} error={error}
                 />
             </section>
@@ -395,7 +401,7 @@ function WizardStepper({ step, setStep }) {
     );
 }
 
-function FormBody({ form, set, constants, showFinancial, showHcpFeeQuestion, showHcpLevel, showClassificationPicker, cscBadge, onSubmit, loading, error, step, setStep }) {
+function FormBody({ form, set, constants, showFinancial, showHcpFeeQuestion, showHcpLevel, showClassificationPicker, cscBadge, onSubmit, loading, error, step, setStep, isFreeTier }) {
     const { isDark } = useTheme();
     const meta = WIZARD_STEPS[step];
     const isLast = step === WIZARD_STEPS.length - 1;
@@ -634,6 +640,9 @@ function FormBody({ form, set, constants, showFinancial, showHcpFeeQuestion, sho
                     )}
                 </div>
 
+                {isLast && isFreeTier && (
+                    <FreeAllowanceBadge tool="CONTRIBUTION_ESTIMATOR" noun="contribution estimate" nounPlural="contribution estimates" refreshKey={step} />
+                )}
                 <div className="relative mt-7 flex items-center justify-between gap-3">
                     {step > 0 ? (
                         <button

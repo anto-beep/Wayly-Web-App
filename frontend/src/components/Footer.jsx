@@ -26,6 +26,8 @@ const RESOURCES = [
 const LEGAL_COMPANY = [
     { to: "/about", label: "About Wayly" },
     { to: "/legal/terms", label: "Terms of Service" },
+    { to: "/legal/trial-terms", label: "Free Trial Terms" },
+    { to: "/legal/refund-policy", label: "Refund Policy" },
     { to: "/legal/privacy", label: "Privacy Policy" },
     { to: "/legal/ai-disclaimer", label: "AI Disclaimer" },
     { to: "/legal/accessibility", label: "Accessibility Statement" },

@@ -1,0 +1,47 @@
+{
+  "summary": "CONV-1 v2 follow-up E2E tested. D2 free metering on all 3 new tools (budget-calc, classification-check, contribution-estimator) works correctly for fresh FREE users: 1st POST 200, 2nd POST 429 cooldown_active, /api/free-tool/usage returns limit=1 remaining=0 window_days=120. E5/E6 legal pages render with draft banners, A$24.50/A$49.50 copy, 0 em-dashes, and are linked from footer + pricing page + cancel modal. E3 cancel flow confirmed 2-click (cancel-plan-btn -> modal with keep/confirm + legal-links; no interstitial). ToolGate shown for anon on all 3 pages. FreeAllowanceBadge visible for logged-in FREE user on BC, CSC, CE (last wizard step reached via 2 nexts). HOWEVER: ONE HIGH-severity backend bug found: `_enforce_free_tool_limit` reads user.trial_ends_at (stale) instead of loading the subscription record, so trial fixtures whose user.trial_ends_at is in the past (but subscription.trial_ends_at is still future) are INCORRECTLY metered as free. Repro: trialactive@example.com has user.trial_ends_at=2026-11-07 (past) but subscription.trial_ends_at=2026-11-29 (future, UI shows '5 days remaining'); /api/public/budget-calc on that account records a free_tool_usage and returns 429 on second call.",
+  "platforms_tested": ["web"],
+  "backend_issues": {
+    "critical": [
+      {
+        "endpoint": "/api/public/budget-calc, /classification-check, /contribution-estimator (shared: _enforce_free_tool_limit)",
+        "issue": "Trial users whose user.trial_ends_at is stale (past) but subscription.trial_ends_at is still future are treated as 'free' by the gate and METERED. Root cause: server.py line 4100 calls _compute_access_state(user) without loading the sub doc; the function falls back to user.subscription_status + user.trial_ends_at and returns a non-trial state. /auth/me loads the sub and returns 'trial' correctly, so the UI shows the trial banner while the metered-tool gate silently blocks after 1 call. Reproduced live on trialactive@example.com: UI banner says 'Trial: 5 days remaining', yet 2nd budget-calc POST returns 429 cooldown_active.",
+        "priority": "HIGH"
+      }
+    ],
+    "minor": []
+  },
+  "frontend_issues": {
+    "web": {
+      "ui_bugs": [],
+      "integration_issues": [],
+      "design_issues": []
+    }
+  },
+  "parity_issues": [],
+  "test_report_links": [
+    "/app/backend/tests/test_conv1_v2_d2_iter100.py",
+    "/app/test_reports/pytest/iter100_results.xml"
+  ],
+  "action_items": [
+    "HIGH: In /app/backend/server.py, patch _enforce_free_tool_limit (and audit _require_paid_plan for the same latent bug) to load the latest subscription doc and pass it to _compute_access_state. Suggested: sub = await db.subscriptions.find_one({'user_id': user['id']}, sort=[('updated_at',-1)]); state = _compute_access_state(user, sub). Mirrors how /auth/me computes access_state. Otherwise any trial account whose user.trial_ends_at wasn't kept in sync by the trial-refresh/webhook pipeline will see false 429s on D2 tools — a paying-customer-facing bug.",
+    "OPTIONAL: Backfill user.trial_ends_at from the latest subscription doc for all trialing users (one-shot) to self-heal pre-existing fixtures until the gate is patched."
+  ],
+  "critical_code_review_comments": [
+    "server.py `_enforce_free_tool_limit` and `_require_paid_plan` both call `_compute_access_state(user)` without the sub doc — same latent bug surface. `_compute_access_state` already accepts an optional sub param. Standardise on passing sub at every call site.",
+    "/app/memory/test_credentials.md says trialactive 'trial_ends_at refreshed to now+5d' — but only the subscription doc was refreshed, the user doc still carries 2026-11-07. Either the trial-refresh helper must update both, or the gate must always consult the sub."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_conv1_v2_d2_iter100.py"
+  ],
+  "success_rate": {
+    "backend": "5/8 passed (3 trial-unmetered failures surface the backend bug above)",
+    "frontend": "100% (all D2 badges, ToolGate, legal pages, cancel modal verified)"
+  },
+  "test_credentials": "Used cancelled.vo@example.com (free) for badge check, trialactive@example.com (trial) for cancel modal + unmetered test. Fresh TEST_d2_* signups (strong password) for metering. All TEST_d2_* users + today's trialactive free_tool_usage records cleaned up post-run.",
+  "seed_data_creation": "Created and deleted 6 TEST_d2_* free users (one per metering test). Deleted 5 free_tool_usage records that my tests incidentally wrote against trialactive@example.com during the trial-unmetered run (reset the fixture to its pre-test state).",
+  "retest_needed": true,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "D2 metering for FREE users is confirmed working end-to-end. The ONLY failure is the trial-unmetered backend bug above — once main agent fixes _enforce_free_tool_limit to pass the sub doc (or backfills user.trial_ends_at), re-run /app/backend/tests/test_conv1_v2_d2_iter100.py::TestD2TrialUnmetered. Before re-run, clean any trialactive residue: db.free_tool_usage.delete_many({user_id:'7b86378f-5fea-44ef-a207-3641cf39c0bd', tool:{$in:['BUDGET_CALCULATOR','CLASSIFICATION_CHECK','CONTRIBUTION_ESTIMATOR']}}). Rate limits: if signup or tools_unauth_ip burst limits trigger, flush Redis keys rl:signup_ip:*, rl:signup_email:*, rl:tools_unauth_ip:* using REDIS_URL from backend/.env.",
+  "rca of the issue": "Trial user metering regression. The Nov 24 2026 trial-refresh (per test_credentials.md) updated subscriptions.trial_ends_at to now+5d but left users.trial_ends_at pointing at the original 2026-11-07. /api/auth/me correctly returns access_state='trial' because its computation passes the subscription doc into _compute_access_state. BUT the D2 free-tool gate (_enforce_free_tool_limit, server.py line 4100) calls _compute_access_state(user) WITHOUT the sub doc; the function then reads user.subscription_status='trialing' and _trial_end_dt(user.trial_ends_at)=2026-11-07 < now, triggering _downgrade_state(user) -> 'free'. The user is then treated as a free member and metered at 1/120d. Fix: sub = await db.subscriptions.find_one({'user_id': user['id']}, sort=[('updated_at',-1)]); state = _compute_access_state(user, sub). Short-term mitigation: backfill users.trial_ends_at from the active subscription."
+}
